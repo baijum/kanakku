@@ -1,0 +1,107 @@
+[
+  {
+    "key": "ctrl+shift+f",
+    "command": "editor.action.formatDocument",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+shift+l",
+    "command": "editor.action.formatSelection",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+k ctrl+d",
+    "command": "editor.action.revealDefinition",
+    "when": "editorHasDefinitionProvider && editorTextFocus && !isInEmbeddedEditor"
+  },
+  {
+    "key": "ctrl+k ctrl+i",
+    "command": "editor.action.showHover",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+k ctrl+r",
+    "command": "editor.action.goToReferences",
+    "when": "editorHasReferenceProvider && editorTextFocus && !inReferenceSearchEditor && !isInEmbeddedEditor"
+  },
+  {
+    "key": "ctrl+k ctrl+s",
+    "command": "workbench.action.gotoSymbol",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+k ctrl+t",
+    "command": "workbench.action.showAllSymbols",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+k ctrl+c",
+    "command": "editor.action.addCommentLine",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+k ctrl+u",
+    "command": "editor.action.removeCommentLine",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+k ctrl+x",
+    "command": "editor.action.trimTrailingWhitespace",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+k ctrl+y",
+    "command": "editor.action.foldAll",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+k ctrl+z",
+    "command": "editor.action.unfoldAll",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+k ctrl+p",
+    "command": "workbench.action.quickOpen",
+    "when": "!inQuickOpen"
+  },
+  {
+    "key": "ctrl+k ctrl+q",
+    "command": "workbench.action.showCommands",
+    "when": "!inQuickOpen"
+  },
+  {
+    "key": "ctrl+k ctrl+w",
+    "command": "workbench.action.closeAllEditors",
+    "when": "!inQuickOpen"
+  },
+  {
+    "key": "ctrl+k ctrl+e",
+    "command": "workbench.action.files.openFileFolder",
+    "when": "!inQuickOpen"
+  },
+  {
+    "key": "ctrl+k ctrl+n",
+    "command": "workbench.action.newWindow",
+    "when": "!inQuickOpen"
+  },
+  {
+    "key": "ctrl+k ctrl+m",
+    "command": "workbench.action.toggleMaximizedPanel",
+    "when": "!inQuickOpen"
+  },
+  {
+    "key": "ctrl+k ctrl+b",
+    "command": "workbench.action.toggleSidebarVisibility",
+    "when": "!inQuickOpen"
+  },
+  {
+    "key": "ctrl+k ctrl+j",
+    "command": "workbench.action.togglePanel",
+    "when": "!inQuickOpen"
+  },
+  {
+    "key": "ctrl+k ctrl+k",
+    "command": "workbench.action.toggleZenMode",
+    "when": "!inQuickOpen"
+  }
+] 
