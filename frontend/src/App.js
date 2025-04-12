@@ -16,12 +16,14 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import AddIcon from '@mui/icons-material/Add';
 import ListIcon from '@mui/icons-material/List';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 
 // Components
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import ViewTransactions from './components/ViewTransactions';
 import Reports from './components/Reports';
+import AccountForm from './components/Accounts/AccountForm';
 
 const drawerWidth = 240;
 
@@ -88,6 +90,12 @@ function App() {
                   </ListItemIcon>
                   <ListItemText primary="Reports" />
                 </ListItem>
+                <ListItem button component={RouterLink} to="/accounts/new">
+                  <ListItemIcon>
+                    <AccountBalanceWalletIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Create Account" />
+                </ListItem>
               </List>
             </Box>
           </Drawer>
@@ -98,6 +106,7 @@ function App() {
               <Route path="/add" element={<AddTransaction />} />
               <Route path="/transactions" element={<ViewTransactions />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/accounts/new" element={<AccountForm />} />
             </Routes>
           </Box>
         </Box>
