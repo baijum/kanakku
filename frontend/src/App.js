@@ -17,13 +17,13 @@ import AddIcon from '@mui/icons-material/Add';
 import ListIcon from '@mui/icons-material/List';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-
-// Components
+import Button from '@mui/material/Button';
+import Reports from './components/Reports';
+import AccountForm from './components/Accounts/AccountForm';
+import Login from './components/Auth/Login';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import ViewTransactions from './components/ViewTransactions';
-import Reports from './components/Reports';
-import AccountForm from './components/Accounts/AccountForm';
 
 const drawerWidth = 240;
 
@@ -47,9 +47,12 @@ function App() {
         <Box sx={{ display: 'flex' }}>
           <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
             <Toolbar>
-              <Typography variant="h6" noWrap component="div">
+              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
                 Kanakku
               </Typography>
+              <Button color="inherit" component={RouterLink} to="/login">
+                Login
+              </Button>
             </Toolbar>
           </AppBar>
           <Drawer
@@ -107,6 +110,7 @@ function App() {
               <Route path="/transactions" element={<ViewTransactions />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/accounts/new" element={<AccountForm />} />
+              <Route path="/login" element={<Login />} />
             </Routes>
           </Box>
         </Box>
