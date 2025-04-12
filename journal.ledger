@@ -1,0 +1,47 @@
+; Sample Ledger file for Kanakku
+
+; Account declarations (optional but helpful)
+account Assets:Checking
+account Assets:Savings
+account Expenses:Groceries
+account Expenses:Rent
+account Expenses:Utilities
+account Income:Salary
+
+; Initial balance
+2025-01-01 * Opening Balance
+    Assets:Checking      $5000.00
+    Equity:Opening Balances
+
+; Sample transactions
+2025-01-15 * Salary
+    Assets:Checking      $3000.00
+    Income:Salary
+
+2025-01-16 * Groceries Store
+    Expenses:Groceries   $75.25
+    Assets:Checking
+
+2025-01-20 * Rent Payment
+    Expenses:Rent        $1200.00
+    Assets:Checking
+
+2025-01-25 * Utility Bill
+    Expenses:Utilities   $85.50
+    Assets:Checking
+
+2025-02-01 * Salary
+    Assets:Checking      $3000.00
+    Income:Salary
+
+2025-02-05 * Groceries Store
+    Expenses:Groceries   $62.30
+    Assets:Checking
+
+2025-02-10 * Rent Payment
+    Expenses:Rent        $1200.00
+    Assets:Checking
+
+2025-02-15 * Utility Bill
+    Expenses:Utilities   $92.75
+    Assets:Checking 
