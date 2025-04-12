@@ -8,8 +8,6 @@
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
     "@mui/x-date-pickers": "^6.19.4",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.6.7",
     "date-fns": "^2.30.0",
@@ -43,5 +41,10 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5000"
-} 
+  "proxy": "http://localhost:5000",
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "jest": "^27.5.1"
+  }
+}
