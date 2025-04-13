@@ -1,0 +1,185 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Box,
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Button,
+  IconButton,
+  Alert
+} from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+// Function to get the token (assuming it's stored in localStorage)
+const getToken = () => localStorage.getItem('token');
+
+function AccountsList() {
+  const [accounts, setAccounts] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const fetchAccounts = useCallback(() => {
+    const token = getToken();
+    if (!token) {
+      setError('Authentication required. Please log in.');
+      return;
+    }
+
+    const params = {
+      limit: rowsPerPage,
+      offset: page * rowsPerPage,
+    };
+
+    // Get account names first - this endpoint is known to work
+    axios.get('/api/accounts', { 
+      params, 
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(nameResponse => {
+        console.log('Names API Response:', nameResponse.data);
+        
+        if (nameResponse.data && nameResponse.data.accounts) {
+          // Convert names to account objects
+          const accountObjects = nameResponse.data.accounts.map((name, idx) => ({
+            id: idx + 1,  // Temporary ID for rendering
+            name: name,
+            type: '-',    // Placeholder
+            description: '' // Placeholder
+          }));
+          setAccounts(accountObjects);
+          setTotalCount(accountObjects.length);
+          
+          // After successfully getting names, try to get full details
+          axios.get('/api/accounts/details', { 
+            params, 
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+            .then(detailsResponse => {
+              console.log('Details API Response:', detailsResponse.data);
+              
+              if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
+                // If we get details successfully, update with the full account objects
+                setAccounts(detailsResponse.data);
+                setTotalCount(detailsResponse.data.length);
+              }
+            })
+            .catch(detailsError => {
+              console.error('Error fetching account details, but names were loaded:', detailsError);
+              // No need to set error as we already have account names
+            });
+        } else {
+          console.error('Unexpected response structure for accounts:', nameResponse.data);
+          setAccounts([]);
+          setTotalCount(0);
+          setError('Failed to load accounts. Unexpected data format.');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching account names:', error);
+        setAccounts([]);
+        setTotalCount(0);
+        setError('Failed to load accounts. Please try again later.');
+      });
+  }, [page, rowsPerPage]);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleEditAccount = (accountId) => {
+    navigate(`/accounts/edit/${accountId}`);
+  };
+
+  return (
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      <Typography variant="h4" gutterBottom>
+        Accounts
+      </Typography>
+      
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+      
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => navigate('/accounts/new')}
+        >
+          Create Account
+        </Button>
+      </Box>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {accounts.length > 0 ? (
+              accounts.map((account, index) => (
+                <TableRow key={account.id || index}>
+                  <TableCell>{account.name || ''}</TableCell>
+                  <TableCell>{account.type || '-'}</TableCell>
+                  <TableCell>{account.description || ''}</TableCell>
+                  <TableCell>
+                    <IconButton 
+                      color="primary" 
+                      onClick={() => handleEditAccount(account.id || index + 1)}
+                      aria-label="edit account"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  No accounts found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        <TablePagination
+          component="div"
+          count={totalCount}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25]}
+        />
+      </TableContainer>
+    </Box>
+  );
+}
+
+export default AccountsList; 

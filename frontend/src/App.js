@@ -23,6 +23,8 @@ import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import Reports from './components/Reports';
 import AccountForm from './components/Accounts/AccountForm';
+import AccountsList from './components/Accounts/AccountsList';
+import EditAccount from './components/Accounts/EditAccount';
 import Login from './components/Auth/Login';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
@@ -79,6 +81,12 @@ function App() {
               <AccountBalanceIcon />
             </ListItemIcon>
             <ListItemText primary="Reports" />
+          </ListItem>
+          <ListItem button component={RouterLink} to="/accounts" onClick={isMobile ? handleDrawerToggle : undefined}>
+            <ListItemIcon>
+              <AccountBalanceWalletIcon />
+            </ListItemIcon>
+            <ListItemText primary="Accounts" />
           </ListItem>
           <ListItem button component={RouterLink} to="/accounts/new" onClick={isMobile ? handleDrawerToggle : undefined}>
             <ListItemIcon>
@@ -162,7 +170,9 @@ function App() {
               <Route path="/add" element={<AddTransaction />} />
               <Route path="/transactions" element={<ViewTransactions />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/accounts" element={<AccountsList />} />
               <Route path="/accounts/new" element={<AccountForm />} />
+              <Route path="/accounts/edit/:id" element={<EditAccount />} />
               <Route path="/login" element={<Login />} />
             </Routes>
           </Box>

@@ -27,8 +27,8 @@ function Reports() {
 
   useEffect(() => {
     const token = getToken();
-    // Fetch list of accounts from the reports endpoint
-    axios.get('/api/reports/accounts', {
+    // Fetch list of accounts from the standard accounts endpoint
+    axios.get('/api/accounts', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(response => {

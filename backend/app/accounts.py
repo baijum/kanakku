@@ -20,6 +20,16 @@ def get_accounts():
     # Original return format with full account details - commented out
     # return jsonify([account.to_dict() for account in accounts_list])
 
+@accounts.route('/api/accounts/details', methods=['GET'])
+@jwt_required()
+def get_accounts_details():
+    current_app.logger.debug("Entered get_accounts_details route")
+    """Get all accounts with full details for the current user."""
+    accounts_list = Account.query.filter_by(user_id=current_user.id).all()
+    
+    # Return full account details
+    return jsonify([account.to_dict() for account in accounts_list])
+
 @accounts.route('/api/accounts', methods=['POST'])
 @jwt_required()
 def create_account():

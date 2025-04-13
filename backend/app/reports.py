@@ -107,24 +107,6 @@ def get_register():
         current_app.logger.error(f"Register report error: {e}")
         return jsonify({'error': str(e)}), 500
 
-@reports.route('/api/reports/accounts', methods=['GET'])
-@jwt_required()
-def get_accounts():
-    """Get list of all accounts"""
-    try:
-        # Simply query all account names for the current user
-        accounts_list = db.session.query(Account.name).filter(
-            Account.user_id == current_user.id
-        ).order_by(Account.name).all()
-        
-        # Extract account names from tuples
-        accounts_list = [account.name for account in accounts_list]
-        
-        return jsonify({'accounts': accounts_list})
-    except Exception as e:
-        current_app.logger.error(f"Accounts list error: {e}")
-        return jsonify({'error': str(e)}), 500
-        
 @reports.route('/api/reports/balance_report', methods=['GET'])
 @jwt_required()
 def get_balance_report():
