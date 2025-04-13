@@ -20,6 +20,9 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 
+// Function to get the token (assuming it's stored in localStorage)
+const getToken = () => localStorage.getItem('token');
+
 function AddTransaction() {
   const [date, setDate] = useState(new Date());
   const [status, setStatus] = useState('');
@@ -32,13 +35,23 @@ function AddTransaction() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const token = getToken(); // Get token
     // Fetch list of accounts
-    axios.get('/api/accounts')
+    axios.get('/api/accounts', { 
+      headers: { 'Authorization': `Bearer ${token}` } // Add header
+    })
       .then(response => {
-        setAccounts(response.data.accounts);
+        // Ensure response.data exists and response.data.accounts is an array
+        if (response.data && Array.isArray(response.data.accounts)) {
+          setAccounts(response.data.accounts);
+        } else {
+          console.error('Unexpected response structure for accounts:', response.data);
+          setAccounts([]);
+        }
       })
       .catch(error => {
         console.error('Error fetching accounts:', error);
+        setAccounts([]); // Set to empty array on error
       });
   }, []);
 
@@ -87,8 +100,11 @@ function AddTransaction() {
       })),
     };
 
+    const token = getToken(); // Get token
     // Send to backend
-    axios.post('/api/transactions', transactionData)
+    axios.post('/api/transactions', transactionData, {
+      headers: { 'Authorization': `Bearer ${token}` } // Add header
+    })
       .then(response => {
         // Reset form
         setDate(new Date());

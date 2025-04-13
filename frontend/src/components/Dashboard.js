@@ -13,6 +13,9 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
+// Function to get the token (assuming it's stored in localStorage)
+const getToken = () => localStorage.getItem('token');
+
 function Dashboard() {
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [balanceReport, setBalanceReport] = useState('');
@@ -24,24 +27,46 @@ function Dashboard() {
   }, []);
 
   const fetchRecentTransactions = () => {
-    axios.get('/api/transactions', { params: { limit: 5 } })
+    const token = getToken(); // Get token
+    axios.get('/api/transactions', { 
+      params: { limit: 5 },
+      headers: { 'Authorization': `Bearer ${token}` } // Add header
+    })
       .then(response => {
-        setRecentTransactions(response.data.transactions);
+        // Add check for transactions
+        if (response.data && Array.isArray(response.data.transactions)) {
+          setRecentTransactions(response.data.transactions);
+        } else {
+          console.error('Unexpected response structure for recent transactions:', response.data);
+          setRecentTransactions([]);
+        }
       })
       .catch(error => {
         console.error('Error fetching recent transactions:', error);
         setError('Failed to load recent transactions');
+        setRecentTransactions([]); // Set to empty array on error
       });
   };
 
   const fetchBalanceReport = () => {
-    axios.get('/api/reports/balance', { params: { depth: 1 } })
+    const token = getToken(); // Get token
+    axios.get('/api/reports/balance', { 
+      params: { depth: 1 },
+      headers: { 'Authorization': `Bearer ${token}` } // Add header
+    })
       .then(response => {
-        setBalanceReport(response.data.balance);
+        // Add check for balance report string
+        if (response.data && typeof response.data.balance === 'string') {
+          setBalanceReport(response.data.balance);
+        } else {
+          console.error('Unexpected response structure for balance report:', response.data);
+          setBalanceReport('');
+        }
       })
       .catch(error => {
         console.error('Error fetching balance report:', error);
         setError('Failed to load balance report');
+        setBalanceReport(''); // Set to empty string on error
       });
   };
 

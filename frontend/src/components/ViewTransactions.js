@@ -15,6 +15,9 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
+// Function to get the token (assuming it's stored in localStorage)
+const getToken = () => localStorage.getItem('token');
+
 function ViewTransactions() {
   const [transactions, setTransactions] = useState([]);
   const [page, setPage] = useState(0);
@@ -24,6 +27,7 @@ function ViewTransactions() {
   const [endDate, setEndDate] = useState('');
 
   const fetchTransactions = useCallback(() => {
+    const token = getToken(); // Get token
     const params = {
       limit: rowsPerPage,
       offset: page * rowsPerPage,
@@ -32,14 +36,26 @@ function ViewTransactions() {
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
 
-    axios.get('/api/transactions', { params })
+    axios.get('/api/transactions', { 
+      params, 
+      headers: { 'Authorization': `Bearer ${token}` } // Add header
+    })
       .then(response => {
-        setTransactions(response.data.transactions);
+        // Ensure response.data exists and response.data.transactions is an array
+        if (response.data && Array.isArray(response.data.transactions)) {
+          setTransactions(response.data.transactions);
+        } else {
+          // Log unexpected response and set transactions to empty array
+          console.error('Unexpected response structure for transactions:', response.data);
+          setTransactions([]);
+        }
         // Note: In a real implementation, you'd get the total count from the API
         setTotalCount(100); // Placeholder
       })
       .catch(error => {
         console.error('Error fetching transactions:', error);
+        // Set transactions to empty array on error to prevent crash
+        setTransactions([]);
       });
   }, [page, rowsPerPage, startDate, endDate]);
 
