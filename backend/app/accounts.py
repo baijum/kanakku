@@ -11,8 +11,14 @@ def get_accounts():
     """Get all accounts for the current user."""
     accounts_list = Account.query.filter_by(user_id=current_user.id).all()
     
-    # Use to_dict() for consistent serialization
-    return jsonify([account.to_dict() for account in accounts_list])
+    # For Add Transaction dropdown, we just need the account names
+    account_names = [account.name for account in accounts_list]
+    
+    # Return in format expected by AddTransaction.js
+    return jsonify({'accounts': account_names})
+    
+    # Original return format with full account details - commented out
+    # return jsonify([account.to_dict() for account in accounts_list])
 
 @accounts.route('/api/accounts', methods=['POST'])
 @jwt_required()
