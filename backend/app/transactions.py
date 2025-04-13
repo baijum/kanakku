@@ -381,27 +381,42 @@ def update_transaction_with_postings(transaction_id):
             transaction_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'error': f"Invalid date format. Use YYYY-MM-DD."}), 400
-            
-        # Find the original transaction
-        original_transaction = Transaction.query.filter_by(id=transaction_id, user_id=current_user.id).first()
         
-        if not original_transaction:
-            return jsonify({'error': 'Transaction not found'}), 404
-            
-        # Store original account info to reverse its effect
-        original_account_id = original_transaction.account_id
-        original_amount = original_transaction.amount
+        # Get all original transaction IDs to be replaced
+        original_transaction_ids = data.get('original_transaction_ids', [transaction_id])
+        if not isinstance(original_transaction_ids, list):
+            original_transaction_ids = [original_transaction_ids]
         
-        # Start by reversing the effect of the original transaction
-        original_account = Account.query.get(original_account_id)
-        if original_account:
-            if original_account.type.lower() in ['liability', 'equity', 'income']:
-                original_account.balance += original_amount
+        current_app.logger.debug(f"Original transaction IDs to replace: {original_transaction_ids}")
+            
+        # Find all original transactions
+        original_transactions = []
+        for orig_id in original_transaction_ids:
+            tx = Transaction.query.filter_by(id=orig_id, user_id=current_user.id).first()
+            if tx:
+                original_transactions.append(tx)
             else:
-                original_account.balance -= original_amount
-                
-        # Delete the original transaction
-        db.session.delete(original_transaction)
+                current_app.logger.warning(f"Original transaction ID {orig_id} not found")
+        
+        if not original_transactions:
+            return jsonify({'error': 'None of the original transactions found'}), 404
+            
+        # Start by reversing the effect of original transactions on their accounts
+        for original_transaction in original_transactions:
+            # Store original account info to reverse its effect
+            original_account_id = original_transaction.account_id
+            original_amount = original_transaction.amount
+            
+            # Reverse the effect on the original account
+            original_account = Account.query.get(original_account_id)
+            if original_account:
+                if original_account.type.lower() in ['liability', 'equity', 'income']:
+                    original_account.balance += original_amount
+                else:
+                    original_account.balance -= original_amount
+                    
+            # Delete the original transaction
+            db.session.delete(original_transaction)
         
         # Process each new posting
         new_transactions = []
@@ -473,4 +488,65 @@ def update_transaction_with_postings(transaction_id):
     except Exception as e:
         # Catch-all for any unexpected errors during processing
         current_app.logger.error(f"Unhandled error in update_transaction_with_postings: {str(e)} - Traceback: {traceback.format_exc()}")
-        return jsonify({'error': 'An unexpected server error occurred'}), 500 
+        return jsonify({'error': 'An unexpected server error occurred'}), 500
+
+@transactions.route('/api/transactions/<int:transaction_id>/related', methods=['GET'])
+@jwt_required()
+def get_related_transactions(transaction_id):
+    """Get a transaction and all its related transactions (by date and payee)"""
+    try:
+        # Log request
+        current_app.logger.debug(f"GET /api/transactions/{transaction_id}/related")
+        
+        # Get the transaction to find its date and payee
+        transaction = Transaction.query.filter_by(id=transaction_id, user_id=current_user.id).first()
+        
+        if not transaction:
+            current_app.logger.warning(f"Transaction ID {transaction_id} not found for user ID {current_user.id}")
+            return jsonify({'error': 'Transaction not found'}), 404
+            
+        # Get all transactions with the same date and payee
+        related_transactions = Transaction.query.filter_by(
+            user_id=current_user.id,
+            date=transaction.date,
+            payee=transaction.payee
+        ).all()
+        
+        if not related_transactions:
+            current_app.logger.warning(f"No related transactions found for transaction ID {transaction_id}")
+            # If no related transactions found, just return the original transaction
+            related_transactions = [transaction]
+        
+        # Format the transactions with account information
+        formatted_transactions = []
+        for tx in related_transactions:
+            # Get account name
+            account = Account.query.get(tx.account_id)
+            account_name = account.name if account else "Unknown Account"
+            
+            formatted_transaction = {
+                'id': tx.id,
+                'date': tx.date.isoformat(),
+                'description': tx.description,
+                'payee': tx.payee,
+                'account_id': tx.account_id,
+                'account_name': account_name,
+                'account_type': account.type if account else "",
+                'amount': tx.amount,
+                'currency': tx.currency
+            }
+            formatted_transactions.append(formatted_transaction)
+        
+        # Prepare the response
+        response = {
+            'transactions': formatted_transactions,
+            'date': transaction.date.isoformat(),
+            'payee': transaction.payee,
+            'primary_transaction_id': transaction_id
+        }
+        
+        current_app.logger.debug(f"Returning related transactions: {response}")
+        return jsonify(response)
+    except Exception as e:
+        current_app.logger.error(f"Error in get_related_transactions: {str(e)} - Traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'Failed to retrieve related transactions'}), 500 

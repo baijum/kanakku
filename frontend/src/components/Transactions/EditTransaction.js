@@ -73,11 +73,12 @@ function EditTransaction() {
     const token = getToken();
     
     try {
-      const response = await axios.get(`/api/transactions/${id}`, {
+      // Use the related transactions endpoint to get all postings
+      const response = await axios.get(`/api/transactions/${id}/related`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      console.log('Transaction data received:', response.data);
+      console.log('Related transactions data received:', response.data);
       
       // Store original transaction data
       setOriginalTransaction(response.data);
@@ -92,52 +93,77 @@ function EditTransaction() {
 
       // Set form values from transaction data
       if (response.data) {
+        const transactionData = response.data;
         console.log('Setting transaction data:');
-        console.log('Date:', response.data.date);
-        console.log('Payee:', response.data.payee);
-        console.log('Account:', response.data.account_name);
+        console.log('Date:', transactionData.date);
+        console.log('Payee:', transactionData.payee);
         
-        setDate(new Date(response.data.date));
-        setPayee(response.data.payee || '');
+        setDate(new Date(transactionData.date));
+        setPayee(transactionData.payee || '');
         
-        // Initialize with current transaction as first posting
-        const initialPosting = {
-          account: response.data.account_name || '',
-          account_id: response.data.account_id,
-          amount: response.data.amount.toString(),
-          currency: response.data.currency || 'USD',
-        };
-        
-        // Try to find a suitable offsetting account for the balancing posting
-        // Prefer an account of a different type than the first account
-        let balancingAccountName = '';
-        
-        // Find the type of the first account
-        const firstAccountType = accountsList.find(a => a.name === response.data.account_name)?.type || '';
-        
-        // Find accounts of different types
-        const otherTypeAccounts = accountsList.filter(a => a.type !== firstAccountType);
-        
-        if (otherTypeAccounts.length > 0) {
-          // Choose an account of a different type
-          balancingAccountName = otherTypeAccounts[0].name;
-        } else if (accountsList.length > 0) {
-          // If no different type accounts, just pick the first account that's not the same as initialPosting
-          const differentAccount = accountsList.find(a => a.name !== response.data.account_name);
-          balancingAccountName = differentAccount ? differentAccount.name : accountsList[0].name;
+        // Initialize postings from all related transactions
+        if (transactionData.transactions && transactionData.transactions.length > 0) {
+          const initialPostings = transactionData.transactions.map(tx => ({
+            id: tx.id,
+            account: tx.account_name || '',
+            account_id: tx.account_id,
+            amount: tx.amount.toString(),
+            currency: tx.currency || 'USD',
+          }));
+          
+          console.log('Initial postings from related transactions:', initialPostings);
+          
+          // Check if we need to add a balancing posting
+          const totalAmount = initialPostings.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+          
+          // If the total doesn't balance (within rounding error), add a balancing posting
+          if (Math.abs(totalAmount) > 0.01) {
+            console.log('Total amount does not balance, adding balancing posting. Current total:', totalAmount);
+            
+            // Try to find a suitable offsetting account
+            let balancingAccountName = '';
+            
+            // Try to find an account that's not already used in the postings
+            const usedAccountNames = initialPostings.map(p => p.account);
+            const unusedAccount = accountsList.find(a => !usedAccountNames.includes(a.name));
+            
+            if (unusedAccount) {
+              balancingAccountName = unusedAccount.name;
+            } else if (accountsList.length > 0) {
+              // Just use the first account if no unused account is found
+              balancingAccountName = accountsList[0].name;
+            }
+            
+            const balancingPosting = {
+              account: balancingAccountName,
+              amount: (-totalAmount).toFixed(2), // Balance out the total
+              currency: initialPostings[0]?.currency || 'USD',
+            };
+            
+            console.log('Adding balancing posting:', balancingPosting);
+            initialPostings.push(balancingPosting);
+          }
+          
+          setPostings(initialPostings);
+        } else {
+          // Fallback: if no transactions are provided, create default postings
+          console.warn('No transactions provided in response, creating default postings');
+          
+          // Find two different accounts if possible for the default postings
+          let account1 = accountsList.length > 0 ? accountsList[0].name : '';
+          let account2 = '';
+          
+          if (accountsList.length > 1) {
+            account2 = accountsList[1].name;
+          } else if (accountsList.length > 0) {
+            account2 = accountsList[0].name;
+          }
+          
+          setPostings([
+            { account: account1, amount: '100', currency: 'USD' },
+            { account: account2, amount: '-100', currency: 'USD' }
+          ]);
         }
-        
-        // We need to add a second posting for balancing, initialized with a selected account if possible
-        const balancingPosting = {
-          account: balancingAccountName,
-          amount: (-response.data.amount).toString(), // Opposite amount for balancing
-          currency: response.data.currency || 'USD',
-        };
-        
-        console.log('Initial posting:', initialPosting);
-        console.log('Balancing posting:', balancingPosting);
-        
-        setPostings([initialPosting, balancingPosting]);
       }
     } catch (err) {
       console.error('Error fetching transaction:', err);
@@ -254,6 +280,12 @@ function EditTransaction() {
       ? date.toISOString().split('T')[0]
       : (typeof date === 'string' ? date : '');
       
+    // Get all existing transaction IDs that need to be replaced
+    const existingTransactionIds = originalTransaction && 
+      originalTransaction.transactions ? 
+      originalTransaction.transactions.map(tx => tx.id) : 
+      [id]; // Fallback to just the primary ID
+      
     // Prepare transaction data in the format expected by the API
     const transactionData = {
       date: formattedDate,
@@ -263,9 +295,13 @@ function EditTransaction() {
         account: posting.account,
         amount: parseFloat(posting.amount),
         currency: posting.currency || 'USD',
+        id: posting.id, // Include original ID if available
       })),
-      original_transaction_id: id
+      original_transaction_ids: existingTransactionIds,
+      primary_transaction_id: id
     };
+    
+    console.log('Submitting transaction data:', transactionData);
 
     try {
       // We'll use the update endpoint that handles multiple postings
