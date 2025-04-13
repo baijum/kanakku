@@ -80,6 +80,16 @@ def create_transaction():
                 currency=posting.get('currency', 'USD')
             )
             
+            # Update the account balance based on account type
+            # For Asset and Expense accounts, positive amounts increase the balance
+            # For Liability, Equity, and Income accounts, positive amounts decrease the balance
+            if account.type.lower() in ['liability', 'equity', 'income']:
+                # Invert the sign for these account types
+                account.balance -= amount_float
+            else:
+                # Default behavior for Asset and Expense accounts
+                account.balance += amount_float
+            
             db.session.add(new_transaction)
             transaction_responses.append(new_transaction)
         
