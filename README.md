@@ -25,6 +25,35 @@ kanakku/
 └── journal.ledger     # Ledger file (created on first run)
 ```
 
+## Architecture
+
+*   **Frontend:** React application located in the `frontend/` directory (`frontend/src`). It provides the user interface and interacts with the backend via API calls.
+*   **Backend:** Flask application located in the `backend/` directory (`backend/app`). It serves a RESTful API, handles business logic, interacts with the `ledger-cli` tool, and manages authentication.
+*   **API:** Defined using Flask Blueprints. The main API endpoints are consolidated under `/api/`. Authentication is handled via JWT.
+*   **Data Storage:**
+    *   **Ledger Data:** Stored in a plain text file (e.g., `journal.ledger`), managed via the `ledger-cli` tool (`backend/app/ledger.py`).
+    *   **Application Data:** An SQLite database (`backend/app/app.db`) for users, sessions, etc. (managed via SQLAlchemy in `backend/app/models.py`).
+
+## API Endpoints
+
+The main API endpoints are served under the `/api/` prefix by the Flask backend. Authentication via JWT is required for most endpoints.
+
+*   **Health Check**
+    *   `GET /api/health` (No Auth Required) - Basic health check.
+*   **Transactions**
+    *   `GET /api/transactions` - Get all transactions for the current user.
+    *   `POST /api/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "payee": "...", "postings": [...] }`)
+*   **Accounts**
+    *   `GET /api/accounts` - Get all account names for the current user.
+    *   `POST /api/accounts` - Add a new account. (Body: `{ "name": "...", "type": "..." }`)
+*   **Reports**
+    *   `GET /api/reports/balance` - Get balance report.
+    *   `GET /api/reports/register` - Get register report.
+*   **Authentication**
+    *   Endpoints for user registration, login, logout, and token management are likely provided by the `auth` blueprint (see `backend/app/auth.py`).
+
+*(Note: Some API endpoints might currently return mocked data as per `backend/app/api.py`)*
+
 ## Setup
 
 ### Backend Setup
