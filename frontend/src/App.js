@@ -29,6 +29,7 @@ import Login from './components/Auth/Login';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import ViewTransactions from './components/ViewTransactions';
+import EditTransaction from './components/Transactions/EditTransaction';
 
 const drawerWidth = 240;
 
@@ -163,6 +164,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/add" element={<AddTransaction />} />
               <Route path="/transactions" element={<ViewTransactions />} />
+              <Route path="/transactions/edit/:id" element={<EditTransaction />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/accounts" element={<AccountsList />} />
               <Route path="/accounts/new" element={<AccountForm />} />

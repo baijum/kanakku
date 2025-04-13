@@ -12,7 +12,11 @@ import {
   TablePagination,
   TextField,
   Grid,
+  Button,
+  IconButton,
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // Function to get the token (assuming it's stored in localStorage)
@@ -25,6 +29,7 @@ function ViewTransactions() {
   const [totalCount, setTotalCount] = useState(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const navigate = useNavigate();
 
   const fetchTransactions = useCallback(() => {
     const token = getToken(); // Get token
@@ -43,6 +48,7 @@ function ViewTransactions() {
       .then(response => {
         // Ensure response.data exists and response.data.transactions is an array
         if (response.data && Array.isArray(response.data.transactions)) {
+          console.log('Transaction data:', response.data.transactions);
           setTransactions(response.data.transactions);
         } else {
           // Log unexpected response and set transactions to empty array
@@ -75,6 +81,15 @@ function ViewTransactions() {
   const handleDateChange = (setter) => (event) => {
     setter(event.target.value);
     setPage(0);
+  };
+
+  const handleEditTransaction = (transactionId) => {
+    // Make sure we have a valid ID before navigating
+    if (transactionId) {
+      navigate(`/transactions/edit/${transactionId}`);
+    } else {
+      console.error('Attempted to edit transaction with undefined ID');
+    }
   };
 
   return (
@@ -114,23 +129,44 @@ function ViewTransactions() {
               <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Status</TableCell>
               <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Payee</TableCell>
               <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Postings</TableCell>
+              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {transactions.map((transaction, index) => (
-              <TableRow key={index}>
-                <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.date}</TableCell>
-                <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.status}</TableCell>
-                <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.payee}</TableCell>
-                <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
-                  {transaction.postings.map((posting, pIndex) => (
-                    <div key={pIndex}>
-                      {posting.account}: {posting.currency} {posting.amount}
-                    </div>
-                  ))}
-                </TableCell>
-              </TableRow>
-            ))}
+            {transactions.map((transaction, index) => {
+              // Try to get a valid ID for editing, first from transaction, then from first posting
+              const editId = transaction.id || 
+                (transaction.postings && transaction.postings.length > 0 ? 
+                  transaction.postings[0].id : undefined);
+              
+              return (
+                <TableRow key={index}>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.date}</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.status}</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.payee}</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
+                    {transaction.postings.map((posting, pIndex) => (
+                      <div key={pIndex}>
+                        {posting.account}: {posting.currency} {posting.amount}
+                      </div>
+                    ))}
+                  </TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
+                    <IconButton 
+                      color="primary" 
+                      onClick={() => {
+                        console.log('Editing transaction with ID:', editId);
+                        handleEditTransaction(editId);
+                      }}
+                      aria-label="edit"
+                      disabled={!editId}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
         <TablePagination
