@@ -71,7 +71,7 @@ function Dashboard() {
   };
 
   return (
-    <Box>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Typography variant="h4" gutterBottom>
         Dashboard
       </Typography>

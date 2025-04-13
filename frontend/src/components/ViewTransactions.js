@@ -78,7 +78,7 @@ function ViewTransactions() {
   };
 
   return (
-    <Box>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Typography variant="h4" gutterBottom>
         View Transactions
       </Typography>
@@ -110,19 +110,19 @@ function ViewTransactions() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Payee</TableCell>
-              <TableCell>Postings</TableCell>
+              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Date</TableCell>
+              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Status</TableCell>
+              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Payee</TableCell>
+              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Postings</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {transactions.map((transaction, index) => (
               <TableRow key={index}>
-                <TableCell>{transaction.date}</TableCell>
-                <TableCell>{transaction.status}</TableCell>
-                <TableCell>{transaction.payee}</TableCell>
-                <TableCell>
+                <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.date}</TableCell>
+                <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.status}</TableCell>
+                <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.payee}</TableCell>
+                <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
                   {transaction.postings.map((posting, pIndex) => (
                     <div key={pIndex}>
                       {posting.account}: {posting.currency} {posting.amount}
