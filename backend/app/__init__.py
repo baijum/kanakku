@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, current_app
+from flask import Flask, jsonify, current_app, request
 from flask_sqlalchemy import SQLAlchemy
 # from flask_login import LoginManager # Remove if not used for API
 from flask_cors import CORS
@@ -15,8 +15,23 @@ jwt = JWTManager()
 def create_app(config_name='default'):
     app = Flask(__name__)
     app.logger.setLevel(logging.DEBUG)
-    CORS(app)
     
+    # Configure CORS to allow any origin
+    CORS(app, 
+         origins=["*", "http://localhost:3000"], 
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
+         supports_credentials=True)
+    
+    # Add a CORS after_request handler to ensure all responses have CORS headers
+    @app.after_request
+    def after_request(response):
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization,Accept,X-Requested-With")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response
+        
     app.config.from_object(config[config_name])
     
     # Initialize extensions that don't depend on app context first
@@ -108,6 +123,15 @@ def create_app(config_name='default'):
         @app.errorhandler(405)
         def method_not_allowed_error(error):
             return jsonify({'error': 'Method not allowed'}), 405
+            
+        @app.errorhandler(403)
+        def forbidden_error(error):
+            app.logger.error(f"403 Forbidden Error: {error}")
+            app.logger.error(f"Request path: {request.path}")
+            app.logger.error(f"Request method: {request.method}")
+            app.logger.error(f"Request headers: {dict(request.headers)}")
+            app.logger.error(f"Request data: {request.get_data(as_text=True)}")
+            return jsonify({'error': 'Forbidden - You do not have permission to access this resource'}), 403
             
         @app.errorhandler(422)
         def unprocessable_entity_error(error):

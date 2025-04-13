@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user
 from datetime import datetime, timezone, timedelta
@@ -38,33 +38,69 @@ def register():
         'token': token
     }), 201
 
+# Add OPTIONS handler for CORS preflight requests
+@auth.route('/api/auth/login', methods=['OPTIONS'])
+def login_options():
+    response = Response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+    return response
+
 @auth.route('/api/auth/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    logging.info(f"Login attempt for username: {data.get('username')}")
-    user = User.query.filter_by(username=data['username']).first()
+    """Simple login endpoint that accepts username/password and returns a token"""
     
-    if user and user.check_password(data['password']):
-        logging.info(f"User {user.username} authenticated successfully.")
-        # Generate token using Flask-JWT-Extended
+    # Log the request for debugging
+    current_app.logger.debug(f"LOGIN ENDPOINT CALLED")
+    current_app.logger.debug(f"Request method: {request.method}")
+    current_app.logger.debug(f"Request headers: {dict(request.headers)}")
+    current_app.logger.debug(f"Request data: {request.get_data(as_text=True)}")
+    
+    # Get the JSON data or form data
+    data = None
+    try:
+        data = request.get_json(silent=True)
+        if data is None:
+            # Try to get form data instead
+            data = request.form.to_dict() or {}
+            current_app.logger.debug(f"Got form data: {data}")
+        else:
+            current_app.logger.debug(f"Got JSON data: {data}")
+    except Exception as e:
+        current_app.logger.error(f"Error parsing request data: {e}")
+        data = {}
+
+    # Handle case with no data
+    if not data:
+        current_app.logger.error("No data provided in request")
+        return jsonify({"error": "No data provided"}), 400
+
+    username = data.get('username')
+    password = data.get('password')
+    
+    # Basic validation
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
+    
+    # Find the user
+    user = User.query.filter_by(username=username).first()
+    
+    # Check password
+    if user and user.check_password(password):
+        # Generate token
         try:
-            # Convert user.id to string for the sub claim
             token = create_access_token(identity=user.id, additional_claims={"sub": str(user.id)})
-            # Debug: Log token details
-            token_data = decode_token(token)
-            logging.info(f"Generated token with claims: {token_data}")
-            logging.info(f"Token generated successfully for user {user.id}")
-            
             return jsonify({
-                'message': 'Login successful',
-                'token': token
+                "message": "Login successful",
+                "token": token
             }), 200
         except Exception as e:
-            logging.error(f"Error generating token for user {user.id}: {e}", exc_info=True)
-            return jsonify({'error': 'Token generation failed'}), 500
+            current_app.logger.error(f"Token generation error: {str(e)}")
+            return jsonify({"error": "Error generating token"}), 500
     
-    logging.warning(f"Invalid login attempt for username: {data.get('username')}")
-    return jsonify({'error': 'Invalid username or password'}), 401
+    # Invalid credentials
+    return jsonify({"error": "Invalid username or password"}), 401
 
 @auth.route('/api/auth/logout', methods=['POST'])
 @flask_jwt_required()

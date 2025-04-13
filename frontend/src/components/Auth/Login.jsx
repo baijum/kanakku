@@ -22,26 +22,37 @@ function Login() {
     }
 
     try {
-      // TODO: Replace with your actual API endpoint
-      const response = await axios.post('/api/auth/login', {
-        username,
-        password,
+      // Use relative URL path to leverage the proxy
+      const response = await axios({
+        method: 'post',
+        url: '/api/auth/login',
+        data: {
+          username,
+          password,
+        },
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+
+      console.log('Login response:', response);
 
       // Assuming the backend returns a token upon successful login
       if (response.data && response.data.token) {
         // Log the token format for debugging
         console.log('Token received:', response.data.token);
-        localStorage.setItem('token', response.data.token); // Store the token (example)
-        // TODO: Implement proper state management for authentication status (e.g., Context API, Redux)
+        localStorage.setItem('token', response.data.token); // Store the token
         console.log('Login successful, token received');
         navigate('/'); // Redirect to dashboard or desired page after login
       } else {
+        console.error('Invalid response format:', response.data);
         setError('Login failed. Invalid response from server.');
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      console.error("Error response:", err.response);
+      console.error("Error request:", err.request);
+      setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
