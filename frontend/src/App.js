@@ -88,12 +88,6 @@ function App() {
             </ListItemIcon>
             <ListItemText primary="Accounts" />
           </ListItem>
-          <ListItem button component={RouterLink} to="/accounts/new" onClick={isMobile ? handleDrawerToggle : undefined}>
-            <ListItemIcon>
-              <AccountBalanceWalletIcon />
-            </ListItemIcon>
-            <ListItemText primary="Create Account" />
-          </ListItem>
         </List>
       </Box>
     </>
