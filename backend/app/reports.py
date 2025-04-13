@@ -50,7 +50,8 @@ def get_accounts():
         output = run_ledger_command(['accounts'])
         # Simple parsing assuming one account per line
         accounts_list = [line.strip() for line in output.splitlines() if line.strip()]
-        return jsonify(accounts_list)
+        # Return in the expected format
+        return jsonify({'accounts': accounts_list})
     except Exception as e:
         current_app.logger.error(f"Ledger accounts error: {e}")
         return jsonify({'error': str(e)}), 500

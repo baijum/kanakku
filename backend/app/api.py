@@ -52,14 +52,9 @@ def get_accounts():
     """Get all accounts for the current user."""
     current_user = g.current_user
     try:
-        accounts = Account.query.filter_by(user_id=current_user.id).all()
-        return jsonify([{
-            'id': account.id,
-            'name': account.name,
-            'type': account.type,
-            'currency': account.currency,
-            'balance': account.balance
-        } for account in accounts])
+        accounts = Account.query.filter_by(user_id=current_user.id).order_by(Account.name).all()
+        account_names = [account.name for account in accounts]
+        return jsonify({'accounts': account_names})
     except Exception as e:
         current_app.logger.error(f"Error getting accounts: {e}")
         return jsonify({"error": str(e)}), 500

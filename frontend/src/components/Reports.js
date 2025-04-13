@@ -14,6 +14,9 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
+// Function to get the token (assuming it's stored in localStorage)
+const getToken = () => localStorage.getItem('token');
+
 function Reports() {
   const [tabValue, setTabValue] = useState(0);
   const [accounts, setAccounts] = useState([]);
@@ -23,22 +26,38 @@ function Reports() {
   const [registerReport, setRegisterReport] = useState('');
 
   useEffect(() => {
-    // Fetch list of accounts
-    axios.get('/api/accounts')
+    const token = getToken();
+    // Fetch list of accounts from the reports endpoint
+    axios.get('/api/reports/accounts', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(response => {
-        setAccounts(response.data.accounts);
+        // Ensure response.data exists and response.data.accounts is an array
+        if (response.data && Array.isArray(response.data.accounts)) {
+          setAccounts(response.data.accounts);
+        } else {
+          // Log unexpected response and set accounts to empty array
+          console.error('Unexpected response structure for accounts:', response.data);
+          setAccounts([]); 
+        }
       })
       .catch(error => {
         console.error('Error fetching accounts:', error);
+        // Set accounts to empty array on error to prevent crash
+        setAccounts([]); 
       });
   }, []);
 
   const fetchBalanceReport = useCallback(() => {
+    const token = getToken();
     const params = {};
     if (selectedAccount) params.account = selectedAccount;
     if (depth) params.depth = depth;
 
-    axios.get('/api/reports/balance', { params })
+    axios.get('/api/reports/balance', { 
+      params,
+      headers: { 'Authorization': `Bearer ${token}` } 
+    })
       .then(response => {
         setBalanceReport(response.data.balance);
       })
@@ -48,9 +67,13 @@ function Reports() {
   }, [selectedAccount, depth]);
 
   const fetchRegisterReport = useCallback(() => {
+    const token = getToken();
     if (!selectedAccount) return;
 
-    axios.get('/api/reports/register', { params: { account: selectedAccount } })
+    axios.get('/api/reports/register', { 
+      params: { account: selectedAccount },
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(response => {
         setRegisterReport(response.data.register);
       })
