@@ -30,6 +30,8 @@ function Login() {
 
       // Assuming the backend returns a token upon successful login
       if (response.data && response.data.token) {
+        // Log the token format for debugging
+        console.log('Token received:', response.data.token);
         localStorage.setItem('token', response.data.token); // Store the token (example)
         // TODO: Implement proper state management for authentication status (e.g., Context API, Redux)
         console.log('Login successful, token received');

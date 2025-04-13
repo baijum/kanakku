@@ -2,10 +2,11 @@ from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user
 from datetime import datetime, timezone, timedelta
-from flask_jwt_extended import create_access_token, jwt_required as flask_jwt_required, current_user
+from flask_jwt_extended import create_access_token, jwt_required as flask_jwt_required, current_user, decode_token
 from functools import wraps
 from app.models import User, db
 from app.extensions import login_manager
+import logging
 
 auth = Blueprint('auth', __name__)
 
@@ -29,8 +30,8 @@ def register():
     db.session.add(user)
     db.session.commit()
     
-    # Generate token using Flask-JWT-Extended
-    token = create_access_token(identity=user.id)
+    # Generate token using Flask-JWT-Extended - convert id to string for sub claim
+    token = create_access_token(identity=user.id, additional_claims={"sub": str(user.id)})
     
     return jsonify({
         'message': 'User created successfully',
@@ -40,16 +41,29 @@ def register():
 @auth.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.get_json()
+    logging.info(f"Login attempt for username: {data.get('username')}")
     user = User.query.filter_by(username=data['username']).first()
     
     if user and user.check_password(data['password']):
+        logging.info(f"User {user.username} authenticated successfully.")
         # Generate token using Flask-JWT-Extended
-        token = create_access_token(identity=user.id)
-        return jsonify({
-            'message': 'Login successful',
-            'token': token
-        }), 200
+        try:
+            # Convert user.id to string for the sub claim
+            token = create_access_token(identity=user.id, additional_claims={"sub": str(user.id)})
+            # Debug: Log token details
+            token_data = decode_token(token)
+            logging.info(f"Generated token with claims: {token_data}")
+            logging.info(f"Token generated successfully for user {user.id}")
+            
+            return jsonify({
+                'message': 'Login successful',
+                'token': token
+            }), 200
+        except Exception as e:
+            logging.error(f"Error generating token for user {user.id}: {e}", exc_info=True)
+            return jsonify({'error': 'Token generation failed'}), 500
     
+    logging.warning(f"Invalid login attempt for username: {data.get('username')}")
     return jsonify({'error': 'Invalid username or password'}), 401
 
 @auth.route('/api/auth/logout', methods=['POST'])

@@ -28,6 +28,8 @@ function AccountForm() {
     try {
       // TODO: Replace with your actual API endpoint and authentication handling
       const token = localStorage.getItem('token'); // Example: Get token from storage
+      console.log('Using token for account creation:', token);
+      
       const response = await axios.post('/api/accounts', newAccount, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -46,7 +48,12 @@ function AccountForm() {
       }
     } catch (err) {
       console.error("Account creation error:", err);
-      setError(err.response?.data?.message || 'An error occurred during account creation.');
+      // Log more details about the error
+      console.error("Error response:", err.response?.data);
+      console.error("Error status:", err.response?.status);
+      console.error("Error headers:", err.response?.headers);
+      
+      setError(err.response?.data?.message || err.response?.data?.msg || err.response?.data?.error || 'An error occurred during account creation.');
     }
   };
 

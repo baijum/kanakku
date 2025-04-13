@@ -10,6 +10,7 @@ transactions = Blueprint('transactions', __name__)
 @transactions.route('/api/transactions', methods=['POST'])
 @jwt_required()
 def create_transaction():
+    current_app.logger.debug("Entered create_transaction route")
     try:
         # --- Start of main try block ---
         # Log the request for debugging
@@ -92,6 +93,7 @@ def create_transaction():
 @transactions.route('/api/transactions', methods=['GET'])
 @jwt_required()
 def get_transactions():
+    current_app.logger.debug("Entered get_transactions route")
     try:
         # Log request
         current_app.logger.debug(f"GET /api/transactions request with params: {request.args}")
