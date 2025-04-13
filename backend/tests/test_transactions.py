@@ -75,7 +75,7 @@ def test_add_transaction_missing_fields(authenticated_client):
     assert response.status_code == 400 # Expect Bad Request
     data = response.get_json()
     assert 'error' in data
-    assert 'Missing required fields' in data['error']
+    assert 'Missing required field:' in data['error']
 
 def test_add_transaction_unbalanced(authenticated_client, account, mock_ledger_command):
     """Test adding a transaction that would result in an unbalanced ledger (if check is implemented)."""

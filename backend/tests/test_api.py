@@ -71,26 +71,27 @@ def test_add_account(authenticated_client):
         'currency': 'USD'
     })
     assert response.status_code == 201
-    data = response.json
-    assert 'message' in data
-    assert data['message'] == 'Account created successfully'
+    assert 'Test Account' in response.json['account']['name']
 
-def test_get_balance(authenticated_client, mock_ledger_command):
-    """Test getting balance report."""
-    # Mock the ledger_command to return text not bytes
-    mock_ledger_command.return_value = "Assets:Checking   $500.00"
-    
-    response = authenticated_client.get('/api/reports/balance')
-    assert response.status_code == 200
-    data = response.json
-    assert 'balance' in data
-
-def test_get_register(authenticated_client, mock_ledger_command):
-    """Test getting register report."""
-    # Mock the ledger_command to return text not bytes
-    mock_ledger_command.return_value = "2025-01-17 Test Store   Expenses:Groceries   $50.00"
-    
-    response = authenticated_client.get('/api/reports/register')
-    assert response.status_code == 200
-    data = response.json
-    assert 'register' in data 
+# Remove the following two tests as the routes were removed from api.py
+# def test_get_balance(authenticated_client, mock_ledger_command):
+#     """Test getting balance report."""
+#     # Mock the ledger_command to return text not bytes
+#     mock_ledger_command.return_value = "Assets:Checking   $500.00"
+#     
+#     response = authenticated_client.get('/api/reports/balance')
+#     assert response.status_code == 200
+#     data = response.json
+#     assert 'balance' in data
+#     assert data['balance'] == "Assets:Checking   $500.00"
+# 
+# def test_get_register(authenticated_client, mock_ledger_command):
+#     """Test getting register report."""
+#     # Mock the ledger_command to return text not bytes
+#     mock_ledger_command.return_value = "2025-01-17 Test Store   Expenses:Groceries   $50.00"
+#     
+#     response = authenticated_client.get('/api/reports/register')
+#     assert response.status_code == 200
+#     data = response.json
+#     assert 'register' in data
+#     assert data['register'] == "2025-01-17 Test Store   Expenses:Groceries   $50.00" 

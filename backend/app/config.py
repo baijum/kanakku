@@ -14,7 +14,6 @@ class Config:
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
     
     # Ledger Settings
-    LEDGER_FILE = os.environ.get('LEDGER_FILE') or 'ledger.dat'
     LEDGER_PATH = os.environ.get('LEDGER_PATH') or '/opt/homebrew/bin/ledger' # Default for Homebrew on Apple Silicon
 
 class DevelopmentConfig(Config):
@@ -24,11 +23,9 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
-    LEDGER_FILE = ':memory:' # Use in-memory or mock for tests
     JWT_SECRET_KEY = 'test-secret-key'
     SECRET_KEY = 'test-secret-key' # Ensure SECRET_KEY is also set for testing consistency
     LEDGER_PATH = '/opt/homebrew/bin/ledger' # Ensure path is set for testing if needed
-    LOGIN_DISABLED = True  # Disable login_required for testing
 
 class ProductionConfig(Config):
     pass

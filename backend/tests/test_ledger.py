@@ -1,4 +1,5 @@
 import pytest
+from datetime import date
 from app import create_app, db
 from app.models import User, Transaction, Account
 
@@ -48,131 +49,108 @@ def account(app, db_session):
         db_session.commit()
         return account
 
-def test_get_transactions(authenticated_client, app, db_session):
+def test_get_transactions(authenticated_client, app, db_session, user):
     """Test getting transactions for a user."""
-    with app.app_context():
-        # Get or create a user
-        user = User.query.filter_by(username='testuser').first()
-        if not user:
-            user = User(username='testuser', email='test@example.com')
-            user.set_password('password')
-            db_session.add(user)
+    with db_session.no_autoflush:
+        # Fetch the known test account within this session using the user
+        test_account = db_session.query(Account).filter_by(user_id=user.id, name='Test Account').first()
+        if not test_account:
+            # If it doesn't exist for some reason (e.g., fixture failed), create it
+            test_account = Account(user_id=user.id, name='Test Account', type='asset', balance=1000.0, currency='USD')
+            db_session.add(test_account)
             db_session.commit()
-        
-        # Get or create an account
-        account = Account.query.filter_by(name='Test Account').first()
-        if not account:
-            account = Account(
-                user_id=user.id,
-                name='Test Account',
-                type='asset',
-                balance=1000.00,
-                currency='USD'
-            )
-            db_session.add(account)
-            db_session.commit()
-    
-    # Create a transaction first
-    transaction_data = {
-        'date': '2024-01-01',
-        'description': 'Test transaction',
-        'payee': 'Test Payee',
-        'amount': 100.00,
-        'account_name': 'Test Account'
-    }
-    
-    # Post the transaction
-    response = authenticated_client.post('/api/transactions', json=transaction_data)
-    assert response.status_code == 201
-    
-    # Get transactions
-    response = authenticated_client.get('/api/transactions')
-    assert response.status_code == 200
-    assert len(response.json) >= 1
-    
-    # At least one transaction should exist with our description
-    found = False
-    for transaction in response.json:
-        if transaction['description'] == 'Test transaction':
-            found = True
-            break
-    assert found
+            # Need to re-fetch after commit if created here
+            test_account = db_session.query(Account).filter_by(user_id=user.id, name='Test Account').first()
+            if not test_account: 
+                 pytest.fail("Failed to create or find Test Account in session")
 
-def test_create_account(authenticated_client, user):
+        transaction_data = {
+            'date': '2024-01-01',
+            'description': 'Test transaction for ledger test',
+            'payee': 'Test Payee',
+            'amount': 100.00,
+            'account_name': test_account.name # Use name from fetched account
+        }
+        
+        post_response = authenticated_client.post('/api/transactions', json=transaction_data)
+        assert post_response.status_code == 201
+        
+        get_response = authenticated_client.get('/api/transactions')
+        assert get_response.status_code == 200
+        response_data = get_response.get_json()
+        assert isinstance(response_data, list)
+        assert len(response_data) >= 1
+        
+        found = False
+        for tx in response_data:
+            if tx.get('description') == 'Test transaction for ledger test':
+                found = True
+                break
+        assert found, "Test transaction not found in GET response"
+
+def test_create_account(authenticated_client, user, db_session):
     """Test creating a new account."""
-    account_data = {
-        'name': 'Assets:Savings',
-        'type': 'asset',
-        'currency': 'USD'
-    }
-    
-    response = authenticated_client.post('/api/accounts', json=account_data)
-    assert response.status_code == 201
-    assert 'message' in response.json
-    assert 'created successfully' in response.json['message'].lower()
-
-def test_get_balance(authenticated_client, user, monkeypatch):
-    """Test getting balance report."""
-    # Mock the run_ledger_command function directly
-    def mock_run_command(*args, **kwargs):
-        return 'Assets:Checking    $1000.00\nTotal    $1000.00'
-    
-    # Apply the mock to the actual function
-    monkeypatch.setattr('app.reports.run_ledger_command', mock_run_command)
-    
-    # Get balance report
-    response = authenticated_client.get('/api/reports/balance')
-    assert response.status_code == 200
-    assert 'balance' in response.json
-
-def test_run_ledger_command(authenticated_client, app, mocker):
-    """Test run_ledger_command function"""
-    # Mock the subprocess.run function
-    mock_subprocess = mocker.patch('subprocess.run')
-    mock_subprocess.return_value.stdout = 'Mocked ledger output'
-    mock_subprocess.return_value.returncode = 0
-    
-    # Import the function we're testing
-    from app.ledger import run_ledger_command
-    
-    # Test with app context
-    with app.app_context():
-        # Explicitly pass ledger_file path
-        result = run_ledger_command(['balance'], ledger_file='/tmp/test.ledger')
+    with db_session.no_autoflush:
+        account_data = {
+            'name': 'Assets:Savings',
+            'type': 'asset',
+            'currency': 'USD'
+        }
         
-        # Check it was called correctly
-        mock_subprocess.assert_called_once()
-        assert result == 'Mocked ledger output'
+        response = authenticated_client.post('/api/accounts', json=account_data)
+        assert response.status_code == 201
+        response_data = response.get_json()
+        assert 'message' in response_data
+        assert 'created successfully' in response_data['message'].lower()
 
-def test_get_balance_report(authenticated_client, monkeypatch):
-    """Test getting a balance report from the ledger API"""
-    # Mock the run_ledger_command function directly
-    def mock_run_command(*args, **kwargs):
-        return 'Assets:Checking    $1000.00\nTotal    $1000.00'
-    
-    # Apply the mock to the actual function
-    monkeypatch.setattr('app.reports.run_ledger_command', mock_run_command)
-    
-    # Make the request
-    response = authenticated_client.get('/api/reports/balance_report')
-    
-    # Check the response
-    assert response.status_code == 200
-    assert 'balance_report' in response.json
-    assert response.json['balance_report'] == 'Assets:Checking    $1000.00\nTotal    $1000.00'
+        # Verify account was actually created in DB for this user
+        attached_user = db_session.get(User, user.id) # Ensure user is attached
+        if not attached_user:
+             pytest.fail("User fixture could not be re-fetched in session")
+        new_account = db_session.query(Account).filter_by(user_id=attached_user.id, name='Assets:Savings').first()
+        assert new_account is not None
+        assert new_account.type == 'asset'
 
-def test_get_register_report(authenticated_client, monkeypatch):
-    """Test getting a register report from the ledger API"""
-    # Mock the run_ledger_command function directly
-    def mock_run_command(*args, **kwargs):
-        return '2024-01-01 Opening Balance    Assets:Checking    $1000.00    $1000.00'
-    
-    # Apply the mock to the actual function
-    monkeypatch.setattr('app.reports.run_ledger_command', mock_run_command)
-    
-    # Make the request
-    response = authenticated_client.get('/api/reports/register')
-    
-    # Check the response
-    assert response.status_code == 200
-    assert 'register' in response.json 
+def test_get_transactions_ledger_format(authenticated_client, app, db_session, user):
+        """Test getting transactions in ledger format."""
+        with db_session.no_autoflush:
+            # Fetch user and the specific test account within this session context
+            attached_user = db_session.get(User, user.id)
+            # Fetch account by name and user ID 
+            test_account = db_session.query(Account).filter_by(user_id=user.id, name='Test Account').first()
+
+            if not attached_user:
+                 pytest.fail("User fixture could not be re-fetched in session")
+            if not test_account:
+                 # If the account doesn't exist (e.g., fixture setup issue), create it here
+                 test_account = Account(user_id=attached_user.id, name='Test Account', type='asset', balance=1000.0, currency='USD')
+                 db_session.add(test_account)
+                 db_session.commit()
+                 # Re-fetch after commit
+                 test_account = db_session.query(Account).filter_by(user_id=attached_user.id, name='Test Account').first()
+                 if not test_account:
+                     pytest.fail("Failed to create or find Test Account within test")
+
+            transaction = Transaction(
+                user_id=attached_user.id,
+                account_id=test_account.id, # Use ID from fetched account
+                date=date(2024, 7, 27),
+                description="Grocery Shopping",
+                payee="Local Mart",
+                amount=-75.50,
+                currency="USD"
+            )
+            db_session.add(transaction)
+            db_session.commit()
+
+            response = authenticated_client.get('/api/v1/ledgertransactions')
+
+            assert response.status_code == 200
+            assert response.mimetype == 'text/plain'
+
+            # Check the key parts of the response instead of the exact format
+            text = response.text
+            assert '2024-07-27 * Grocery Shopping' in text
+            assert 'Payee: Local Mart' in text
+            assert 'Test Account' in text
+            assert '-75.50 USD' in text

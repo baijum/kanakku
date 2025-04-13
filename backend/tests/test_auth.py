@@ -51,7 +51,16 @@ def test_invalid_login(client):
     })
     assert response.status_code == 401
 
-def test_get_current_user(authenticated_client, user):
-    response = authenticated_client.get('/api/auth/me')
-    assert response.status_code == 200
-    assert response.json['username'] == 'testuser' 
+def test_get_current_user(authenticated_client, user, db_session):
+    # Using db_session ensures the user object from the fixture 
+    # can be used for comparison if needed, although accessing response data is preferred.
+    with db_session.no_autoflush:
+        response = authenticated_client.get('/api/auth/me')
+        # Primary assertion should be on status code and response content
+        assert response.status_code == 200
+        response_data = response.get_json()
+        assert response_data is not None
+        # Compare response data against the known ID from the fixture user
+        assert response_data.get('id') == user.id
+        assert response_data.get('username') == user.username
+        assert response_data.get('email') == user.email 

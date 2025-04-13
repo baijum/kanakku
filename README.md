@@ -6,9 +6,10 @@ A modern web interface for the Ledger CLI double-entry accounting tool. Kanakku 
 
 - Add new transactions with a user-friendly form
 - View existing transactions and account balances
-- Generate standard Ledger reports
+- Generate standard Ledger reports (currently via Ledger CLI directly)
 - Modern, responsive web interface
 - Single-user, local-first design
+- JWT-based authentication
 
 ## Prerequisites
 
@@ -21,86 +22,125 @@ A modern web interface for the Ledger CLI double-entry accounting tool. Kanakku 
 ```
 kanakku/
 ├── backend/           # Flask backend
+│   ├── app/           # Application package
+│   │   ├── __init__.py # App factory
+│   │   ├── models.py  # SQLAlchemy models
+│   │   ├── config.py  # Configuration settings
+│   │   ├── extensions.py # Flask extensions (db, jwt)
+│   │   ├── api.py     # General API routes (e.g., health check)
+│   │   ├── auth.py    # Authentication routes
+│   │   ├── accounts.py # Account management routes
+│   │   ├── transactions.py # Transaction management routes
+│   │   ├── ledger.py  # Ledger-specific routes (e.g., ledger format export)
+│   │   ├── reports.py # Reporting routes (currently commented out)
+│   │   └── errors.py  # Error handlers
+│   ├── tests/         # Pytest test suite
+│   ├── venv/          # Virtual environment
+│   ├── requirements.txt
+│   └── ...
 ├── frontend/          # React frontend
+│   ├── public/
+│   ├── src/           # Source code
+│   ├── package.json
+│   └── ...
+├── fixes/             # Documentation for major bug fixes
+│   └── flask-jwt-extended-422-errors.md
 └── journal.ledger     # Ledger file (created on first run)
 ```
 
 ## Architecture
 
-*   **Frontend:** React application located in the `frontend/` directory (`frontend/src`). It provides the user interface and interacts with the backend via API calls.
-*   **Backend:** Flask application located in the `backend/` directory (`backend/app`). It serves a RESTful API, handles business logic, interacts with the `ledger-cli` tool, and manages authentication.
-*   **API:** Defined using Flask Blueprints. The main API endpoints are consolidated under `/api/`. Authentication is handled via JWT.
-*   **Data Storage:**
-    *   **Ledger Data:** Stored in a plain text file (e.g., `journal.ledger`), managed via the `ledger-cli` tool (`backend/app/ledger.py`).
-    *   **Application Data:** An SQLite database (`backend/app/app.db`) for users, sessions, etc. (managed via SQLAlchemy in `backend/app/models.py`).
+*   **Frontend:** React application (`frontend/`) providing the user interface. It communicates with the backend via API calls.
+*   **Backend:** Flask application (`backend/`) serving a RESTful API. It handles:
+    *   **Business Logic:** Managing users, accounts, and transactions.
+    *   **Database Interaction:** Using SQLAlchemy (`backend/app/models.py`) with an SQLite database (`backend/app/app.db`) for application data (users, accounts, transactions).
+    *   **Authentication:** Utilizing Flask-JWT-Extended for token-based authentication (`backend/app/auth.py`, `backend/app/__init__.py`).
+    *   **Ledger Interaction:** Currently limited to exporting data in Ledger format (`backend/app/ledger.py`). Direct interaction with `ledger-cli` for reporting is present but commented out.
+*   **API:** Defined using Flask Blueprints, organized by functionality (auth, accounts, transactions, etc.). All endpoints are prefixed with `/api/`.
 
 ## API Endpoints
 
-The main API endpoints are served under the `/api/` prefix by the Flask backend. Authentication via JWT is required for most endpoints.
+The main API endpoints are served under the `/api/` prefix by the Flask backend. Authentication via JWT (Bearer token in Authorization header) is required for most endpoints.
 
-*   **Health Check**
+*   **Health Check (`api.py`)**
     *   `GET /api/health` (No Auth Required) - Basic health check.
-*   **Transactions**
-    *   `GET /api/transactions` - Get all transactions for the current user.
-    *   `POST /api/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "payee": "...", "postings": [...] }`)
-*   **Accounts**
-    *   `GET /api/accounts` - Get all account names for the current user.
-    *   `POST /api/accounts` - Add a new account. (Body: `{ "name": "...", "type": "..." }`)
-*   **Reports**
-    *   `GET /api/reports/balance` - Get balance report.
-    *   `GET /api/reports/register` - Get register report.
-*   **Authentication**
-    *   Endpoints for user registration, login, logout, and token management are likely provided by the `auth` blueprint (see `backend/app/auth.py`).
-
-*(Note: Some API endpoints might currently return mocked data as per `backend/app/api.py`)*
+*   **Authentication (`auth.py`)**
+    *   `POST /api/auth/register` - Register a new user. (Body: `{ "username": "...", "email": "...", "password": "..." }`)
+    *   `POST /api/auth/login` - Log in a user. (Body: `{ "username": "...", "password": "..." }`)
+    *   `POST /api/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
+    *   `GET /api/auth/me` (Auth Required) - Get the current logged-in user's details.
+*   **Accounts (`accounts.py`)** (Auth Required)
+    *   `GET /api/accounts` - Get all accounts for the current user.
+    *   `POST /api/accounts` - Add a new account. (Body: `{ "name": "...", "type": "...", "currency": "..." (optional), "balance": ... (optional) }`)
+    *   `GET /api/accounts/<int:account_id>` - Get details for a specific account.
+    *   `PUT /api/accounts/<int:account_id>` - Update a specific account. (Body: `{ "name": "...", "type": "...", ... }`)
+    *   `DELETE /api/accounts/<int:account_id>` - Delete a specific account.
+*   **Transactions (`transactions.py`)** (Auth Required)
+    *   `POST /api/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "description": "...", "amount": ..., "account_name": "...", "payee": "..." (optional), "currency": "..." (optional) }`)
+    *   `GET /api/transactions` - Get all transactions for the current user (supports `?limit=N` query parameter).
+*   **Ledger (`ledger.py`)** (Auth Required)
+    *   `GET /api/v1/ledgertransactions` - Get all transactions for the current user in Ledger text format.
+*   **Reports (`reports.py`)**
+    *   (No active API endpoints currently - routes are commented out)
 
 ## Setup
 
 ### Backend Setup
 
-1. Create and activate virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-2. Install dependencies:
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-3. Configure environment variables:
-```bash
-export LEDGER_FILE=../journal.ledger
-export FLASK_APP=app.py
-export FLASK_ENV=development
-```
-
-4. Run the backend server:
-```bash
-flask run
-```
+1.  Navigate to the backend directory:
+    ```bash
+    cd backend
+    ```
+2.  Create and activate a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  Configure environment variables (optional - defaults are provided in `config.py`):
+    *   `SECRET_KEY`: A secret key for Flask sessions and security.
+    *   `JWT_SECRET_KEY`: A secret key for JWT generation.
+    *   `DATABASE_URL`: Database connection string (defaults to SQLite `app.db`).
+    *   `LEDGER_PATH`: Path to the `ledger` executable (if not in system PATH).
+5.  Run the backend server:
+    ```bash
+    flask run
+    ```
+    The backend will be available at `http://127.0.0.1:5000`.
 
 ### Frontend Setup
 
-1. Install dependencies:
-```bash
-cd frontend
-npm install
-```
+1.  Navigate to the frontend directory:
+    ```bash
+    cd frontend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Run the frontend development server:
+    ```bash
+    npm start
+    ```
+    The frontend will be available at `http://localhost:3000` and will proxy API requests to the backend.
 
-2. Start the development server:
-```bash
-npm start
-```
+## Usage
 
-## Development
+1.  Start both the backend and frontend servers.
+2.  Access the web interface in your browser (usually `http://localhost:3000`).
+3.  Register a new user or log in if you already have an account.
+4.  Use the interface to add accounts and transactions.
 
-The application runs in development mode with:
-- Backend: http://localhost:5000
-- Frontend: http://localhost:3000
+## Testing
 
-## License
+To run the backend tests:
 
-MIT License 
+1.  Ensure the backend virtual environment is active and development dependencies are installed (`pytest`, `pytest-cov`, `pytest-mock`).
+2.  Navigate to the `kanakku` root directory.
+3.  Run pytest:
+    ```bash
+    python -m pytest -v backend/tests/
+    ```
