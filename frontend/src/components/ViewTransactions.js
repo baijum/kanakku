@@ -207,7 +207,7 @@ function ViewTransactions() {
               disabled={exportLoading}
               fullWidth
             >
-              Export Transactions
+              Export
             </Button>
           </Grid>
         </Grid>
