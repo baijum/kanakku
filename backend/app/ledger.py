@@ -22,7 +22,6 @@ def get_transactions_ledger_format():
     """Return all transactions for the logged-in user in ledger format."""
     try:
         # Use current_user proxy populated by user_lookup_loader
-        # user_id = get_jwt_identity() <-- No longer needed directly
         user = current_user
         if not user:
             # This check might be redundant if @jwt_required() works correctly
@@ -40,25 +39,30 @@ def get_transactions_ledger_format():
         if not transactions:
             return Response("", mimetype='text/plain') # Return empty if no transactions
 
-        ledger_output = []
+        # Group transactions by date and description
+        transaction_groups = {}
         for transaction, account_name in transactions:
-            # Format: YYYY-MM-DD * Description [; Payee: <payee>]
-            #          AccountName    Amount Currency
-            header = f"{transaction.date.strftime('%Y-%m-%d')} * {transaction.description}"
-            if transaction.payee:
-                header += f" ; Payee: {transaction.payee}"
+            key = (transaction.date.strftime('%Y-%m-%d'), transaction.description)
+            if key not in transaction_groups:
+                transaction_groups[key] = []
             
-            # Ensure we use the negative sign to match test expectations
+            # Format amount with currency
             amt_str = f"{transaction.amount:.2f}"
-
-            # Format for currency - add rupee symbol for INR
             if transaction.currency in ('INR', '₹'):
                 posting = f"    {account_name}    ₹{amt_str}"
             else:
                 posting = f"    {account_name}    {amt_str} {transaction.currency}"
             
-            # Create a single entry with a line break between transactions
-            entry = f"{header}\n{posting}\n"
+            transaction_groups[key].append(posting)
+        
+        # Format output with grouped transactions
+        ledger_output = []
+        for (date, description), postings in transaction_groups.items():
+            # Create header without payee
+            header = f"{date} * {description}"
+            
+            # Add all postings under this header
+            entry = f"{header}\n{chr(10).join(postings)}\n"
             ledger_output.append(entry)
 
         # Join with an empty string (not newline) as entries already have trailing newlines
