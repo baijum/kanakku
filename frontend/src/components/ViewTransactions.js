@@ -14,8 +14,14 @@ import {
   Grid,
   Button,
   IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -29,6 +35,8 @@ function ViewTransactions() {
   const [totalCount, setTotalCount] = useState(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState(null);
   const navigate = useNavigate();
 
   const fetchTransactions = useCallback(() => {
@@ -90,6 +98,42 @@ function ViewTransactions() {
     } else {
       console.error('Attempted to edit transaction with undefined ID');
     }
+  };
+
+  const handleDeleteConfirmOpen = (transactionId) => {
+    setTransactionToDelete(transactionId);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleDeleteConfirmClose = () => {
+    setOpenDeleteDialog(false);
+  };
+
+  const handleDeleteTransaction = () => {
+    if (!transactionToDelete) {
+      console.error('No transaction selected for deletion');
+      setOpenDeleteDialog(false);
+      return;
+    }
+
+    const token = getToken();
+    const endpoint = `/api/transactions/${transactionToDelete}/related`;
+
+    axios.delete(endpoint, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(response => {
+        console.log('Delete response:', response.data);
+        // Refresh transactions list
+        fetchTransactions();
+        // Close dialog
+        setOpenDeleteDialog(false);
+      })
+      .catch(error => {
+        console.error('Error deleting transaction:', error);
+        setOpenDeleteDialog(false);
+        // You could add error state and display message to user
+      });
   };
 
   return (
@@ -160,8 +204,17 @@ function ViewTransactions() {
                       }}
                       aria-label="edit"
                       disabled={!editId}
+                      sx={{ mr: 1 }}
                     >
                       <EditIcon />
+                    </IconButton>
+                    <IconButton 
+                      color="error"
+                      onClick={() => handleDeleteConfirmOpen(editId)}
+                      aria-label="delete"
+                      disabled={!editId}
+                    >
+                      <DeleteIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -178,6 +231,27 @@ function ViewTransactions() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </TableContainer>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleDeleteConfirmClose}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this transaction and all related transactions? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteConfirmClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteTransaction} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

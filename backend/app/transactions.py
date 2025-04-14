@@ -549,4 +549,107 @@ def get_related_transactions(transaction_id):
         return jsonify(response)
     except Exception as e:
         current_app.logger.error(f"Error in get_related_transactions: {str(e)} - Traceback: {traceback.format_exc()}")
-        return jsonify({'error': 'Failed to retrieve related transactions'}), 500 
+        return jsonify({'error': 'Failed to retrieve related transactions'}), 500
+
+@transactions.route('/api/transactions/<int:transaction_id>', methods=['DELETE'])
+@jwt_required()
+def delete_transaction(transaction_id):
+    """Delete a transaction by ID"""
+    current_app.logger.debug(f"Entered delete_transaction route for ID: {transaction_id}")
+    try:
+        # Find the transaction to delete
+        transaction = Transaction.query.filter_by(id=transaction_id, user_id=current_user.id).first()
+        
+        if not transaction:
+            current_app.logger.warning(f"Transaction ID {transaction_id} not found for user ID {current_user.id}")
+            return jsonify({'error': 'Transaction not found'}), 404
+            
+        # Undo the effect on the account balance before deleting
+        account = Account.query.get(transaction.account_id)
+        if account:
+            # Reverse the effect based on account type
+            if account.type.lower() in ['liability', 'equity', 'income']:
+                account.balance += transaction.amount
+            else:
+                account.balance -= transaction.amount
+        
+        # Delete the transaction
+        db.session.delete(transaction)
+        
+        # Commit changes
+        try:
+            db.session.commit()
+            current_app.logger.info(f"Transaction ID {transaction_id} deleted successfully")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Database commit error: {str(e)}")
+            return jsonify({'error': 'Failed to delete transaction'}), 500
+        
+        return jsonify({'message': 'Transaction deleted successfully'}), 200
+        
+    except Exception as e:
+        # Catch-all for any unexpected errors during processing
+        current_app.logger.error(f"Unhandled error in delete_transaction: {str(e)} - Traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'An unexpected server error occurred'}), 500
+
+@transactions.route('/api/transactions/<int:transaction_id>/related', methods=['DELETE'])
+@jwt_required()
+def delete_related_transactions(transaction_id):
+    """Delete a transaction and all its related transactions (same date and payee)"""
+    current_app.logger.debug(f"Entered delete_related_transactions route for ID: {transaction_id}")
+    try:
+        # Find the transaction to identify related ones
+        transaction = Transaction.query.filter_by(id=transaction_id, user_id=current_user.id).first()
+        
+        if not transaction:
+            current_app.logger.warning(f"Transaction ID {transaction_id} not found for user ID {current_user.id}")
+            return jsonify({'error': 'Transaction not found'}), 404
+            
+        # Find all transactions with the same date and payee
+        related_transactions = Transaction.query.filter_by(
+            user_id=current_user.id,
+            date=transaction.date,
+            payee=transaction.payee
+        ).all()
+        
+        if not related_transactions:
+            current_app.logger.warning(f"No related transactions found for transaction ID {transaction_id}")
+            return jsonify({'error': 'No transactions found to delete'}), 404
+        
+        # Track how many were deleted
+        deleted_count = 0
+        
+        # Undo account balance effects and delete each transaction
+        for tx in related_transactions:
+            # Get the account
+            account = Account.query.get(tx.account_id)
+            
+            if account:
+                # Reverse the effect based on account type
+                if account.type.lower() in ['liability', 'equity', 'income']:
+                    account.balance += tx.amount
+                else:
+                    account.balance -= tx.amount
+            
+            # Delete the transaction
+            db.session.delete(tx)
+            deleted_count += 1
+        
+        # Commit all changes
+        try:
+            db.session.commit()
+            current_app.logger.info(f"Deleted {deleted_count} related transactions for ID {transaction_id}")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Database commit error: {str(e)}")
+            return jsonify({'error': 'Failed to delete related transactions'}), 500
+        
+        return jsonify({
+            'message': 'Related transactions deleted successfully',
+            'count': deleted_count
+        }), 200
+        
+    except Exception as e:
+        # Catch-all for any unexpected errors during processing
+        current_app.logger.error(f"Unhandled error in delete_related_transactions: {str(e)} - Traceback: {traceback.format_exc()}")
+        return jsonify({'error': 'An unexpected server error occurred'}), 500 
