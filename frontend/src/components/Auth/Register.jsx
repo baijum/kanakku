@@ -5,7 +5,6 @@ import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import GoogleIcon from '@mui/icons-material/Google';
 
 function Register({ setIsLoggedIn }) {
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,7 +19,7 @@ function Register({ setIsLoggedIn }) {
     setLoading(true);
 
     // Validation
-    if (!username || !email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword) {
       setError('All fields are required.');
       setLoading(false);
       return;
@@ -37,7 +36,6 @@ function Register({ setIsLoggedIn }) {
         method: 'post',
         url: '/api/auth/register',
         data: {
-          username,
           email,
           password,
         },
@@ -128,24 +126,12 @@ function Register({ setIsLoggedIn }) {
           margin="normal"
           required
           fullWidth
-          id="username"
-          label="Username"
-          name="username"
-          autoComplete="username"
-          autoFocus
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          disabled={loading}
-        />
-        <TextField
-          margin="normal"
-          required
-          fullWidth
           id="email"
           label="Email Address"
           name="email"
           autoComplete="email"
           type="email"
+          autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}

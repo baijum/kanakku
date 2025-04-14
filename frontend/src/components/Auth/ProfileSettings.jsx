@@ -76,9 +76,6 @@ const ProfileSettings = () => {
         </Typography>
         {user && (
           <Box mb={3}>
-            <Typography variant="body1" sx={{ mb: 1 }}>
-              <strong>Username:</strong> {user.username}
-            </Typography>
             <Typography variant="body1">
               <strong>Email:</strong> {user.email}
             </Typography>

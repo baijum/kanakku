@@ -18,14 +18,11 @@ def register():
     data = request.get_json()
     
     # Check if user already exists
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({'error': 'Username already exists'}), 400
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already exists'}), 400
     
     # Create new user
     user = User(
-        username=data['username'],
         email=data['email'],
         is_active=False  # Default is False, users need to be activated by an admin
     )
@@ -51,7 +48,7 @@ def login_options():
 
 @auth.route('/api/auth/login', methods=['POST'])
 def login():
-    """Simple login endpoint that accepts username/password and returns a token"""
+    """Simple login endpoint that accepts email/password and returns a token"""
     
     # Log the request for debugging
     current_app.logger.debug(f"LOGIN ENDPOINT CALLED")
@@ -78,15 +75,15 @@ def login():
         current_app.logger.error("No data provided in request")
         return jsonify({"error": "No data provided"}), 400
 
-    username = data.get('username')
+    email = data.get('email')
     password = data.get('password')
     
     # Basic validation
-    if not username or not password:
-        return jsonify({"error": "Username and password are required"}), 400
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
     
     # Find the user
-    user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(email=email).first()
     
     # Check password
     if user and user.check_password(password):
@@ -106,7 +103,7 @@ def login():
             return jsonify({"error": "Error generating token"}), 500
     
     # Invalid credentials
-    return jsonify({"error": "Invalid username or password"}), 401
+    return jsonify({"error": "Invalid email or password"}), 401
 
 @auth.route('/api/auth/logout', methods=['POST'])
 @flask_jwt_required()
@@ -148,7 +145,7 @@ def activate_user(user_id):
         user_to_update.deactivate()
     
     return jsonify({
-        'message': f"User {user_to_update.username} {'activated' if is_active else 'deactivated'} successfully",
+        'message': f"User {user_to_update.email} {'activated' if is_active else 'deactivated'} successfully",
         'user': user_to_update.to_dict()
     }), 200
 
@@ -261,16 +258,7 @@ def google_callback():
                 user.picture = userinfo.get('picture')
             else:
                 # Create new user
-                username = userinfo['email'].split('@')[0]
-                # Ensure username is unique
-                base_username = username
-                count = 1
-                while User.query.filter_by(username=username).first():
-                    username = f"{base_username}{count}"
-                    count += 1
-                
                 user = User(
-                    username=username,
                     email=userinfo['email'],
                     google_id=userinfo['sub'],
                     picture=userinfo.get('picture'),

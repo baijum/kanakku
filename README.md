@@ -183,7 +183,7 @@ To run the backend tests:
 ```
 $ cd backend
 $ flask shell
->>> from app.models import User, db
->>> user = User.query.filter_by(username='your_username').first()
+>>> from app.models import User
+>>> user = User.query.filter_by(email='user@example.com').first()
 >>> user.activate()
 ```

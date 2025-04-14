@@ -7,7 +7,6 @@ from .extensions import db, login_manager
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     is_active = db.Column(db.Boolean, default=False)
@@ -52,7 +51,6 @@ class User(UserMixin, db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'username': self.username,
             'email': self.email,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
@@ -60,7 +58,7 @@ class User(UserMixin, db.Model):
         }
 
     def __repr__(self):
-        return f'<User {self.username}>'
+        return f'<User {self.email}>'
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)

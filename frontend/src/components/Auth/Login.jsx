@@ -5,7 +5,7 @@ import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
 import GoogleIcon from '@mui/icons-material/Google';
 
 function Login({ setIsLoggedIn }) {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -31,8 +31,8 @@ function Login({ setIsLoggedIn }) {
     setError('');
     setLoading(true);
 
-    if (!username || !password) {
-      setError('Username and Password are required.');
+    if (!email || !password) {
+      setError('Email and Password are required.');
       setLoading(false);
       return;
     }
@@ -43,7 +43,7 @@ function Login({ setIsLoggedIn }) {
         method: 'post',
         url: '/api/auth/login',
         data: {
-          username,
+          email,
           password,
         },
         headers: {
@@ -130,13 +130,13 @@ function Login({ setIsLoggedIn }) {
           margin="normal"
           required
           fullWidth
-          id="username"
-          label="Username"
-          name="username"
-          autoComplete="username"
+          id="email"
+          label="Email"
+          name="email"
+          autoComplete="email"
           autoFocus
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
         />
         <TextField
