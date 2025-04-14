@@ -6,6 +6,7 @@ from flask_jwt_extended import create_access_token, jwt_required as flask_jwt_re
 from functools import wraps
 from app.models import User, db
 from app.extensions import login_manager
+from app.utils import send_password_reset_email
 import logging
 import requests
 import json
@@ -162,20 +163,91 @@ def update_password():
     current_password = data.get('current_password')
     new_password = data.get('new_password')
     
-    # Validate inputs
-    if not current_password or not new_password:
-        return jsonify({"error": "Current password and new password are required"}), 400
+    # Check if new password is provided
+    if not new_password:
+        return jsonify({"error": "New password is required"}), 400
     
-    # Verify current password
-    user = current_user
-    if not user.check_password(current_password):
+    # Check if current password matches
+    if not current_user.check_password(current_password):
         return jsonify({"error": "Current password is incorrect"}), 401
     
-    # Set new password
-    user.set_password(new_password)
+    # Update password
+    current_user.set_password(new_password)
     db.session.commit()
     
     return jsonify({"message": "Password updated successfully"}), 200
+
+@auth.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    """Request a password reset"""
+    # Get request data
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+    
+    # Find the user by email
+    user = User.query.filter_by(email=email).first()
+    
+    # Even if user doesn't exist, return success to prevent email enumeration
+    if not user:
+        current_app.logger.warning(f"Password reset requested for non-existent email: {email}")
+        return jsonify({"message": "If your email is registered, you will receive a password reset link"}), 200
+    
+    # Check if user is active
+    if not user.is_active:
+        current_app.logger.warning(f"Password reset requested for inactive account: {email}")
+        return jsonify({"message": "If your email is registered, you will receive a password reset link"}), 200
+    
+    # Generate and store reset token
+    token = user.generate_reset_token()
+    
+    # Send reset email
+    try:
+        send_password_reset_email(user, token)
+        return jsonify({"message": "If your email is registered, you will receive a password reset link"}), 200
+    except Exception as e:
+        current_app.logger.error(f"Failed to send password reset email to {email}: {str(e)}")
+        return jsonify({"error": "Failed to send password reset email"}), 500
+
+@auth.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    """Reset password using token"""
+    # Get request data
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    email = data.get('email')
+    token = data.get('token')
+    new_password = data.get('new_password')
+    
+    if not email or not token or not new_password:
+        return jsonify({"error": "Email, token, and new password are required"}), 400
+    
+    # Find the user by email
+    user = User.query.filter_by(email=email).first()
+    
+    if not user:
+        return jsonify({"error": "Invalid or expired reset token"}), 400
+    
+    # Verify the token
+    if not user.verify_reset_token(token):
+        return jsonify({"error": "Invalid or expired reset token"}), 400
+    
+    # Update the password
+    user.set_password(new_password)
+    
+    # Clear the reset token
+    user.clear_reset_token()
+    
+    return jsonify({"message": "Password has been reset successfully"}), 200
 
 # Google OAuth2 route
 @auth.route('/api/auth/google', methods=['GET'])

@@ -37,6 +37,8 @@ import PreambleList from './components/Preambles/PreambleList';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import GoogleAuthCallback from './components/Auth/GoogleAuthCallback';
+import ForgotPassword from './components/Auth/ForgotPassword';
+import ResetPassword from './components/Auth/ResetPassword';
 
 const drawerWidth = 240;
 
@@ -323,6 +325,8 @@ function App() {
               />
               <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
               <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/google-auth-callback" element={<GoogleAuthCallback setIsLoggedIn={setIsLoggedIn} />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>

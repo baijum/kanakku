@@ -3,6 +3,7 @@ Flask-CORS==4.0.0
 Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
 Flask-JWT-Extended==4.6.0
+Flask-Mail==0.9.1
 python-dotenv==1.0.1
 Werkzeug==3.0.1
 click==8.1.7

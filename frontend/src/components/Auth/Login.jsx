@@ -166,10 +166,11 @@ function Login({ setIsLoggedIn }) {
           type="submit"
           fullWidth
           variant="contained"
+          color="primary"
           sx={{ mt: 3, mb: 2 }}
-          disabled={loading || googleLoading}
+          disabled={loading}
         >
-          {loading ? <CircularProgress size={24} /> : 'Sign In'}
+          {loading ? <CircularProgress size={24} /> : 'Log In'}
         </Button>
         
         <Divider sx={{ my: 2 }}>or</Divider>
@@ -185,10 +186,18 @@ function Login({ setIsLoggedIn }) {
           {googleLoading ? <CircularProgress size={24} /> : 'Sign in with Google'}
         </Button>
         
-        <Box textAlign="center">
-          <Link component={RouterLink} to="/register" variant="body2">
-            Don't have an account? Register
-          </Link>
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Box sx={{ mb: 1 }}>
+            <Link component={RouterLink} to="/forgot-password" variant="body2">
+              Forgot Password?
+            </Link>
+          </Box>
+          <Box>
+            Don't have an account?{' '}
+            <Link component={RouterLink} to="/register" variant="body2">
+              Sign Up
+            </Link>
+          </Box>
         </Box>
       </Box>
     </Box>

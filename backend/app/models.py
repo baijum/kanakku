@@ -1,9 +1,10 @@
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import relationship
 from sqlalchemy import Date
 from .extensions import db, login_manager
+import secrets
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -12,6 +13,10 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    # Password reset fields
+    reset_token = db.Column(db.String(100), nullable=True)
+    reset_token_expires_at = db.Column(db.DateTime, nullable=True)
     
     # Google Auth fields
     google_id = db.Column(db.String(100), unique=True, nullable=True)
@@ -34,6 +39,24 @@ class User(UserMixin, db.Model):
     
     def deactivate(self):
         self.is_active = False
+        db.session.commit()
+        
+    def generate_reset_token(self):
+        self.reset_token = secrets.token_urlsafe(32)
+        self.reset_token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        db.session.commit()
+        return self.reset_token
+    
+    def verify_reset_token(self, token):
+        if not self.reset_token or self.reset_token != token:
+            return False
+        if not self.reset_token_expires_at or self.reset_token_expires_at < datetime.now(timezone.utc):
+            return False
+        return True
+        
+    def clear_reset_token(self):
+        self.reset_token = None
+        self.reset_token_expires_at = None
         db.session.commit()
 
     def get_token(self):

@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from .extensions import db # Remove login_manager if unused
+from .extensions import db, mail # Add mail
 from .config import config
 from .models import User
 
@@ -42,6 +42,7 @@ def create_app(config_name='default'):
     # Initialize extensions that don't depend on app context first
     db.init_app(app)
     jwt.init_app(app)
+    mail.init_app(app)
     # login_manager.init_app(app) # Remove if not used
     # login_manager.login_view = 'auth.login' # Remove if not used
 

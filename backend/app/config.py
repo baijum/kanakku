@@ -16,6 +16,17 @@ class Config:
     # Ledger Settings
     LEDGER_PATH = os.environ.get('LEDGER_PATH') or '/opt/homebrew/bin/ledger' # Default for Homebrew on Apple Silicon
 
+    # Mail Settings
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() in ['true', 'on', '1']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER') or 'no-reply@kanakku.app'
+    
+    # Application Settings
+    FRONTEND_URL = os.environ.get('FRONTEND_URL') or 'http://localhost:3000'
+    
     # Google OAuth Config
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET') 
