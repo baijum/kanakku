@@ -10,12 +10,12 @@ def client(app):
 def user(app):
     with app.app_context():
         # Check if user already exists
-        existing_user = User.query.filter_by(username='testuser').first()
+        existing_user = User.query.filter_by(email='test@example.com').first()
         if existing_user:
             return existing_user
         
         # Create new user if it doesn't exist
-        user = User(username='testuser', email='test@example.com')
+        user = User(email='test@example.com')
         user.set_password('password')
         db.session.add(user)
         db.session.commit()
@@ -23,20 +23,27 @@ def user(app):
 
 def test_register(client):
     response = client.post('/api/auth/register', json={
-        'username': 'newuser',
         'email': 'new@example.com',
         'password': 'password'
     })
     assert response.status_code == 201
     data = response.get_json()
     assert 'message' in data
-    assert 'token' in data
-    assert data['message'] == 'User created successfully'
+    assert 'user_id' in data
+    assert 'pending activation' in data['message']
 
-def test_login(client, user):
+def test_login(client, user, app):
+    # First activate the user
+    with app.app_context():
+        # Fetch the user again within the app context
+        user = User.query.filter_by(email='test@example.com').first()
+        user.set_password('password123')
+        user.activate()
+        db.session.commit()
+    
     response = client.post('/api/auth/login', json={
-        'username': 'testuser',
-        'password': 'password'
+        'email': 'test@example.com',
+        'password': 'password123'
     })
     assert response.status_code == 200
     data = response.get_json()
@@ -46,7 +53,7 @@ def test_login(client, user):
 
 def test_invalid_login(client):
     response = client.post('/api/auth/login', json={
-        'username': 'wronguser',
+        'email': 'wrong@example.com',
         'password': 'wrongpass'
     })
     assert response.status_code == 401
@@ -62,5 +69,4 @@ def test_get_current_user(authenticated_client, user, db_session):
         assert response_data is not None
         # Compare response data against the known ID from the fixture user
         assert response_data.get('id') == user.id
-        assert response_data.get('username') == user.username
         assert response_data.get('email') == user.email 

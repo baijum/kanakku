@@ -10,10 +10,7 @@ def client(app):
 @pytest.fixture
 def user(db_session):
     """Create a test user."""
-    user = User(
-        username='testuser', 
-        email='test@example.com'
-    )
+    user = User(email='test@example.com')
     user.set_password('password123')
     db_session.add(user)
     db_session.commit()
@@ -21,7 +18,6 @@ def user(db_session):
 
 def test_user_creation(db_session, user):
     """Test creating a user."""
-    assert user.username == 'testuser'
     assert user.email == 'test@example.com'
     assert user.check_password('password123')
 
@@ -77,7 +73,7 @@ def test_user_transactions_relationship(db_session, user):
     db_session.refresh(user)
     
     assert user.transactions[0].description == 'Test transaction'
-    assert transaction.user.username == 'testuser'
+    assert transaction.user.email == 'test@example.com'
 
 def test_user_accounts_relationship(db_session, user):
     """Test the relationship between a user and their accounts."""
@@ -95,4 +91,4 @@ def test_user_accounts_relationship(db_session, user):
     db_session.refresh(user)
     
     assert user.accounts[0].name == 'Test Account'
-    assert account.user.username == 'testuser' 
+    assert account.user.email == 'test@example.com' 

@@ -6,27 +6,39 @@ from datetime import date
 def test_register(authenticated_client, mock_ledger_command):
     """Test user registration."""
     response = authenticated_client.post('/api/auth/register', json={
-        'username': 'newuser',
         'email': 'new@example.com',
         'password': 'password123'
     })
     assert response.status_code == 201
-    assert 'token' in response.json
+    data = response.get_json()
+    assert 'message' in data
+    assert 'User created successfully' in data['message']
+    assert 'pending activation' in data['message']
+    assert 'user_id' in data
 
-def test_login(authenticated_client, mock_ledger_command):
+def test_login(authenticated_client, mock_ledger_command, db_session):
     """Test user login."""
+    # First activate the test user
+    user = db_session.query(User).filter_by(email='test@example.com').first()
+    user.activate()
+    db_session.commit()
+    
     response = authenticated_client.post('/api/auth/login', json={
-        'username': 'testuser',
+        'email': 'test@example.com',
         'password': 'password123'
     })
     assert response.status_code == 200
-    assert 'token' in response.json
+    data = response.get_json()
+    assert 'token' in data
 
 def test_get_transactions(authenticated_client, mock_ledger_command):
     """Test getting transactions."""
     response = authenticated_client.get('/api/transactions')
     assert response.status_code == 200
-    assert isinstance(response.json, list)
+    data = response.get_json()
+    assert 'transactions' in data
+    assert isinstance(data['transactions'], list)
+    assert 'total' in data
 
 def test_add_transaction(authenticated_client, mock_ledger_command):
     """Test adding a transaction."""
@@ -42,11 +54,14 @@ def test_add_transaction(authenticated_client, mock_ledger_command):
     # Now create a transaction using the account
     transaction_data = {
         'date': '2025-01-17',
-        'description': 'Grocery Shopping',
         'payee': 'Test Store',
-        'amount': 50.00,
-        'currency': 'INR',
-        'account_name': 'Assets:Checking'
+        'postings': [
+            {
+                'account': 'Assets:Checking',
+                'amount': 50.00,
+                'currency': 'INR'
+            }
+        ]
     }
     
     response = authenticated_client.post('/api/transactions', json=transaction_data)
@@ -60,8 +75,10 @@ def test_get_accounts(authenticated_client, account):
     response = authenticated_client.get('/api/accounts')
     assert response.status_code == 200
     data = response.json
-    assert isinstance(data, list)
-    # Could assert the account from fixture is in the response
+    assert isinstance(data, dict)
+    assert 'accounts' in data
+    assert isinstance(data['accounts'], list)
+    assert 'Test Account' in data['accounts']
 
 def test_add_account(authenticated_client):
     """Test adding an account."""

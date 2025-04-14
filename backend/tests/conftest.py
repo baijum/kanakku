@@ -63,7 +63,6 @@ def user(app, db_session):
         
     # Create a new user
     user = User(
-        username='testuser',
         email='test@example.com'
     )
     user.set_password('password123')
@@ -88,7 +87,7 @@ def authenticated_client(client, app, db_session):
         test_user = db_session.query(User).filter_by(email='test@example.com').first()
         if not test_user:
             # Create if doesn't exist (should usually exist due to fixture order)
-            test_user = User(username='testuser', email='test@example.com')
+            test_user = User(email='test@example.com')
             test_user.set_password('password123') # Use consistent password
             db_session.add(test_user)
             db_session.commit()
