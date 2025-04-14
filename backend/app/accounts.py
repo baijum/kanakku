@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from app.models import Account, db
+from app.models import Account, Transaction, db
 from flask_jwt_extended import jwt_required, current_user
 
 accounts = Blueprint('accounts', __name__)
@@ -102,6 +102,13 @@ def delete_account(account_id):
     current_app.logger.debug(f"Entered delete_account route for ID: {account_id}")
     """Delete an account."""
     account = Account.query.filter_by(id=account_id, user_id=current_user.id).first_or_404()
+    
+    # Check if there are any transactions associated with this account
+    transactions_count = Transaction.query.filter_by(account_id=account_id).count()
+    if transactions_count > 0:
+        return jsonify({
+            'error': 'Cannot delete account with existing transactions. Please delete or reassign transactions first.'
+        }), 400
     
     db.session.delete(account)
     db.session.commit()

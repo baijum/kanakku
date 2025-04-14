@@ -12,9 +12,15 @@ import {
   TablePagination,
   Button,
   IconButton,
-  Alert
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -27,6 +33,9 @@ function AccountsList() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
   const navigate = useNavigate();
 
   const fetchAccounts = useCallback(() => {
@@ -110,6 +119,40 @@ function AccountsList() {
     navigate(`/accounts/edit/${accountId}`);
   };
 
+  const handleDeleteAccount = (account) => {
+    setAccountToDelete(account);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    const token = getToken();
+    if (!token || !accountToDelete) {
+      setError('Authentication required or invalid account');
+      setDeleteDialogOpen(false);
+      return;
+    }
+
+    axios.delete(`/api/accounts/${accountToDelete.id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(response => {
+        setSuccess('Account deleted successfully');
+        setDeleteDialogOpen(false);
+        fetchAccounts(); // Refresh the accounts list
+      })
+      .catch(error => {
+        console.error('Error deleting account:', error);
+        const errorMessage = error.response?.data?.error || 'Failed to delete account. Please try again.';
+        setError(errorMessage);
+        setDeleteDialogOpen(false);
+      });
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setAccountToDelete(null);
+  };
+
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Typography variant="h4" gutterBottom>
@@ -119,6 +162,12 @@ function AccountsList() {
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {success}
         </Alert>
       )}
       
@@ -156,6 +205,13 @@ function AccountsList() {
                     >
                       <EditIcon />
                     </IconButton>
+                    <IconButton 
+                      color="error" 
+                      onClick={() => handleDeleteAccount(account)}
+                      aria-label="delete account"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))
@@ -178,6 +234,32 @@ function AccountsList() {
           rowsPerPageOptions={[5, 10, 25]}
         />
       </TableContainer>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={closeDeleteDialog}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Delete Account
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete the account "{accountToDelete?.name}"?
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDeleteAccount} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
