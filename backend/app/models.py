@@ -54,7 +54,7 @@ class Transaction(db.Model):
     description = db.Column(db.String(200), nullable=False)
     payee = db.Column(db.String(100))
     amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(3), default='USD')
+    currency = db.Column(db.String(3), default='INR')
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships already defined via backref in User and Account models
@@ -83,7 +83,7 @@ class Account(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     type = db.Column(db.String(20), nullable=False)  # asset, liability, equity, income, expense
-    currency = db.Column(db.String(3), default='USD')
+    currency = db.Column(db.String(3), default='INR')
     balance = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     

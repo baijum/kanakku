@@ -50,7 +50,7 @@ def create_account():
         user_id=current_user.id,
         name=data['name'],
         type=data['type'],
-        currency=data.get('currency', 'USD'),
+        currency=data.get('currency', 'INR'),
         balance=data.get('balance', 0.0)
     )
     

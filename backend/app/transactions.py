@@ -77,7 +77,7 @@ def create_transaction():
                 description=data['payee'],  # Use payee as description
                 payee=data['payee'],
                 amount=amount_float,
-                currency=posting.get('currency', 'USD')
+                currency=posting.get('currency', 'INR')
             )
             
             # Update the account balance based on account type
@@ -453,7 +453,7 @@ def update_transaction_with_postings(transaction_id):
                 description=data['payee'],  # Use payee as description
                 payee=data['payee'],
                 amount=amount_float,
-                currency=posting.get('currency', 'USD')
+                currency=posting.get('currency', 'INR')
             )
             
             # Update the account balance based on account type

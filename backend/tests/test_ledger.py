@@ -43,7 +43,7 @@ def account(app, db_session):
             name='Test Account',
             type='asset',
             balance=1000.00,
-            currency='USD'
+            currency='INR'
         )
         db_session.add(account)
         db_session.commit()
@@ -56,7 +56,7 @@ def test_get_transactions(authenticated_client, app, db_session, user):
         test_account = db_session.query(Account).filter_by(user_id=user.id, name='Test Account').first()
         if not test_account:
             # If it doesn't exist for some reason (e.g., fixture failed), create it
-            test_account = Account(user_id=user.id, name='Test Account', type='asset', balance=1000.0, currency='USD')
+            test_account = Account(user_id=user.id, name='Test Account', type='asset', balance=1000.0, currency='INR')
             db_session.add(test_account)
             db_session.commit()
             # Need to re-fetch after commit if created here
@@ -94,7 +94,7 @@ def test_create_account(authenticated_client, user, db_session):
         account_data = {
             'name': 'Assets:Savings',
             'type': 'asset',
-            'currency': 'USD'
+            'currency': 'INR'
         }
         
         response = authenticated_client.post('/api/accounts', json=account_data)
@@ -123,7 +123,7 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
                  pytest.fail("User fixture could not be re-fetched in session")
             if not test_account:
                  # If the account doesn't exist (e.g., fixture setup issue), create it here
-                 test_account = Account(user_id=attached_user.id, name='Test Account', type='asset', balance=1000.0, currency='USD')
+                 test_account = Account(user_id=attached_user.id, name='Test Account', type='asset', balance=1000.0, currency='INR')
                  db_session.add(test_account)
                  db_session.commit()
                  # Re-fetch after commit
@@ -138,7 +138,7 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
                 description="Grocery Shopping",
                 payee="Local Mart",
                 amount=-75.50,
-                currency="USD"
+                currency="INR"
             )
             db_session.add(transaction)
             db_session.commit()
@@ -153,4 +153,4 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
             assert '2024-07-27 * Grocery Shopping' in text
             assert 'Payee: Local Mart' in text
             assert 'Test Account' in text
-            assert '-75.50 USD' in text
+            assert '-75.50 INR' in text

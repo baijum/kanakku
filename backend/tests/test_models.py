@@ -33,7 +33,7 @@ def test_transaction_creation(db_session, user):
         description='Test transaction',
         payee='Test payee',
         amount=100.0,
-        currency='USD'
+        currency='INR'
     )
     db_session.add(transaction)
     db_session.commit()
@@ -49,7 +49,7 @@ def test_account_creation(db_session, user):
         user_id=user.id,
         name='Test Account',
         type='asset',
-        currency='USD',
+        currency='INR',
         balance=1000.0
     )
     db_session.add(account)
@@ -68,7 +68,7 @@ def test_user_transactions_relationship(db_session, user):
         description='Test transaction',
         payee='Test payee',
         amount=100.0,
-        currency='USD'
+        currency='INR'
     )
     db_session.add(transaction)
     db_session.commit()
@@ -85,7 +85,7 @@ def test_user_accounts_relationship(db_session, user):
         user_id=user.id,
         name='Test Account',
         type='asset',
-        currency='USD',
+        currency='INR',
         balance=1000.0
     )
     db_session.add(account)

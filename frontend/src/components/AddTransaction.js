@@ -28,8 +28,8 @@ function AddTransaction() {
   const [status, setStatus] = useState('');
   const [payee, setPayee] = useState('');
   const [postings, setPostings] = useState([
-    { account: '', amount: '', currency: '$' },
-    { account: '', amount: '', currency: '$' },
+    { account: '', amount: '', currency: '₹' },
+    { account: '', amount: '', currency: '₹' },
   ]);
   const [accounts, setAccounts] = useState([]);
   const [error, setError] = useState('');
@@ -56,7 +56,7 @@ function AddTransaction() {
   }, []);
 
   const handleAddPosting = () => {
-    setPostings([...postings, { account: '', amount: '', currency: '$' }]);
+    setPostings([...postings, { account: '', amount: '', currency: '₹' }]);
   };
 
   const handleRemovePosting = (index) => {
@@ -111,8 +111,8 @@ function AddTransaction() {
         setStatus('');
         setPayee('');
         setPostings([
-          { account: '', amount: '', currency: '$' },
-          { account: '', amount: '', currency: '$' },
+          { account: '', amount: '', currency: '₹' },
+          { account: '', amount: '', currency: '₹' },
         ]);
         alert('Transaction added successfully!');
       })

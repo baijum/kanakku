@@ -38,7 +38,7 @@ function EditTransaction() {
   const [payee, setPayee] = useState('');
   const [status, setStatus] = useState('');
   const [postings, setPostings] = useState([
-    { account: '', amount: '', currency: 'USD' },
+    { account: '', amount: '', currency: 'INR' },
   ]);
   
   // Track the original transaction data for comparison
@@ -108,7 +108,7 @@ function EditTransaction() {
             account: tx.account_name || '',
             account_id: tx.account_id,
             amount: tx.amount.toString(),
-            currency: tx.currency || 'USD',
+            currency: tx.currency || 'INR',
           }));
           
           console.log('Initial postings from related transactions:', initialPostings);
@@ -137,7 +137,7 @@ function EditTransaction() {
             const balancingPosting = {
               account: balancingAccountName,
               amount: (-totalAmount).toFixed(2), // Balance out the total
-              currency: initialPostings[0]?.currency || 'USD',
+              currency: initialPostings[0]?.currency || 'INR',
             };
             
             console.log('Adding balancing posting:', balancingPosting);
@@ -160,8 +160,8 @@ function EditTransaction() {
           }
           
           setPostings([
-            { account: account1, amount: '100', currency: 'USD' },
-            { account: account2, amount: '-100', currency: 'USD' }
+            { account: account1, amount: '100', currency: 'INR' },
+            { account: account2, amount: '-100', currency: 'INR' }
           ]);
         }
       }
@@ -224,7 +224,7 @@ function EditTransaction() {
       { 
         account: defaultAccount, 
         amount: '0', 
-        currency: 'USD' 
+        currency: 'INR' 
       }
     ]);
   };
@@ -294,7 +294,7 @@ function EditTransaction() {
       postings: postings.map(posting => ({
         account: posting.account,
         amount: parseFloat(posting.amount),
-        currency: posting.currency || 'USD',
+        currency: posting.currency || 'INR',
         id: posting.id, // Include original ID if available
       })),
       original_transaction_ids: existingTransactionIds,
@@ -420,25 +420,19 @@ function EditTransaction() {
                           console.log(`Rendering value for posting ${index}, selected:`, selected);
                           // Find the account with matching name
                           const selectedAccount = accounts.find(a => a.name === selected);
-                          console.log(`Found matching account:`, selectedAccount);
-                          return selectedAccount ? selectedAccount.fullName : selected;
+                          console.log(`Rendering account:`, selectedAccount);
+                          return selectedAccount ? selectedAccount.fullName : '';
                         }}
                       >
-                        {accounts && accounts.length > 0 ? (
-                          accounts.map((account, accountIndex) => (
-                            <MenuItem key={accountIndex} value={account.name}>
-                              {account.fullName}
-                            </MenuItem>
-                          ))
-                        ) : (
-                          <MenuItem value="" disabled>
-                            No accounts available
+                        {accounts.map((account) => (
+                          <MenuItem key={account.id} value={account.name}>
+                            {account.fullName}
                           </MenuItem>
-                        )}
+                        ))}
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={5}>
+                  <Grid item xs={12} sm={4}>
                     <TextField
                       fullWidth
                       label="Amount"
@@ -448,58 +442,51 @@ function EditTransaction() {
                       required
                     />
                   </Grid>
-                  <Grid item xs={12} sm={2}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                      <IconButton
-                        onClick={() => handleRemovePosting(index)}
-                        disabled={postings.length <= 2}
+                  <Grid item xs={12} sm={3}>
+                    <FormControl fullWidth>
+                      <InputLabel>Currency</InputLabel>
+                      <Select
+                        value={posting.currency || 'INR'}
+                        onChange={(e) => handlePostingChange(index, 'currency', e.target.value)}
+                        label="Currency"
+                        required
                       >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
+                        <MenuItem value="INR">INR</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <IconButton
+                      onClick={() => handleRemovePosting(index)}
+                      color="error"
+                      aria-label="remove"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
                   </Grid>
                 </React.Fragment>
               );
             })}
-            
-            <Grid item xs={12}>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={handleAddPosting}
-                variant="outlined"
-                sx={{ mr: 2 }}
-              >
-                Add Posting
-              </Button>
-              <Button
-                onClick={fetchAccounts}
-                variant="outlined"
-                color="secondary"
-              >
-                Refresh Accounts
-              </Button>
-            </Grid>
-            
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-              <Button 
-                variant="outlined" 
-                onClick={() => navigate('/transactions')}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary"
-              >
-                Update Transaction
-              </Button>
-            </Grid>
           </Grid>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ mt: 3, mr: 1 }}
+          >
+            Update Transaction
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/transactions')}
+            sx={{ mt: 3, ml: 1 }}
+          >
+            Cancel
+          </Button>
         </form>
       </Paper>
     </Box>
   );
 }
 
-export default EditTransaction; 
+export default EditTransaction;

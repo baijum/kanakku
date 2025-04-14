@@ -34,7 +34,7 @@ def test_add_transaction(authenticated_client, mock_ledger_command):
     account_data = {
         'name': 'Assets:Checking',
         'type': 'asset',
-        'currency': 'USD'
+        'currency': 'INR'
     }
     account_response = authenticated_client.post('/api/accounts', json=account_data)
     assert account_response.status_code == 201
@@ -45,7 +45,7 @@ def test_add_transaction(authenticated_client, mock_ledger_command):
         'description': 'Grocery Shopping',
         'payee': 'Test Store',
         'amount': 50.00,
-        'currency': 'USD',
+        'currency': 'INR',
         'account_name': 'Assets:Checking'
     }
     
@@ -68,7 +68,7 @@ def test_add_account(authenticated_client):
     response = authenticated_client.post('/api/accounts', json={
         'name': 'Test Account',
         'type': 'asset',
-        'currency': 'USD'
+        'currency': 'INR'
     })
     assert response.status_code == 201
     assert 'Test Account' in response.json['account']['name']

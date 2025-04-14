@@ -12,7 +12,7 @@ def test_create_transaction(authenticated_client, user, account):
         'description': 'Coffee purchase',
         'payee': 'Cafe Nero',
         'amount': -5.50, # Negative for expense
-        'currency': 'USD',
+        'currency': 'INR',
         'account_name': account.name # Link to existing account
     }
     response = authenticated_client.post('/api/transactions', json=transaction_data)
@@ -55,7 +55,7 @@ def test_add_transaction(authenticated_client, user, account): # Renamed from te
         'description': 'Lunch',
         'payee': 'Restaurant',
         'amount': -25.00,
-        'currency': 'USD',
+        'currency': 'INR',
         'account_name': account.name
     }
     response = authenticated_client.post('/api/transactions', json=transaction_data)
@@ -69,7 +69,7 @@ def test_add_transaction_missing_fields(authenticated_client):
         'date': '2024-01-17',
         # Missing description, amount, account_name
         'payee': 'Store',
-        'currency': 'USD'
+        'currency': 'INR'
     }
     response = authenticated_client.post('/api/transactions', json=transaction_data)
     assert response.status_code == 400 # Expect Bad Request
@@ -88,7 +88,7 @@ def test_add_transaction_unbalanced(authenticated_client, account, mock_ledger_c
         'description': 'Unbalanced Transaction',
         'payee': 'Error Inc',
         'amount': 1000.00,
-        'currency': 'USD',
+        'currency': 'INR',
         'account_name': account.name
     }
     response = authenticated_client.post('/api/transactions', json=transaction_data)

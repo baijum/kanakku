@@ -94,7 +94,7 @@ function Dashboard() {
                             <br />
                             {transaction.postings.map((posting, pIndex) => (
                               <span key={pIndex}>
-                                {posting.account}: {posting.currency} {posting.amount}
+                                {posting.account}: {posting.currency === 'INR' ? `₹${posting.amount}` : `${posting.currency} ${posting.amount}`}
                                 <br />
                               </span>
                             ))}

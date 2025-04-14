@@ -133,7 +133,10 @@ def get_balance_report():
                 if current_type is not None:
                     # Add subtotal for previous type
                     for currency, amount in total_by_type.items():
-                        result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
+                        if currency == 'INR':
+                            result.append(f"    {'':<38} {'₹'}{amount:.2f}")
+                        else:
+                            result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
                     result.append("")  # Empty line between sections
                 
                 current_type = acct.type
@@ -141,7 +144,10 @@ def get_balance_report():
                 total_by_type = {}
             
             # Format account balance
-            balance_str = f"{acct.balance:.2f} {acct.currency}"
+            if acct.currency == 'INR':
+                balance_str = f"₹{acct.balance:.2f}"
+            else:
+                balance_str = f"{acct.balance:.2f} {acct.currency}"
             result.append(f"    {acct.name:<38} {balance_str:>15}")
             
             # Track total by currency
@@ -152,7 +158,10 @@ def get_balance_report():
         # Add final type total
         if current_type is not None:
             for currency, amount in total_by_type.items():
-                result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
+                if currency == 'INR':
+                    result.append(f"    {'':<38} {'₹'}{amount:.2f}")
+                else:
+                    result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
         
         # Join all lines with newlines
         output = '\n'.join(result)
@@ -192,7 +201,10 @@ def get_income_statement():
         income_total = {}
         
         for acct in income:
-            balance_str = f"{acct.balance:.2f} {acct.currency}"
+            if acct.currency == 'INR':
+                balance_str = f"₹{acct.balance:.2f}"
+            else:
+                balance_str = f"{acct.balance:.2f} {acct.currency}"
             result.append(f"    {acct.name:<38} {balance_str:>15}")
             
             if acct.currency not in income_total:
@@ -201,14 +213,20 @@ def get_income_statement():
         
         # Add income subtotal
         for currency, amount in income_total.items():
-            result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
+            if currency == 'INR':
+                result.append(f"    {'':<38} {'₹'}{amount:.2f}")
+            else:
+                result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
         
         result.append("")  # Empty line between sections
         result.append("Expenses")
         expense_total = {}
         
         for acct in expenses:
-            balance_str = f"{acct.balance:.2f} {acct.currency}"
+            if acct.currency == 'INR':
+                balance_str = f"₹{acct.balance:.2f}"
+            else:
+                balance_str = f"{acct.balance:.2f} {acct.currency}"
             result.append(f"    {acct.name:<38} {balance_str:>15}")
             
             if acct.currency not in expense_total:
@@ -217,7 +235,10 @@ def get_income_statement():
         
         # Add expense subtotal
         for currency, amount in expense_total.items():
-            result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
+            if currency == 'INR':
+                result.append(f"    {'':<38} {'₹'}{amount:.2f}")
+            else:
+                result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
         
         # Add net income/loss section
         result.append("")  # Empty line
@@ -229,7 +250,10 @@ def get_income_statement():
             income_amt = income_total.get(currency, 0)
             expense_amt = expense_total.get(currency, 0)
             net_amt = income_amt - expense_amt
-            result.append(f"    {'':<38} {net_amt:.2f} {currency:>3}")
+            if currency == 'INR':
+                result.append(f"    {'':<38} {'₹'}{net_amt:.2f}")
+            else:
+                result.append(f"    {'':<38} {net_amt:.2f} {currency:>3}")
         
         # Join all lines with newlines
         output = '\n'.join(result)

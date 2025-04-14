@@ -163,7 +163,7 @@ def transaction(app, db_session, user):
         description='Test transaction',
         payee='Test payee',
         amount=100.0,
-        currency='USD'
+        currency='INR'
         # Ensure account_id is set if needed, maybe link to account fixture?
         # account_id=account.id # Example if account fixture is also used
     )
@@ -187,7 +187,7 @@ def account(app, db_session, user):
         user_id=user.id,
         name='Test Account',
         type='asset',
-        currency='USD',
+        currency='INR',
         balance=1000.0
     )
     db_session.add(account)
