@@ -10,6 +10,7 @@ A modern web interface for the Ledger CLI double-entry accounting tool. Kanakku 
 - Modern, responsive web interface
 - Single-user, local-first design
 - JWT-based authentication
+- Google Sign-In integration
 
 ## Prerequisites
 
@@ -82,6 +83,38 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
     *   `GET /api/v1/ledgertransactions` - Get all transactions for the current user in Ledger text format.
 *   **Reports (`reports.py`)**
     *   (No active API endpoints currently - routes are commented out)
+
+## Authentication
+
+Kanakku supports two authentication methods:
+
+1. **Traditional username/password authentication**:
+   - Register with a username, email, and password
+   - Login with username and password
+   - User accounts require activation by an administrator
+
+2. **Google Sign-In**:
+   - Sign in with your Google account
+   - New users are automatically created and activated
+   - Existing users can link their account with Google
+
+### Setting up Google OAuth
+
+To enable Google Sign-In, you need to:
+
+1. Create a project in the [Google Cloud Console](https://console.cloud.google.com/)
+2. Configure the OAuth consent screen
+3. Create OAuth client credentials (Web application type)
+4. Add authorized JavaScript origins:
+   - `http://localhost:5000` (backend development server)
+   - `http://localhost:3000` (frontend development server)
+5. Add authorized redirect URIs:
+   - `http://localhost:5000/api/auth/google/callback`
+6. Copy the Client ID and Client Secret to your backend `.env` file:
+   ```
+   GOOGLE_CLIENT_ID=your-client-id
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   ```
 
 ## Setup
 

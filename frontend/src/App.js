@@ -36,6 +36,7 @@ import EditTransaction from './components/Transactions/EditTransaction';
 import PreambleList from './components/Preambles/PreambleList';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
+import GoogleAuthCallback from './components/Auth/GoogleAuthCallback';
 
 const drawerWidth = 240;
 
@@ -322,6 +323,8 @@ function App() {
               />
               <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
               <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
+              <Route path="/google-auth-callback" element={<GoogleAuthCallback setIsLoggedIn={setIsLoggedIn} />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </Box>
         </Box>

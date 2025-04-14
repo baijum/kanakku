@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app, Response
+from flask import Blueprint, request, jsonify, current_app, Response, url_for, redirect, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user
 from datetime import datetime, timezone, timedelta
@@ -7,6 +7,9 @@ from functools import wraps
 from app.models import User, db
 from app.extensions import login_manager
 import logging
+import requests
+import json
+import os
 
 auth = Blueprint('auth', __name__)
 
@@ -176,3 +179,116 @@ def update_password():
     db.session.commit()
     
     return jsonify({"message": "Password updated successfully"}), 200
+
+# Google OAuth2 route
+@auth.route('/api/auth/google', methods=['GET'])
+def google_login():
+    # Get Google OAuth2 configuration
+    google_client_id = current_app.config.get('GOOGLE_CLIENT_ID')
+    if not google_client_id:
+        return jsonify({'error': 'Google OAuth is not configured'}), 500
+    
+    # Generate a random state for CSRF protection
+    import secrets
+    state = secrets.token_urlsafe(16)
+    session['oauth_state'] = state
+    
+    # Redirect to Google's OAuth 2.0 server
+    redirect_uri = request.url_root.rstrip('/') + url_for('auth.google_callback')
+    
+    params = {
+        'client_id': google_client_id,
+        'redirect_uri': redirect_uri,
+        'scope': 'openid email profile',
+        'state': state,
+        'response_type': 'code',
+        'prompt': 'select_account'
+    }
+    
+    auth_url = 'https://accounts.google.com/o/oauth2/v2/auth'
+    from urllib.parse import urlencode
+    auth_url += '?' + urlencode(params)
+    
+    return jsonify({'auth_url': auth_url})
+
+@auth.route('/api/auth/google/callback', methods=['GET'])
+def google_callback():
+    # Verify state parameter to prevent CSRF
+    state = request.args.get('state')
+    if not state or session.pop('oauth_state', None) != state:
+        return jsonify({'error': 'Invalid state parameter'}), 400
+    
+    # Get authorization code
+    code = request.args.get('code')
+    if not code:
+        return jsonify({'error': 'Authorization code not provided'}), 400
+    
+    # Exchange code for tokens
+    token_url = 'https://oauth2.googleapis.com/token'
+    redirect_uri = request.url_root.rstrip('/') + url_for('auth.google_callback')
+    
+    token_data = {
+        'code': code,
+        'client_id': current_app.config.get('GOOGLE_CLIENT_ID'),
+        'client_secret': current_app.config.get('GOOGLE_CLIENT_SECRET'),
+        'redirect_uri': redirect_uri,
+        'grant_type': 'authorization_code'
+    }
+    
+    try:
+        token_response = requests.post(token_url, data=token_data)
+        token_response.raise_for_status()
+        tokens = token_response.json()
+        
+        # Get user info using the access token
+        userinfo_url = 'https://www.googleapis.com/oauth2/v3/userinfo'
+        userinfo_response = requests.get(
+            userinfo_url,
+            headers={'Authorization': f'Bearer {tokens["access_token"]}'}
+        )
+        userinfo_response.raise_for_status()
+        userinfo = userinfo_response.json()
+        
+        # Check if user exists
+        user = User.query.filter_by(google_id=userinfo['sub']).first()
+        
+        if not user:
+            # Check if email exists
+            user = User.query.filter_by(email=userinfo['email']).first()
+            if user:
+                # Update existing user with Google ID
+                user.google_id = userinfo['sub']
+                user.picture = userinfo.get('picture')
+            else:
+                # Create new user
+                username = userinfo['email'].split('@')[0]
+                # Ensure username is unique
+                base_username = username
+                count = 1
+                while User.query.filter_by(username=username).first():
+                    username = f"{base_username}{count}"
+                    count += 1
+                
+                user = User(
+                    username=username,
+                    email=userinfo['email'],
+                    google_id=userinfo['sub'],
+                    picture=userinfo.get('picture'),
+                    is_active=True  # Auto-activate Google users
+                )
+                
+            db.session.add(user)
+            db.session.commit()
+        
+        # Generate JWT token
+        token = create_access_token(identity=user.id, additional_claims={"sub": str(user.id)})
+        
+        # Return token in query parameters for the frontend to consume
+        frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:3000')
+        redirect_url = f"{frontend_url}/google-auth-callback?token={token}"
+        
+        return redirect(redirect_url)
+    
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f"Error in Google OAuth: {str(e)}")
+        return jsonify({'error': 'Failed to authenticate with Google'}), 500

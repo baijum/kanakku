@@ -14,6 +14,10 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
+    # Google Auth fields
+    google_id = db.Column(db.String(100), unique=True, nullable=True)
+    picture = db.Column(db.String(500), nullable=True)
+    
     # Define relationships once, with consistent backrefs
     transactions = db.relationship('Transaction', backref='user', lazy=True, foreign_keys='Transaction.user_id')
     accounts = db.relationship('Account', backref='user', lazy=True, foreign_keys='Account.user_id')
@@ -51,7 +55,8 @@ class User(UserMixin, db.Model):
             'username': self.username,
             'email': self.email,
             'is_active': self.is_active,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'picture': self.picture
         }
 
     def __repr__(self):

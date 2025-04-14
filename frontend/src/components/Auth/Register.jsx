@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, CircularProgress, Alert, Link } from '@mui/material';
+import { Box, TextField, Button, Typography, CircularProgress, Alert, Link, Divider } from '@mui/material';
 import axios from 'axios';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import GoogleIcon from '@mui/icons-material/Google';
 
 function Register({ setIsLoggedIn }) {
   const [username, setUsername] = useState('');
@@ -10,6 +11,7 @@ function Register({ setIsLoggedIn }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
@@ -84,6 +86,27 @@ function Register({ setIsLoggedIn }) {
       setError(err.response?.data?.error || err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setGoogleLoading(true);
+    
+    try {
+      const response = await axios.get('/api/auth/google');
+      
+      if (response.data && response.data.auth_url) {
+        // Redirect to Google's authentication page
+        window.location.href = response.data.auth_url;
+      } else {
+        setError('Failed to start Google authentication');
+        setGoogleLoading(false);
+      }
+    } catch (err) {
+      console.error("Google login error:", err);
+      setError(err.response?.data?.error || err.message || 'Failed to start Google authentication');
+      setGoogleLoading(false);
     }
   };
 
@@ -163,10 +186,24 @@ function Register({ setIsLoggedIn }) {
           fullWidth
           variant="contained"
           sx={{ mt: 3, mb: 2 }}
-          disabled={loading}
+          disabled={loading || googleLoading}
         >
           {loading ? <CircularProgress size={24} /> : 'Register'}
         </Button>
+        
+        <Divider sx={{ my: 2 }}>or</Divider>
+        
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<GoogleIcon />}
+          onClick={handleGoogleLogin}
+          disabled={loading || googleLoading}
+          sx={{ mb: 2 }}
+        >
+          {googleLoading ? <CircularProgress size={24} /> : 'Sign up with Google'}
+        </Button>
+        
         <Box textAlign="center">
           <Link component={RouterLink} to="/login" variant="body2">
             Already have an account? Sign in
