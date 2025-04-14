@@ -144,3 +144,13 @@ To run the backend tests:
     ```bash
     python -m pytest -v backend/tests/
     ```
+
+## Activating a User
+
+```
+$ cd backend
+$ flask shell
+>>> from app.models import User, db
+>>> user = User.query.filter_by(username='your_username').first()
+>>> user.activate()
+```
