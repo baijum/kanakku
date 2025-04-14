@@ -19,6 +19,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -39,6 +43,9 @@ function ViewTransactions() {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
+  const [preambles, setPreambles] = useState([]);
+  const [selectedPreamble, setSelectedPreamble] = useState('');
+  const [openExportDialog, setOpenExportDialog] = useState(false);
   const navigate = useNavigate();
 
   const fetchTransactions = useCallback(() => {
@@ -75,9 +82,31 @@ function ViewTransactions() {
       });
   }, [page, rowsPerPage, startDate, endDate]);
 
+  // Fetch preambles when component mounts
+  const fetchPreambles = useCallback(() => {
+    const token = getToken();
+    axios.get('/api/v1/preambles', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(response => {
+        if (response.data && Array.isArray(response.data.preambles)) {
+          setPreambles(response.data.preambles);
+          // Find and set default preamble if available
+          const defaultPreamble = response.data.preambles.find(p => p.is_default);
+          if (defaultPreamble) {
+            setSelectedPreamble(defaultPreamble.id.toString());
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching preambles:', error);
+      });
+  }, []);
+
   useEffect(() => {
     fetchTransactions();
-  }, [fetchTransactions]);
+    fetchPreambles();
+  }, [fetchTransactions, fetchPreambles]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -138,11 +167,29 @@ function ViewTransactions() {
       });
   };
 
+  const handleOpenExportDialog = () => {
+    setOpenExportDialog(true);
+  };
+
+  const handleCloseExportDialog = () => {
+    setOpenExportDialog(false);
+  };
+
+  const handlePreambleChange = (event) => {
+    setSelectedPreamble(event.target.value);
+  };
+
   const handleExportLedgerFormat = () => {
     setExportLoading(true);
     const token = getToken();
     
-    axios.get('/api/v1/ledgertransactions', {
+    // Prepare URL with preamble ID if selected
+    let url = '/api/v1/ledgertransactions';
+    if (selectedPreamble) {
+      url += `?preamble_id=${selectedPreamble}`;
+    }
+    
+    axios.get(url, {
       headers: { 'Authorization': `Bearer ${token}` },
       responseType: 'blob' // Important for handling the response as a file
     })
@@ -164,10 +211,12 @@ function ViewTransactions() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         setExportLoading(false);
+        handleCloseExportDialog();
       })
       .catch(error => {
         console.error('Error exporting transactions in ledger format:', error);
         setExportLoading(false);
+        handleCloseExportDialog();
         // You could add error state and display message to user
       });
   };
@@ -203,7 +252,7 @@ function ViewTransactions() {
             <Button
               variant="outlined"
               startIcon={<FileDownloadIcon />}
-              onClick={handleExportLedgerFormat}
+              onClick={handleOpenExportDialog}
               disabled={exportLoading}
               fullWidth
             >
@@ -212,6 +261,46 @@ function ViewTransactions() {
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Export Dialog */}
+      <Dialog open={openExportDialog} onClose={handleCloseExportDialog}>
+        <DialogTitle>Export Transactions</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Select a preamble to include at the beginning of the exported file.
+          </DialogContentText>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel id="preamble-select-label">Preamble</InputLabel>
+            <Select
+              labelId="preamble-select-label"
+              id="preamble-select"
+              value={selectedPreamble}
+              label="Preamble"
+              onChange={handlePreambleChange}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              {preambles.map((preamble) => (
+                <MenuItem key={preamble.id} value={preamble.id.toString()}>
+                  {preamble.name} {preamble.is_default ? '(Default)' : ''}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseExportDialog}>Cancel</Button>
+          <Button 
+            onClick={handleExportLedgerFormat}
+            variant="contained"
+            disabled={exportLoading}
+          >
+            Export
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>

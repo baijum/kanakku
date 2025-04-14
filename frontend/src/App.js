@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ListIcon from '@mui/icons-material/List';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import DescriptionIcon from '@mui/icons-material/Description';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -30,6 +31,7 @@ import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import ViewTransactions from './components/ViewTransactions';
 import EditTransaction from './components/Transactions/EditTransaction';
+import PreambleList from './components/Preambles/PreambleList';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 const drawerWidth = 240;
@@ -126,6 +128,12 @@ function App() {
               <AccountBalanceWalletIcon />
             </ListItemIcon>
             <ListItemText primary="Accounts" />
+          </ListItem>
+          <ListItem button component={RouterLink} to="/preambles" onClick={isMobile ? handleDrawerToggle : undefined}>
+            <ListItemIcon>
+              <DescriptionIcon />
+            </ListItemIcon>
+            <ListItemText primary="Preambles" />
           </ListItem>
         </List>
       </Box>
@@ -277,7 +285,15 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route path="/login" element={<Login />} />
+              <Route 
+                path="/preambles" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <PreambleList />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
             </Routes>
           </Box>
         </Box>

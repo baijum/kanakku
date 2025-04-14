@@ -96,7 +96,7 @@ def create_app(config_name='default'):
     # Now work within the app context for DB creation and blueprints
     with app.app_context():
         # Import models needed for create_all
-        from .models import Transaction, Account 
+        from .models import Transaction, Account, Preamble
         db.create_all()
         
         # Register blueprints
@@ -110,6 +110,8 @@ def create_app(config_name='default'):
         app.register_blueprint(transactions_blueprint)
         from .accounts import accounts as accounts_blueprint
         app.register_blueprint(accounts_blueprint)
+        from .preamble import preamble as preamble_blueprint
+        app.register_blueprint(preamble_blueprint)
         from .errors import errors as errors_blueprint
         app.register_blueprint(errors_blueprint)
         from .api import api as api_blueprint

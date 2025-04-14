@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 from flask import Blueprint, request, jsonify, current_app, Response
 # from flask_login import login_required, current_user # Keep if used elsewhere
 from . import db
-from .models import Transaction, Account
+from .models import Transaction, Account, Preamble
 import logging
 # Use standard flask_jwt_extended imports
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
@@ -27,6 +27,22 @@ def get_transactions_ledger_format():
             # This check might be redundant if @jwt_required() works correctly
             return jsonify({"error": "Authentication required"}), 401
 
+        # Get preamble id if provided in query params
+        preamble_id = request.args.get('preamble_id')
+        
+        # Get preamble content
+        preamble_content = ""
+        if preamble_id:
+            # Get specific preamble if ID provided
+            preamble = Preamble.query.filter_by(id=preamble_id, user_id=user.id).first()
+            if preamble:
+                preamble_content = preamble.content + "\n\n"
+        else:
+            # Otherwise try to get default preamble
+            default_preamble = Preamble.query.filter_by(user_id=user.id, is_default=True).first()
+            if default_preamble:
+                preamble_content = default_preamble.content + "\n\n"
+
         # Fetch transactions joined with account names for the user
         transactions = db.session.query(
             Transaction,
@@ -36,8 +52,8 @@ def get_transactions_ledger_format():
          .order_by(Transaction.date.asc()) \
          .all()
 
-        if not transactions:
-            return Response("", mimetype='text/plain') # Return empty if no transactions
+        if not transactions and not preamble_content:
+            return Response("", mimetype='text/plain') # Return empty if no transactions and no preamble
 
         # Group transactions by date and description
         transaction_groups = {}
@@ -66,7 +82,8 @@ def get_transactions_ledger_format():
             ledger_output.append(entry)
 
         # Join with an empty string (not newline) as entries already have trailing newlines
-        return Response("".join(ledger_output), mimetype='text/plain')
+        # Add preamble at the beginning
+        return Response(preamble_content + "".join(ledger_output), mimetype='text/plain')
 
     except Exception as e:
         logging.error(f"Error generating ledger format: {e}")

@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     # Define relationships once, with consistent backrefs
     transactions = db.relationship('Transaction', backref='user', lazy=True, foreign_keys='Transaction.user_id')
     accounts = db.relationship('Account', backref='user', lazy=True, foreign_keys='Account.user_id')
+    preambles = db.relationship('Preamble', backref='user', lazy=True, foreign_keys='Preamble.user_id')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -98,4 +99,24 @@ class Account(db.Model):
             'currency': self.currency,
             'balance': self.balance,
             'created_at': self.created_at.isoformat()
+        }
+
+class Preamble(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    is_default = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'name': self.name,
+            'content': self.content,
+            'is_default': self.is_default,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
         } 
