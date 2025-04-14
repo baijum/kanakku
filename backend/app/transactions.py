@@ -19,10 +19,14 @@ def create_transaction():
         try:
             data = request.get_json()
             if data is None:
-                current_app.logger.error("Failed to parse JSON: {}".format(request.data))
+                current_app.logger.error(
+                    "Failed to parse JSON: {}".format(request.data)
+                )
                 return jsonify({"error": "Request must be valid JSON"}), 400
         except Exception as json_error:
-            current_app.logger.error("JSON parsing error: {}: {}".format(str(json_error), request.data))
+            current_app.logger.error(
+                "JSON parsing error: {}: {}".format(str(json_error), request.data)
+            )
             return jsonify({"error": "Invalid JSON format"}), 400
 
         # Validate required top-level fields
@@ -32,7 +36,11 @@ def create_transaction():
         if "payee" not in data or not data["payee"]:
             return jsonify({"error": "Missing required field: payee"}), 400
 
-        if "postings" not in data or not isinstance(data["postings"], list) or len(data["postings"]) < 1:
+        if (
+            "postings" not in data
+            or not isinstance(data["postings"], list)
+            or len(data["postings"]) < 1
+        ):
             return jsonify({"error": "Missing or invalid postings"}), 400
 
         # Validate date format
@@ -61,11 +69,16 @@ def create_transaction():
             try:
                 amount_float = float(posting["amount"])
             except ValueError:
-                return jsonify({"error": "Invalid amount format. Must be a number."}), 400
+                return (
+                    jsonify({"error": "Invalid amount format. Must be a number."}),
+                    400,
+                )
 
             # Find the account
             account_name = posting["account"]
-            account = Account.query.filter_by(name=account_name, user_id=user.id).first()
+            account = Account.query.filter_by(
+                name=account_name, user_id=user.id
+            ).first()
 
             if not account:
                 current_app.logger.error("Account not found: {}".format(account_name))
@@ -108,12 +121,18 @@ def create_transaction():
             "transactions": [tx.to_dict() for tx in transaction_responses],
         }
 
-        current_app.logger.debug("Transaction response: {}".format(json.dumps(response_data)))
+        current_app.logger.debug(
+            "Transaction response: {}".format(json.dumps(response_data))
+        )
         return jsonify(response_data), 201
 
     except Exception as e:
         # Catch-all for any unexpected errors during processing
-        current_app.logger.error("Unhandled error in create_transaction: {} - Traceback: {}".format(str(e), traceback.format_exc()))
+        current_app.logger.error(
+            "Unhandled error in create_transaction: {} - Traceback: {}".format(
+                str(e), traceback.format_exc()
+            )
+        )
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
 
@@ -169,8 +188,14 @@ def get_transactions():
 
         for tx in transactions_list:
             # Get account name
+            if not tx.account_id:
+                current_app.logger.error("Transaction has no account_id")
+                continue
             account = db.session.get(Account, tx.account_id)
-            account_name = account.name if account else "Unknown Account"
+            if not account:
+                current_app.logger.error("Account not found for transaction")
+                continue
+            account_name = account.name
 
             # Create a unique key for grouping
             key = f"{tx.date.isoformat()}|{tx.payee}"
@@ -229,8 +254,15 @@ def get_transaction(transaction_id):
             return jsonify({"error": "Transaction not found"}), 404
 
         # Get account name
+        if not transaction.account_id:
+            current_app.logger.error("Transaction has no account_id")
+            return jsonify({"error": "Transaction has no associated account"}), 400
+
         account = db.session.get(Account, transaction.account_id)
-        account_name = account.name if account else "Unknown Account"
+        if not account:
+            current_app.logger.error("Account not found for transaction")
+            return jsonify({"error": "Associated account not found"}), 404
+        account_name = account.name
 
         # Format the transaction
         formatted_transaction = {
@@ -267,14 +299,20 @@ def update_transaction(transaction_id):
         try:
             data = request.get_json()
             if data is None:
-                current_app.logger.error("Failed to parse JSON: {}".format(request.data))
+                current_app.logger.error(
+                    "Failed to parse JSON: {}".format(request.data)
+                )
                 return jsonify({"error": "Request must be valid JSON"}), 400
         except Exception as json_error:
-            current_app.logger.error("JSON parsing error: {}: {}".format(str(json_error), request.data))
+            current_app.logger.error(
+                "JSON parsing error: {}: {}".format(str(json_error), request.data)
+            )
             return jsonify({"error": "Invalid JSON format"}), 400
 
         # Find the transaction
-        transaction = Transaction.query.filter_by(id=transaction_id, user_id=current_user.id).first()
+        transaction = Transaction.query.filter_by(
+            id=transaction_id, user_id=current_user.id
+        ).first()
 
         if not transaction:
             return jsonify({"error": "Transaction not found"}), 404
@@ -299,14 +337,19 @@ def update_transaction(transaction_id):
                 amount_float = float(data["amount"])
                 transaction.amount = amount_float
             except ValueError:
-                return jsonify({"error": "Invalid amount format. Must be a number."}), 400
+                return (
+                    jsonify({"error": "Invalid amount format. Must be a number."}),
+                    400,
+                )
 
         if "currency" in data:
             transaction.currency = data["currency"]
 
         if "account_id" in data:
             new_account_id = data["account_id"]
-            account = Account.query.filter_by(id=new_account_id, user_id=current_user.id).first()
+            account = Account.query.filter_by(
+                id=new_account_id, user_id=current_user.id
+            ).first()
 
             if not account:
                 return jsonify({"error": "Account not found"}), 404
@@ -317,10 +360,16 @@ def update_transaction(transaction_id):
         if "amount" in data or "account_id" in data:
             # Calculate the difference between the new and old amounts
             amount_difference = transaction.amount - original_amount
-            current_app.logger.debug("Original amount: {}, New amount: {}, Difference: {}".format(original_amount, transaction.amount, amount_difference))
+            current_app.logger.debug(
+                "Original amount: {}, New amount: {}, Difference: {}".format(
+                    original_amount, transaction.amount, amount_difference
+                )
+            )
 
             # Apply the difference to the account balance
-            account = Account.query.filter_by(id=transaction.account_id, user_id=current_user.id).first()
+            account = Account.query.filter_by(
+                id=transaction.account_id, user_id=current_user.id
+            ).first()
             if account:
                 current_app.logger.debug("Current balance: {}".format(account.balance))
                 if account.type.lower() in ["liability", "equity", "income"]:
@@ -347,12 +396,18 @@ def update_transaction(transaction_id):
             "transaction": transaction.to_dict(),
         }
 
-        current_app.logger.debug("Transaction update response: {}".format(json.dumps(response_data)))
+        current_app.logger.debug(
+            "Transaction update response: {}".format(json.dumps(response_data))
+        )
         return jsonify(response_data), 200
 
     except Exception as e:
         # Catch-all for any unexpected errors during processing
-        current_app.logger.error("Unhandled error in update_transaction: {} - Traceback: {}".format(str(e), traceback.format_exc()))
+        current_app.logger.error(
+            "Unhandled error in update_transaction: {} - Traceback: {}".format(
+                str(e), traceback.format_exc()
+            )
+        )
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
 
@@ -372,7 +427,9 @@ def update_transaction_with_postings(transaction_id):
         try:
             data = request.get_json()
             if data is None:
-                current_app.logger.error("Failed to parse JSON: {}".format(request.data))
+                current_app.logger.error(
+                    "Failed to parse JSON: {}".format(request.data)
+                )
                 return jsonify({"error": "Request must be valid JSON"}), 400
         except Exception as json_error:
             current_app.logger.error(
@@ -557,8 +614,14 @@ def get_related_transactions(transaction_id):
         formatted_transactions = []
         for tx in related_transactions:
             # Get account name
+            if not tx.account_id:
+                current_app.logger.error("Transaction has no account_id")
+                continue
             account = db.session.get(Account, tx.account_id)
-            account_name = account.name if account else "Unknown Account"
+            if not account:
+                current_app.logger.error("Account not found for transaction")
+                continue
+            account_name = account.name
 
             formatted_transaction = {
                 "id": tx.id,
@@ -680,14 +743,19 @@ def delete_related_transactions(transaction_id):
         # Undo account balance effects and delete each transaction
         for tx in related_transactions:
             # Get the account
+            if not tx.account_id:
+                current_app.logger.error("Transaction has no account_id")
+                continue
             account = db.session.get(Account, tx.account_id)
+            if not account:
+                current_app.logger.error("Account not found for transaction")
+                continue
 
-            if account:
-                # Reverse the effect based on account type
-                if account.type.lower() in ["liability", "equity", "income"]:
-                    account.balance += tx.amount
-                else:
-                    account.balance -= tx.amount
+            # Reverse the effect based on account type
+            if account.type.lower() in ["liability", "equity", "income"]:
+                account.balance += tx.amount
+            else:
+                account.balance -= tx.amount
 
             # Delete the transaction
             db.session.delete(tx)

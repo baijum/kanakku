@@ -1,7 +1,7 @@
 import pytest
 from flask import json
 from app.models import User, Transaction, db, Account
-from datetime import date
+from datetime import date, datetime
 
 # Removed local app fixture
 
@@ -322,3 +322,24 @@ def test_add_transaction_unbalanced(authenticated_client, account, mock_ledger_c
     assert (
         data["transactions"][0]["description"] == "Error Inc"
     )  # Description matches payee
+
+
+@pytest.fixture
+def transaction(db_session, user):
+    """Create a test transaction."""
+    # Create a test account first
+    account = Account(name="Test Account", type="Asset", user_id=user.id)
+    db_session.add(account)
+    db_session.commit()
+
+    # Create a transaction with the account
+    tx = Transaction(
+        date=datetime.now(),
+        description="Test Transaction",
+        amount=100.00,
+        account_id=account.id,
+        user_id=user.id,
+    )
+    db_session.add(tx)
+    db_session.commit()
+    return tx

@@ -20,5 +20,6 @@ def load_user(user_id):
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     from .models import User
+
     identity = jwt_data["sub"]
     return db.session.get(User, identity)

@@ -8,7 +8,11 @@ from flask import (
     redirect,
     session,
 )
-from flask_jwt_extended import create_access_token, jwt_required as flask_jwt_required, current_user
+from flask_jwt_extended import (
+    create_access_token,
+    jwt_required as flask_jwt_required,
+    current_user,
+)
 from app.models import User, db
 from app.utils import send_password_reset_email
 import requests
@@ -37,10 +41,15 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({
-        "message": "User created successfully. Your account is pending activation by an administrator.",
-        "user_id": user.id,
-    }), 201
+    return (
+        jsonify(
+            {
+                "message": "User created successfully. Your account is pending activation by an administrator.",
+                "user_id": user.id,
+            }
+        ),
+        201,
+    )
 
 
 # Add OPTIONS handler for CORS preflight requests
@@ -95,11 +104,18 @@ def login():
     if user and user.check_password(password):
         # Check if user is active
         if not user.is_active:
-            return jsonify({"error": "Account is inactive. Please contact an administrator."}), 403
+            return (
+                jsonify(
+                    {"error": "Account is inactive. Please contact an administrator."}
+                ),
+                403,
+            )
 
         # Generate token
         try:
-            token = create_access_token(identity=user.id, additional_claims={"sub": str(user.id)})
+            token = create_access_token(
+                identity=user.id, additional_claims={"sub": str(user.id)}
+            )
             return jsonify({"message": "Login successful", "token": token}), 200
         except Exception as e:
             current_app.logger.error("Token generation error: {}".format(str(e)))
@@ -139,7 +155,7 @@ def activate_user(user_id):
     # TODO: Add proper admin role checking once roles are implemented
 
     # Get the target user
-    user_to_update = User.query.get(user_id)
+    user_to_update = db.session.get(User, user_id)
     if not user_to_update:
         return jsonify({"error": "User not found"}), 404
 
