@@ -95,7 +95,7 @@ function ViewTransactions() {
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Typography variant="h4" gutterBottom>
-        View Transactions
+        Transactions
       </Typography>
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>

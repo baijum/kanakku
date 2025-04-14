@@ -113,7 +113,7 @@ function App() {
             <ListItemIcon>
               <ListIcon />
             </ListItemIcon>
-            <ListItemText primary="View Transactions" />
+            <ListItemText primary="Transactions" />
           </ListItem>
           <ListItem button component={RouterLink} to="/reports" onClick={isMobile ? handleDrawerToggle : undefined}>
             <ListItemIcon>
