@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Box, TextField, Button, Typography, CircularProgress, Alert, Link } from '@mui/material';
-import axios from 'axios'; // Assuming axios is used
-import { useNavigate, Link as RouterLink } from 'react-router-dom'; // To redirect after login
+import axios from 'axios';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 
-function Login({ setIsLoggedIn }) {
+function Register({ setIsLoggedIn }) {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -15,19 +17,26 @@ function Login({ setIsLoggedIn }) {
     setError('');
     setLoading(true);
 
-    if (!username || !password) {
-      setError('Username and Password are required.');
+    // Validation
+    if (!username || !email || !password || !confirmPassword) {
+      setError('All fields are required.');
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
       setLoading(false);
       return;
     }
 
     try {
-      // Use relative URL path to leverage the proxy
       const response = await axios({
         method: 'post',
-        url: '/api/auth/login',
+        url: '/api/auth/register',
         data: {
           username,
+          email,
           password,
         },
         headers: {
@@ -35,41 +44,32 @@ function Login({ setIsLoggedIn }) {
         },
       });
 
-      console.log('Login response:', response);
+      console.log('Registration response:', response);
 
-      // Assuming the backend returns a token upon successful login
       if (response.data && response.data.token) {
         try {
-          // Log the token format for debugging
-          console.log('Token received:', response.data.token);
-          
           // Store the token
           localStorage.setItem('token', response.data.token);
-          console.log('Token stored in localStorage:', localStorage.getItem('token'));
           
           // Set login state directly
           setIsLoggedIn(true);
           
           // Also dispatch storage event for other tabs
           window.dispatchEvent(new Event('storage'));
-          console.log('Storage event dispatched');
           
-          console.log('Navigating to dashboard...');
-          // Use React Router navigation instead of window.location
+          // Navigate to dashboard
           navigate('/');
         } catch (storageError) {
           console.error('Error storing token:', storageError);
-          setError('Error completing login. Please try again.');
+          setError('Error completing registration. Please try again.');
         }
       } else {
         console.error('Invalid response format:', response.data);
-        setError('Login failed. Invalid response from server.');
+        setError('Registration failed. Invalid response from server.');
       }
     } catch (err) {
-      console.error("Login error:", err);
-      console.error("Error response:", err.response);
-      console.error("Error request:", err.request);
-      setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
+      console.error("Registration error:", err);
+      setError(err.response?.data?.error || err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ function Login({ setIsLoggedIn }) {
       }}
     >
       <Typography component="h1" variant="h5">
-        Sign in
+        Register
       </Typography>
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%', maxWidth: '400px' }}>
         <TextField
@@ -106,13 +106,39 @@ function Login({ setIsLoggedIn }) {
           margin="normal"
           required
           fullWidth
+          id="email"
+          label="Email Address"
+          name="email"
+          autoComplete="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
+        />
+        <TextField
+          margin="normal"
+          required
+          fullWidth
           name="password"
           label="Password"
           type="password"
           id="password"
-          autoComplete="current-password"
+          autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+        />
+        <TextField
+          margin="normal"
+          required
+          fullWidth
+          name="confirmPassword"
+          label="Confirm Password"
+          type="password"
+          id="confirmPassword"
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
           disabled={loading}
         />
         {error && (
@@ -127,11 +153,11 @@ function Login({ setIsLoggedIn }) {
           sx={{ mt: 3, mb: 2 }}
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} /> : 'Sign In'}
+          {loading ? <CircularProgress size={24} /> : 'Register'}
         </Button>
         <Box textAlign="center">
-          <Link component={RouterLink} to="/register" variant="body2">
-            Don't have an account? Register
+          <Link component={RouterLink} to="/login" variant="body2">
+            Already have an account? Sign in
           </Link>
         </Box>
       </Box>
@@ -139,4 +165,4 @@ function Login({ setIsLoggedIn }) {
   );
 }
 
-export default Login; 
+export default Register; 

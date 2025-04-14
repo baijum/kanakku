@@ -27,6 +27,7 @@ import AccountForm from './components/Accounts/AccountForm';
 import AccountsList from './components/Accounts/AccountsList';
 import EditAccount from './components/Accounts/EditAccount';
 import Login from './components/Auth/Login';
+import Register from './components/Auth/Register';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import ViewTransactions from './components/ViewTransactions';
@@ -175,13 +176,23 @@ function App() {
                   Logout
                 </Button>
               ) : (
-                <Button 
-                  color="inherit" 
-                  component={RouterLink} 
-                  to="/login"
-                >
-                  Login
-                </Button>
+                <>
+                  <Button 
+                    color="inherit" 
+                    component={RouterLink} 
+                    to="/login"
+                    sx={{ mr: 1 }}
+                  >
+                    Login
+                  </Button>
+                  <Button 
+                    color="inherit" 
+                    component={RouterLink} 
+                    to="/register"
+                  >
+                    Register
+                  </Button>
+                </>
               )}
             </Toolbar>
           </AppBar>
@@ -294,6 +305,7 @@ function App() {
                 } 
               />
               <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+              <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
             </Routes>
           </Box>
         </Box>
