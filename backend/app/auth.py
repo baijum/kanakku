@@ -23,19 +23,18 @@ def register():
     # Create new user
     user = User(
         username=data['username'],
-        email=data['email']
+        email=data['email'],
+        is_active=False  # Default is False, users need to be activated by an admin
     )
     user.set_password(data['password'])
     
     db.session.add(user)
     db.session.commit()
     
-    # Generate token using Flask-JWT-Extended - convert id to string for sub claim
-    token = create_access_token(identity=user.id, additional_claims={"sub": str(user.id)})
-    
+    # Don't generate token since user is inactive by default
     return jsonify({
-        'message': 'User created successfully',
-        'token': token
+        'message': 'User created successfully. Your account is pending activation by an administrator.',
+        'user_id': user.id
     }), 201
 
 # Add OPTIONS handler for CORS preflight requests
@@ -88,6 +87,10 @@ def login():
     
     # Check password
     if user and user.check_password(password):
+        # Check if user is active
+        if not user.is_active:
+            return jsonify({"error": "Account is inactive. Please contact an administrator."}), 403
+            
         # Generate token
         try:
             token = create_access_token(identity=user.id, additional_claims={"sub": str(user.id)})
@@ -119,3 +122,29 @@ def get_current_user():
          return jsonify({'error': 'User not found despite valid token'}), 404
     # Explicitly convert user object to dict before jsonify
     return jsonify(user.to_dict()), 200
+
+@auth.route('/api/auth/users/<int:user_id>/activate', methods=['POST'])
+@flask_jwt_required()
+def activate_user(user_id):
+    # Only admins should be able to activate/deactivate users
+    # TODO: Add proper admin role checking once roles are implemented
+    
+    # Get the target user
+    user_to_update = User.query.get(user_id)
+    if not user_to_update:
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Get request data
+    data = request.get_json()
+    is_active = data.get('is_active', True)
+    
+    # Update user active status
+    if is_active:
+        user_to_update.activate()
+    else:
+        user_to_update.deactivate()
+    
+    return jsonify({
+        'message': f"User {user_to_update.username} {'activated' if is_active else 'deactivated'} successfully",
+        'user': user_to_update.to_dict()
+    }), 200

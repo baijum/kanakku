@@ -1,14 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, TextField, Button, Typography, CircularProgress, Alert, Link } from '@mui/material';
 import axios from 'axios'; // Assuming axios is used
-import { useNavigate, Link as RouterLink } from 'react-router-dom'; // To redirect after login
+import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom'; // To redirect after login
 
 function Login({ setIsLoggedIn }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check for success notification from registration
+  useEffect(() => {
+    if (location.state?.notification) {
+      const { type, message } = location.state.notification;
+      if (type === 'success') {
+        setSuccess(message);
+      }
+      // Clear the location state after using it
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -118,6 +132,11 @@ function Login({ setIsLoggedIn }) {
         {error && (
           <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
             {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert severity="success" sx={{ mt: 2, width: '100%' }}>
+            {success}
           </Alert>
         )}
         <Button

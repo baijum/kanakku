@@ -63,6 +63,18 @@ function Register({ setIsLoggedIn }) {
           console.error('Error storing token:', storageError);
           setError('Error completing registration. Please try again.');
         }
+      } else if (response.data && response.data.message) {
+        // New flow: Registration succeeded but user needs activation
+        setError('');
+        // Navigate to login with success message
+        navigate('/login', { 
+          state: { 
+            notification: {
+              type: 'success',
+              message: response.data.message
+            }
+          }
+        });
       } else {
         console.error('Invalid response format:', response.data);
         setError('Registration failed. Invalid response from server.');
