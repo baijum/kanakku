@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -37,6 +38,7 @@ function ViewTransactions() {
   const [endDate, setEndDate] = useState('');
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [exportLoading, setExportLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchTransactions = useCallback(() => {
@@ -136,6 +138,40 @@ function ViewTransactions() {
       });
   };
 
+  const handleExportLedgerFormat = () => {
+    setExportLoading(true);
+    const token = getToken();
+    
+    axios.get('/api/v1/ledgertransactions', {
+      headers: { 'Authorization': `Bearer ${token}` },
+      responseType: 'blob' // Important for handling the response as a file
+    })
+      .then(response => {
+        // Create a blob from the response data
+        const blob = new Blob([response.data], { type: 'text/plain' });
+        
+        // Create a URL for the blob
+        const url = window.URL.createObjectURL(blob);
+        
+        // Create a temporary anchor element to trigger the download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'transactions.ledger';
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setExportLoading(false);
+      })
+      .catch(error => {
+        console.error('Error exporting transactions in ledger format:', error);
+        setExportLoading(false);
+        // You could add error state and display message to user
+      });
+  };
+
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Typography variant="h4" gutterBottom>
@@ -143,7 +179,7 @@ function ViewTransactions() {
       </Typography>
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={5}>
             <TextField
               fullWidth
               label="Start Date"
@@ -153,7 +189,7 @@ function ViewTransactions() {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={5}>
             <TextField
               fullWidth
               label="End Date"
@@ -162,6 +198,17 @@ function ViewTransactions() {
               onChange={handleDateChange(setEndDate)}
               InputLabelProps={{ shrink: true }}
             />
+          </Grid>
+          <Grid item xs={12} sm={2} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadIcon />}
+              onClick={handleExportLedgerFormat}
+              disabled={exportLoading}
+              fullWidth
+            >
+              Export Transactions
+            </Button>
           </Grid>
         </Grid>
       </Paper>
@@ -191,7 +238,7 @@ function ViewTransactions() {
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
                     {transaction.postings.map((posting, pIndex) => (
                       <div key={pIndex}>
-                        {posting.account}: {posting.currency} {posting.amount}
+                        {posting.account}: {posting.currency === 'INR' ? '₹' : posting.currency} {posting.amount}
                       </div>
                     ))}
                   </TableCell>

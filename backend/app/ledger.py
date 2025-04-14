@@ -16,38 +16,6 @@ def health_check():
     """Health check endpoint."""
     return jsonify({'status': 'ok'}), 200
 
-# If these routes are API endpoints, they should likely use @jwt_required()
-# and current_user from flask_jwt_extended instead of flask_login
-# @ledger.route('/transactions', methods=['GET'])
-# @login_required
-# def get_transactions():
-#     transactions = Transaction.query.filter_by(user_id=current_user.id).all()
-#     return jsonify([{...} for t in transactions]), 200
-
-# @ledger.route('/transactions', methods=['POST'])
-# @login_required
-# def create_transaction():
-#     data = request.get_json()
-#     transaction = Transaction(user_id=current_user.id, ...)
-#     db.session.add(transaction)
-#     db.session.commit()
-#     return jsonify({...}), 201
-
-# @ledger.route('/accounts', methods=['GET'])
-# @login_required
-# def get_accounts():
-#     accounts = Account.query.filter_by(user_id=current_user.id).all()
-#     return jsonify([{...} for a in accounts]), 200
-
-# @ledger.route('/accounts', methods=['POST'])
-# @login_required
-# def create_account():
-#     data = request.get_json()
-#     account = Account(user_id=current_user.id, ...)
-#     db.session.add(account)
-#     db.session.commit()
-#     return jsonify({...}), 201
-
 @ledger.route('/api/v1/ledgertransactions', methods=['GET'])
 @jwt_required() # Correct usage
 def get_transactions_ledger_format():
@@ -82,8 +50,12 @@ def get_transactions_ledger_format():
             
             # Ensure we use the negative sign to match test expectations
             amt_str = f"{transaction.amount:.2f}"
-            
-            posting = f"    {account_name}    {amt_str} {transaction.currency}"
+
+            # Format for currency - add rupee symbol for INR
+            if transaction.currency in ('INR', '₹'):
+                posting = f"    {account_name}    ₹{amt_str}"
+            else:
+                posting = f"    {account_name}    {amt_str} {transaction.currency}"
             
             # Create a single entry with a line break between transactions
             entry = f"{header}\n{posting}\n"
@@ -95,39 +67,3 @@ def get_transactions_ledger_format():
     except Exception as e:
         logging.error(f"Error generating ledger format: {e}")
         return jsonify({'error': 'Failed to generate ledger format'}), 500
-
-# @ledger.route('/balance', methods=['GET'])
-# @login_required
-# def get_balance():
-#     cmd_args = ['balance']
-#     if 'account' in request.args:
-#         cmd_args.append(request.args['account'])
-#     if 'depth' in request.args:
-#         cmd_args.extend(['--depth', request.args['depth']])
-#         
-#     output = run_ledger_command(cmd_args)
-#     return jsonify({'balance': output}), 200
-
-# @ledger.route('/reports/balance', methods=['GET'])
-# @login_required
-# def get_balance_report():
-#     cmd_args = ['balance']
-#     if 'account' in request.args:
-#         cmd_args.append(request.args['account'])
-#     if 'depth' in request.args:
-#         cmd_args.extend(['--depth', request.args['depth']])
-#         
-#     output = run_ledger_command(cmd_args)
-#     return jsonify({'balance': output}), 200
-
-# @ledger.route('/reports/register', methods=['GET'])
-# @login_required
-# def get_register():
-#     cmd_args = ['register']
-#     if 'account' in request.args:
-#         cmd_args.append(request.args['account'])
-#     if 'limit' in request.args:
-#         cmd_args.extend(['--limit', request.args['limit']])
-#         
-#     output = run_ledger_command(cmd_args)
-#     return jsonify({'register': output}), 200
