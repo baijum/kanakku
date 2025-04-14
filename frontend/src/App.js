@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -30,6 +30,7 @@ import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import ViewTransactions from './components/ViewTransactions';
 import EditTransaction from './components/Transactions/EditTransaction';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const drawerWidth = 240;
 
@@ -45,13 +46,50 @@ const theme = createTheme({
   },
 });
 
+// Protected route component
+const ProtectedRoute = ({ children, isLoggedIn }) => {
+  console.log('ProtectedRoute - isLoggedIn:', isLoggedIn);
+  if (!isLoggedIn) {
+    // Redirect to login page if not logged in
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
 function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
+  // Check if user is logged in
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem('token');
+      console.log('Auth check - Token exists:', !!token);
+      setIsLoggedIn(!!token);
+    };
+
+    // Initial check
+    checkLoginStatus();
+
+    // Listen for storage events (for multi-tab logout)
+    window.addEventListener('storage', checkLoginStatus);
+
+    return () => {
+      window.removeEventListener('storage', checkLoginStatus);
+    };
+  }, []);
+
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsLoggedIn(false);
+    // Optional: redirect to login page
+    window.location.href = '/login';
   };
 
   const drawerContent = (
@@ -120,9 +158,23 @@ function App() {
               <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
                 Kanakku
               </Typography>
-              <Button color="inherit" component={RouterLink} to="/login">
-                Login
-              </Button>
+              {isLoggedIn ? (
+                <Button 
+                  color="inherit" 
+                  onClick={handleLogout}
+                  startIcon={<LogoutIcon />}
+                >
+                  Logout
+                </Button>
+              ) : (
+                <Button 
+                  color="inherit" 
+                  component={RouterLink} 
+                  to="/login"
+                >
+                  Login
+                </Button>
+              )}
             </Toolbar>
           </AppBar>
           <Box
@@ -161,14 +213,70 @@ function App() {
           >
             <Toolbar />
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/add" element={<AddTransaction />} />
-              <Route path="/transactions" element={<ViewTransactions />} />
-              <Route path="/transactions/edit/:id" element={<EditTransaction />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/accounts" element={<AccountsList />} />
-              <Route path="/accounts/new" element={<AccountForm />} />
-              <Route path="/accounts/edit/:id" element={<EditAccount />} />
+              <Route 
+                path="/" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/add" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <AddTransaction />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/transactions" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <ViewTransactions />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/transactions/edit/:id" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <EditTransaction />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/reports" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <Reports />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/accounts" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <AccountsList />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/accounts/new" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <AccountForm />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/accounts/edit/:id" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <EditAccount />
+                  </ProtectedRoute>
+                } 
+              />
               <Route path="/login" element={<Login />} />
             </Routes>
           </Box>

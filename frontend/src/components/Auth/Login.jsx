@@ -39,11 +39,25 @@ function Login() {
 
       // Assuming the backend returns a token upon successful login
       if (response.data && response.data.token) {
-        // Log the token format for debugging
-        console.log('Token received:', response.data.token);
-        localStorage.setItem('token', response.data.token); // Store the token
-        console.log('Login successful, token received');
-        navigate('/'); // Redirect to dashboard or desired page after login
+        try {
+          // Log the token format for debugging
+          console.log('Token received:', response.data.token);
+          
+          // Store the token
+          localStorage.setItem('token', response.data.token);
+          console.log('Token stored in localStorage:', localStorage.getItem('token'));
+          
+          // Set login state with an event
+          window.dispatchEvent(new Event('storage'));
+          console.log('Storage event dispatched');
+          
+          console.log('Navigating to dashboard...');
+          // Use React Router navigation instead of window.location
+          navigate('/');
+        } catch (storageError) {
+          console.error('Error storing token:', storageError);
+          setError('Error completing login. Please try again.');
+        }
       } else {
         console.error('Invalid response format:', response.data);
         setError('Login failed. Invalid response from server.');
