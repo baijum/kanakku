@@ -1,14 +1,13 @@
-# Kanakku - Ledger CLI Web Interface
+# Kanakku - An expense tracker
 
-A modern web interface for the Ledger CLI double-entry accounting tool. Kanakku provides a user-friendly way to manage your financial transactions while keeping your data in the standard Ledger plain text format.
+Kanakku provides a user-friendly way to manage your financial transactions.
 
 ## Features
 
 - Add new transactions with a user-friendly form
 - View existing transactions and account balances
-- Generate standard Ledger reports (currently via Ledger CLI directly)
+- Generate standard Ledger reports
 - Modern, responsive web interface
-- Single-user, local-first design
 - JWT-based authentication
 - Google Sign-In integration
 
@@ -16,7 +15,6 @@ A modern web interface for the Ledger CLI double-entry accounting tool. Kanakku 
 
 - Python 3.12+
 - Node.js 18+
-- Ledger CLI installed and accessible in PATH
 
 ## Project Structure
 
@@ -45,8 +43,7 @@ kanakku/
 │   ├── package.json
 │   └── ...
 ├── fixes/             # Documentation for major bug fixes
-│   └── flask-jwt-extended-422-errors.md
-└── journal.ledger     # Ledger file (created on first run)
+    └── flask-jwt-extended-422-errors.md
 ```
 
 ## Architecture
