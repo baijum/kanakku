@@ -1,7 +1,5 @@
 from flask import Blueprint, jsonify
-from app.models import db, User, Transaction, Account
-from flask_jwt_extended import jwt_required, current_user
-from datetime import datetime
+from werkzeug.exceptions import MethodNotAllowed
 
 api = Blueprint("api", __name__)
 
@@ -10,6 +8,11 @@ api = Blueprint("api", __name__)
 @api.route("/api/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "ok"})
+
+
+@api.errorhandler(MethodNotAllowed)
+def handle_405_error(e):
+    return jsonify({"error": "Method not allowed"}), 405
 
 
 # Remove all other duplicate/mocked endpoints below this line

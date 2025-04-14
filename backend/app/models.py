@@ -1,40 +1,36 @@
-from datetime import datetime, date, timezone, timedelta
+from datetime import datetime, timezone, timedelta
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Date
+from sqlalchemy.orm import relationship
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.orm import relationship
-from sqlalchemy import Date
-from .extensions import db, login_manager
+from .extensions import db
 import secrets
 
 
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
-    is_active = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(
-        db.DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-    )
+    id = Column(Integer, primary_key=True)
+    email = Column(String(120), unique=True, nullable=False)
+    password_hash = Column(String(128))
+    is_active = Column(db.Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Password reset fields
-    reset_token = db.Column(db.String(100), nullable=True)
-    reset_token_expires_at = db.Column(db.DateTime, nullable=True)
+    reset_token = Column(String(100), nullable=True)
+    reset_token_expires_at = Column(DateTime, nullable=True)
 
     # Google Auth fields
-    google_id = db.Column(db.String(100), unique=True, nullable=True)
-    picture = db.Column(db.String(500), nullable=True)
+    google_id = Column(String(100), unique=True, nullable=True)
+    picture = Column(String(500), nullable=True)
 
     # Define relationships once, with consistent backrefs
-    transactions = db.relationship(
+    transactions = relationship(
         "Transaction", backref="user", lazy=True, foreign_keys="Transaction.user_id"
     )
-    accounts = db.relationship(
+    accounts = relationship(
         "Account", backref="user", lazy=True, foreign_keys="Account.user_id"
     )
-    preambles = db.relationship(
+    preambles = relationship(
         "Preamble", backref="user", lazy=True, foreign_keys="Preamble.user_id"
     )
 
@@ -105,15 +101,15 @@ class User(UserMixin, db.Model):
 
 
 class Transaction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    account_id = db.Column(db.Integer, db.ForeignKey("account.id"))
-    date = db.Column(db.Date, nullable=False)
-    description = db.Column(db.String(200), nullable=False)
-    payee = db.Column(db.String(100))
-    amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(3), default="INR")
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    account_id = Column(Integer, ForeignKey("account.id"))
+    date = Column(Date, nullable=False)
+    description = Column(String(200), nullable=False)
+    payee = Column(String(100))
+    amount = Column(Float, nullable=False)
+    currency = Column(String(3), default="INR")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships already defined via backref in User and Account models
 
@@ -138,15 +134,13 @@ class Transaction(db.Model):
 
 
 class Account(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    type = db.Column(
-        db.String(20), nullable=False
-    )  # asset, liability, equity, income, expense
-    currency = db.Column(db.String(3), default="INR")
-    balance = db.Column(db.Float, default=0.0)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    type = Column(String(20), nullable=False)  # asset, liability, equity, income, expense
+    currency = Column(String(3), default="INR")
+    balance = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships already defined via backref in User model
 

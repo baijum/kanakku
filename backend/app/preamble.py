@@ -1,8 +1,7 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request
 import logging
 from flask_jwt_extended import jwt_required, current_user
-from .extensions import db
-from .models import Preamble
+from .models import db, Preamble
 
 preamble = Blueprint("preamble", __name__)
 

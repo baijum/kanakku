@@ -8,23 +8,11 @@ from flask import (
     redirect,
     session,
 )
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user
-from datetime import datetime, timezone, timedelta
-from flask_jwt_extended import (
-    create_access_token,
-    jwt_required as flask_jwt_required,
-    current_user,
-    decode_token,
-)
-from functools import wraps
+from flask_jwt_extended import create_access_token, jwt_required as flask_jwt_required, current_user
 from app.models import User, db
-from app.extensions import login_manager
 from app.utils import send_password_reset_email
-import logging
 import requests
-import json
-import os
+import secrets
 
 auth = Blueprint("auth", __name__)
 
@@ -32,6 +20,8 @@ auth = Blueprint("auth", __name__)
 @auth.route("/api/auth/register", methods=["POST"])
 def register():
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
 
     # Check if user already exists
     if User.query.filter_by(email=data["email"]).first():
@@ -47,16 +37,10 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    # Don't generate token since user is inactive by default
-    return (
-        jsonify(
-            {
-                "message": "User created successfully. Your account is pending activation by an administrator.",
-                "user_id": user.id,
-            }
-        ),
-        201,
-    )
+    return jsonify({
+        "message": "User created successfully. Your account is pending activation by an administrator.",
+        "user_id": user.id,
+    }), 201
 
 
 # Add OPTIONS handler for CORS preflight requests
@@ -72,12 +56,11 @@ def login_options():
 @auth.route("/api/auth/login", methods=["POST"])
 def login():
     """Simple login endpoint that accepts email/password and returns a token"""
-
     # Log the request for debugging
-    current_app.logger.debug(f"LOGIN ENDPOINT CALLED")
-    current_app.logger.debug(f"Request method: {request.method}")
-    current_app.logger.debug(f"Request headers: {dict(request.headers)}")
-    current_app.logger.debug(f"Request data: {request.get_data(as_text=True)}")
+    current_app.logger.debug("LOGIN ENDPOINT CALLED")
+    current_app.logger.debug("Request method: {}".format(request.method))
+    current_app.logger.debug("Request headers: {}".format(dict(request.headers)))
+    current_app.logger.debug("Request data: {}".format(request.get_data(as_text=True)))
 
     # Get the JSON data or form data
     data = None
@@ -86,11 +69,11 @@ def login():
         if data is None:
             # Try to get form data instead
             data = request.form.to_dict() or {}
-            current_app.logger.debug(f"Got form data: {data}")
+            current_app.logger.debug("Got form data: {}".format(data))
         else:
-            current_app.logger.debug(f"Got JSON data: {data}")
+            current_app.logger.debug("Got JSON data: {}".format(data))
     except Exception as e:
-        current_app.logger.error(f"Error parsing request data: {e}")
+        current_app.logger.error("Error parsing request data: {}".format(e))
         data = {}
 
     # Handle case with no data
@@ -112,21 +95,14 @@ def login():
     if user and user.check_password(password):
         # Check if user is active
         if not user.is_active:
-            return (
-                jsonify(
-                    {"error": "Account is inactive. Please contact an administrator."}
-                ),
-                403,
-            )
+            return jsonify({"error": "Account is inactive. Please contact an administrator."}), 403
 
         # Generate token
         try:
-            token = create_access_token(
-                identity=user.id, additional_claims={"sub": str(user.id)}
-            )
+            token = create_access_token(identity=user.id, additional_claims={"sub": str(user.id)})
             return jsonify({"message": "Login successful", "token": token}), 200
         except Exception as e:
-            current_app.logger.error(f"Token generation error: {str(e)}")
+            current_app.logger.error("Token generation error: {}".format(str(e)))
             return jsonify({"error": "Error generating token"}), 500
 
     # Invalid credentials
@@ -326,8 +302,6 @@ def google_login():
         return jsonify({"error": "Google OAuth is not configured"}), 500
 
     # Generate a random state for CSRF protection
-    import secrets
-
     state = secrets.token_urlsafe(16)
     session["oauth_state"] = state
 

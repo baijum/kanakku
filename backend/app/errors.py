@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify
+from werkzeug.exceptions import MethodNotAllowed
 
 errors = Blueprint("errors", __name__)
 
@@ -14,6 +15,11 @@ def internal_error(error):
     # from .extensions import db
     # db.session.rollback()
     return jsonify({"error": "Internal Server Error"}), 500
+
+
+@errors.app_errorhandler(405)
+def method_not_allowed_error(error):
+    return jsonify({"error": "Method Not Allowed"}), 405
 
 
 # Add a test route to trigger an error
