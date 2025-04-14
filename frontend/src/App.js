@@ -28,12 +28,14 @@ import AccountsList from './components/Accounts/AccountsList';
 import EditAccount from './components/Accounts/EditAccount';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import ProfileSettings from './components/Auth/ProfileSettings';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import ViewTransactions from './components/ViewTransactions';
 import EditTransaction from './components/Transactions/EditTransaction';
 import PreambleList from './components/Preambles/PreambleList';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const drawerWidth = 240;
 
@@ -135,6 +137,12 @@ function App() {
               <DescriptionIcon />
             </ListItemIcon>
             <ListItemText primary="Preambles" />
+          </ListItem>
+          <ListItem button component={RouterLink} to="/profile" onClick={isMobile ? handleDrawerToggle : undefined}>
+            <ListItemIcon>
+              <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Profile Settings" />
           </ListItem>
         </List>
       </Box>
@@ -301,6 +309,14 @@ function App() {
                 element={
                   <ProtectedRoute isLoggedIn={isLoggedIn}>
                     <PreambleList />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                    <ProfileSettings />
                   </ProtectedRoute>
                 } 
               />

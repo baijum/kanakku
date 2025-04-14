@@ -148,3 +148,31 @@ def activate_user(user_id):
         'message': f"User {user_to_update.username} {'activated' if is_active else 'deactivated'} successfully",
         'user': user_to_update.to_dict()
     }), 200
+
+@auth.route('/api/auth/password', methods=['PUT'])
+@flask_jwt_required()
+def update_password():
+    """Update the current user's password"""
+    # Get request data
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+    
+    # Validate inputs
+    if not current_password or not new_password:
+        return jsonify({"error": "Current password and new password are required"}), 400
+    
+    # Verify current password
+    user = current_user
+    if not user.check_password(current_password):
+        return jsonify({"error": "Current password is incorrect"}), 401
+    
+    # Set new password
+    user.set_password(new_password)
+    db.session.commit()
+    
+    return jsonify({"message": "Password updated successfully"}), 200
