@@ -50,9 +50,13 @@ class User(UserMixin, db.Model):
     def verify_reset_token(self, token):
         if not self.reset_token or self.reset_token != token:
             return False
-        if not self.reset_token_expires_at or self.reset_token_expires_at < datetime.now(timezone.utc):
+        if not self.reset_token_expires_at:
             return False
-        return True
+        # Ensure both datetimes are timezone-aware
+        now = datetime.now(timezone.utc)
+        if self.reset_token_expires_at.tzinfo is None:
+            self.reset_token_expires_at = self.reset_token_expires_at.replace(tzinfo=timezone.utc)
+        return self.reset_token_expires_at > now
         
     def clear_reset_token(self):
         self.reset_token = None

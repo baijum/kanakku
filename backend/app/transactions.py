@@ -304,25 +304,21 @@ def update_transaction(transaction_id):
             
         # Update account balances
         if 'amount' in data or 'account_id' in data:
-            # Reverse the original entry's effect on the original account
-            original_account = Account.query.get(original_account_id)
-            if original_account:
-                if original_account.type.lower() in ['liability', 'equity', 'income']:
-                    # For these types, we added to balance originally, so subtract now
-                    original_account.balance += original_amount
-                else:
-                    # For asset and expense, we subtracted originally, so add back
-                    original_account.balance -= original_amount
+            # Calculate the difference between the new and old amounts
+            amount_difference = transaction.amount - original_amount
+            current_app.logger.debug(f"Original amount: {original_amount}, New amount: {transaction.amount}, Difference: {amount_difference}")
             
-            # Apply the new entry to the new account
-            new_account = Account.query.get(transaction.account_id)
-            if new_account:
-                if new_account.type.lower() in ['liability', 'equity', 'income']:
+            # Apply the difference to the account balance
+            account = Account.query.get(transaction.account_id)
+            if account:
+                current_app.logger.debug(f"Current balance: {account.balance}")
+                if account.type.lower() in ['liability', 'equity', 'income']:
                     # For these types, positive amounts decrease balance
-                    new_account.balance -= transaction.amount
+                    account.balance -= amount_difference
                 else:
                     # For asset and expense, positive amounts increase balance
-                    new_account.balance += transaction.amount
+                    account.balance += amount_difference
+                current_app.logger.debug(f"New balance: {account.balance}")
         
         # Commit changes
         try:
