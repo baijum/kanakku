@@ -1,5 +1,5 @@
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Date
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Date, Boolean
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -36,6 +36,9 @@ class User(UserMixin, db.Model):
     )
     preambles = relationship(
         "Preamble", backref="user", lazy=True, foreign_keys="Preamble.user_id"
+    )
+    api_tokens = relationship(
+        "ApiToken", backref="user", lazy=True, foreign_keys="ApiToken.user_id"
     )
 
     def set_password(self, password):
@@ -184,4 +187,45 @@ class Preamble(db.Model):
             "is_default": self.is_default,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+        }
+
+
+class ApiToken(db.Model):
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    token = Column(String(64), unique=True, nullable=False)
+    name = Column(String(100), nullable=False)
+    expires_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_used_at = Column(DateTime, nullable=True)
+    
+    @staticmethod
+    def generate_token():
+        return secrets.token_hex(32)
+    
+    def is_expired(self):
+        if not self.expires_at:
+            return False
+        now = datetime.now(timezone.utc)
+        if self.expires_at.tzinfo is None:
+            self.expires_at = self.expires_at.replace(tzinfo=timezone.utc)
+        return self.expires_at <= now
+    
+    def is_valid(self):
+        return self.is_active and not self.is_expired()
+    
+    def update_last_used(self):
+        self.last_used_at = datetime.now(timezone.utc)
+        db.session.commit()
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "created_at": self.created_at.isoformat(),
+            "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
+            "is_active": self.is_active,
+            # Don't include the actual token in the dict for security
         }

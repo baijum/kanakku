@@ -7,6 +7,7 @@ from flask import (
     url_for,
     redirect,
     session,
+    g,
 )
 from flask_jwt_extended import (
     create_access_token,
@@ -15,8 +16,10 @@ from flask_jwt_extended import (
 )
 from app.models import User, db
 from app.utils import send_password_reset_email
+from app.extensions import api_token_required
 import requests
 import secrets
+from datetime import datetime
 
 auth = Blueprint("auth", __name__)
 
@@ -414,3 +417,155 @@ def google_callback():
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"Error in Google OAuth: {str(e)}")
         return jsonify({"error": "Failed to authenticate with Google"}), 500
+
+
+# API Token Management Endpoints
+@auth.route("/api/auth/tokens", methods=["GET"])
+@api_token_required
+def get_tokens():
+    """Get all API tokens for the current user"""
+    from app.models import ApiToken
+    from flask import g
+    
+    # Get the user from JWT or API token auth
+    user = current_user or g.get('current_user')
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    # Log the request for debugging
+    current_app.logger.debug(f"Getting tokens for user ID: {user.id}")
+    
+    tokens = ApiToken.query.filter_by(user_id=user.id).all()
+    # Always return a 200 with an empty array if no tokens exist
+    return jsonify([token.to_dict() for token in tokens]), 200
+
+
+@auth.route("/api/auth/tokens", methods=["POST"])
+@api_token_required
+def create_token():
+    """Create a new API token for the current user"""
+    from app.models import ApiToken
+    from flask import g
+    
+    # Get the user from JWT or API token auth
+    user = current_user or g.get('current_user')
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    name = data.get("name")
+    if not name:
+        return jsonify({"error": "Token name is required"}), 400
+    
+    # Parse expiry date if provided
+    expires_at = None
+    if "expires_at" in data and data["expires_at"]:
+        try:
+            expires_at = datetime.fromisoformat(data["expires_at"].replace("Z", "+00:00"))
+        except ValueError:
+            return jsonify({"error": "Invalid expiry date format"}), 400
+    
+    # Generate a new token
+    token_value = ApiToken.generate_token()
+    token = ApiToken(
+        user_id=user.id,
+        token=token_value,
+        name=name,
+        expires_at=expires_at
+    )
+    
+    db.session.add(token)
+    db.session.commit()
+    
+    # Include the token value in the response (it will not be shown again)
+    token_dict = token.to_dict()
+    token_dict["token"] = token_value
+    
+    return jsonify(token_dict), 201
+
+
+@auth.route("/api/auth/tokens/<int:token_id>", methods=["DELETE"])
+@api_token_required
+def revoke_token(token_id):
+    """Revoke (delete) an API token"""
+    from app.models import ApiToken
+    from flask import g
+    
+    # Get the user from JWT or API token auth
+    user = current_user or g.get('current_user')
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    token = ApiToken.query.filter_by(id=token_id, user_id=user.id).first()
+    if not token:
+        return jsonify({"error": "Token not found"}), 404
+    
+    db.session.delete(token)
+    db.session.commit()
+    
+    return jsonify({"message": "Token revoked successfully"}), 200
+
+
+@auth.route("/api/auth/tokens/<int:token_id>", methods=["PUT"])
+@api_token_required
+def update_token(token_id):
+    """Update an API token (name or expiry)"""
+    from app.models import ApiToken
+    from flask import g
+    
+    # Get the user from JWT or API token auth
+    user = current_user or g.get('current_user')
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    token = ApiToken.query.filter_by(id=token_id, user_id=user.id).first()
+    if not token:
+        return jsonify({"error": "Token not found"}), 404
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    # Update name if provided
+    if "name" in data:
+        token.name = data["name"]
+    
+    # Update expiry if provided
+    if "expires_at" in data:
+        if data["expires_at"]:
+            try:
+                token.expires_at = datetime.fromisoformat(data["expires_at"].replace("Z", "+00:00"))
+            except ValueError:
+                return jsonify({"error": "Invalid expiry date format"}), 400
+        else:
+            token.expires_at = None
+    
+    # Update active status if provided
+    if "is_active" in data:
+        token.is_active = bool(data["is_active"])
+    
+    db.session.commit()
+    
+    return jsonify(token.to_dict()), 200
+
+
+# Simple test route to verify authentication status
+@auth.route("/api/auth/test", methods=["GET"])
+@api_token_required
+def auth_test():
+    """Test authentication status"""
+    from flask import g
+    
+    user = current_user or g.get('current_user')
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    return jsonify({
+        "message": "Authentication successful",
+        "user_id": user.id,
+        "email": user.email,
+        "auth_type": "JWT" if current_user else "API Token"
+    }), 200
