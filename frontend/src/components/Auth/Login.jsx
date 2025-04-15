@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, TextField, Button, Typography, CircularProgress, Alert, Link, Divider } from '@mui/material';
-import axios from 'axios'; // Assuming axios is used
+// import axios from 'axios'; // Remove direct import
+import axiosInstance from '../../api/axiosInstance'; // Import the configured instance
 import { useNavigate, Link as RouterLink, useLocation } from 'react-router-dom'; // To redirect after login
 import GoogleIcon from '@mui/icons-material/Google';
 
@@ -39,7 +40,7 @@ function Login({ setIsLoggedIn }) {
 
     try {
       // Use relative URL path to leverage the proxy
-      const response = await axios({
+      const response = await axiosInstance({
         method: 'post',
         url: '/api/auth/login',
         data: {
@@ -96,7 +97,7 @@ function Login({ setIsLoggedIn }) {
     setGoogleLoading(true);
     
     try {
-      const response = await axios.get('/api/auth/google');
+      const response = await axiosInstance.get('/api/auth/google');
       
       if (response.data && response.data.auth_url) {
         // Redirect to Google's authentication page

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, TextField, Button, Typography, CircularProgress, Alert, Link } from '@mui/material';
-import axios from 'axios';
+import axiosInstance from '../../api/axiosInstance';
 import { Link as RouterLink } from 'react-router-dom';
 
 function ForgotPassword() {
@@ -22,7 +22,7 @@ function ForgotPassword() {
     }
 
     try {
-      const response = await axios({
+      const response = await axiosInstance({
         method: 'post',
         url: '/api/auth/forgot-password',
         data: { email },

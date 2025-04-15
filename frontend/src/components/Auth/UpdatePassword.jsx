@@ -9,8 +9,10 @@ import {
   Alert,
   InputAdornment,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import axiosInstance from '../../api/axiosInstance'; // Import the configured instance
 
 const UpdatePassword = () => {
   const [formData, setFormData] = useState({
@@ -82,23 +84,23 @@ const UpdatePassword = () => {
         throw new Error('You must be logged in to update your password');
       }
       
-      const response = await fetch('/api/auth/password', {
-        method: 'PUT',
+      // Convert fetch options to Axios config
+      const config = {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          current_password: formData.currentPassword,
-          new_password: formData.newPassword,
-        }),
-      });
+        }
+      };
       
-      const data = await response.json();
+      const body = {
+        current_password: formData.currentPassword,
+        new_password: formData.newPassword,
+      };
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update password');
-      }
+      // Use axiosInstance.put
+      const response = await axiosInstance.put('/api/auth/password', body, config);
+      
+      const data = response.data; // Axios puts response data in `data` property
       
       // Reset form
       setFormData({
@@ -109,7 +111,8 @@ const UpdatePassword = () => {
       
       setSuccessMessage(data.message || 'Password updated successfully');
     } catch (error) {
-      setErrorMessage(error.message);
+      // Handle Axios error structure (error.response.data)
+      setErrorMessage(error.response?.data?.error || error.message || 'Failed to update password');
     } finally {
       setIsLoading(false);
     }
@@ -215,7 +218,7 @@ const UpdatePassword = () => {
             disabled={isLoading}
             fullWidth
           >
-            {isLoading ? 'Updating...' : 'Update Password'}
+            {isLoading ? <CircularProgress size={24} /> : 'Update Password'}
           </Button>
         </Stack>
       </form>

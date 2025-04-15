@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, TextField, Button, Typography, CircularProgress, Alert, Link } from '@mui/material';
-import axios from 'axios';
+import axiosInstance from '../../api/axiosInstance';
 import { Link as RouterLink, useParams, useNavigate, useLocation } from 'react-router-dom';
 
 function ResetPassword() {
@@ -48,7 +48,7 @@ function ResetPassword() {
     }
 
     try {
-      const response = await axios({
+      const response = await axiosInstance({
         method: 'post',
         url: '/api/auth/reset-password',
         data: {

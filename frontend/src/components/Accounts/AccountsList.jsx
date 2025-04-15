@@ -17,12 +17,13 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle
+  DialogTitle,
+  Link
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import axiosInstance from '../../api/axiosInstance';
 
 // Function to get the token (assuming it's stored in localStorage)
 const getToken = () => localStorage.getItem('token');
@@ -36,71 +37,62 @@ function AccountsList() {
   const [success, setSuccess] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchAccounts = useCallback(() => {
+  const fetchAccounts = useCallback(async () => {
     const token = getToken();
     if (!token) {
-      setError('Authentication required. Please log in.');
+      setError('Authentication required.');
+      setLoading(false);
       return;
     }
 
-    const params = {
-      limit: rowsPerPage,
-      offset: page * rowsPerPage,
+    const fetchConfig = {
+      headers: { 'Authorization': `Bearer ${token}` }
     };
 
-    // Get account names first - this endpoint is known to work
-    axios.get('/api/accounts', { 
-      params, 
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(nameResponse => {
-        console.log('Names API Response:', nameResponse.data);
+    try {
+      // Fetch main accounts list
+      const [accountsResponse, detailsResponse] = await Promise.all([
+        axiosInstance.get('/api/accounts', fetchConfig),
+        axiosInstance.get('/api/accounts/details', fetchConfig)
+      ]);
+
+      console.log('Names API Response:', accountsResponse.data);
+      
+      if (accountsResponse.data && accountsResponse.data.accounts) {
+        // Convert names to account objects
+        const accountObjects = accountsResponse.data.accounts.map((name, idx) => ({
+          id: idx + 1,  // Temporary ID for rendering
+          name: name,
+          type: '-',    // Placeholder
+          description: '' // Placeholder
+        }));
+        setAccounts(accountObjects);
+        setTotalCount(accountObjects.length);
         
-        if (nameResponse.data && nameResponse.data.accounts) {
-          // Convert names to account objects
-          const accountObjects = nameResponse.data.accounts.map((name, idx) => ({
-            id: idx + 1,  // Temporary ID for rendering
-            name: name,
-            type: '-',    // Placeholder
-            description: '' // Placeholder
-          }));
-          setAccounts(accountObjects);
-          setTotalCount(accountObjects.length);
-          
-          // After successfully getting names, try to get full details
-          axios.get('/api/accounts/details', { 
-            params, 
-            headers: { 'Authorization': `Bearer ${token}` }
-          })
-            .then(detailsResponse => {
-              console.log('Details API Response:', detailsResponse.data);
-              
-              if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
-                // If we get details successfully, update with the full account objects
-                setAccounts(detailsResponse.data);
-                setTotalCount(detailsResponse.data.length);
-              }
-            })
-            .catch(detailsError => {
-              console.error('Error fetching account details, but names were loaded:', detailsError);
-              // No need to set error as we already have account names
-            });
-        } else {
-          console.error('Unexpected response structure for accounts:', nameResponse.data);
-          setAccounts([]);
-          setTotalCount(0);
-          setError('Failed to load accounts. Unexpected data format.');
+        // After successfully getting names, try to get full details
+        if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
+          // If we get details successfully, update with the full account objects
+          setAccounts(detailsResponse.data);
+          setTotalCount(detailsResponse.data.length);
         }
-      })
-      .catch(error => {
-        console.error('Error fetching account names:', error);
+      } else {
+        console.error('Unexpected response structure for accounts:', accountsResponse.data);
         setAccounts([]);
         setTotalCount(0);
-        setError('Failed to load accounts. Please try again later.');
-      });
-  }, [page, rowsPerPage]);
+        setError('Failed to load accounts. Unexpected data format.');
+      }
+    } catch (error) {
+      console.error('Error fetching account names:', error);
+      setAccounts([]);
+      setTotalCount(0);
+      setError('Failed to load accounts. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchAccounts();
@@ -124,28 +116,30 @@ function AccountsList() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDeleteAccount = () => {
-    const token = getToken();
-    if (!token || !accountToDelete) {
-      setError('Authentication required or invalid account');
+  const confirmDeleteAccount = async () => {
+    if (!accountToDelete) {
+      setError('Invalid account');
       setDeleteDialogOpen(false);
       return;
     }
 
-    axios.delete(`/api/accounts/${accountToDelete.id}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(response => {
-        setSuccess('Account deleted successfully');
-        setDeleteDialogOpen(false);
-        fetchAccounts(); // Refresh the accounts list
-      })
-      .catch(error => {
-        console.error('Error deleting account:', error);
-        const errorMessage = error.response?.data?.error || 'Failed to delete account. Please try again.';
-        setError(errorMessage);
-        setDeleteDialogOpen(false);
+    console.log('Deleting account:', accountToDelete.id);
+    const token = getToken();
+    
+    try {
+      const response = await axiosInstance.delete(`/api/accounts/${accountToDelete.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      setSuccess('Account deleted successfully');
+      setDeleteDialogOpen(false);
+      fetchAccounts(); // Refresh the accounts list
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to delete account. Please try again.';
+      setError(errorMessage);
+      setDeleteDialogOpen(false);
+    }
   };
 
   const closeDeleteDialog = () => {

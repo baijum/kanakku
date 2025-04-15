@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { 
   Box, 
   TextField, 
@@ -7,9 +7,17 @@ import {
   Typography, 
   Paper,
   CircularProgress,
-  Alert
+  Alert,
+  Container,
+  Grid,
+  Link,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Chip
 } from '@mui/material';
-import axios from 'axios';
+import axiosInstance from '../../api/axiosInstance'; // Import the configured instance
 
 // Function to get the token (assuming it's stored in localStorage)
 const getToken = () => localStorage.getItem('token');
@@ -39,15 +47,12 @@ function EditAccount() {
           setLoading(false);
           return;
         }
+        const config = { headers: { 'Authorization': `Bearer ${token}` } };
 
         // Try getting account details first from standard endpoint
         try {
           // Directly fetch account information using the specific account endpoint
-          const response = await axios.get(`/api/accounts/${id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const response = await axiosInstance.get(`/api/accounts/${id}`, config);
           
           console.log('Account API Response:', response.data);
           
@@ -67,11 +72,7 @@ function EditAccount() {
         // Fallback: try to get all accounts and find the one matching the ID
         try {
           // Get detailed account info
-          const detailsResponse = await axios.get('/api/accounts/details', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const detailsResponse = await axiosInstance.get('/api/accounts/details', config);
           
           console.log('Accounts details response:', detailsResponse.data);
           
@@ -92,11 +93,7 @@ function EditAccount() {
         }
         
         // Final fallback: Get just account names
-        const accountsResponse = await axios.get('/api/accounts', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const accountsResponse = await axiosInstance.get('/api/accounts', config);
         
         console.log('Accounts list response:', accountsResponse.data);
         
@@ -159,14 +156,11 @@ function EditAccount() {
         setError('Authentication required. Please log in.');
         return;
       }
+      const config = { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } };
 
-      const response = await axios.put(`/api/accounts/${id}`, updatedAccount, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await axiosInstance.put(`/api/accounts/${id}`, updatedAccount, config);
 
-      console.log('Update response:', response);
+      console.log('Update response:', response.data);
 
       if (response.status === 200) {
         setSuccess(`Account '${accountName}' updated successfully!`);

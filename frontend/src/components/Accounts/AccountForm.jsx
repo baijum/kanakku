@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography } from '@mui/material';
-import axios from 'axios'; // Assuming you use axios for API calls
+import { Box, TextField, Button, Typography, CircularProgress, Alert } from '@mui/material';
+// import axios from 'axios'; // Assuming axios is used for API calls
+import axiosInstance from '../../api/axiosInstance'; // Import the configured instance
 
 function AccountForm() {
   const [accountName, setAccountName] = useState('');
@@ -26,13 +27,13 @@ function AccountForm() {
     };
 
     try {
-      // TODO: Replace with your actual API endpoint and authentication handling
-      const token = localStorage.getItem('token'); // Example: Get token from storage
-      console.log('Using token for account creation:', token);
-      
-      const response = await axios.post('/api/accounts', newAccount, {
+      const token = localStorage.getItem('token');
+
+      // Use axiosInstance and add Authorization header
+      const response = await axiosInstance.post('/api/accounts', newAccount, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' // Axios usually sets this, but good to be explicit
         }
       });
 
