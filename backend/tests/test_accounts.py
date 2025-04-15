@@ -1,4 +1,3 @@
-import pytest
 from app.models import Account, Transaction, db
 from datetime import date
 

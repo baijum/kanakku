@@ -1,6 +1,4 @@
 from flask import Blueprint, jsonify, current_app, request
-from werkzeug.exceptions import MethodNotAllowed, NotFound, HTTPException
-import traceback
 from sqlalchemy.exc import SQLAlchemyError
 from .extensions import db
 

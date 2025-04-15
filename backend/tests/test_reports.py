@@ -1,4 +1,3 @@
-import pytest
 from datetime import date, timedelta
 from app.models import Account, Transaction, db
 

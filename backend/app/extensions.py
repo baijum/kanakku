@@ -31,9 +31,8 @@ def user_lookup_callback(_jwt_header, jwt_data):
 def api_token_required(f):
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
-        from flask import current_app
         from .models import ApiToken, User
-        from flask_jwt_extended import verify_jwt_in_request, current_user
+        from flask_jwt_extended import verify_jwt_in_request
         from flask_jwt_extended.exceptions import (
             NoAuthorizationError,
             InvalidHeaderError,
@@ -43,7 +42,7 @@ def api_token_required(f):
         try:
             verify_jwt_in_request()
             return f(*args, **kwargs)
-        except (NoAuthorizationError, InvalidHeaderError) as e:
+        except (NoAuthorizationError, InvalidHeaderError):
             # JWT authentication failed, try API token
             auth_header = request.headers.get("Authorization", "").strip()
 

@@ -4,7 +4,6 @@ from flask_jwt_extended import jwt_required, current_user
 from datetime import datetime
 import traceback
 import json
-import logging
 from sqlalchemy.exc import SQLAlchemyError
 
 transactions = Blueprint("transactions", __name__)
@@ -14,8 +13,8 @@ transactions = Blueprint("transactions", __name__)
 @jwt_required()
 def create_transaction():
     """Create a new transaction from the provided JSON data."""
-    request_id = getattr(request, "request_id", "unknown")
-    current_app.logger.info(f"Processing transaction creation request")
+    # request_id = getattr(request, "request_id", "unknown") # Removed unused variable
+    current_app.logger.info("Processing transaction creation request")
 
     try:
         # Parse and validate the request data
@@ -55,7 +54,7 @@ def create_transaction():
         # Validate date format
         try:
             transaction_date = datetime.strptime(data["date"], "%Y-%m-%d").date()
-        except ValueError as date_error:
+        except ValueError:
             current_app.logger.warning(f"Invalid date format: {data['date']}")
             return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 

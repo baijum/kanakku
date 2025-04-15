@@ -3,9 +3,8 @@ Logging utilities for the Kanakku application.
 Provides helper functions for consistent, structured logging across the application.
 """
 
-from flask import current_app, g, request
+from flask import current_app, request
 import json
-import traceback
 from functools import wraps
 
 

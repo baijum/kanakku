@@ -1,9 +1,6 @@
-import os
 import pytest
 import json
-from datetime import datetime, date, timedelta, timezone
-from flask import Flask
-import jwt
+from datetime import date
 from flask_jwt_extended import create_access_token
 from app import create_app
 from app.extensions import db
@@ -29,7 +26,6 @@ def app():
     # Ensure app context is available
     with app.app_context():
         # Import all models to ensure they are registered with SQLAlchemy
-        from app.models import User, Transaction, Account
 
         # Drop any existing tables
         db.drop_all()

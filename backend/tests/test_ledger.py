@@ -1,6 +1,6 @@
 import pytest
 from datetime import date
-from app import create_app, db
+from app import db
 from app.models import User, Transaction, Account
 
 

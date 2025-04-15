@@ -425,7 +425,6 @@ def google_callback():
 def get_tokens():
     """Get all API tokens for the current user"""
     from app.models import ApiToken
-    from flask import g
 
     # Get the user from JWT or API token auth
     user = current_user or g.get("current_user")
@@ -445,7 +444,6 @@ def get_tokens():
 def create_token():
     """Create a new API token for the current user"""
     from app.models import ApiToken
-    from flask import g
 
     # Get the user from JWT or API token auth
     user = current_user or g.get("current_user")
@@ -491,7 +489,6 @@ def create_token():
 def revoke_token(token_id):
     """Revoke (delete) an API token"""
     from app.models import ApiToken
-    from flask import g
 
     # Get the user from JWT or API token auth
     user = current_user or g.get("current_user")
@@ -513,7 +510,6 @@ def revoke_token(token_id):
 def update_token(token_id):
     """Update an API token (name or expiry)"""
     from app.models import ApiToken
-    from flask import g
 
     # Get the user from JWT or API token auth
     user = current_user or g.get("current_user")
@@ -558,7 +554,6 @@ def update_token(token_id):
 @api_token_required
 def auth_test():
     """Test authentication status"""
-    from flask import g
 
     user = current_user or g.get("current_user")
     if not user:

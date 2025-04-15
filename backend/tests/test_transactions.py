@@ -1,6 +1,5 @@
 import pytest
-from flask import json
-from app.models import User, Transaction, db, Account
+from app.models import Transaction, db, Account
 from datetime import date, datetime
 
 # Removed local app fixture

@@ -1,7 +1,4 @@
-import pytest
-import json
-from app.models import User, Transaction, Account
-from datetime import date
+from app.models import User
 
 
 def test_register(authenticated_client, mock_ledger_command):
