@@ -2,7 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
-from flask import request, g
+from flask import request, g, current_app
 import functools
 
 db = SQLAlchemy()
@@ -57,8 +57,8 @@ def api_token_required(f):
                 
                 # If token exists and is valid
                 if api_token and api_token.is_valid():
-                    # Set custom current user
-                    user = User.query.get(api_token.user_id)
+                    # Set custom current user using the recommended db.session.get approach
+                    user = db.session.get(User, api_token.user_id)
                     if user:
                         g.current_user = user
                         
