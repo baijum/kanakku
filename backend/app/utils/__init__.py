@@ -12,5 +12,5 @@ from .logging_utils import (
     log_response,
     log_function_call,
     log_error,
-    log_db_error
-) 
+    log_db_error,
+)

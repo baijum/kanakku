@@ -1,6 +1,7 @@
 """
 Email utility functions for the Kanakku application.
 """
+
 from flask import render_template_string, current_app
 from flask_mail import Message
 from ..extensions import mail
@@ -9,18 +10,18 @@ from ..extensions import mail
 def send_password_reset_email(user, token):
     """
     Send a password reset email to the user.
-    
+
     Args:
         user: User model instance
         token: Reset token string
-        
+
     Returns:
         bool: True if email was sent successfully
     """
     reset_url = f"{current_app.config['FRONTEND_URL']}/reset-password/{token}?email={user.email}"
-    
+
     # Log the email being sent (without exposing the full token)
-    masked_token = token[:5] + '...' if token else 'None'
+    masked_token = token[:5] + "..." if token else "None"
     current_app.logger.info(
         f"Sending password reset email to {user.email} with token starting with {masked_token}"
     )
@@ -44,8 +45,12 @@ def send_password_reset_email(user, token):
         )
 
         mail.send(msg)
-        current_app.logger.info(f"Password reset email sent successfully to {user.email}")
+        current_app.logger.info(
+            f"Password reset email sent successfully to {user.email}"
+        )
         return True
     except Exception as e:
-        current_app.logger.error(f"Failed to send password reset email: {str(e)}", exc_info=True)
-        raise 
+        current_app.logger.error(
+            f"Failed to send password reset email: {str(e)}", exc_info=True
+        )
+        raise

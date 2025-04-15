@@ -14,38 +14,39 @@ transactions = Blueprint("transactions", __name__)
 @jwt_required()
 def create_transaction():
     """Create a new transaction from the provided JSON data."""
-    request_id = getattr(request, 'request_id', 'unknown')
+    request_id = getattr(request, "request_id", "unknown")
     current_app.logger.info(f"Processing transaction creation request")
-    
+
     try:
         # Parse and validate the request data
         try:
             data = request.get_json()
             if data is None:
-                current_app.logger.warning(
-                    f"Failed to parse JSON data: {request.data}"
-                )
+                current_app.logger.warning(f"Failed to parse JSON data: {request.data}")
                 return jsonify({"error": "Request must be valid JSON"}), 400
         except Exception as json_error:
             current_app.logger.error(
-                f"JSON parsing error: {str(json_error)}", 
-                exc_info=True
+                f"JSON parsing error: {str(json_error)}", exc_info=True
             )
             return jsonify({"error": "Invalid JSON format"}), 400
 
         # Log sanitized data (remove sensitive info if any)
         log_data = data.copy() if data else {}
         current_app.logger.debug(f"Transaction data: {json.dumps(log_data)}")
-        
+
         # Validate required top-level fields
         missing_fields = []
         if "date" not in data:
             missing_fields.append("date")
         if "payee" not in data or not data["payee"]:
             missing_fields.append("payee")
-        if "postings" not in data or not isinstance(data["postings"], list) or len(data["postings"]) < 1:
+        if (
+            "postings" not in data
+            or not isinstance(data["postings"], list)
+            or len(data["postings"]) < 1
+        ):
             missing_fields.append("postings")
-            
+
         if missing_fields:
             error_msg = f"Missing required fields: {', '.join(missing_fields)}"
             current_app.logger.warning(f"Validation error: {error_msg}")
@@ -60,7 +61,7 @@ def create_transaction():
 
         # Access current_user
         user = current_user
-        
+
         # Process each posting
         transaction_responses = []
 
@@ -120,9 +121,14 @@ def create_transaction():
             db.session.rollback()
             current_app.logger.error(
                 f"Database error during transaction save: {str(db_error)}",
-                exc_info=True
+                exc_info=True,
             )
-            return jsonify({"error": "Failed to save transaction", "details": str(db_error)}), 500
+            return (
+                jsonify(
+                    {"error": "Failed to save transaction", "details": str(db_error)}
+                ),
+                500,
+            )
 
         # Prepare response
         response_data = {
@@ -130,14 +136,15 @@ def create_transaction():
             "transactions": [tx.to_dict() for tx in transaction_responses],
         }
 
-        current_app.logger.info(f"Transaction created successfully: {len(transaction_responses)} entries")
+        current_app.logger.info(
+            f"Transaction created successfully: {len(transaction_responses)} entries"
+        )
         return jsonify(response_data), 201
 
     except Exception as e:
         # Catch-all for any unexpected errors during processing
         current_app.logger.error(
-            f"Unhandled error in create_transaction: {str(e)}",
-            exc_info=True
+            f"Unhandled error in create_transaction: {str(e)}", exc_info=True
         )
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
@@ -663,21 +670,25 @@ def get_related_transactions(transaction_id):
 @jwt_required()
 def delete_transaction(transaction_id):
     """Delete a specific transaction."""
-    current_app.logger.info(f"Processing transaction deletion request for ID: {transaction_id}")
-    
+    current_app.logger.info(
+        f"Processing transaction deletion request for ID: {transaction_id}"
+    )
+
     # Find the transaction
     transaction = Transaction.query.filter_by(
         id=transaction_id, user_id=current_user.id
     ).first()
-    
+
     if not transaction:
-        current_app.logger.warning(f"Attempted to delete non-existent transaction ID: {transaction_id}")
+        current_app.logger.warning(
+            f"Attempted to delete non-existent transaction ID: {transaction_id}"
+        )
         return jsonify({"error": "Transaction not found"}), 404
-    
+
     # Delete the transaction
     db.session.delete(transaction)
     db.session.commit()
-    
+
     current_app.logger.info(f"Transaction ID {transaction_id} deleted successfully")
     return jsonify({"message": "Transaction deleted"}), 200
 
@@ -771,7 +782,7 @@ def delete_related_transactions(transaction_id):
 def handle_errors(func):
     """Decorator to provide consistent error handling for transaction routes."""
     from functools import wraps
-    
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -782,15 +793,13 @@ def handle_errors(func):
         except SQLAlchemyError as e:
             db.session.rollback()
             current_app.logger.error(
-                f"Database error in {func.__name__}: {str(e)}",
-                exc_info=True
+                f"Database error in {func.__name__}: {str(e)}", exc_info=True
             )
             return jsonify({"error": "Database error occurred"}), 500
         except Exception as e:
             current_app.logger.error(
-                f"Unhandled exception in {func.__name__}: {str(e)}",
-                exc_info=True
+                f"Unhandled exception in {func.__name__}: {str(e)}", exc_info=True
             )
             return jsonify({"error": "An unexpected error occurred"}), 500
-    
+
     return wrapper

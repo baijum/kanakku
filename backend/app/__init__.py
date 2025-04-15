@@ -13,68 +13,68 @@ from .config import Config
 def setup_logging(app):
     """Configure application logging with structured formatting."""
     # Create logs directory if it doesn't exist
-    logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+    logs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
-    
+
     # Configure the log formatter with more information
     formatter = logging.Formatter(
-        '[%(asctime)s] [%(levelname)s] [%(request_id)s] %(module)s: %(message)s',
-        '%Y-%m-%d %H:%M:%S'
+        "[%(asctime)s] [%(levelname)s] [%(request_id)s] %(module)s: %(message)s",
+        "%Y-%m-%d %H:%M:%S",
     )
-    
+
     # File handler for all logs (rotating to keep file size manageable)
     file_handler = RotatingFileHandler(
-        os.path.join(logs_dir, 'kanakku.log'),
+        os.path.join(logs_dir, "kanakku.log"),
         maxBytes=10 * 1024 * 1024,  # 10 MB
-        backupCount=5
+        backupCount=5,
     )
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.INFO)
-    
+
     # Error log file for errors only
     error_file_handler = RotatingFileHandler(
-        os.path.join(logs_dir, 'error.log'),
+        os.path.join(logs_dir, "error.log"),
         maxBytes=10 * 1024 * 1024,  # 10 MB
-        backupCount=5
+        backupCount=5,
     )
     error_file_handler.setFormatter(formatter)
     error_file_handler.setLevel(logging.ERROR)
-    
+
     # Console handler for development
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     console_handler.setLevel(logging.DEBUG if app.debug else logging.INFO)
-    
+
     # Set the base logger level
     app.logger.setLevel(logging.DEBUG if app.debug else logging.INFO)
-    
+
     # Clear existing handlers and add our custom handlers
     app.logger.handlers = []
     app.logger.addHandler(file_handler)
     app.logger.addHandler(error_file_handler)
     app.logger.addHandler(console_handler)
-    
+
     # Add filter to inject request ID into log records
     class RequestIDLogFilter(logging.Filter):
         def filter(self, record):
-            if not hasattr(record, 'request_id'):
-                record.request_id = 'no_request_id'
+            if not hasattr(record, "request_id"):
+                record.request_id = "no_request_id"
                 # Only try to get request ID if we're in a request context
                 if has_request_context():
-                    record.request_id = getattr(g, 'request_id', 'no_request_id')
+                    record.request_id = getattr(g, "request_id", "no_request_id")
             return True
-    
+
     for handler in app.logger.handlers:
         handler.addFilter(RequestIDLogFilter())
-    
+
     # Log application startup
     app.logger.info("Application startup complete")
 
 
 def create_app(config_name="default"):
     app = Flask(__name__)
-    
+
     # Basic configuration
     app.config.from_object(Config)
 
@@ -89,18 +89,20 @@ def create_app(config_name="default"):
 
     # Setup logging after config is loaded
     setup_logging(app)
-    
+
     # Request ID middleware
     @app.before_request
     def assign_request_id():
         g.request_id = str(uuid.uuid4())
         app.logger.debug(f"Request started: {request.method} {request.path}")
-    
+
     @app.after_request
     def log_response(response):
-        app.logger.debug(f"Request completed: {request.method} {request.path} - Status: {response.status_code}")
+        app.logger.debug(
+            f"Request completed: {request.method} {request.path} - Status: {response.status_code}"
+        )
         return response
-    
+
     # Create database tables
     with app.app_context():
         try:
@@ -110,31 +112,40 @@ def create_app(config_name="default"):
 
         # Register blueprints
         from .auth import auth as auth_blueprint
+
         app.register_blueprint(auth_blueprint)
-        
+
         from .ledger import ledger as ledger_blueprint
+
         app.register_blueprint(ledger_blueprint)
-        
+
         from .reports import reports as reports_blueprint
+
         app.register_blueprint(reports_blueprint)
-        
+
         from .transactions import transactions as transactions_blueprint
+
         app.register_blueprint(transactions_blueprint)
-        
+
         from .accounts import accounts as accounts_blueprint
+
         app.register_blueprint(accounts_blueprint)
-        
+
         from .preamble import preamble as preamble_blueprint
+
         app.register_blueprint(preamble_blueprint)
-        
+
         from .errors import errors as errors_blueprint
+
         app.register_blueprint(errors_blueprint)
-        
+
         from .api import api as api_blueprint
+
         app.register_blueprint(api_blueprint)
-        
+
         # Register Swagger UI blueprint
         from .swagger import swagger as swagger_blueprint
+
         app.register_blueprint(swagger_blueprint)
 
     return app

@@ -1,9 +1,10 @@
 from flask import Blueprint, send_from_directory
 import os
 
-swagger = Blueprint('swagger', __name__)
+swagger = Blueprint("swagger", __name__)
 
-@swagger.route('/api/docs')
+
+@swagger.route("/api/docs")
 def swagger_ui():
     """Serve Swagger UI documentation"""
     return """
@@ -41,8 +42,9 @@ def swagger_ui():
     </html>
     """
 
-@swagger.route('/api/swagger.yaml')
+
+@swagger.route("/api/swagger.yaml")
 def serve_swagger_file():
     """Serve the swagger.yaml file"""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return send_from_directory(base_dir, 'swagger.yaml') 
+    return send_from_directory(base_dir, "swagger.yaml")
