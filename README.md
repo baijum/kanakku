@@ -81,6 +81,35 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
 *   **Reports (`reports.py`)**
     *   (No active API endpoints currently - routes are commented out)
 
+## API Documentation
+
+Kanakku provides Swagger/OpenAPI documentation for its REST API endpoints.
+
+### Accessing the API Documentation
+
+After starting the backend server, you can access the Swagger UI at:
+```
+http://localhost:8000/api/docs
+```
+
+This interactive documentation allows you to:
+- Browse all available API endpoints
+- View request and response schemas
+- Make API requests directly from the browser (with authentication)
+
+### Running Backend with Swagger
+
+To start the backend with Swagger documentation:
+
+```bash
+cd backend
+./run-backend.sh
+```
+
+### Updating API Documentation
+
+The API documentation is defined in `backend/swagger.yaml`. When new endpoints are added or existing ones are modified, the Swagger documentation should be updated accordingly.
+
 ## Authentication
 
 Kanakku supports two authentication methods:

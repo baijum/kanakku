@@ -15,4 +15,7 @@ pytest-cov==4.1.0
 pytest-mock==3.12.0
 requests==2.31.0
 authlib==1.2.1
-flask-dance==7.0.0 
+flask-dance==7.0.0
+# Swagger related
+flask-swagger-ui==4.11.1
+PyYAML==6.0.1 

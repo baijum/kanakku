@@ -53,5 +53,9 @@ def create_app(config_name="default"):
         from .api import api as api_blueprint
 
         app.register_blueprint(api_blueprint)
+        # Register Swagger UI blueprint
+        from .swagger import swagger as swagger_blueprint
+
+        app.register_blueprint(swagger_blueprint)
 
     return app

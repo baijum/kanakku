@@ -1,0 +1,1084 @@
+openapi: 3.0.0
+info:
+  title: Kanakku API
+  description: API documentation for Kanakku - A Simple Accounting Application
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+tags:
+  - name: Auth
+    description: Authentication and user management
+  - name: Accounts
+    description: Account management
+  - name: Transactions
+    description: Transaction management
+  - name: Reports
+    description: Financial reports
+  - name: Ledger
+    description: Ledger file format operations
+  - name: Preamble
+    description: Preamble management for ledger files
+
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      responses:
+        200:
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  
+  # Authentication Endpoints
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        201:
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user_id:
+                    type: integer
+        400:
+          description: Email already exists or missing required fields
+  
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login to get authentication token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+        401:
+          description: Invalid email or password
+        403:
+          description: Account inactive
+  
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout (client-side token invalidation)
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Logout successful
+  
+  /api/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user information
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        404:
+          description: User not found
+  
+  /api/auth/users/{userId}/activate:
+    post:
+      tags:
+        - Auth
+      summary: Activate or deactivate a user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_active:
+                  type: boolean
+                  example: true
+      responses:
+        200:
+          description: User activation status updated
+        404:
+          description: User not found
+  
+  /api/auth/password:
+    put:
+      tags:
+        - Auth
+      summary: Update user password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - current_password
+                - new_password
+              properties:
+                current_password:
+                  type: string
+                  format: password
+                new_password:
+                  type: string
+                  format: password
+      responses:
+        200:
+          description: Password updated successfully
+        400:
+          description: Missing required fields or invalid current password
+  
+  /api/auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        200:
+          description: Password reset instructions sent
+        404:
+          description: User not found
+  
+  /api/auth/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - email
+                - new_password
+              properties:
+                token:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                new_password:
+                  type: string
+                  format: password
+      responses:
+        200:
+          description: Password reset successful
+        400:
+          description: Invalid or expired token
+  
+  # Account Endpoints
+  /api/accounts:
+    get:
+      tags:
+        - Accounts
+      summary: Get all account names
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: List of account names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      type: string
+    post:
+      tags:
+        - Accounts
+      summary: Create a new account
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreate'
+      responses:
+        201:
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  account:
+                    $ref: '#/components/schemas/Account'
+        400:
+          description: Missing required fields or account already exists
+  
+  /api/accounts/details:
+    get:
+      tags:
+        - Accounts
+      summary: Get all accounts with full details
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: List of accounts with details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+  
+  /api/accounts/{accountId}:
+    get:
+      tags:
+        - Accounts
+      summary: Get a specific account
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        404:
+          description: Account not found
+    put:
+      tags:
+        - Accounts
+      summary: Update an account
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdate'
+      responses:
+        200:
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  account:
+                    $ref: '#/components/schemas/Account'
+        404:
+          description: Account not found
+    delete:
+      tags:
+        - Accounts
+      summary: Delete an account
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Account deleted successfully
+        400:
+          description: Cannot delete account with existing transactions
+        404:
+          description: Account not found
+  
+  # Transaction Endpoints
+  /api/transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Get all transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  total_count:
+                    type: integer
+    post:
+      tags:
+        - Transactions
+      summary: Create a new transaction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreate'
+      responses:
+        201:
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+        400:
+          description: Invalid input
+        404:
+          description: Account not found
+  
+  /api/transactions/{transactionId}:
+    get:
+      tags:
+        - Transactions
+      summary: Get a specific transaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        404:
+          description: Transaction not found
+    put:
+      tags:
+        - Transactions
+      summary: Update a transaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionUpdate'
+      responses:
+        200:
+          description: Transaction updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  transaction:
+                    $ref: '#/components/schemas/Transaction'
+        404:
+          description: Transaction or account not found
+    delete:
+      tags:
+        - Transactions
+      summary: Delete a transaction
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Transaction deleted successfully
+        404:
+          description: Transaction not found
+  
+  /api/transactions/{transactionId}/update_with_postings:
+    put:
+      tags:
+        - Transactions
+      summary: Update a transaction with multiple postings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionWithPostingsUpdate'
+      responses:
+        200:
+          description: Transaction updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+        404:
+          description: Transaction or account not found
+  
+  /api/transactions/{transactionId}/related:
+    get:
+      tags:
+        - Transactions
+      summary: Get related transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Related transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        404:
+          description: Transaction not found
+    delete:
+      tags:
+        - Transactions
+      summary: Delete related transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Related transactions deleted successfully
+        404:
+          description: Transaction not found
+  
+  # Report Endpoints
+  /api/reports/balance:
+    get:
+      tags:
+        - Reports
+      summary: Get balance report
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account
+          in: query
+          schema:
+            type: string
+        - name: depth
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Balance report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: string
+  
+  /api/reports/register:
+    get:
+      tags:
+        - Reports
+      summary: Get transaction register
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Transaction register
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  register:
+                    type: string
+  
+  /api/reports/balance_report:
+    get:
+      tags:
+        - Reports
+      summary: Get balance report by account type
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Balance report by account type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance_report:
+                    type: string
+  
+  /api/reports/income_statement:
+    get:
+      tags:
+        - Reports
+      summary: Get income statement
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Income statement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  income_statement:
+                    type: string
+  
+  # Ledger Endpoints
+  /api/v1/ledgertransactions:
+    get:
+      tags:
+        - Ledger
+      summary: Get transactions in ledger format
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: preamble_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Transactions in ledger format
+          content:
+            text/plain:
+              schema:
+                type: string
+  
+  # Preamble Endpoints
+  /api/v1/preambles:
+    get:
+      tags:
+        - Preamble
+      summary: Get all preambles
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: List of preambles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preambles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Preamble'
+    post:
+      tags:
+        - Preamble
+      summary: Create a new preamble
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreambleCreate'
+      responses:
+        201:
+          description: Preamble created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  preamble:
+                    $ref: '#/components/schemas/Preamble'
+        400:
+          description: Missing required fields
+  
+  /api/v1/preambles/{preambleId}:
+    get:
+      tags:
+        - Preamble
+      summary: Get a specific preamble
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: preambleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Preamble details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Preamble'
+        404:
+          description: Preamble not found
+    put:
+      tags:
+        - Preamble
+      summary: Update a preamble
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: preambleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreambleUpdate'
+      responses:
+        200:
+          description: Preamble updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  preamble:
+                    $ref: '#/components/schemas/Preamble'
+        404:
+          description: Preamble not found
+    delete:
+      tags:
+        - Preamble
+      summary: Delete a preamble
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: preambleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Preamble deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  was_default:
+                    type: boolean
+        404:
+          description: Preamble not found
+  
+  /api/v1/preambles/default:
+    get:
+      tags:
+        - Preamble
+      summary: Get default preamble
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Default preamble
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Preamble'
+        404:
+          description: Default preamble not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        picture:
+          type: string
+    
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [asset, liability, equity, income, expense]
+        currency:
+          type: string
+          default: INR
+        balance:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+    
+    AccountCreate:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [asset, liability, equity, income, expense]
+        currency:
+          type: string
+          default: INR
+        balance:
+          type: number
+          default: 0
+    
+    AccountUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [asset, liability, equity, income, expense]
+        currency:
+          type: string
+        balance:
+          type: number
+    
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        account_id:
+          type: integer
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        payee:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    
+    TransactionCreate:
+      type: object
+      required:
+        - date
+        - payee
+        - postings
+      properties:
+        date:
+          type: string
+          format: date
+          example: '2023-01-01'
+        payee:
+          type: string
+        postings:
+          type: array
+          items:
+            type: object
+            required:
+              - account
+              - amount
+            properties:
+              account:
+                type: string
+              amount:
+                type: string
+              currency:
+                type: string
+                default: INR
+    
+    TransactionUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        payee:
+          type: string
+        account_id:
+          type: integer
+        amount:
+          type: number
+        currency:
+          type: string
+    
+    TransactionWithPostingsUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        payee:
+          type: string
+        postings:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              account:
+                type: string
+              amount:
+                type: string
+              currency:
+                type: string
+    
+    Preamble:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        content:
+          type: string
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    PreambleCreate:
+      type: object
+      required:
+        - name
+        - content
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+        is_default:
+          type: boolean
+          default: false
+    
+    PreambleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+        is_default:
+          type: boolean 
