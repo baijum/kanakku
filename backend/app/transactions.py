@@ -4,6 +4,8 @@ from flask_jwt_extended import jwt_required, current_user
 from datetime import datetime
 import traceback
 import json
+import logging
+from sqlalchemy.exc import SQLAlchemyError
 
 transactions = Blueprint("transactions", __name__)
 
@@ -11,50 +13,54 @@ transactions = Blueprint("transactions", __name__)
 @transactions.route("/api/transactions", methods=["POST"])
 @jwt_required()
 def create_transaction():
-    current_app.logger.debug("Entered create_transaction route")
+    """Create a new transaction from the provided JSON data."""
+    request_id = getattr(request, 'request_id', 'unknown')
+    current_app.logger.info(f"Processing transaction creation request")
+    
     try:
-        # Log the request for debugging
-        current_app.logger.debug("Transaction request: {}".format(request.data))
-
+        # Parse and validate the request data
         try:
             data = request.get_json()
             if data is None:
-                current_app.logger.error(
-                    "Failed to parse JSON: {}".format(request.data)
+                current_app.logger.warning(
+                    f"Failed to parse JSON data: {request.data}"
                 )
                 return jsonify({"error": "Request must be valid JSON"}), 400
         except Exception as json_error:
             current_app.logger.error(
-                "JSON parsing error: {}: {}".format(str(json_error), request.data)
+                f"JSON parsing error: {str(json_error)}", 
+                exc_info=True
             )
             return jsonify({"error": "Invalid JSON format"}), 400
 
+        # Log sanitized data (remove sensitive info if any)
+        log_data = data.copy() if data else {}
+        current_app.logger.debug(f"Transaction data: {json.dumps(log_data)}")
+        
         # Validate required top-level fields
+        missing_fields = []
         if "date" not in data:
-            return jsonify({"error": "Missing required field: date"}), 400
-
+            missing_fields.append("date")
         if "payee" not in data or not data["payee"]:
-            return jsonify({"error": "Missing required field: payee"}), 400
-
-        if (
-            "postings" not in data
-            or not isinstance(data["postings"], list)
-            or len(data["postings"]) < 1
-        ):
-            return jsonify({"error": "Missing or invalid postings"}), 400
+            missing_fields.append("payee")
+        if "postings" not in data or not isinstance(data["postings"], list) or len(data["postings"]) < 1:
+            missing_fields.append("postings")
+            
+        if missing_fields:
+            error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+            current_app.logger.warning(f"Validation error: {error_msg}")
+            return jsonify({"error": error_msg}), 400
 
         # Validate date format
         try:
             transaction_date = datetime.strptime(data["date"], "%Y-%m-%d").date()
-        except ValueError:
+        except ValueError as date_error:
+            current_app.logger.warning(f"Invalid date format: {data['date']}")
             return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
         # Access current_user
         user = current_user
-        if not user:
-            # Should not happen if @jwt_required() works
-            return jsonify({"error": "Authentication error: User not found"}), 401
-
+        
         # Process each posting
         transaction_responses = []
 
@@ -110,10 +116,13 @@ def create_transaction():
             # Refresh the objects to get updated values
             for tx in transaction_responses:
                 db.session.refresh(tx)
-        except Exception as e:
+        except SQLAlchemyError as db_error:
             db.session.rollback()
-            current_app.logger.error("Database commit error: {}".format(str(e)))
-            return jsonify({"error": "Failed to save transaction"}), 500
+            current_app.logger.error(
+                f"Database error during transaction save: {str(db_error)}",
+                exc_info=True
+            )
+            return jsonify({"error": "Failed to save transaction", "details": str(db_error)}), 500
 
         # Prepare response
         response_data = {
@@ -121,17 +130,14 @@ def create_transaction():
             "transactions": [tx.to_dict() for tx in transaction_responses],
         }
 
-        current_app.logger.debug(
-            "Transaction response: {}".format(json.dumps(response_data))
-        )
+        current_app.logger.info(f"Transaction created successfully: {len(transaction_responses)} entries")
         return jsonify(response_data), 201
 
     except Exception as e:
         # Catch-all for any unexpected errors during processing
         current_app.logger.error(
-            "Unhandled error in create_transaction: {} - Traceback: {}".format(
-                str(e), traceback.format_exc()
-            )
+            f"Unhandled error in create_transaction: {str(e)}",
+            exc_info=True
         )
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
@@ -656,53 +662,24 @@ def get_related_transactions(transaction_id):
 @transactions.route("/api/transactions/<int:transaction_id>", methods=["DELETE"])
 @jwt_required()
 def delete_transaction(transaction_id):
-    """Delete a transaction by ID"""
-    current_app.logger.debug(
-        f"Entered delete_transaction route for ID: {transaction_id}"
-    )
-    try:
-        # Find the transaction to delete
-        transaction = Transaction.query.filter_by(
-            id=transaction_id, user_id=current_user.id
-        ).first()
-
-        if not transaction:
-            current_app.logger.warning(
-                f"Transaction ID {transaction_id} not found for user ID {current_user.id}"
-            )
-            return jsonify({"error": "Transaction not found"}), 404
-
-        # Undo the effect on the account balance before deleting
-        account = db.session.get(Account, transaction.account_id)
-        if account:
-            # Reverse the effect based on account type
-            if account.type.lower() in ["liability", "equity", "income"]:
-                account.balance += transaction.amount
-            else:
-                account.balance -= transaction.amount
-
-        # Delete the transaction
-        db.session.delete(transaction)
-
-        # Commit changes
-        try:
-            db.session.commit()
-            current_app.logger.info(
-                f"Transaction ID {transaction_id} deleted successfully"
-            )
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Database commit error: {str(e)}")
-            return jsonify({"error": "Failed to delete transaction"}), 500
-
-        return jsonify({"message": "Transaction deleted successfully"}), 200
-
-    except Exception as e:
-        # Catch-all for any unexpected errors during processing
-        current_app.logger.error(
-            f"Unhandled error in delete_transaction: {str(e)} - Traceback: {traceback.format_exc()}"
-        )
-        return jsonify({"error": "An unexpected server error occurred"}), 500
+    """Delete a specific transaction."""
+    current_app.logger.info(f"Processing transaction deletion request for ID: {transaction_id}")
+    
+    # Find the transaction
+    transaction = Transaction.query.filter_by(
+        id=transaction_id, user_id=current_user.id
+    ).first()
+    
+    if not transaction:
+        current_app.logger.warning(f"Attempted to delete non-existent transaction ID: {transaction_id}")
+        return jsonify({"error": "Transaction not found"}), 404
+    
+    # Delete the transaction
+    db.session.delete(transaction)
+    db.session.commit()
+    
+    current_app.logger.info(f"Transaction ID {transaction_id} deleted successfully")
+    return jsonify({"message": "Transaction deleted"}), 200
 
 
 @transactions.route(
@@ -788,3 +765,32 @@ def delete_related_transactions(transaction_id):
             f"Unhandled error in delete_related_transactions: {str(e)} - Traceback: {traceback.format_exc()}"
         )
         return jsonify({"error": "An unexpected server error occurred"}), 500
+
+
+# Add a decorator function for consistent error handling
+def handle_errors(func):
+    """Decorator to provide consistent error handling for transaction routes."""
+    from functools import wraps
+    
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ValueError as e:
+            current_app.logger.warning(f"Validation error in {func.__name__}: {str(e)}")
+            return jsonify({"error": str(e)}), 400
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Database error in {func.__name__}: {str(e)}",
+                exc_info=True
+            )
+            return jsonify({"error": "Database error occurred"}), 500
+        except Exception as e:
+            current_app.logger.error(
+                f"Unhandled exception in {func.__name__}: {str(e)}",
+                exc_info=True
+            )
+            return jsonify({"error": "An unexpected error occurred"}), 500
+    
+    return wrapper

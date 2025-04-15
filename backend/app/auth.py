@@ -15,7 +15,7 @@ from flask_jwt_extended import (
     current_user,
 )
 from app.models import User, db
-from app.utils import send_password_reset_email
+from app.utils.email_utils import send_password_reset_email
 from app.extensions import api_token_required
 import requests
 import secrets

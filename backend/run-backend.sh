@@ -8,6 +8,9 @@ fi
 # Install dependencies if needed
 pip install -r requirements.txt
 
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
 # Set Flask environment variables
 export FLASK_APP=app
 export FLASK_ENV=development
