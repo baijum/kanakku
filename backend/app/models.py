@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Date,
     Boolean,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
@@ -186,6 +187,8 @@ class Preamble(db.Model):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+
+    __table_args__ = (UniqueConstraint("user_id", "name", name="uq_preamble_user_name"),)
 
     def to_dict(self):
         return {

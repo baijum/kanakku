@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 import logging
 from flask_jwt_extended import jwt_required, current_user
+from sqlalchemy.exc import IntegrityError
 from .models import db, Preamble
 
 preamble = Blueprint("preamble", __name__)
@@ -38,17 +39,15 @@ def get_preamble(preamble_id):
 @jwt_required()
 def create_preamble():
     """Create a new preamble."""
+    user = current_user
+    data = request.json
+
+    if not data or not data.get("name") or not data.get("content"):
+        return jsonify({"message": "Name and content are required"}), 400
+
+    is_default = data.get("is_default", False)
+
     try:
-        user = current_user
-        data = request.json
-
-        # Validate required fields
-        if not data or not data.get("name") or not data.get("content"):
-            return jsonify({"error": "Name and content are required"}), 400
-
-        # Check if this is being set as default
-        is_default = data.get("is_default", False)
-
         # If setting as default, unset any existing defaults
         if is_default:
             existing_defaults = Preamble.query.filter_by(
@@ -57,7 +56,6 @@ def create_preamble():
             for p in existing_defaults:
                 p.is_default = False
 
-        # Create new preamble
         new_preamble = Preamble(
             user_id=user.id,
             name=data["name"],
@@ -77,26 +75,38 @@ def create_preamble():
             ),
             201,
         )
+    except IntegrityError as e:
+        db.session.rollback()
+        # Log the original error for debugging
+        logging.error(f"IntegrityError encountered. Original error: {e.orig}") 
+        # Check if the error is the unique constraint violation for user_id and name
+        error_str = str(e.orig).lower()
+        if "unique constraint failed" in error_str and "preamble.user_id" in error_str and "preamble.name" in error_str:
+            return jsonify({"message": "Preamble with this name already exists for this user"}), 400
+        else:
+            logging.error(f"Integrity error creating preamble: {e}")
+            return jsonify({"message": "Database integrity error"}), 500
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error creating preamble: {e}")
-        return jsonify({"error": "Failed to create preamble"}), 500
+        # Use 'message' key for consistency
+        return jsonify({"message": "Failed to create preamble"}), 500
 
 
 @preamble.route("/api/v1/preambles/<int:preamble_id>", methods=["PUT"])
 @jwt_required()
 def update_preamble(preamble_id):
     """Update an existing preamble."""
+    user = current_user
+    preamble = Preamble.query.filter_by(id=preamble_id, user_id=user.id).first()
+    if not preamble:
+        return jsonify({"message": "Preamble not found"}), 404
+
+    data = request.json
+    if not data:
+        return jsonify({"message": "No data provided"}), 400
+
     try:
-        user = current_user
-        preamble = Preamble.query.filter_by(id=preamble_id, user_id=user.id).first()
-        if not preamble:
-            return jsonify({"error": "Preamble not found"}), 404
-
-        data = request.json
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
-
         # Update fields if provided
         if "name" in data:
             preamble.name = data["name"]
@@ -119,10 +129,22 @@ def update_preamble(preamble_id):
         return jsonify(
             {"message": "Preamble updated successfully", "preamble": preamble.to_dict()}
         )
+    except IntegrityError as e:
+        db.session.rollback()
+        # Log the original error for debugging
+        logging.error(f"IntegrityError encountered. Original error: {e.orig}") 
+        # Check if the error is the unique constraint violation for user_id and name
+        error_str = str(e.orig).lower()
+        if "unique constraint failed" in error_str and "preamble.user_id" in error_str and "preamble.name" in error_str:
+            return jsonify({"message": "Preamble with this name already exists for this user"}), 400
+        else:
+            logging.error(f"Integrity error updating preamble: {e}")
+            return jsonify({"message": "Database integrity error"}), 500
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error updating preamble: {e}")
-        return jsonify({"error": "Failed to update preamble"}), 500
+        # Use 'message' key for consistency
+        return jsonify({"message": "Failed to update preamble"}), 500
 
 
 @preamble.route("/api/v1/preambles/<int:preamble_id>", methods=["DELETE"])

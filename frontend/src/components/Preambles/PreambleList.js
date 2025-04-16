@@ -117,25 +117,41 @@ function PreambleList() {
 
     setLoading(true);
     const token = getToken();
+    const apiUrl = currentPreamble
+      ? `/api/v1/preambles/${currentPreamble.id}`
+      : '/api/v1/preambles';
+    const method = currentPreamble ? 'put' : 'post';
+
     try {
-      if (currentPreamble) {
-        // Update existing preamble
-        await axios.put(`/api/v1/preambles/${currentPreamble.id}`, formData, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        showSnackbar('Preamble updated successfully', 'success');
-      } else {
-        // Create new preamble
-        await axios.post('/api/v1/preambles', formData, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        showSnackbar('Preamble created successfully', 'success');
-      }
+      await axios[method](apiUrl, formData, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      showSnackbar(
+        `Preamble ${currentPreamble ? 'updated' : 'created'} successfully`,
+        'success'
+      );
       handleCloseDialog();
-      fetchPreambles();
+      fetchPreambles(); // Refresh the list
     } catch (error) {
       console.error('Error saving preamble:', error);
-      showSnackbar('Failed to save preamble', 'error');
+      let errorMessage = 'Failed to save preamble'; // Default message
+
+      // Check for specific backend error structure
+      if (error.response && error.response.status === 400 && error.response.data?.message) {
+        // Check if the message indicates a duplicate name error
+        if (error.response.data.message.includes('already exists for this user')) {
+          errorMessage = 'A preamble with this name already exists. Please use a different name.';
+        } else {
+          // Use the specific message from the backend if it's not the duplicate error
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.response && error.response.data?.error) {
+        // Handle cases where the backend might still use the 'error' key (legacy or other routes)
+        errorMessage = error.response.data.error;
+      }
+      // Further checks for network errors, etc., could be added here
+
+      showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
