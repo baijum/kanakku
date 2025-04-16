@@ -1,18 +1,19 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 import logging
-from flask_jwt_extended import jwt_required, current_user
+from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
 from .models import db, Preamble
+from .extensions import api_token_required
 
 preamble = Blueprint("preamble", __name__)
 
 
 @preamble.route("/api/v1/preambles", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_preambles():
     """Return all preambles for the logged-in user."""
     try:
-        user = current_user
+        user = g.current_user
         preambles = Preamble.query.filter_by(user_id=user.id).all()
         return jsonify({"preambles": [p.to_dict() for p in preambles]})
     except Exception as e:
@@ -21,11 +22,11 @@ def get_preambles():
 
 
 @preamble.route("/api/v1/preambles/<int:preamble_id>", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_preamble(preamble_id):
     """Return a specific preamble by ID."""
     try:
-        user = current_user
+        user = g.current_user
         preamble = Preamble.query.filter_by(id=preamble_id, user_id=user.id).first()
         if not preamble:
             return jsonify({"error": "Preamble not found"}), 404
@@ -36,11 +37,11 @@ def get_preamble(preamble_id):
 
 
 @preamble.route("/api/v1/preambles/name/<string:name>", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_preamble_by_name(name):
     """Return a specific preamble by name."""
     try:
-        user = current_user
+        user = g.current_user
         preamble = Preamble.query.filter_by(name=name, user_id=user.id).first()
         if not preamble:
             return jsonify({"error": "Preamble not found"}), 404
@@ -51,10 +52,10 @@ def get_preamble_by_name(name):
 
 
 @preamble.route("/api/v1/preambles", methods=["POST"])
-@jwt_required()
+@api_token_required
 def create_preamble():
     """Create a new preamble."""
-    user = current_user
+    user = g.current_user
     data = request.json
 
     if not data or not data.get("name") or not data.get("content"):
@@ -109,10 +110,10 @@ def create_preamble():
 
 
 @preamble.route("/api/v1/preambles/<int:preamble_id>", methods=["PUT"])
-@jwt_required()
+@api_token_required
 def update_preamble(preamble_id):
     """Update an existing preamble."""
-    user = current_user
+    user = g.current_user
     preamble = Preamble.query.filter_by(id=preamble_id, user_id=user.id).first()
     if not preamble:
         return jsonify({"message": "Preamble not found"}), 404
@@ -163,11 +164,11 @@ def update_preamble(preamble_id):
 
 
 @preamble.route("/api/v1/preambles/<int:preamble_id>", methods=["DELETE"])
-@jwt_required()
+@api_token_required
 def delete_preamble(preamble_id):
     """Delete a preamble."""
     try:
-        user = current_user
+        user = g.current_user
         preamble = Preamble.query.filter_by(id=preamble_id, user_id=user.id).first()
         if not preamble:
             return jsonify({"error": "Preamble not found"}), 404
@@ -187,11 +188,11 @@ def delete_preamble(preamble_id):
 
 
 @preamble.route("/api/v1/preambles/default", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_default_preamble():
     """Return the default preamble for the logged-in user."""
     try:
-        user = current_user
+        user = g.current_user
         preamble = Preamble.query.filter_by(user_id=user.id, is_default=True).first()
         if not preamble:
             return jsonify({"error": "No default preamble found"}), 404

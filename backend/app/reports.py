@@ -1,12 +1,13 @@
-from flask import Blueprint, jsonify, request, current_app
-from flask_jwt_extended import jwt_required, current_user
+from flask import Blueprint, jsonify, request, current_app, g
+from flask_jwt_extended import jwt_required
 from .models import Account, Transaction, db
+from .extensions import api_token_required
 
 reports = Blueprint("reports", __name__)
 
 
 @reports.route("/api/reports/balance", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_balance():
     """Get balance report, optionally filtered by account and limited by depth"""
     try:
@@ -16,7 +17,7 @@ def get_balance():
         # Build base query to get account balances
         query = db.session.query(
             Account.name, Account.type, Account.currency, Account.balance
-        ).filter(Account.user_id == current_user.id)
+        ).filter(Account.user_id == g.current_user.id)
 
         # Filter by account name if provided
         if account:
@@ -52,7 +53,7 @@ def get_balance():
 
 
 @reports.route("/api/reports/register", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_register():
     """Get transaction register, optionally filtered by account and limited by count"""
     try:
@@ -70,7 +71,7 @@ def get_register():
                 Account.name.label("account_name"),
             )
             .join(Account, Transaction.account_id == Account.id)
-            .filter(Transaction.user_id == current_user.id)
+            .filter(Transaction.user_id == g.current_user.id)
             .order_by(Transaction.date.desc())
         )
 
@@ -107,7 +108,7 @@ def get_register():
 
 
 @reports.route("/api/reports/balance_report", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_balance_report():
     """Get a full balance report for all accounts"""
     try:
@@ -116,7 +117,7 @@ def get_balance_report():
             db.session.query(
                 Account.name, Account.type, Account.currency, Account.balance
             )
-            .filter(Account.user_id == current_user.id)
+            .filter(Account.user_id == g.current_user.id)
             .order_by(Account.type, Account.name)
             .all()
         )
@@ -172,14 +173,14 @@ def get_balance_report():
 
 
 @reports.route("/api/reports/income_statement", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_income_statement():
     """Generate an income statement (Income vs Expenses)"""
     try:
         # Query Income accounts
         income = (
             db.session.query(Account.name, Account.currency, Account.balance)
-            .filter(Account.user_id == current_user.id, Account.type == "Income")
+            .filter(Account.user_id == g.current_user.id, Account.type == "Income")
             .order_by(Account.name)
             .all()
         )
@@ -187,7 +188,7 @@ def get_income_statement():
         # Query Expense accounts
         expenses = (
             db.session.query(Account.name, Account.currency, Account.balance)
-            .filter(Account.user_id == current_user.id, Account.type == "Expenses")
+            .filter(Account.user_id == g.current_user.id, Account.type == "Expenses")
             .order_by(Account.name)
             .all()
         )

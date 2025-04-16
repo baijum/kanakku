@@ -12,7 +12,7 @@ from flask import (
 from flask_jwt_extended import (
     create_access_token,
     jwt_required as flask_jwt_required,
-    current_user,
+    current_user as flask_jwt_current_user,
 )
 from app.models import User, db
 from app.utils.email_utils import send_password_reset_email
@@ -129,10 +129,13 @@ def login():
 
 
 @auth.route("/api/auth/logout", methods=["POST"])
-@flask_jwt_required()
+@api_token_required
 def logout():
     # JWT logout is typically handled client-side by discarding the token.
     # Flask-JWT-Extended offers blocklisting for server-side revocation if needed.
+    # Accessing g.current_user isn't strictly necessary here, but okay
+    user = g.current_user
+    current_app.logger.info(f"Logout endpoint called for user {user.id}")
     return (
         jsonify({"message": "Logout successful (token invalidated client-side)"}),
         200,
@@ -140,22 +143,24 @@ def logout():
 
 
 @auth.route("/api/auth/me", methods=["GET"])
-@flask_jwt_required()
+@api_token_required
 def get_current_user():
-    # Access the user loaded by @jwt.user_lookup_loader via current_user proxy
-    user = current_user
+    # Access the user loaded by the decorator via g.current_user
+    user = g.current_user
     if not user:
-        # This case should ideally not happen if @flask_jwt_required() and user_lookup_loader work
-        return jsonify({"error": "User not found despite valid token"}), 404
+        # This case should not happen if decorator works correctly
+        return jsonify({"error": "User not found"}), 404
     # Explicitly convert user object to dict before jsonify
     return jsonify(user.to_dict()), 200
 
 
 @auth.route("/api/auth/users/<int:user_id>/activate", methods=["POST"])
-@flask_jwt_required()
+@api_token_required
 def activate_user(user_id):
-    # Only admins should be able to activate/deactivate users
-    # TODO: Add proper admin role checking once roles are implemented
+    # TODO: Add proper admin role checking using g.current_user
+    requesting_user = g.current_user
+    if not requesting_user.is_admin: # Assuming an is_admin flag exists
+         return jsonify({"error": "Admin privileges required"}), 403
 
     # Get the target user
     user_to_update = db.session.get(User, user_id)
@@ -184,9 +189,11 @@ def activate_user(user_id):
 
 
 @auth.route("/api/auth/password", methods=["PUT"])
-@flask_jwt_required()
+@api_token_required
 def update_password():
     """Update the current user's password"""
+    # Access user via g
+    user = g.current_user
     # Get request data
     data = request.get_json()
 
@@ -200,12 +207,12 @@ def update_password():
     if not new_password:
         return jsonify({"error": "New password is required"}), 400
 
-    # Check if current password matches
-    if not current_user.check_password(current_password):
+    # Check if current password matches using the user from g
+    if not user.check_password(current_password):
         return jsonify({"error": "Current password is incorrect"}), 401
 
-    # Update password
-    current_user.set_password(new_password)
+    # Update password on the user from g
+    user.set_password(new_password)
     db.session.commit()
 
     return jsonify({"message": "Password updated successfully"}), 200
@@ -427,7 +434,7 @@ def get_tokens():
     from app.models import ApiToken
 
     # Get the user from JWT or API token auth
-    user = current_user or g.get("current_user")
+    user = g.current_user
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -446,7 +453,7 @@ def create_token():
     from app.models import ApiToken
 
     # Get the user from JWT or API token auth
-    user = current_user or g.get("current_user")
+    user = g.current_user
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -491,7 +498,7 @@ def revoke_token(token_id):
     from app.models import ApiToken
 
     # Get the user from JWT or API token auth
-    user = current_user or g.get("current_user")
+    user = g.current_user
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -512,7 +519,7 @@ def update_token(token_id):
     from app.models import ApiToken
 
     # Get the user from JWT or API token auth
-    user = current_user or g.get("current_user")
+    user = g.current_user
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -555,7 +562,7 @@ def update_token(token_id):
 def auth_test():
     """Test authentication status"""
 
-    user = current_user or g.get("current_user")
+    user = g.current_user
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -565,7 +572,7 @@ def auth_test():
                 "message": "Authentication successful",
                 "user_id": user.id,
                 "email": user.email,
-                "auth_type": "JWT" if current_user else "API Token",
+                "auth_type": "JWT" if flask_jwt_current_user else "API Token",
             }
         ),
         200,

@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify, Response
-from flask_jwt_extended import jwt_required, current_user
+from flask import Blueprint, request, jsonify, Response, g
+from flask_jwt_extended import jwt_required
 from .models import db, Account, Transaction, Preamble
+from .extensions import api_token_required
 import logging
 
 # from flask_login import login_required, current_user # Keep if used elsewhere
@@ -15,14 +16,14 @@ def health_check():
 
 
 @ledger.route("/api/v1/ledgertransactions", methods=["GET"])
-@jwt_required()  # Correct usage
+@api_token_required
 def get_transactions_ledger_format():
     """Return all transactions for the logged-in user in ledger format."""
     try:
-        # Use current_user proxy populated by user_lookup_loader
-        user = current_user
+        # Use g.current_user populated by the decorator
+        user = g.current_user
         if not user:
-            # This check might be redundant if @jwt_required() works correctly
+            # This check is technically redundant if decorator works, but safe
             return jsonify({"error": "Authentication required"}), 401
 
         # Get preamble id if provided in query params
@@ -31,19 +32,19 @@ def get_transactions_ledger_format():
         # Get preamble content
         preamble_content = ""
         if preamble_id:
-            # Get specific preamble if ID provided
+            # Get specific preamble if ID provided - use g.current_user.id
             preamble = Preamble.query.filter_by(id=preamble_id, user_id=user.id).first()
             if preamble:
                 preamble_content = preamble.content + "\n\n"
         else:
-            # Otherwise try to get default preamble
+            # Otherwise try to get default preamble - use g.current_user.id
             default_preamble = Preamble.query.filter_by(
                 user_id=user.id, is_default=True
             ).first()
             if default_preamble:
                 preamble_content = default_preamble.content + "\n\n"
 
-        # Fetch transactions joined with account names for the user
+        # Fetch transactions joined with account names for the user - use g.current_user.id
         transactions = (
             db.session.query(Transaction, Account.name)
             .join(Account, Transaction.account_id == Account.id)

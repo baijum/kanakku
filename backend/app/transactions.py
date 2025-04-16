@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, g
 from app.models import db, Transaction, Account
-from flask_jwt_extended import jwt_required, current_user
+from flask_jwt_extended import jwt_required
+from .extensions import api_token_required
 from datetime import datetime
 import traceback
 import json
@@ -10,7 +11,7 @@ transactions = Blueprint("transactions", __name__)
 
 
 @transactions.route("/api/transactions", methods=["POST"])
-@jwt_required()
+@api_token_required
 def create_transaction():
     """Create a new transaction from the provided JSON data."""
     # request_id = getattr(request, "request_id", "unknown") # Removed unused variable
@@ -58,8 +59,8 @@ def create_transaction():
             current_app.logger.warning(f"Invalid date format: {data['date']}")
             return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
-        # Access current_user
-        user = current_user
+        # Access current_user via g
+        user = g.current_user
 
         # Process each posting
         transaction_responses = []
@@ -149,7 +150,7 @@ def create_transaction():
 
 
 @transactions.route("/api/transactions", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_transactions():
     current_app.logger.debug("Entered get_transactions route")
     try:
@@ -164,7 +165,7 @@ def get_transactions():
         offset = request.args.get("offset", type=int, default=0)
 
         # Start with base query
-        query = Transaction.query.filter_by(user_id=current_user.id)
+        query = Transaction.query.filter_by(user_id=g.current_user.id)
 
         # Apply date filters if provided
         if start_date:
@@ -247,7 +248,7 @@ def get_transactions():
 
 
 @transactions.route("/api/transactions/<int:transaction_id>", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_transaction(transaction_id):
     """Get a single transaction by ID"""
     try:
@@ -256,12 +257,12 @@ def get_transaction(transaction_id):
 
         # Get the transaction
         transaction = Transaction.query.filter_by(
-            id=transaction_id, user_id=current_user.id
+            id=transaction_id, user_id=g.current_user.id
         ).first()
 
         if not transaction:
             current_app.logger.warning(
-                f"Transaction ID {transaction_id} not found for user ID {current_user.id}"
+                f"Transaction ID {transaction_id} not found for user ID {g.current_user.id}"
             )
             return jsonify({"error": "Transaction not found"}), 404
 
@@ -298,7 +299,7 @@ def get_transaction(transaction_id):
 
 
 @transactions.route("/api/transactions/<int:transaction_id>", methods=["PUT"])
-@jwt_required()
+@api_token_required
 def update_transaction(transaction_id):
     """Update a transaction"""
     current_app.logger.debug(
@@ -323,7 +324,7 @@ def update_transaction(transaction_id):
 
         # Find the transaction
         transaction = Transaction.query.filter_by(
-            id=transaction_id, user_id=current_user.id
+            id=transaction_id, user_id=g.current_user.id
         ).first()
 
         if not transaction:
@@ -360,7 +361,7 @@ def update_transaction(transaction_id):
         if "account_id" in data:
             new_account_id = data["account_id"]
             account = Account.query.filter_by(
-                id=new_account_id, user_id=current_user.id
+                id=new_account_id, user_id=g.current_user.id
             ).first()
 
             if not account:
@@ -380,7 +381,7 @@ def update_transaction(transaction_id):
 
             # Apply the difference to the account balance
             account = Account.query.filter_by(
-                id=transaction.account_id, user_id=current_user.id
+                id=transaction.account_id, user_id=g.current_user.id
             ).first()
             if account:
                 current_app.logger.debug("Current balance: {}".format(account.balance))
@@ -426,7 +427,7 @@ def update_transaction(transaction_id):
 @transactions.route(
     "/api/transactions/<int:transaction_id>/update_with_postings", methods=["PUT"]
 )
-@jwt_required()
+@api_token_required
 def update_transaction_with_postings(transaction_id):
     """Update a transaction with multiple postings"""
     current_app.logger.debug(
@@ -484,7 +485,7 @@ def update_transaction_with_postings(transaction_id):
         original_transactions = []
         for orig_id in original_transaction_ids:
             tx = Transaction.query.filter_by(
-                id=orig_id, user_id=current_user.id
+                id=orig_id, user_id=g.current_user.id
             ).first()
             if tx:
                 original_transactions.append(tx)
@@ -534,7 +535,7 @@ def update_transaction_with_postings(transaction_id):
             # Find the account
             account_name = posting["account"]
             account = Account.query.filter_by(
-                name=account_name, user_id=current_user.id
+                name=account_name, user_id=g.current_user.id
             ).first()
 
             if not account:
@@ -543,7 +544,7 @@ def update_transaction_with_postings(transaction_id):
 
             # Create transaction object
             new_transaction = Transaction(
-                user_id=current_user.id,
+                user_id=g.current_user.id,
                 account_id=account.id,
                 date=transaction_date,
                 description=data["payee"],  # Use payee as description
@@ -592,7 +593,7 @@ def update_transaction_with_postings(transaction_id):
 
 
 @transactions.route("/api/transactions/<int:transaction_id>/related", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_related_transactions(transaction_id):
     """Get a transaction and all its related transactions (by date and payee)"""
     try:
@@ -601,18 +602,18 @@ def get_related_transactions(transaction_id):
 
         # Get the transaction to find its date and payee
         transaction = Transaction.query.filter_by(
-            id=transaction_id, user_id=current_user.id
+            id=transaction_id, user_id=g.current_user.id
         ).first()
 
         if not transaction:
             current_app.logger.warning(
-                f"Transaction ID {transaction_id} not found for user ID {current_user.id}"
+                f"Transaction ID {transaction_id} not found for user ID {g.current_user.id}"
             )
             return jsonify({"error": "Transaction not found"}), 404
 
         # Get all transactions with the same date and payee
         related_transactions = Transaction.query.filter_by(
-            user_id=current_user.id, date=transaction.date, payee=transaction.payee
+            user_id=g.current_user.id, date=transaction.date, payee=transaction.payee
         ).all()
 
         if not related_transactions:
@@ -666,7 +667,7 @@ def get_related_transactions(transaction_id):
 
 
 @transactions.route("/api/transactions/<int:transaction_id>", methods=["DELETE"])
-@jwt_required()
+@api_token_required
 def delete_transaction(transaction_id):
     """Delete a specific transaction."""
     current_app.logger.info(
@@ -675,7 +676,7 @@ def delete_transaction(transaction_id):
 
     # Find the transaction
     transaction = Transaction.query.filter_by(
-        id=transaction_id, user_id=current_user.id
+        id=transaction_id, user_id=g.current_user.id
     ).first()
 
     if not transaction:
@@ -695,7 +696,7 @@ def delete_transaction(transaction_id):
 @transactions.route(
     "/api/transactions/<int:transaction_id>/related", methods=["DELETE"]
 )
-@jwt_required()
+@api_token_required
 def delete_related_transactions(transaction_id):
     """Delete a transaction and all its related transactions (same date and payee)"""
     current_app.logger.debug(
@@ -704,18 +705,18 @@ def delete_related_transactions(transaction_id):
     try:
         # Find the transaction to identify related ones
         transaction = Transaction.query.filter_by(
-            id=transaction_id, user_id=current_user.id
+            id=transaction_id, user_id=g.current_user.id
         ).first()
 
         if not transaction:
             current_app.logger.warning(
-                f"Transaction ID {transaction_id} not found for user ID {current_user.id}"
+                f"Transaction ID {transaction_id} not found for user ID {g.current_user.id}"
             )
             return jsonify({"error": "Transaction not found"}), 404
 
         # Find all transactions with the same date and payee
         related_transactions = Transaction.query.filter_by(
-            user_id=current_user.id, date=transaction.date, payee=transaction.payee
+            user_id=g.current_user.id, date=transaction.date, payee=transaction.payee
         ).all()
 
         if not related_transactions:

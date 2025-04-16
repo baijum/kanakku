@@ -48,17 +48,9 @@ func getPreambleIDByName(apiBaseURL, token, name string) (string, error) {
 		return "", fmt.Errorf("error creating request for preamble by name: %w", err)
 	}
 
-	req.Header.Add("Authorization", "Bearer "+token)
+	// Use "Token" prefix instead of "Bearer"
+	req.Header.Add("Authorization", "Token "+token)
 	req.Header.Add("Accept", "application/json")
-
-	// Debug: Print request headers
-	fmt.Println("--- Request Headers ---")
-	for name, headers := range req.Header {
-		for _, h := range headers {
-			fmt.Printf("%v: %v\n", name, h)
-		}
-	}
-	fmt.Println("---------------------")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -144,7 +136,7 @@ func main() {
 	}
 
 	// Add the Authorization header
-	req.Header.Add("Authorization", "Bearer "+accessToken)
+	req.Header.Add("Authorization", "Token "+accessToken)
 	req.Header.Add("Accept", "application/json") // Assuming the API returns JSON
 
 	resp, err := client.Do(req)

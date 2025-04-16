@@ -32,7 +32,7 @@ def api_token_required(f):
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
         from .models import ApiToken, User
-        from flask_jwt_extended import verify_jwt_in_request
+        from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
         from flask_jwt_extended.exceptions import (
             NoAuthorizationError,
             InvalidHeaderError,
@@ -41,6 +41,11 @@ def api_token_required(f):
         # First try JWT token authentication
         try:
             verify_jwt_in_request()
+            identity = get_jwt_identity()
+            user = db.session.get(User, identity)
+            if not user:
+                return {"error": "User associated with JWT not found"}, 401
+            g.current_user = user
             return f(*args, **kwargs)
         except (NoAuthorizationError, InvalidHeaderError):
             # JWT authentication failed, try API token
