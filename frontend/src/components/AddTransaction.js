@@ -136,7 +136,9 @@ function AddTransaction() {
                   label="Date"
                   value={date}
                   onChange={setDate}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
+                  slots={{
+                    textField: (params) => <TextField {...params} fullWidth />
+                  }}
                 />
               </LocalizationProvider>
             </Grid>

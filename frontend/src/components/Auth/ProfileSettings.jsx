@@ -418,7 +418,9 @@ const ProfileSettings = () => {
                         label="Expiry Date"
                         value={expiryDate}
                         onChange={(date) => setExpiryDate(date)}
-                        renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                        slots={{
+                          textField: (params) => <TextField {...params} fullWidth size="small" />
+                        }}
                         disablePast
                       />
                     </LocalizationProvider>
