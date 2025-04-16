@@ -17,12 +17,11 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle,
-  Link
+  DialogTitle
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 
 // Function to get the token (assuming it's stored in localStorage)
@@ -37,14 +36,12 @@ function AccountsList() {
   const [success, setSuccess] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const fetchAccounts = useCallback(async () => {
     const token = getToken();
     if (!token) {
       setError('Authentication required.');
-      setLoading(false);
       return;
     }
 
@@ -89,8 +86,6 @@ function AccountsList() {
       setAccounts([]);
       setTotalCount(0);
       setError('Failed to load accounts. Please try again later.');
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -127,7 +122,7 @@ function AccountsList() {
     const token = getToken();
     
     try {
-      const response = await axiosInstance.delete(`/api/accounts/${accountToDelete.id}`, {
+      await axiosInstance.delete(`/api/accounts/${accountToDelete.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

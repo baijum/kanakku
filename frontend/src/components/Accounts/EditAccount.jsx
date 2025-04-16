@@ -24,7 +24,6 @@ function EditAccount() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
-  const [accountData, setAccountData] = useState(null);
 
   // Fetch account details when component mounts
   useEffect(() => {
@@ -49,7 +48,6 @@ function EditAccount() {
           console.log('Account API Response:', response.data);
           
           if (response.data) {
-            setAccountData(response.data);
             setAccountName(response.data.name || '');
             setAccountType(response.data.type || '');
             setDescription(response.data.description || '');
@@ -71,7 +69,6 @@ function EditAccount() {
           if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
             const accountInfo = detailsResponse.data.find(a => a.id === parseInt(id));
             if (accountInfo) {
-              setAccountData(accountInfo);
               setAccountName(accountInfo.name || '');
               setAccountType(accountInfo.type || '');
               setDescription(accountInfo.description || '');
@@ -98,7 +95,6 @@ function EditAccount() {
               type: '',
               description: ''
             };
-            setAccountData(accountInfo);
             setAccountName(accountInfo.name);
             setAccountType('');
             setDescription('');

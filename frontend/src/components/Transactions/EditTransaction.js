@@ -257,7 +257,7 @@ function EditTransaction() {
     
     try {
       // We'll use the update endpoint that handles multiple postings
-      const response = await axios.put(`/api/transactions/${id}/update_with_postings`, transactionData, {
+      await axios.put(`/api/transactions/${id}/update_with_postings`, transactionData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
