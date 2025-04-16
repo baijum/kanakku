@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -48,12 +48,7 @@ function PreambleList() {
     severity: 'success'
   });
 
-  // Fetch preambles when component mounts
-  useEffect(() => {
-    fetchPreambles();
-  }, []);
-
-  const fetchPreambles = async () => {
+  const fetchPreambles = useCallback(async () => {
     setLoading(true);
     try {
       const token = getToken();
@@ -67,7 +62,12 @@ function PreambleList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch preambles when component mounts
+  useEffect(() => {
+    fetchPreambles();
+  }, [fetchPreambles]);
 
   const handleOpenDialog = (preamble = null) => {
     if (preamble) {

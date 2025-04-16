@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -18,7 +18,6 @@ import {
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 
@@ -44,31 +43,7 @@ function EditTransaction() {
   // Track the original transaction data for comparison
   const [originalTransaction, setOriginalTransaction] = useState(null);
 
-  useEffect(() => {
-    // Validate transaction ID before fetching
-    if (!id || id === 'undefined') {
-      setError('Invalid transaction ID. Please go back and try again.');
-      setLoading(false);
-      console.error('Invalid transaction ID:', id);
-      return;
-    }
-    
-    console.log('Fetching transaction with ID:', id);
-    
-    // Fetch transaction details when component mounts
-    fetchTransaction();
-    fetchAccounts();
-  }, [id]);
-
-  useEffect(() => {
-    // For debugging - log postings and accounts whenever they change
-    if (postings.length > 0 && accounts.length > 0) {
-      console.log('Current postings:', postings);
-      console.log('Available accounts:', accounts);
-    }
-  }, [postings, accounts]);
-
-  const fetchTransaction = async () => {
+  const fetchTransaction = useCallback(async () => {
     setLoading(true);
     const token = getToken();
     
@@ -78,8 +53,6 @@ function EditTransaction() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      console.log('Related transactions data received:', response.data);
-      
       // Store original transaction data
       setOriginalTransaction(response.data);
 
@@ -89,14 +62,10 @@ function EditTransaction() {
       });
       
       const accountsList = Array.isArray(accountsResponse.data) ? accountsResponse.data : [];
-      console.log('Accounts for initializing:', accountsList);
 
       // Set form values from transaction data
       if (response.data) {
         const transactionData = response.data;
-        console.log('Setting transaction data:');
-        console.log('Date:', transactionData.date);
-        console.log('Payee:', transactionData.payee);
         
         setDate(new Date(transactionData.date));
         setPayee(transactionData.payee || '');
@@ -111,15 +80,11 @@ function EditTransaction() {
             currency: tx.currency || 'INR',
           }));
           
-          console.log('Initial postings from related transactions:', initialPostings);
-          
           // Check if we need to add a balancing posting
           const totalAmount = initialPostings.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
           
           // If the total doesn't balance (within rounding error), add a balancing posting
           if (Math.abs(totalAmount) > 0.01) {
-            console.log('Total amount does not balance, adding balancing posting. Current total:', totalAmount);
-            
             // Try to find a suitable offsetting account
             let balancingAccountName = '';
             
@@ -139,16 +104,12 @@ function EditTransaction() {
               amount: (-totalAmount).toFixed(2), // Balance out the total
               currency: initialPostings[0]?.currency || 'INR',
             };
-            
-            console.log('Adding balancing posting:', balancingPosting);
             initialPostings.push(balancingPosting);
           }
           
           setPostings(initialPostings);
         } else {
           // Fallback: if no transactions are provided, create default postings
-          console.warn('No transactions provided in response, creating default postings');
-          
           // Find two different accounts if possible for the default postings
           let account1 = accountsList.length > 0 ? accountsList[0].name : '';
           let account2 = '';
@@ -166,12 +127,26 @@ function EditTransaction() {
         }
       }
     } catch (err) {
-      console.error('Error fetching transaction:', err);
       setError(err.response?.data?.error || 'Failed to load transaction data. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    // Validate transaction ID before fetching
+    if (!id || id === 'undefined') {
+      setError('Invalid transaction ID. Please go back and try again.');
+      setLoading(false);
+      return;
+    }
+    fetchTransaction();
+    fetchAccounts();
+  }, [id, fetchTransaction]);
+
+  useEffect(() => {
+    // For debugging - log postings and accounts whenever they change
+  }, [postings, accounts]);
 
   const fetchAccounts = async () => {
     const token = getToken();
@@ -183,7 +158,6 @@ function EditTransaction() {
       });
       
       if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
-        console.log('Account details:', detailsResponse.data);
         // Set accounts with full details
         setAccounts(detailsResponse.data.map(account => ({
           id: account.id,
@@ -200,33 +174,15 @@ function EditTransaction() {
       });
       
       if (response.data && Array.isArray(response.data.accounts)) {
-        console.log('Accounts names only:', response.data.accounts);
         // Create account objects with just names
         setAccounts(response.data.accounts.map(name => ({
           name: name,
           fullName: name
         })));
-      } else {
-        console.error('Unexpected response structure for accounts:', response.data);
       }
     } catch (err) {
-      console.error('Error fetching accounts:', err);
       setError('Failed to load accounts. Please try again.');
     }
-  };
-
-  const handleAddPosting = () => {
-    // Find the first account as a default, if available
-    const defaultAccount = accounts.length > 0 ? accounts[0].name : '';
-    
-    setPostings([
-      ...postings, 
-      { 
-        account: defaultAccount, 
-        amount: '0', 
-        currency: 'INR' 
-      }
-    ]);
   };
 
   const handleRemovePosting = (index) => {
@@ -238,8 +194,6 @@ function EditTransaction() {
   const handlePostingChange = (index, field, value) => {
     const newPostings = [...postings];
     newPostings[index][field] = value;
-    console.log(`Updating posting ${index}, field ${field} to ${value}`);
-    console.log('New postings:', newPostings);
     setPostings(newPostings);
   };
 
@@ -301,8 +255,6 @@ function EditTransaction() {
       primary_transaction_id: id
     };
     
-    console.log('Submitting transaction data:', transactionData);
-
     try {
       // We'll use the update endpoint that handles multiple postings
       const response = await axios.put(`/api/transactions/${id}/update_with_postings`, transactionData, {
@@ -402,7 +354,6 @@ function EditTransaction() {
             
             {/* Postings */}
             {postings.map((posting, index) => {
-              console.log(`Rendering posting ${index}, account:`, posting.account);
               return (
                 <React.Fragment key={index}>
                   <Grid item xs={12}>
@@ -417,10 +368,8 @@ function EditTransaction() {
                         label="Account"
                         required
                         renderValue={(selected) => {
-                          console.log(`Rendering value for posting ${index}, selected:`, selected);
                           // Find the account with matching name
                           const selectedAccount = accounts.find(a => a.name === selected);
-                          console.log(`Rendering account:`, selectedAccount);
                           return selectedAccount ? selectedAccount.fullName : '';
                         }}
                       >
