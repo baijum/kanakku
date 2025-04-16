@@ -22,6 +22,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
+import CircularProgress from '@mui/material/CircularProgress';
 import Reports from './components/Reports';
 import AccountForm from './components/Accounts/AccountForm';
 import AccountsList from './components/Accounts/AccountsList';
@@ -39,6 +40,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import GoogleAuthCallback from './components/Auth/GoogleAuthCallback';
 import ForgotPassword from './components/Auth/ForgotPassword';
 import ResetPassword from './components/Auth/ResetPassword';
+import axiosInstance from './api/axiosInstance';
 
 const drawerWidth = 240;
 
@@ -55,8 +57,13 @@ const theme = createTheme({
 });
 
 // Protected route component
-const ProtectedRoute = ({ children, isLoggedIn }) => {
-  console.log('ProtectedRoute - isLoggedIn:', isLoggedIn);
+const ProtectedRoute = ({ children, isLoggedIn, authLoading }) => {
+  console.log('ProtectedRoute - isLoggedIn:', isLoggedIn, 'authLoading:', authLoading);
+
+  if (authLoading) {
+    return null;
+  }
+
   if (!isLoggedIn) {
     // Redirect to login page if not logged in
     return <Navigate to="/login" replace />;
@@ -67,25 +74,51 @@ const ProtectedRoute = ({ children, isLoggedIn }) => {
 function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
-  // Check if user is logged in
+  // Check if user is logged in by validating token
   useEffect(() => {
-    const checkLoginStatus = () => {
+    const validateToken = async () => {
       const token = localStorage.getItem('token');
-      console.log('Auth check - Token exists:', !!token);
-      setIsLoggedIn(!!token);
+      console.log('Auth check - Token found in localStorage:', !!token);
+
+      if (token) {
+        try {
+          console.log('Validating token with /api/auth/test...');
+          await axiosInstance.get('/api/auth/test', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          console.log('Token validation successful.');
+          setIsLoggedIn(true);
+        } catch (error) {
+          console.error('Token validation failed:', error.response ? error.response.data : error.message);
+          localStorage.removeItem('token');
+          setIsLoggedIn(false);
+        }
+      } else {
+        console.log('No token found in localStorage.');
+        setIsLoggedIn(false);
+      }
+      setAuthLoading(false);
     };
 
-    // Initial check
-    checkLoginStatus();
+    validateToken();
 
-    // Listen for storage events (for multi-tab logout)
-    window.addEventListener('storage', checkLoginStatus);
+    // Listen for storage events (e.g., logout in another tab)
+    const handleStorageChange = () => {
+      console.log('Storage event detected, re-validating token...');
+      setAuthLoading(true);
+      validateToken();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      window.removeEventListener('storage', checkLoginStatus);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -96,7 +129,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
-    // Optional: redirect to login page
+    setAuthLoading(false);
     window.location.href = '/login';
   };
 
@@ -151,6 +184,21 @@ function App() {
       </Box>
     </>
   );
+
+  if (authLoading) {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh' 
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -246,7 +294,7 @@ function App() {
               <Route 
                 path="/" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <Dashboard />
                   </ProtectedRoute>
                 } 
@@ -254,7 +302,7 @@ function App() {
               <Route 
                 path="/add" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <AddTransaction />
                   </ProtectedRoute>
                 } 
@@ -262,7 +310,7 @@ function App() {
               <Route 
                 path="/transactions" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <ViewTransactions />
                   </ProtectedRoute>
                 } 
@@ -270,7 +318,7 @@ function App() {
               <Route 
                 path="/transactions/edit/:id" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <EditTransaction />
                   </ProtectedRoute>
                 } 
@@ -278,7 +326,7 @@ function App() {
               <Route 
                 path="/reports" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <Reports />
                   </ProtectedRoute>
                 } 
@@ -286,7 +334,7 @@ function App() {
               <Route 
                 path="/accounts" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <AccountsList />
                   </ProtectedRoute>
                 } 
@@ -294,7 +342,7 @@ function App() {
               <Route 
                 path="/accounts/new" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <AccountForm />
                   </ProtectedRoute>
                 } 
@@ -302,7 +350,7 @@ function App() {
               <Route 
                 path="/accounts/edit/:id" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <EditAccount />
                   </ProtectedRoute>
                 } 
@@ -310,7 +358,7 @@ function App() {
               <Route 
                 path="/preambles" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <PreambleList />
                   </ProtectedRoute>
                 } 
@@ -318,7 +366,7 @@ function App() {
               <Route 
                 path="/profile" 
                 element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <ProfileSettings />
                   </ProtectedRoute>
                 } 
@@ -328,7 +376,12 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password/:token" element={<ResetPassword />} />
               <Route path="/google-auth-callback" element={<GoogleAuthCallback setIsLoggedIn={setIsLoggedIn} />} />
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route 
+                path="*" 
+                element={
+                  isLoggedIn ? <Navigate to="/" replace /> : <Navigate to="/login" replace />
+                } 
+              />
             </Routes>
           </Box>
         </Box>
