@@ -58,7 +58,7 @@ def create_preamble():
     data = request.json
 
     if not data or not data.get("name") or not data.get("content"):
-        return jsonify({"message": "Name and content are required"}), 400
+        return jsonify({"error": "Name and content are required"}), 400
 
     is_default = data.get("is_default", False)
 

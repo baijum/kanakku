@@ -22,6 +22,7 @@ class User(UserMixin, db.Model):
     email = Column(String(120), unique=True, nullable=False)
     password_hash = Column(String(128))
     is_active = Column(db.Boolean, default=False)
+    is_admin = Column(db.Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime,

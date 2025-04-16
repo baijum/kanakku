@@ -4,6 +4,7 @@ from flask_mail import Mail
 from flask_jwt_extended import JWTManager
 from flask import request, g, current_app
 import functools
+from werkzeug.exceptions import NotFound
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -36,50 +37,89 @@ def api_token_required(f):
         from flask_jwt_extended.exceptions import (
             NoAuthorizationError,
             InvalidHeaderError,
+            JWTDecodeError,
+            WrongTokenError,
+            RevokedTokenError,
+            FreshTokenRequired,
+            CSRFError,
         )
 
-        # First try JWT token authentication
         try:
-            verify_jwt_in_request()
-            identity = get_jwt_identity()
-            user = db.session.get(User, identity)
-            if not user:
-                return {"error": "User associated with JWT not found"}, 401
-            g.current_user = user
-            return f(*args, **kwargs)
-        except (NoAuthorizationError, InvalidHeaderError):
-            # JWT authentication failed, try API token
-            auth_header = request.headers.get("Authorization", "").strip()
+            # First try JWT token authentication
+            try:
+                verify_jwt_in_request()
+                identity = get_jwt_identity()
+                user = db.session.get(User, identity)
+                if not user:
+                    return {"error": "User associated with JWT not found"}, 401
+                g.current_user = user
+                # Call the actual route function
+                return f(*args, **kwargs)
+            except (
+                NoAuthorizationError,
+                InvalidHeaderError,
+                JWTDecodeError,
+                WrongTokenError,
+                RevokedTokenError,
+                FreshTokenRequired,
+                CSRFError,
+            ) as jwt_error:
+                # JWT authentication failed or specific JWT error occurred, try API token
+                current_app.logger.debug(
+                    f"JWT Auth failed/not provided: {jwt_error}. Trying API Token."
+                )
 
-            # If no Authorization header is provided
-            if not auth_header:
+                auth_header = request.headers.get("Authorization", "").strip()
+
+                # If no Authorization header is provided at all
+                if not auth_header:
+                    return {"error": "Authentication required"}, 401
+
+                # Check if it's an API token (Token prefix)
+                if auth_header.startswith("Token "):
+                    token_value = auth_header.split(" ", 1)[1].strip()
+
+                    # Look up the token
+                    api_token = ApiToken.query.filter_by(token=token_value).first()
+
+                    # If token exists and is valid
+                    if api_token and api_token.is_valid():
+                        user = db.session.get(User, api_token.user_id)
+                        if user:
+                            g.current_user = user
+                            api_token.update_last_used()
+                            # Call the actual route function again if API token auth succeeds
+                            return f(*args, **kwargs)
+
+                # Authentication failed (neither valid JWT nor valid API token)
+                current_app.logger.warning(
+                    f"Authentication failed for request to {request.path}"
+                )
                 return {"error": "Authentication required"}, 401
+            # Let NotFound exceptions propagate to Flask's handler
+            except NotFound:
+                raise
+            except Exception as e:
+                # Catch other unexpected errors during the core route execution
+                current_app.logger.error(
+                    f"Unexpected error during authenticated route execution: {str(e)}",
+                    exc_info=True,
+                )
+                # It might be better to return a 500 here instead of 401
+                return {"error": "An internal server error occurred"}, 500
 
-            # Check if it's an API token (Token prefix)
-            if auth_header.startswith("Token "):
-                token_value = auth_header.split(" ", 1)[1].strip()
-
-                # Look up the token
-                api_token = ApiToken.query.filter_by(token=token_value).first()
-
-                # If token exists and is valid
-                if api_token and api_token.is_valid():
-                    # Set custom current user using the recommended db.session.get approach
-                    user = db.session.get(User, api_token.user_id)
-                    if user:
-                        g.current_user = user
-
-                        # Update last used timestamp
-                        api_token.update_last_used()
-
-                        return f(*args, **kwargs)
-
-            # Authentication failed
-            return {"error": "Authentication required"}, 401
+        except NotFound:
+            # Catch NotFound if it happens *outside* the inner try-except (less likely)
+            # Let Flask handle the 404 response
+            raise
         except Exception as e:
-            # Some other error occurred with JWT verification
-            current_app.logger.error(f"Authentication error: {str(e)}")
-            return {"error": f"Authentication error: {str(e)}"}, 401
+            # Catch any other unexpected errors during setup/auth logic
+            current_app.logger.error(
+                f"Unexpected error in auth wrapper: {str(e)}", exc_info=True
+            )
+            return {
+                "error": "An internal server error occurred during authentication"
+            }, 500
 
     return decorated_function
 

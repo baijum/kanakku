@@ -67,6 +67,8 @@ def user(app, db_session):
     # Create a new user
     user = User(email="test@example.com")
     user.set_password("password123")
+    user.is_admin = True  # Make test user an admin
+    user.is_active = True  # Ensure user is active for tests
     db_session.add(user)
     db_session.commit()
     user_id = user.id  # Get ID after commit
@@ -91,6 +93,8 @@ def authenticated_client(client, app, db_session):
             # Create if doesn't exist (should usually exist due to fixture order)
             test_user = User(email="test@example.com")
             test_user.set_password("password123")  # Use consistent password
+            test_user.is_admin = True  # Ensure admin flag is set here too
+            test_user.is_active = True  # Ensure active flag is set here too
             db_session.add(test_user)
             db_session.commit()
             user_id = test_user.id
