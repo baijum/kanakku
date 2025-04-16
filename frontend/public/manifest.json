@@ -1,6 +1,6 @@
 {
   "short_name": "Kanakku",
-  "name": "Kanakku - Ledger CLI Web Interface",
+  "name": "Kanakku - An expense tracker",
   "icons": [
     {
       "src": "favicon.ico",
