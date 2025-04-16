@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme, useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -41,6 +41,7 @@ import GoogleAuthCallback from './components/Auth/GoogleAuthCallback';
 import ForgotPassword from './components/Auth/ForgotPassword';
 import ResetPassword from './components/Auth/ResetPassword';
 import axiosInstance from './api/axiosInstance';
+import { createBrowserHistory } from 'history';
 
 const drawerWidth = 240;
 
@@ -55,6 +56,8 @@ const theme = createTheme({
     },
   },
 });
+
+const history = createBrowserHistory();
 
 // Protected route component
 const ProtectedRoute = ({ children, isLoggedIn, authLoading }) => {
@@ -203,7 +206,11 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
+      {/*
+        Use HistoryRouter to allow passing the `future` prop for React Router v7 compatibility.
+        This enables the v7_startTransition flag to remove the warning and future-proof navigation.
+      */}
+      <HistoryRouter history={history} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Box sx={{ display: 'flex' }}>
           <AppBar
             position="fixed"
@@ -385,7 +392,7 @@ function App() {
             </Routes>
           </Box>
         </Box>
-      </Router>
+      </HistoryRouter>
     </ThemeProvider>
   );
 }
