@@ -27,50 +27,66 @@ type Preamble struct {
 }
 
 const (
+	// Remove the constant apiBaseURL
 	// !!! IMPORTANT: Replace with your actual API base URL !!!
-	apiBaseURL           = "https://api.example.com" // Example: "https://your-api-domain.com"
-	ledgerAPIEndpoint    = "/api/v1/ledgertransactions"
-	preamblesAPIEndpoint = "/api/v1/preambles" // Endpoint to fetch all preambles
+	// apiBaseURL           = "https://api.example.com" // Example: "https://your-api-domain.com"
+	ledgerAPIEndpoint = "/api/v1/ledgertransactions"
+	// Remove unused preamblesAPIEndpoint
+	// preamblesAPIEndpoint = "/api/v1/preambles"
 )
 
-// Function to get Preamble ID by Name
-func getPreambleIDByName(baseURL, token, name string) (string, error) {
-	fmt.Printf("Fetching preambles to find ID for name: %s\n", name)
+// Function to get Preamble ID by Name using the specific name endpoint
+func getPreambleIDByName(apiBaseURL, token, name string) (string, error) {
+	// Construct the URL for the specific preamble name endpoint
+	preambleByNameEndpoint := fmt.Sprintf("/api/v1/preambles/name/%s", name)
+	fmt.Printf("Fetching preamble ID from %s%s\n", apiBaseURL, preambleByNameEndpoint)
+
 	client := &http.Client{}
-	reqURL := baseURL + preamblesAPIEndpoint
+	reqURL := apiBaseURL + preambleByNameEndpoint
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
-		return "", fmt.Errorf("error creating request for preambles: %w", err)
+		return "", fmt.Errorf("error creating request for preamble by name: %w", err)
 	}
 
 	req.Header.Add("Authorization", "Bearer "+token)
 	req.Header.Add("Accept", "application/json")
 
+	// Debug: Print request headers
+	fmt.Println("--- Request Headers ---")
+	for name, headers := range req.Header {
+		for _, h := range headers {
+			fmt.Printf("%v: %v\n", name, h)
+		}
+	}
+	fmt.Println("---------------------")
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("error making request for preambles: %w", err)
+		return "", fmt.Errorf("error making request for preamble by name: %w", err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound { // Handle 404 specifically
+		return "", fmt.Errorf("preamble with name '%s' not found", name)
+	}
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("preambles API returned non-OK status: %s", resp.Status)
+		return "", fmt.Errorf("preamble by name API returned non-OK status: %s", resp.Status)
 	}
 
-	var preambles []Preamble // Assuming the API returns a JSON array
+	// Decode the single Preamble object response
+	var preamble Preamble
 	decoder := json.NewDecoder(resp.Body)
-	if err := decoder.Decode(&preambles); err != nil {
-		return "", fmt.Errorf("error decoding preambles JSON response: %w", err)
+	if err := decoder.Decode(&preamble); err != nil {
+		return "", fmt.Errorf("error decoding preamble by name JSON response: %w", err)
 	}
 
-	// Find the preamble with the matching name
-	for _, p := range preambles {
-		if p.Name == name {
-			fmt.Printf("Found Preamble ID: %s for Name: %s\n", p.ID, name)
-			return p.ID, nil
-		}
+	// Check if ID is present (though it should be if status is OK)
+	if preamble.ID == "" {
+		return "", errors.New("preamble ID not found in the response")
 	}
 
-	return "", errors.New("preamble name not found")
+	fmt.Printf("Found Preamble ID: %s for Name: %s\n", preamble.ID, name)
+	return preamble.ID, nil
 }
 
 func main() {
@@ -89,8 +105,15 @@ func main() {
 	if preambleName == "" {
 		preambleName = os.Getenv("PREAMBLE_NAME")
 	}
+	// Get API Base URL from environment variable
+	apiBaseURL := os.Getenv("API_BASE_URL")
 
 	// Validate inputs
+	if apiBaseURL == "" { // Add validation for apiBaseURL
+		fmt.Println("Error: API Base URL is required.")
+		fmt.Println("Please provide it using the API_BASE_URL environment variable.")
+		os.Exit(1)
+	}
 	if accessToken == "" {
 		fmt.Println("Error: API Access Token is required.")
 		fmt.Println("Please provide it using the -token flag or the API_ACCESS_TOKEN environment variable.")

@@ -35,6 +35,21 @@ def get_preamble(preamble_id):
         return jsonify({"error": "Failed to retrieve preamble"}), 500
 
 
+@preamble.route("/api/v1/preambles/name/<string:name>", methods=["GET"])
+@jwt_required()
+def get_preamble_by_name(name):
+    """Return a specific preamble by name."""
+    try:
+        user = current_user
+        preamble = Preamble.query.filter_by(name=name, user_id=user.id).first()
+        if not preamble:
+            return jsonify({"error": "Preamble not found"}), 404
+        return jsonify(preamble.to_dict())
+    except Exception as e:
+        logging.error(f"Error getting preamble by name: {e}")
+        return jsonify({"error": "Failed to retrieve preamble"}), 500
+
+
 @preamble.route("/api/v1/preambles", methods=["POST"])
 @jwt_required()
 def create_preamble():
