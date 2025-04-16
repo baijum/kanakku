@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, Response, g
-from flask_jwt_extended import jwt_required
 from .models import db, Account, Transaction, Preamble
 from .extensions import api_token_required
 import logging

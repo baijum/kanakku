@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request, g
 import logging
-from flask_jwt_extended import jwt_required
 from sqlalchemy.exc import IntegrityError
 from .models import db, Preamble
 from .extensions import api_token_required
@@ -94,11 +93,20 @@ def create_preamble():
     except IntegrityError as e:
         db.session.rollback()
         # Log the original error for debugging
-        logging.error(f"IntegrityError encountered. Original error: {e.orig}") 
+        logging.error(f"IntegrityError encountered. Original error: {e.orig}")
         # Check if the error is the unique constraint violation for user_id and name
         error_str = str(e.orig).lower()
-        if "unique constraint failed" in error_str and "preamble.user_id" in error_str and "preamble.name" in error_str:
-            return jsonify({"message": "Preamble with this name already exists for this user"}), 400
+        if (
+            "unique constraint failed" in error_str
+            and "preamble.user_id" in error_str
+            and "preamble.name" in error_str
+        ):
+            return (
+                jsonify(
+                    {"message": "Preamble with this name already exists for this user"}
+                ),
+                400,
+            )
         else:
             logging.error(f"Integrity error creating preamble: {e}")
             return jsonify({"message": "Database integrity error"}), 500
@@ -148,11 +156,20 @@ def update_preamble(preamble_id):
     except IntegrityError as e:
         db.session.rollback()
         # Log the original error for debugging
-        logging.error(f"IntegrityError encountered. Original error: {e.orig}") 
+        logging.error(f"IntegrityError encountered. Original error: {e.orig}")
         # Check if the error is the unique constraint violation for user_id and name
         error_str = str(e.orig).lower()
-        if "unique constraint failed" in error_str and "preamble.user_id" in error_str and "preamble.name" in error_str:
-            return jsonify({"message": "Preamble with this name already exists for this user"}), 400
+        if (
+            "unique constraint failed" in error_str
+            and "preamble.user_id" in error_str
+            and "preamble.name" in error_str
+        ):
+            return (
+                jsonify(
+                    {"message": "Preamble with this name already exists for this user"}
+                ),
+                400,
+            )
         else:
             logging.error(f"Integrity error updating preamble: {e}")
             return jsonify({"message": "Database integrity error"}), 500

@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, g
 from app.models import Account, Transaction, db
-from flask_jwt_extended import jwt_required
 from .extensions import api_token_required
 
 accounts = Blueprint("accounts", __name__)
@@ -48,9 +47,7 @@ def create_account():
     user_id = g.current_user.id
 
     # Check if account with the same name already exists
-    existing = Account.query.filter_by(
-        user_id=user_id, name=data["name"]
-    ).first()
+    existing = Account.query.filter_by(user_id=user_id, name=data["name"]).first()
     if existing:
         return jsonify({"error": "Account with this name already exists"}), 400
 

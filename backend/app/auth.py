@@ -11,7 +11,6 @@ from flask import (
 )
 from flask_jwt_extended import (
     create_access_token,
-    jwt_required as flask_jwt_required,
     current_user as flask_jwt_current_user,
 )
 from app.models import User, db
@@ -159,8 +158,8 @@ def get_current_user():
 def activate_user(user_id):
     # TODO: Add proper admin role checking using g.current_user
     requesting_user = g.current_user
-    if not requesting_user.is_admin: # Assuming an is_admin flag exists
-         return jsonify({"error": "Admin privileges required"}), 403
+    if not requesting_user.is_admin:  # Assuming an is_admin flag exists
+        return jsonify({"error": "Admin privileges required"}), 403
 
     # Get the target user
     user_to_update = db.session.get(User, user_id)

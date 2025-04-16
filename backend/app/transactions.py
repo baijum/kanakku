@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, g
 from app.models import db, Transaction, Account
-from flask_jwt_extended import jwt_required
 from .extensions import api_token_required
 from datetime import datetime
 import traceback

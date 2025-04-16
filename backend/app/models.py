@@ -188,7 +188,9 @@ class Preamble(db.Model):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    __table_args__ = (UniqueConstraint("user_id", "name", name="uq_preamble_user_name"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="uq_preamble_user_name"),
+    )
 
     def to_dict(self):
         return {
