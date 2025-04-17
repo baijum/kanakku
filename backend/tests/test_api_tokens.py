@@ -34,7 +34,7 @@ def test_create_token(authenticated_client, user, db_session):
     """Test creating a new API token."""
     # Test creating a token without expiry
     response = authenticated_client.post(
-        "/api/auth/tokens", json={"name": "Test API Token"}
+        "/api/v1/auth/tokens", json={"name": "Test API Token"}
     )
     assert response.status_code == 201
     data = response.get_json()
@@ -56,7 +56,7 @@ def test_create_token(authenticated_client, user, db_session):
     # Test creating a token with expiry
     expiry_date = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
     response = authenticated_client.post(
-        "/api/auth/tokens", json={"name": "Expiring Token", "expires_at": expiry_date}
+        "/api/v1/auth/tokens", json={"name": "Expiring Token", "expires_at": expiry_date}
     )
     assert response.status_code == 201
     data = response.get_json()
@@ -78,21 +78,21 @@ def test_create_token(authenticated_client, user, db_session):
 def test_create_token_validation(authenticated_client):
     """Test validation for token creation."""
     # Test creating a token without a name
-    response = authenticated_client.post("/api/auth/tokens", json={})
+    response = authenticated_client.post("/api/v1/auth/tokens", json={})
     assert response.status_code == 400
     data = response.get_json()
     assert "error" in data
     assert "no data provided" in data["error"].lower()
 
     # Test with an empty name
-    response = authenticated_client.post("/api/auth/tokens", json={"name": ""})
+    response = authenticated_client.post("/api/v1/auth/tokens", json={"name": ""})
     assert response.status_code == 400
     data = response.get_json()
     assert "error" in data
 
     # Test creating a token with invalid expiry format
     response = authenticated_client.post(
-        "/api/auth/tokens", json={"name": "Invalid Token", "expires_at": "not-a-date"}
+        "/api/v1/auth/tokens", json={"name": "Invalid Token", "expires_at": "not-a-date"}
     )
     assert response.status_code == 400
     data = response.get_json()
@@ -103,7 +103,7 @@ def test_create_token_validation(authenticated_client):
 def test_get_tokens(authenticated_client, api_token, db_session):
     """Test retrieving API tokens."""
     # Test getting all tokens
-    response = authenticated_client.get("/api/auth/tokens")
+    response = authenticated_client.get("/api/v1/auth/tokens")
     assert response.status_code == 200
     data = response.get_json()
     assert isinstance(data, list)
@@ -125,7 +125,7 @@ def test_get_tokens(authenticated_client, api_token, db_session):
 def test_delete_token(authenticated_client, api_token, db_session):
     """Test deleting an API token."""
     # Test deleting a token
-    response = authenticated_client.delete(f"/api/auth/tokens/{api_token.id}")
+    response = authenticated_client.delete(f"/api/v1/auth/tokens/{api_token.id}")
     assert response.status_code == 200
     data = response.get_json()
     assert "message" in data
@@ -139,7 +139,7 @@ def test_delete_token(authenticated_client, api_token, db_session):
 
 def test_delete_nonexistent_token(authenticated_client):
     """Test trying to delete a token that doesn't exist."""
-    response = authenticated_client.delete("/api/auth/tokens/999999")
+    response = authenticated_client.delete("/api/v1/auth/tokens/999999")
     assert response.status_code == 404
     data = response.get_json()
     assert "error" in data
@@ -150,7 +150,7 @@ def test_update_token(authenticated_client, api_token, db_session):
     """Test updating an API token."""
     # Test updating token name
     response = authenticated_client.put(
-        f"/api/auth/tokens/{api_token.id}", json={"name": "Updated Token Name"}
+        f"/api/v1/auth/tokens/{api_token.id}", json={"name": "Updated Token Name"}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -165,7 +165,7 @@ def test_update_token(authenticated_client, api_token, db_session):
     # Test updating token expiry
     expiry_date = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
     response = authenticated_client.put(
-        f"/api/auth/tokens/{api_token.id}", json={"expires_at": expiry_date}
+        f"/api/v1/auth/tokens/{api_token.id}", json={"expires_at": expiry_date}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -179,7 +179,7 @@ def test_update_token(authenticated_client, api_token, db_session):
 
     # Test removing expiry (setting to null)
     response = authenticated_client.put(
-        f"/api/auth/tokens/{api_token.id}", json={"expires_at": None}
+        f"/api/v1/auth/tokens/{api_token.id}", json={"expires_at": None}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -193,7 +193,7 @@ def test_update_token(authenticated_client, api_token, db_session):
 
     # Test deactivating a token
     response = authenticated_client.put(
-        f"/api/auth/tokens/{api_token.id}", json={"is_active": False}
+        f"/api/v1/auth/tokens/{api_token.id}", json={"is_active": False}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -209,7 +209,7 @@ def test_update_token(authenticated_client, api_token, db_session):
 def test_update_nonexistent_token(authenticated_client):
     """Test trying to update a token that doesn't exist."""
     response = authenticated_client.put(
-        "/api/auth/tokens/999999", json={"name": "This should fail"}
+        "/api/v1/auth/tokens/999999", json={"name": "This should fail"}
     )
     assert response.status_code == 404
     data = response.get_json()
@@ -221,7 +221,7 @@ def test_token_authentication(app, client, api_token, db_session):
     """Test authenticating with an API token."""
     # Test access with API token
     response = client.get(
-        "/api/auth/test", headers={"Authorization": f"Token {api_token.token}"}
+        "/api/v1/auth/test", headers={"Authorization": f"Token {api_token.token}"}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -231,7 +231,7 @@ def test_token_authentication(app, client, api_token, db_session):
 
     # Test with invalid token
     response = client.get(
-        "/api/auth/test", headers={"Authorization": "Token invalid-token"}
+        "/api/v1/auth/test", headers={"Authorization": "Token invalid-token"}
     )
     assert response.status_code == 401
     data = response.get_json()
@@ -243,7 +243,7 @@ def test_token_authentication(app, client, api_token, db_session):
         db_session.commit()
 
     response = client.get(
-        "/api/auth/test", headers={"Authorization": f"Token {api_token.token}"}
+        "/api/v1/auth/test", headers={"Authorization": f"Token {api_token.token}"}
     )
     assert response.status_code == 401
 
@@ -254,7 +254,7 @@ def test_token_authentication(app, client, api_token, db_session):
         db_session.commit()
 
     response = client.get(
-        "/api/auth/test", headers={"Authorization": f"Token {api_token.token}"}
+        "/api/v1/auth/test", headers={"Authorization": f"Token {api_token.token}"}
     )
     assert response.status_code == 401
 

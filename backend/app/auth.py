@@ -23,7 +23,7 @@ from datetime import datetime
 auth = Blueprint("auth", __name__)
 
 
-@auth.route("/api/auth/register", methods=["POST"])
+@auth.route("/api/v1/auth/register", methods=["POST"])
 def register():
     data = request.get_json()
     if not data:
@@ -55,7 +55,7 @@ def register():
 
 
 # Add OPTIONS handler for CORS preflight requests
-@auth.route("/api/auth/login", methods=["OPTIONS"])
+@auth.route("/api/v1/auth/login", methods=["OPTIONS"])
 def login_options():
     response = Response()
     response.headers.add("Access-Control-Allow-Origin", "*")
@@ -64,7 +64,7 @@ def login_options():
     return response
 
 
-@auth.route("/api/auth/login", methods=["POST"])
+@auth.route("/api/v1/auth/login", methods=["POST"])
 def login():
     """Simple login endpoint that accepts email/password and returns a token"""
     # Log the request for debugging
@@ -127,7 +127,7 @@ def login():
     return jsonify({"error": "Invalid email or password"}), 401
 
 
-@auth.route("/api/auth/logout", methods=["POST"])
+@auth.route("/api/v1/auth/logout", methods=["POST"])
 @api_token_required
 def logout():
     # JWT logout is typically handled client-side by discarding the token.
@@ -141,7 +141,7 @@ def logout():
     )
 
 
-@auth.route("/api/auth/me", methods=["GET"])
+@auth.route("/api/v1/auth/me", methods=["GET"])
 @api_token_required
 def get_current_user():
     # Access the user loaded by the decorator via g.current_user
@@ -153,7 +153,7 @@ def get_current_user():
     return jsonify(user.to_dict()), 200
 
 
-@auth.route("/api/auth/users/<int:user_id>/activate", methods=["POST"])
+@auth.route("/api/v1/auth/users/<int:user_id>/activate", methods=["POST"])
 @api_token_required
 def activate_user(user_id):
     # TODO: Add proper admin role checking using g.current_user
@@ -187,7 +187,7 @@ def activate_user(user_id):
     )
 
 
-@auth.route("/api/auth/password", methods=["PUT"])
+@auth.route("/api/v1/auth/password", methods=["PUT"])
 @api_token_required
 def update_password():
     """Update the current user's password"""
@@ -217,7 +217,7 @@ def update_password():
     return jsonify({"message": "Password updated successfully"}), 200
 
 
-@auth.route("/api/auth/forgot-password", methods=["POST"])
+@auth.route("/api/v1/auth/forgot-password", methods=["POST"])
 def forgot_password():
     """Request a password reset"""
     # Get request data
@@ -283,7 +283,7 @@ def forgot_password():
         return jsonify({"error": "Failed to send password reset email"}), 500
 
 
-@auth.route("/api/auth/reset-password", methods=["POST"])
+@auth.route("/api/v1/auth/reset-password", methods=["POST"])
 def reset_password():
     """Reset password using token"""
     # Get request data
@@ -319,7 +319,7 @@ def reset_password():
 
 
 # Google OAuth2 route
-@auth.route("/api/auth/google", methods=["GET"])
+@auth.route("/api/v1/auth/google", methods=["GET"])
 def google_login():
     # Get Google OAuth2 configuration
     google_client_id = current_app.config.get("GOOGLE_CLIENT_ID")
@@ -350,7 +350,7 @@ def google_login():
     return jsonify({"auth_url": auth_url})
 
 
-@auth.route("/api/auth/google/callback", methods=["GET"])
+@auth.route("/api/v1/auth/google/callback", methods=["GET"])
 def google_callback():
     # Verify state parameter to prevent CSRF
     state = request.args.get("state")
@@ -426,7 +426,7 @@ def google_callback():
 
 
 # API Token Management Endpoints
-@auth.route("/api/auth/tokens", methods=["GET"])
+@auth.route("/api/v1/auth/tokens", methods=["GET"])
 @api_token_required
 def get_tokens():
     """Get all API tokens for the current user"""
@@ -445,7 +445,7 @@ def get_tokens():
     return jsonify([token.to_dict() for token in tokens]), 200
 
 
-@auth.route("/api/auth/tokens", methods=["POST"])
+@auth.route("/api/v1/auth/tokens", methods=["POST"])
 @api_token_required
 def create_token():
     """Create a new API token for the current user"""
@@ -490,7 +490,7 @@ def create_token():
     return jsonify(token_dict), 201
 
 
-@auth.route("/api/auth/tokens/<int:token_id>", methods=["DELETE"])
+@auth.route("/api/v1/auth/tokens/<int:token_id>", methods=["DELETE"])
 @api_token_required
 def revoke_token(token_id):
     """Revoke (delete) an API token"""
@@ -511,7 +511,7 @@ def revoke_token(token_id):
     return jsonify({"message": "Token revoked successfully"}), 200
 
 
-@auth.route("/api/auth/tokens/<int:token_id>", methods=["PUT"])
+@auth.route("/api/v1/auth/tokens/<int:token_id>", methods=["PUT"])
 @api_token_required
 def update_token(token_id):
     """Update an API token (name or expiry)"""
@@ -556,7 +556,7 @@ def update_token(token_id):
 
 
 # Simple test route to verify authentication status
-@auth.route("/api/auth/test", methods=["GET"])
+@auth.route("/api/v1/auth/test", methods=["GET"])
 @api_token_required
 def auth_test():
     """Test authentication status"""

@@ -97,7 +97,7 @@ const UpdatePassword = () => {
       };
       
       // Use axiosInstance.put
-      const response = await axiosInstance.put('/api/auth/password', body, config);
+      const response = await axiosInstance.put('/api/v1/auth/password', body, config);
       
       const data = response.data; // Axios puts response data in `data` property
       

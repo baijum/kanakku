@@ -4,7 +4,7 @@ from app.models import User
 def test_register(authenticated_client, mock_ledger_command):
     """Test user registration."""
     response = authenticated_client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={"email": "new@example.com", "password": "password123"},
     )
     assert response.status_code == 201
@@ -23,7 +23,7 @@ def test_login(authenticated_client, mock_ledger_command, db_session):
     db_session.commit()
 
     response = authenticated_client.post(
-        "/api/auth/login", json={"email": "test@example.com", "password": "password123"}
+        "/api/v1/auth/login", json={"email": "test@example.com", "password": "password123"}
     )
     assert response.status_code == 200
     data = response.get_json()

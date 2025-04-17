@@ -34,7 +34,7 @@ function Register({ setIsLoggedIn }) {
     try {
       const response = await axiosInstance({
         method: 'post',
-        url: '/api/auth/register',
+        url: '/api/v1/auth/register',
         data: {
           email,
           password,
@@ -92,7 +92,7 @@ function Register({ setIsLoggedIn }) {
     setGoogleLoading(true);
     
     try {
-      const response = await axiosInstance.get('/api/auth/google');
+      const response = await axiosInstance.get('/api/v1/auth/google');
       
       if (response.data && response.data.auth_url) {
         // Redirect to Google's authentication page

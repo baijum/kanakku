@@ -26,7 +26,7 @@ def user(app):
 
 def test_register(client):
     response = client.post(
-        "/api/auth/register", json={"email": "new@example.com", "password": "password"}
+        "/api/v1/auth/register", json={"email": "new@example.com", "password": "password"}
     )
     assert response.status_code == 201
     data = response.get_json()
@@ -45,7 +45,7 @@ def test_login(client, user, app):
         db.session.commit()
 
     response = client.post(
-        "/api/auth/login", json={"email": "test@example.com", "password": "password123"}
+        "/api/v1/auth/login", json={"email": "test@example.com", "password": "password123"}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -56,7 +56,7 @@ def test_login(client, user, app):
 
 def test_invalid_login(client):
     response = client.post(
-        "/api/auth/login", json={"email": "wrong@example.com", "password": "wrongpass"}
+        "/api/v1/auth/login", json={"email": "wrong@example.com", "password": "wrongpass"}
     )
     assert response.status_code == 401
 
@@ -65,7 +65,7 @@ def test_get_current_user(authenticated_client, user, db_session):
     # Using db_session ensures the user object from the fixture
     # can be used for comparison if needed, although accessing response data is preferred.
     with db_session.no_autoflush:
-        response = authenticated_client.get("/api/auth/me")
+        response = authenticated_client.get("/api/v1/auth/me")
         # Primary assertion should be on status code and response content
         assert response.status_code == 200
         response_data = response.get_json()
@@ -78,7 +78,7 @@ def test_get_current_user(authenticated_client, user, db_session):
 def test_forgot_password(client, user, app):
     # Test with existing user
     response = client.post(
-        "/api/auth/forgot-password", json={"email": "test@example.com"}
+        "/api/v1/auth/forgot-password", json={"email": "test@example.com"}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -86,7 +86,7 @@ def test_forgot_password(client, user, app):
 
     # Test with non-existent user (should still return 200 for security)
     response = client.post(
-        "/api/auth/forgot-password", json={"email": "nonexistent@example.com"}
+        "/api/v1/auth/forgot-password", json={"email": "nonexistent@example.com"}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -103,7 +103,7 @@ def test_reset_password(client, user, app, db_session):
 
     # Test successful password reset
     response = client.post(
-        "/api/auth/reset-password",
+        "/api/v1/auth/reset-password",
         json={
             "email": "test@example.com",
             "token": token,
@@ -122,14 +122,14 @@ def test_reset_password(client, user, app, db_session):
 
     # Verify new password works
     response = client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={"email": "test@example.com", "password": "newpassword123"},
     )
     assert response.status_code == 200
 
     # Test with invalid token
     response = client.post(
-        "/api/auth/reset-password",
+        "/api/v1/auth/reset-password",
         json={
             "email": "test@example.com",
             "token": "invalidtoken",
@@ -148,7 +148,7 @@ def test_update_password(authenticated_client, user, app, db_session):
 
     # Test successful password update
     response = authenticated_client.put(
-        "/api/auth/password",
+        "/api/v1/auth/password",
         json={"current_password": "password123", "new_password": "newpassword123"},
     )
     assert response.status_code == 200
@@ -157,14 +157,14 @@ def test_update_password(authenticated_client, user, app, db_session):
 
     # Verify new password works
     response = authenticated_client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={"email": "test@example.com", "password": "newpassword123"},
     )
     assert response.status_code == 200
 
     # Test with incorrect current password
     response = authenticated_client.put(
-        "/api/auth/password",
+        "/api/v1/auth/password",
         json={"current_password": "wrongpassword", "new_password": "newpassword123"},
     )
     assert response.status_code == 401
@@ -178,7 +178,7 @@ def test_activate_user(authenticated_client, user, app):
 
     # Test activating the user
     response = authenticated_client.post(
-        f"/api/auth/users/{user.id}/activate", json={"is_active": True}
+        f"/api/v1/auth/users/{user.id}/activate", json={"is_active": True}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -187,7 +187,7 @@ def test_activate_user(authenticated_client, user, app):
 
     # Test deactivating the user
     response = authenticated_client.post(
-        f"/api/auth/users/{user.id}/activate", json={"is_active": False}
+        f"/api/v1/auth/users/{user.id}/activate", json={"is_active": False}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -196,7 +196,7 @@ def test_activate_user(authenticated_client, user, app):
 
     # Test with non-existent user
     response = authenticated_client.post(
-        "/api/auth/users/999999/activate", json={"is_active": True}
+        "/api/v1/auth/users/999999/activate", json={"is_active": True}
     )
     assert response.status_code == 404
 
@@ -206,7 +206,7 @@ def test_google_login(client, app):
     app.config["GOOGLE_CLIENT_ID"] = "test-client-id"
 
     # Test the Google login endpoint
-    response = client.get("/api/auth/google")
+    response = client.get("/api/v1/auth/google")
     assert response.status_code == 200
     data = response.get_json()
     assert "auth_url" in data
@@ -248,7 +248,7 @@ def test_google_callback_success(client, app, mocker):
         session["oauth_state"] = "test-state"
 
     # Test callback
-    response = client.get("/api/auth/google/callback?state=test-state&code=test-code")
+    response = client.get("/api/v1/auth/google/callback?state=test-state&code=test-code")
     assert response.status_code == 302  # Redirect
     assert "/google-auth-callback?token=" in response.location
 
@@ -264,7 +264,7 @@ def test_google_callback_success(client, app, mocker):
 def test_google_callback_invalid_state(client, app):
     # Test with invalid state
     response = client.get(
-        "/api/auth/google/callback?state=invalid_state&code=test-code"
+        "/api/v1/auth/google/callback?state=invalid_state&code=test-code"
     )
     assert response.status_code == 400
     data = response.get_json()
@@ -308,7 +308,7 @@ def test_google_callback_existing_user(client, app, mocker):
         session["oauth_state"] = "test-state"
 
     # Test callback
-    response = client.get("/api/auth/google/callback?state=test-state&code=test-code")
+    response = client.get("/api/v1/auth/google/callback?state=test-state&code=test-code")
     assert response.status_code == 302  # Redirect
     assert "/google-auth-callback?token=" in response.location
 

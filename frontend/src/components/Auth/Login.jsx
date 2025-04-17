@@ -42,7 +42,7 @@ function Login({ setIsLoggedIn }) {
       // Use relative URL path to leverage the proxy
       const response = await axiosInstance({
         method: 'post',
-        url: '/api/auth/login',
+        url: '/api/v1/auth/login',
         data: {
           email,
           password,
@@ -97,7 +97,7 @@ function Login({ setIsLoggedIn }) {
     setGoogleLoading(true);
     
     try {
-      const response = await axiosInstance.get('/api/auth/google');
+      const response = await axiosInstance.get('/api/v1/auth/google');
       
       if (response.data && response.data.auth_url) {
         // Redirect to Google's authentication page

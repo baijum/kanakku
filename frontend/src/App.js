@@ -89,8 +89,8 @@ function App() {
 
       if (token) {
         try {
-          console.log('Validating token with /api/auth/test...');
-          await axiosInstance.get('/api/auth/test', {
+          console.log('Validating token with /api/v1/auth/test...');
+          await axiosInstance.get('/api/v1/auth/test', {
             headers: {
               'Authorization': `Bearer ${token}`
             }

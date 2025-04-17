@@ -61,7 +61,7 @@ const ProfileSettings = () => {
           throw new Error('Not authenticated');
         }
 
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch('/api/v1/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -91,7 +91,7 @@ const ProfileSettings = () => {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch('/api/auth/tokens', {
+      const response = await fetch('/api/v1/auth/tokens', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -143,7 +143,7 @@ const ProfileSettings = () => {
         throw new Error('No token found');
       }
       
-      const response = await fetch('/api/auth/test', {
+      const response = await fetch('/api/v1/auth/test', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -208,7 +208,7 @@ const ProfileSettings = () => {
         payload.expires_at = expiryDate.toISOString();
       }
       
-      const response = await fetch('/api/auth/tokens', {
+      const response = await fetch('/api/v1/auth/tokens', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -250,7 +250,7 @@ const ProfileSettings = () => {
     try {
       const jwtToken = localStorage.getItem('token');
       
-      const response = await fetch(`/api/auth/tokens/${tokenToDelete}`, {
+      const response = await fetch(`/api/v1/auth/tokens/${tokenToDelete}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${jwtToken}`

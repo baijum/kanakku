@@ -37,7 +37,7 @@ paths:
                     example: ok
   
   # Authentication Endpoints
-  /api/auth/register:
+  /api/v1/auth/register:
     post:
       tags:
         - Auth
@@ -75,7 +75,7 @@ paths:
         400:
           description: Email already exists or missing required fields
   
-  /api/auth/login:
+  /api/v1/auth/login:
     post:
       tags:
         - Auth
@@ -115,7 +115,7 @@ paths:
         403:
           description: Account inactive
   
-  /api/auth/logout:
+  /api/v1/auth/logout:
     post:
       tags:
         - Auth
@@ -126,7 +126,7 @@ paths:
         200:
           description: Logout successful
   
-  /api/auth/me:
+  /api/v1/auth/me:
     get:
       tags:
         - Auth
@@ -143,7 +143,7 @@ paths:
         404:
           description: User not found
   
-  /api/auth/users/{userId}/activate:
+  /api/v1/auth/users/{userId}/activate:
     post:
       tags:
         - Auth
@@ -172,7 +172,7 @@ paths:
         404:
           description: User not found
   
-  /api/auth/password:
+  /api/v1/auth/password:
     put:
       tags:
         - Auth
@@ -201,7 +201,7 @@ paths:
         400:
           description: Missing required fields or invalid current password
   
-  /api/auth/forgot-password:
+  /api/v1/auth/forgot-password:
     post:
       tags:
         - Auth
@@ -224,7 +224,7 @@ paths:
         404:
           description: User not found
   
-  /api/auth/reset-password:
+  /api/v1/auth/reset-password:
     post:
       tags:
         - Auth

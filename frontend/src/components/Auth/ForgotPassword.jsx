@@ -24,7 +24,7 @@ function ForgotPassword() {
     try {
       const response = await axiosInstance({
         method: 'post',
-        url: '/api/auth/forgot-password',
+        url: '/api/v1/auth/forgot-password',
         data: { email },
         headers: {
           'Content-Type': 'application/json',

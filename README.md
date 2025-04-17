@@ -63,10 +63,10 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
 *   **Health Check (`api.py`)**
     *   `GET /api/health` (No Auth Required) - Basic health check.
 *   **Authentication (`auth.py`)**
-    *   `POST /api/auth/register` - Register a new user. (Body: `{ "username": "...", "email": "...", "password": "..." }`)
-    *   `POST /api/auth/login` - Log in a user. (Body: `{ "username": "...", "password": "..." }`)
-    *   `POST /api/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
-    *   `GET /api/auth/me` (Auth Required) - Get the current logged-in user's details.
+    *   `POST /api/v1/auth/register` - Register a new user. (Body: `{ "username": "...", "email": "...", "password": "..." }`)
+    *   `POST /api/v1/auth/login` - Log in a user. (Body: `{ "username": "...", "password": "..." }`)
+    *   `POST /api/v1/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
+    *   `GET /api/v1/auth/me` (Auth Required) - Get the current logged-in user's details.
 *   **Accounts (`accounts.py`)** (Auth Required)
     *   `GET /api/accounts` - Get all accounts for the current user.
     *   `POST /api/accounts` - Add a new account. (Body: `{ "name": "...", "type": "...", "currency": "..." (optional), "balance": ... (optional) }`)
@@ -135,7 +135,7 @@ To enable Google Sign-In, you need to:
    - `http://localhost:5000` (backend development server)
    - `http://localhost:3000` (frontend development server)
 5. Add authorized redirect URIs:
-   - `http://localhost:5000/api/auth/google/callback`
+   - `http://localhost:5000/api/v1/auth/google/callback`
 6. Copy the Client ID and Client Secret to your backend `.env` file:
    ```
    GOOGLE_CLIENT_ID=your-client-id

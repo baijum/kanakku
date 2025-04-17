@@ -60,7 +60,7 @@ describe('Login Component', () => {
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledTimes(1);
       // Add more specific checks for the fetch call if needed
-      // e.g., expect(fetch).toHaveBeenCalledWith('/api/auth/login', expect.any(Object));
+      // e.g., expect(fetch).toHaveBeenCalledWith('/api/v1/auth/login', expect.any(Object));
       // Check if navigation happened after successful login
       // expect(mockedNavigate).toHaveBeenCalledWith('/dashboard'); // Adjust the target route
     });
