@@ -16,7 +16,6 @@ import { Link as RouterLink } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AddIcon from '@mui/icons-material/Add';
 import ListIcon from '@mui/icons-material/List';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import DescriptionIcon from '@mui/icons-material/Description';
 import Button from '@mui/material/Button';
@@ -41,6 +40,7 @@ import ForgotPassword from './components/Auth/ForgotPassword';
 import ResetPassword from './components/Auth/ResetPassword';
 import axiosInstance from './api/axiosInstance';
 import { createBrowserHistory } from 'history';
+import logo from './logo.svg';
 
 const drawerWidth = 240;
 
@@ -223,9 +223,12 @@ function App() {
               >
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                Kanakku
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                <img src={logo} alt="Kanakku Logo" style={{ height: '40px', marginRight: '10px' }} />
+                <Typography variant="h6" noWrap component="div">
+                  Kanakku
+                </Typography>
+              </Box>
               {isLoggedIn ? (
                 <Button 
                   color="inherit" 
