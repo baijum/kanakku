@@ -29,18 +29,40 @@ def get_balance():
         # For depth limiting, we'll parse the account names and limit display depth
         result = []
 
-        for acct in accounts:
-            # Split account name by colon for hierarchical grouping
-            components = acct.name.split(":")
+        # If depth is provided, track unique top-level accounts
+        # to ensure we include all of them, even with zero balances
+        if depth:
+            # Create a map to aggregate balances for top-level accounts
+            top_level_accounts = {}
 
-            # Limit to specified depth if provided
-            display_name = ":".join(components[: int(depth)]) if depth else acct.name
+            for acct in accounts:
+                # Split account name by colon for hierarchical grouping
+                components = acct.name.split(":")
 
-            # Format balance with currency
-            balance_str = f"{acct.balance:.2f} {acct.currency}"
+                # Get top-level account name based on depth
+                display_name = ":".join(components[: int(depth)])
 
-            # Add account and balance to result
-            result.append(f"{display_name:<40} {balance_str:>15}")
+                # Add to top-level accounts map or update existing entry
+                if display_name in top_level_accounts:
+                    # If currencies match, add balances
+                    if top_level_accounts[display_name]["currency"] == acct.currency:
+                        top_level_accounts[display_name]["balance"] += acct.balance
+                else:
+                    top_level_accounts[display_name] = {
+                        "balance": acct.balance,
+                        "currency": acct.currency,
+                    }
+
+            # Convert aggregated top-level accounts to result format
+            for display_name, data in top_level_accounts.items():
+                balance_str = f"{data['balance']:.2f} {data['currency']}"
+                result.append(f"{display_name:<40} {balance_str:>15}")
+        else:
+            # Original behavior for no depth limitation
+            for acct in accounts:
+                display_name = acct.name
+                balance_str = f"{acct.balance:.2f} {acct.currency}"
+                result.append(f"{display_name:<40} {balance_str:>15}")
 
         # Join all lines with newlines to match ledger CLI output format
         output = "\n".join(result)

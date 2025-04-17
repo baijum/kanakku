@@ -781,19 +781,21 @@ def get_recent_transactions():
         )
 
         limit = request.args.get("limit", type=int, default=7)
-        
+
         # Fetch more raw transactions than we need to ensure we have enough after grouping
-        fetch_limit = limit * 4  # Fetch 4x the requested limit to ensure we have enough groups
-        
+        fetch_limit = (
+            limit * 4
+        )  # Fetch 4x the requested limit to ensure we have enough groups
+
         # Start with base query
         query = Transaction.query.filter_by(user_id=g.current_user.id)
 
         # Apply ordering
         query = query.order_by(Transaction.date.desc())
-        
+
         # Fetch more transactions than needed to ensure we have enough groups
         query = query.limit(fetch_limit)
-        
+
         transactions_list = query.all()
 
         # Group transactions by date and payee to create the expected structure
@@ -837,7 +839,10 @@ def get_recent_transactions():
         formatted_transactions = list(grouped_transactions.values())[:limit]
 
         # Return in the format expected by the frontend
-        response = {"transactions": formatted_transactions, "total": len(formatted_transactions)}
+        response = {
+            "transactions": formatted_transactions,
+            "total": len(formatted_transactions),
+        }
 
         return jsonify(response)
     except Exception as e:

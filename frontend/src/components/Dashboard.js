@@ -6,15 +6,15 @@ import {
   Grid,
   Card,
   CardContent,
-  List,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Divider,
+  IconButton,
 } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import axios from 'axios';
 
 // Function to get the token (assuming it's stored in localStorage)
@@ -25,7 +25,9 @@ function Dashboard() {
   const [balanceReport, setBalanceReport] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchRecentTransactions();
     fetchBalanceReport();
@@ -104,12 +106,19 @@ function Dashboard() {
 
   const fetchBalanceReport = () => {
     const token = getToken();
+    setRefreshing(true);
     axios.get('/api/v1/reports/balance', { 
-      params: { depth: 1 },
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${token}` },
+      // Add a cache-busting parameter
+      params: { 
+        depth: 1,
+        _t: new Date().getTime() 
+      }
     })
       .then(response => {
+        setRefreshing(false);
         if (response.data && typeof response.data.balance === 'string') {
+          console.log('Received balance report:', response.data.balance);
           setBalanceReport(response.data.balance);
         } else {
           console.error('Unexpected response structure for balance report:', response.data);
@@ -117,17 +126,33 @@ function Dashboard() {
         }
       })
       .catch(error => {
+        setRefreshing(false);
         console.error('Error fetching balance report:', error);
         setError('Failed to load balance report');
         setBalanceReport('');
       });
   };
 
+  const handleRefresh = () => {
+    fetchRecentTransactions();
+    fetchBalanceReport();
+  };
+
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4">
+          Dashboard
+        </Typography>
+        <IconButton 
+          onClick={handleRefresh} 
+          disabled={refreshing}
+          color="primary"
+          aria-label="refresh dashboard"
+        >
+          <RefreshIcon />
+        </IconButton>
+      </Box>
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Card>
@@ -197,11 +222,17 @@ function Dashboard() {
                     // Process the balance report to group by account name
                     const balanceMap = new Map();
                     
+                    // Ensure all standard account types are included, even if not in the report
+                    const standardAccounts = ['Assets', 'Liabilities', 'Equity', 'Income', 'Expenses'];
+                    standardAccounts.forEach(account => {
+                      balanceMap.set(account, { value: 0, currency: '₹' });
+                    });
+                    
                     balanceReport.split('\n').forEach(line => {
                       if (!line.trim()) return;
                       
                       // Split each line into account name and balance parts
-                      const parts = line.trim().split(/\s+(?=[\d₹])/);
+                      const parts = line.trim().split(/\s+(?=[\d₹-])/);  // Note the added - to handle negative numbers
                       const accountName = parts[0];
                       const balanceStr = parts[1] || '';
                       
@@ -213,13 +244,20 @@ function Dashboard() {
                         const currencyMatch = balanceStr.match(/[^\d.\s-]+/);
                         const currency = currencyMatch ? currencyMatch[0] : '';
                         
+                        // Special handling for Expenses - they're normally negative but displayed positive
+                        let adjustedValue = numericValue;
+                        if (accountName === 'Expenses' || accountName.startsWith('Expenses:')) {
+                          // For Expenses accounts, we want to display the absolute value
+                          // but preserve the sign in the internal calculations
+                        }
+                        
                         // Use account name as key, store currency and sum value
                         if (balanceMap.has(accountName)) {
                           const existing = balanceMap.get(accountName);
-                          existing.value += numericValue;
+                          existing.value += adjustedValue;
                         } else {
                           balanceMap.set(accountName, { 
-                            value: numericValue, 
+                            value: adjustedValue, 
                             currency 
                           });
                         }
@@ -229,9 +267,18 @@ function Dashboard() {
                     // Convert map back to array for rendering
                     return Array.from(balanceMap).map(([accountName, data], index) => {
                       const { value, currency } = data;
+                      
+                      // Format the balance value
+                      let displayValue = value;
+                      
+                      // For Expenses accounts, we want to show the absolute value as a positive number
+                      if (accountName === 'Expenses' || accountName.startsWith('Expenses:')) {
+                        displayValue = Math.abs(value);
+                      }
+                      
                       const formattedBalance = currency === '₹' 
-                        ? `${currency}${value.toFixed(2)}` 
-                        : `${value.toFixed(2)} ${currency}`;
+                        ? `${currency}${displayValue.toFixed(2)}` 
+                        : `${displayValue.toFixed(2)} ${currency}`;
                       
                       return (
                         <Box 
