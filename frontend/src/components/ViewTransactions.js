@@ -325,10 +325,24 @@ function ViewTransactions() {
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.status}</TableCell>
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.payee}</TableCell>
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
-                    {transaction.postings.map((posting, pIndex) => (
-                      <div key={pIndex}>
-                        {posting.account}: {posting.currency === 'INR' ? '₹' : posting.currency} {posting.amount}
-                      </div>
+                    {transaction.postings && transaction.postings.map((posting, pIndex) => (
+                      <Box 
+                        key={pIndex} 
+                        sx={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          mb: 0.5, 
+                          borderBottom: pIndex < transaction.postings.length - 1 ? '1px solid #f0f0f0' : 'none',
+                          py: 0.5
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ mr: 1 }}>
+                          {posting.account}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 'medium', whiteSpace: 'nowrap' }}>
+                          {posting.currency === 'INR' ? '₹' : posting.currency} {posting.amount}
+                        </Typography>
+                      </Box>
                     ))}
                   </TableCell>
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
