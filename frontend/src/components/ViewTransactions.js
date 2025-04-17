@@ -23,6 +23,9 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  CircularProgress,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -34,80 +37,151 @@ import axios from 'axios';
 const getToken = () => localStorage.getItem('token');
 
 function ViewTransactions() {
+  // State management
   const [transactions, setTransactions] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  // UI state
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  
+  // Dialog states
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [openExportDialog, setOpenExportDialog] = useState(false);
+  
+  // Export related states
   const [exportLoading, setExportLoading] = useState(false);
   const [preambles, setPreambles] = useState([]);
   const [selectedPreamble, setSelectedPreamble] = useState('');
-  const [openExportDialog, setOpenExportDialog] = useState(false);
+  
   const navigate = useNavigate();
 
-  const fetchTransactions = useCallback(() => {
-    const token = getToken(); // Get token
-    const params = {
-      limit: rowsPerPage,
-      offset: page * rowsPerPage,
-    };
-
-    if (startDate) params.startDate = startDate;
-    if (endDate) params.endDate = endDate;
-
-    axios.get('/api/v1/transactions', { 
-      params, 
-      headers: { 'Authorization': `Bearer ${token}` } // Add header
-    })
-      .then(response => {
-        // Ensure response.data exists and response.data.transactions is an array
-        if (response.data && Array.isArray(response.data.transactions)) {
-          console.log('Transaction data:', response.data.transactions);
-          setTransactions(response.data.transactions);
-        } else {
-          // Log unexpected response and set transactions to empty array
-          console.error('Unexpected response structure for transactions:', response.data);
-          setTransactions([]);
-        }
-        // Note: In a real implementation, you'd get the total count from the API
-        setTotalCount(100); // Placeholder
-      })
-      .catch(error => {
-        console.error('Error fetching transactions:', error);
-        // Set transactions to empty array on error to prevent crash
-        setTransactions([]);
+  // Function to fetch transaction details with full posting information
+  const fetchTransactionWithAllPostings = async (transaction) => {
+    if (!transaction || !transaction.id) return transaction;
+    
+    try {
+      const token = getToken();
+      const response = await axios.get(`/api/v1/transactions/${transaction.id}/related`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      
+      if (response.data && response.data.transactions && response.data.transactions.length > 0) {
+        // Map the postings from the related endpoint
+        const allPostings = response.data.transactions.map(tx => ({
+          id: tx.id,
+          account: tx.account_name,
+          amount: tx.amount.toString(),
+          currency: tx.currency || 'INR'
+        }));
+        
+        // Return updated transaction with all postings
+        return {
+          ...transaction,
+          postings: allPostings
+        };
+      }
+      
+      return transaction;
+    } catch (error) {
+      console.error(`Error fetching postings for transaction ${transaction.id}:`, error);
+      return transaction;
+    }
+  };
+
+  // Main function to fetch transactions with pagination and filtering
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const token = getToken();
+      const params = {
+        limit: rowsPerPage,
+        offset: page * rowsPerPage,
+      };
+
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+
+      const response = await axios.get('/api/v1/transactions', { 
+        params, 
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.data && Array.isArray(response.data.transactions)) {
+        const basicTransactions = response.data.transactions;
+        
+        // For each transaction that might have multiple postings,
+        // fetch all the related transactions to get complete posting data
+        const completeTransactions = await Promise.all(
+          basicTransactions.map(async (tx) => {
+            // Check if this transaction might have multiple postings
+            if (tx.postings && tx.postings.length >= 1) {
+              return await fetchTransactionWithAllPostings(tx);
+            }
+            return tx;
+          })
+        );
+        
+        setTransactions(completeTransactions);
+        
+        // Get total count from API if available, otherwise use a default
+        setTotalCount(response.data.total || 100);
+      } else {
+        console.error('Unexpected response structure for transactions:', response.data);
+        setTransactions([]);
+        setError('Failed to load transaction data');
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setTransactions([]);
+      setError('Error loading transactions. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, [page, rowsPerPage, startDate, endDate]);
 
-  // Fetch preambles when component mounts
-  const fetchPreambles = useCallback(() => {
-    const token = getToken();
-    axios.get('/api/v1/preambles', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(response => {
-        if (response.data && Array.isArray(response.data.preambles)) {
-          setPreambles(response.data.preambles);
-          // Find and set default preamble if available
-          const defaultPreamble = response.data.preambles.find(p => p.is_default);
-          if (defaultPreamble) {
-            setSelectedPreamble(defaultPreamble.id.toString());
-          }
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching preambles:', error);
+  // Fetch preambles for export functionality
+  const fetchPreambles = useCallback(async () => {
+    try {
+      const token = getToken();
+      const response = await axios.get('/api/v1/preambles', {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      
+      if (response.data && Array.isArray(response.data.preambles)) {
+        setPreambles(response.data.preambles);
+        
+        // Find and set default preamble if available
+        const defaultPreamble = response.data.preambles.find(p => p.is_default);
+        if (defaultPreamble) {
+          setSelectedPreamble(defaultPreamble.id.toString());
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching preambles:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to load preambles for export',
+        severity: 'warning'
+      });
+    }
   }, []);
 
+  // Load data when component mounts or dependencies change
   useEffect(() => {
     fetchTransactions();
     fetchPreambles();
   }, [fetchTransactions, fetchPreambles]);
 
+  // Event handlers
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -123,11 +197,14 @@ function ViewTransactions() {
   };
 
   const handleEditTransaction = (transactionId) => {
-    // Make sure we have a valid ID before navigating
     if (transactionId) {
       navigate(`/transactions/edit/${transactionId}`);
     } else {
-      console.error('Attempted to edit transaction with undefined ID');
+      setSnackbar({
+        open: true,
+        message: 'Cannot edit: Invalid transaction ID',
+        severity: 'error'
+      });
     }
   };
 
@@ -140,33 +217,52 @@ function ViewTransactions() {
     setOpenDeleteDialog(false);
   };
 
-  const handleDeleteTransaction = () => {
+  const handleDeleteTransaction = async () => {
     if (!transactionToDelete) {
-      console.error('No transaction selected for deletion');
       setOpenDeleteDialog(false);
+      setSnackbar({
+        open: true,
+        message: 'No transaction selected for deletion',
+        severity: 'error'
+      });
       return;
     }
 
-    const token = getToken();
-    const endpoint = `/api/v1/transactions/${transactionToDelete}/related`;
+    try {
+      setLoading(true);
+      const token = getToken();
+      const endpoint = `/api/v1/transactions/${transactionToDelete}/related`;
 
-    axios.delete(endpoint, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(response => {
-        console.log('Delete response:', response.data);
-        // Refresh transactions list
-        fetchTransactions();
-        // Close dialog
-        setOpenDeleteDialog(false);
-      })
-      .catch(error => {
-        console.error('Error deleting transaction:', error);
-        setOpenDeleteDialog(false);
-        // You could add error state and display message to user
+      const response = await axios.delete(endpoint, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      // Refresh transactions list
+      await fetchTransactions();
+      
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: 'Transaction deleted successfully',
+        severity: 'success'
+      });
+      
+      // Close dialog
+      setOpenDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to delete transaction',
+        severity: 'error'
+      });
+      setOpenDeleteDialog(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Export dialog handlers
   const handleOpenExportDialog = () => {
     setOpenExportDialog(true);
   };
@@ -179,46 +275,59 @@ function ViewTransactions() {
     setSelectedPreamble(event.target.value);
   };
 
-  const handleExportLedgerFormat = () => {
+  const handleExportLedgerFormat = async () => {
     setExportLoading(true);
-    const token = getToken();
-    
-    // Prepare URL with preamble ID if selected
-    let url = '/api/v1/ledgertransactions';
-    if (selectedPreamble) {
-      url += `?preamble_id=${selectedPreamble}`;
-    }
-    
-    axios.get(url, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      responseType: 'blob' // Important for handling the response as a file
-    })
-      .then(response => {
-        // Create a blob from the response data
-        const blob = new Blob([response.data], { type: 'text/plain' });
-        
-        // Create a URL for the blob
-        const url = window.URL.createObjectURL(blob);
-        
-        // Create a temporary anchor element to trigger the download
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'transactions.ledger';
-        document.body.appendChild(a);
-        a.click();
-        
-        // Clean up
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        setExportLoading(false);
-        handleCloseExportDialog();
-      })
-      .catch(error => {
-        console.error('Error exporting transactions in ledger format:', error);
-        setExportLoading(false);
-        handleCloseExportDialog();
-        // You could add error state and display message to user
+    try {
+      const token = getToken();
+      
+      // Prepare URL with preamble ID if selected
+      let url = '/api/v1/ledgertransactions';
+      if (selectedPreamble) {
+        url += `?preamble_id=${selectedPreamble}`;
+      }
+      
+      const response = await axios.get(url, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        responseType: 'blob' // Important for handling the response as a file
       });
+      
+      // Create a blob from the response data
+      const blob = new Blob([response.data], { type: 'text/plain' });
+      
+      // Create a URL for the blob
+      const fileUrl = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element to trigger the download
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = 'transactions.ledger';
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(fileUrl);
+      document.body.removeChild(a);
+      
+      setSnackbar({
+        open: true,
+        message: 'Transactions exported successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error exporting transactions in ledger format:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to export transactions',
+        severity: 'error'
+      });
+    } finally {
+      setExportLoading(false);
+      handleCloseExportDialog();
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   return (
@@ -226,6 +335,8 @@ function ViewTransactions() {
       <Typography variant="h4" gutterBottom>
         Transactions
       </Typography>
+
+      {/* Filters and Export Section */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={5}>
@@ -253,7 +364,7 @@ function ViewTransactions() {
               variant="outlined"
               startIcon={<FileDownloadIcon />}
               onClick={handleOpenExportDialog}
-              disabled={exportLoading}
+              disabled={exportLoading || loading}
               fullWidth
             >
               Export
@@ -262,7 +373,106 @@ function ViewTransactions() {
         </Grid>
       </Paper>
 
-      {/* Export Dialog */}
+      {/* Main Content */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      <TableContainer component={Paper}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : transactions.length === 0 ? (
+          <Box sx={{ p: 3, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              No transactions found. Try adjusting your filters.
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Date</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Status</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Payee</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Postings</TableCell>
+                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {transactions.map((transaction, index) => {
+                  // Try to get a valid ID for editing, first from transaction, then from first posting
+                  const editId = transaction.id || 
+                    (transaction.postings && transaction.postings.length > 0 ? 
+                      transaction.postings[0].id : undefined);
+                  
+                  return (
+                    <TableRow key={index}>
+                      <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.date}</TableCell>
+                      <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.status}</TableCell>
+                      <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.payee}</TableCell>
+                      <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
+                        {transaction.postings && transaction.postings.map((posting, pIndex) => (
+                          <Box 
+                            key={pIndex} 
+                            sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              mb: 0.5, 
+                              borderBottom: pIndex < transaction.postings.length - 1 ? '1px solid #f0f0f0' : 'none',
+                              py: 0.5
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ mr: 1 }}>
+                              {posting.account}
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 'medium', whiteSpace: 'nowrap' }}>
+                              {posting.currency === 'INR' ? '₹' : posting.currency} {posting.amount}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </TableCell>
+                      <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
+                        <IconButton 
+                          color="primary" 
+                          onClick={() => handleEditTransaction(editId)}
+                          aria-label="edit"
+                          disabled={!editId}
+                          sx={{ mr: 1 }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton 
+                          color="error"
+                          onClick={() => handleDeleteConfirmOpen(editId)}
+                          aria-label="delete"
+                          disabled={!editId}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            <TablePagination
+              component="div"
+              count={totalCount}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+          </>
+        )}
+      </TableContainer>
+
+      {/* Dialogs */}
       <Dialog open={openExportDialog} onClose={handleCloseExportDialog}>
         <DialogTitle>Export Transactions</DialogTitle>
         <DialogContent>
@@ -296,93 +506,11 @@ function ViewTransactions() {
             variant="contained"
             disabled={exportLoading}
           >
-            Export
+            {exportLoading ? <CircularProgress size={24} /> : 'Export'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Date</TableCell>
-              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Status</TableCell>
-              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Payee</TableCell>
-              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Postings</TableCell>
-              <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {transactions.map((transaction, index) => {
-              // Try to get a valid ID for editing, first from transaction, then from first posting
-              const editId = transaction.id || 
-                (transaction.postings && transaction.postings.length > 0 ? 
-                  transaction.postings[0].id : undefined);
-              
-              return (
-                <TableRow key={index}>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.date}</TableCell>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.status}</TableCell>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.payee}</TableCell>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
-                    {transaction.postings && transaction.postings.map((posting, pIndex) => (
-                      <Box 
-                        key={pIndex} 
-                        sx={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          mb: 0.5, 
-                          borderBottom: pIndex < transaction.postings.length - 1 ? '1px solid #f0f0f0' : 'none',
-                          py: 0.5
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ mr: 1 }}>
-                          {posting.account}
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium', whiteSpace: 'nowrap' }}>
-                          {posting.currency === 'INR' ? '₹' : posting.currency} {posting.amount}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </TableCell>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
-                    <IconButton 
-                      color="primary" 
-                      onClick={() => {
-                        console.log('Editing transaction with ID:', editId);
-                        handleEditTransaction(editId);
-                      }}
-                      aria-label="edit"
-                      disabled={!editId}
-                      sx={{ mr: 1 }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton 
-                      color="error"
-                      onClick={() => handleDeleteConfirmOpen(editId)}
-                      aria-label="delete"
-                      disabled={!editId}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          count={totalCount}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
-
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={openDeleteDialog}
         onClose={handleDeleteConfirmClose}
@@ -402,6 +530,22 @@ function ViewTransactions() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Feedback Snackbar */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
