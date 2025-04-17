@@ -132,7 +132,7 @@ const ProfileSettings = () => {
   };
   
   useEffect(() => {
-    if (tabValue === 1) {
+    if (tabValue === 2) {
       fetchTokens();
     }
   }, [tabValue]);
@@ -340,17 +340,21 @@ const ProfileSettings = () => {
           <Paper sx={{ p: 3, mb: 4 }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
               <Tabs value={tabValue} onChange={handleTabChange}>
+                <Tab label="Books" />
                 <Tab label="Update Password" />
                 <Tab label="API Tokens" />
-                <Tab label="Books" />
               </Tabs>
             </Box>
             
             {tabValue === 0 && (
-              <UpdatePassword />
+              <BookManagement />
             )}
             
             {tabValue === 1 && (
+              <UpdatePassword />
+            )}
+            
+            {tabValue === 2 && (
               <Box>
                 {tokenError && (
                   <Alert 
@@ -557,10 +561,6 @@ const ProfileSettings = () => {
                   </DialogActions>
                 </Dialog>
               </Box>
-            )}
-            
-            {tabValue === 2 && (
-              <BookManagement />
             )}
           </Paper>
         </>
