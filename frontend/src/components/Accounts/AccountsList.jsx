@@ -186,7 +186,9 @@ function AccountsList() {
           </TableHead>
           <TableBody>
             {accounts.length > 0 ? (
-              accounts.map((account, index) => (
+              accounts
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((account, index) => (
                 <TableRow key={account.id || index}>
                   <TableCell>{account.name || ''}</TableCell>
                   <TableCell>{account.description || ''}</TableCell>
