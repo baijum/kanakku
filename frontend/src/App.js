@@ -208,20 +208,22 @@ function App() {
             position="fixed"
             sx={{
               zIndex: (theme) => theme.zIndex.drawer + 1,
-              width: { sm: `calc(100% - ${drawerWidth}px)` },
-              ml: { sm: `${drawerWidth}px` },
+              width: isLoggedIn ? { sm: `calc(100% - ${drawerWidth}px)` } : '100%',
+              ml: isLoggedIn ? { sm: `${drawerWidth}px` } : 0,
             }}
           >
             <Toolbar>
-              <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                edge="start"
-                onClick={handleDrawerToggle}
-                sx={{ mr: 2, display: { sm: 'none' } }}
-              >
-                <MenuIcon />
-              </IconButton>
+              {isLoggedIn && (
+                <IconButton
+                  color="inherit"
+                  aria-label="open drawer"
+                  edge="start"
+                  onClick={handleDrawerToggle}
+                  sx={{ mr: 2, display: { sm: 'none' } }}
+                >
+                  <MenuIcon />
+                </IconButton>
+              )}
               <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                 <img src={logo} alt="Kanakku Logo" style={{ height: '40px', marginRight: '10px' }} />
                 <Typography variant="h6" noWrap component="div">
@@ -257,42 +259,44 @@ function App() {
               )}
             </Toolbar>
           </AppBar>
-          <Box
-            component="nav"
-            sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-            aria-label="mailbox folders"
-          >
-            <Drawer
-              variant="temporary"
-              open={mobileOpen}
-              onClose={handleDrawerToggle}
-              ModalProps={{
-                keepMounted: true,
-              }}
-              sx={{
-                display: { xs: 'block', sm: 'none' },
-                '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-              }}
+          {isLoggedIn && (
+            <Box
+              component="nav"
+              sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+              aria-label="mailbox folders"
             >
-              {drawerContent}
-            </Drawer>
-            <Drawer
-              variant="permanent"
-              sx={{
-                display: { xs: 'none', sm: 'block' },
-                '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-              }}
-              open
-            >
-              {drawerContent}
-            </Drawer>
-          </Box>
+              <Drawer
+                variant="temporary"
+                open={mobileOpen}
+                onClose={handleDrawerToggle}
+                ModalProps={{
+                  keepMounted: true,
+                }}
+                sx={{
+                  display: { xs: 'block', sm: 'none' },
+                  '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                }}
+              >
+                {drawerContent}
+              </Drawer>
+              <Drawer
+                variant="permanent"
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+                }}
+                open
+              >
+                {drawerContent}
+              </Drawer>
+            </Box>
+          )}
           <Box
             component="main"
             sx={{ 
               flexGrow: 1,
               p: 3,
-              width: { sm: `calc(100% - ${drawerWidth}px)` },
+              width: isLoggedIn ? { sm: `calc(100% - ${drawerWidth}px)` } : '100%',
               display: 'flex',
               flexDirection: 'column'
             }}
