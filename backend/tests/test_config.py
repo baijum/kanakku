@@ -1,6 +1,6 @@
 import pytest
 import os
-from app.config import Config, DevelopmentConfig, TestingConfig, ProductionConfig
+from app.config import Config, DevelopmentConfig, TestConfig, ProductionConfig
 from datetime import timedelta
 
 
@@ -37,7 +37,7 @@ def test_development_config():
 
 def test_testing_config():
     """Test the testing configuration"""
-    config = TestingConfig()
+    config = TestConfig()
     
     # Testing specific settings
     assert config.TESTING is True

@@ -59,7 +59,8 @@ class DevelopmentConfig(Config):
         self.GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET") or None
 
 
-class TestingConfig(Config):
+class TestConfig(Config):
+    __test__ = False
     def __init__(self):
         super().__init__()
         self.TESTING = True
@@ -88,7 +89,7 @@ class ProductionConfig(Config):
 # Export a dictionary for easy access in create_app
 config = {
     "development": DevelopmentConfig,
-    "testing": TestingConfig,
+    "testing": TestConfig,
     "production": ProductionConfig,
     "default": DevelopmentConfig,
 }
