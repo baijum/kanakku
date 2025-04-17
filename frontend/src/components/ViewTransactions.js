@@ -414,7 +414,6 @@ function ViewTransactions() {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Date</TableCell>
-                  <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Status</TableCell>
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Payee</TableCell>
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Postings</TableCell>
                   <TableCell sx={{ px: { xs: 1, sm: 2 } }}>Actions</TableCell>
@@ -430,8 +429,9 @@ function ViewTransactions() {
                   return (
                     <TableRow key={index}>
                       <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.date}</TableCell>
-                      <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.status}</TableCell>
-                      <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.payee}</TableCell>
+                      <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
+                        {transaction.status && transaction.status.trim() ? `${transaction.status} ${transaction.payee}` : transaction.payee}
+                      </TableCell>
                       <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
                         {transaction.postings && transaction.postings.map((posting, pIndex) => (
                           <Box 
