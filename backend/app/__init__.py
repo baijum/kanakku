@@ -7,7 +7,7 @@ import os
 from logging.handlers import RotatingFileHandler
 
 from .extensions import db, login_manager, mail, jwt
-from .config import Config
+from .config import Config, config
 
 
 def setup_logging(app):
@@ -75,8 +75,15 @@ def setup_logging(app):
 def create_app(config_name="default"):
     app = Flask(__name__)
 
-    # Basic configuration
-    app.config.from_object(Config)
+    # Load configuration based on config_name
+    config_instance = config[config_name]()
+    
+    # Transfer config from instance to Flask app.config
+    for key in dir(config_instance):
+        if not key.startswith('_'):  # Skip private attributes
+            value = getattr(config_instance, key)
+            if not callable(value):  # Skip methods
+                app.config[key] = value
 
     # Configure CORS to allow any origin
     CORS(app, origins=[app.config["FRONTEND_URL"]])
