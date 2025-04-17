@@ -123,6 +123,7 @@ def get_active_book():
         if first_book:
             user.active_book_id = first_book.id
             db.session.commit()
+            current_app.logger.debug(f"Set existing first book (id={first_book.id}) as active")
         else:
             # Create a default book for the user
             default_book = Book(
@@ -134,8 +135,14 @@ def get_active_book():
             
             user.active_book_id = default_book.id
             db.session.commit()
+            current_app.logger.debug(f"Created new default book (id={default_book.id}) as active")
     
     # Now fetch the active book
     active_book = Book.query.get(user.active_book_id)
     
-    return jsonify(active_book.to_dict() if active_book else {}) 
+    if not active_book:
+        current_app.logger.error(f"Active book ID {user.active_book_id} not found for user {user.id}")
+        # This should not happen, but handle it gracefully
+        return jsonify({})
+    
+    return jsonify(active_book.to_dict()) 
