@@ -73,7 +73,7 @@ function Privacy() {
           9. Contact Us
         </Typography>
         <Typography variant="body1" paragraph>
-          If you have any questions or concerns about this Privacy Statement, please contact us at privacy@kanakku.com.
+          If you have any questions or concerns about this Privacy Statement, please contact us at baiju.m.mail@gmail.com.
         </Typography>
       </Paper>
     </Container>

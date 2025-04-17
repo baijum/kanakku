@@ -66,7 +66,7 @@ function Terms() {
           8. Contact Information
         </Typography>
         <Typography variant="body1" paragraph>
-          If you have any questions about these Terms, please contact us at support@kanakku.com.
+          If you have any questions about these Terms, please contact us at baiju.m.mail@gmail.com.
         </Typography>
       </Paper>
     </Container>
