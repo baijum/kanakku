@@ -32,7 +32,7 @@ def test_login(authenticated_client, mock_ledger_command, db_session):
 
 def test_get_transactions(authenticated_client, mock_ledger_command):
     """Test getting transactions."""
-    response = authenticated_client.get("/api/transactions")
+    response = authenticated_client.get("/api/v1/transactions")
     assert response.status_code == 200
     data = response.get_json()
     assert "transactions" in data
@@ -56,7 +56,7 @@ def test_add_transaction(authenticated_client, mock_ledger_command):
         ],
     }
 
-    response = authenticated_client.post("/api/transactions", json=transaction_data)
+    response = authenticated_client.post("/api/v1/transactions", json=transaction_data)
     assert response.status_code == 201
     data = response.json
     assert "message" in data

@@ -25,7 +25,7 @@ def test_create_transaction(authenticated_client, user, app):
 
     # Test successful transaction creation
     response = authenticated_client.post(
-        "/api/transactions",
+        "/api/v1/transactions",
         json={
             "date": "2024-01-01",
             "payee": "Supermarket",
@@ -56,14 +56,14 @@ def test_create_transaction(authenticated_client, user, app):
 def test_create_transaction_invalid_data(authenticated_client, user, app):
     # Test with missing required fields
     response = authenticated_client.post(
-        "/api/transactions", json={"date": "2024-01-01", "payee": "Supermarket"}
+        "/api/v1/transactions", json={"date": "2024-01-01", "payee": "Supermarket"}
     )
     assert response.status_code == 400
     assert "error" in response.get_json()
 
     # Test with invalid account
     response = authenticated_client.post(
-        "/api/transactions",
+        "/api/v1/transactions",
         json={
             "date": "2024-01-01",
             "payee": "Supermarket",
@@ -75,7 +75,7 @@ def test_create_transaction_invalid_data(authenticated_client, user, app):
 
     # Test with invalid amount format
     response = authenticated_client.post(
-        "/api/transactions",
+        "/api/v1/transactions",
         json={
             "date": "2024-01-01",
             "payee": "Supermarket",
@@ -87,7 +87,7 @@ def test_create_transaction_invalid_data(authenticated_client, user, app):
 
     # Test with invalid date format
     response = authenticated_client.post(
-        "/api/transactions",
+        "/api/v1/transactions",
         json={
             "date": "01-01-2024",  # Wrong format
             "payee": "Supermarket",
@@ -132,7 +132,7 @@ def test_update_transaction(authenticated_client, user, app):
 
     # Test successful update
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}",
+        f"/api/v1/transactions/{transaction_id}",
         json={"payee": "Updated", "amount": 200.0},
     )
     assert response.status_code == 200
@@ -175,7 +175,7 @@ def test_update_transaction_invalid_data(authenticated_client, user, app):
 
     # Test with invalid date format
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}",
+        f"/api/v1/transactions/{transaction_id}",
         json={"date": "01-01-2024"},  # Wrong format
     )
     assert response.status_code == 400
@@ -183,7 +183,7 @@ def test_update_transaction_invalid_data(authenticated_client, user, app):
 
     # Test with invalid amount
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}",
+        f"/api/v1/transactions/{transaction_id}",
         json={"amount": "not-a-number"},
     )
     assert response.status_code == 400
@@ -191,7 +191,7 @@ def test_update_transaction_invalid_data(authenticated_client, user, app):
 
     # Test with non-existent account
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}",
+        f"/api/v1/transactions/{transaction_id}",
         json={"account_id": 99999},  # Non-existent account
     )
     assert response.status_code == 404
@@ -201,7 +201,7 @@ def test_update_transaction_invalid_data(authenticated_client, user, app):
 def test_update_transaction_not_found(authenticated_client):
     # Test with non-existent transaction ID
     response = authenticated_client.put(
-        "/api/transactions/99999",  # Non-existent transaction
+        "/api/v1/transactions/99999",  # Non-existent transaction
         json={"payee": "Updated"},
     )
     assert response.status_code == 404
@@ -247,7 +247,7 @@ def test_delete_related_transactions(authenticated_client, user, app):
 
     # Test successful deletion
     response = authenticated_client.delete(
-        f"/api/transactions/{transaction_id}/related"
+        f"/api/v1/transactions/{transaction_id}/related"
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -269,7 +269,7 @@ def test_delete_related_transactions(authenticated_client, user, app):
 def test_delete_related_transactions_not_found(authenticated_client):
     # Test with non-existent transaction ID
     response = authenticated_client.delete(
-        "/api/transactions/99999/related"  # Non-existent transaction
+        "/api/v1/transactions/99999/related"  # Non-existent transaction
     )
     assert response.status_code == 404
     assert "error" in response.get_json()
@@ -277,7 +277,7 @@ def test_delete_related_transactions_not_found(authenticated_client):
 
 def test_get_transactions(authenticated_client, transaction):
     """Test retrieving transactions via API."""
-    response = authenticated_client.get("/api/transactions")
+    response = authenticated_client.get("/api/v1/transactions")
     assert response.status_code == 200
     data = response.get_json()
     assert "transactions" in data
@@ -301,7 +301,7 @@ def test_get_transactions_with_limit(authenticated_client, transaction):
     # Note: Requires authenticated_client/user/db_session context if adding via model
     # Alternatively, call the API to add another transaction
 
-    response = authenticated_client.get("/api/transactions?limit=1")
+    response = authenticated_client.get("/api/v1/transactions?limit=1")
     assert response.status_code == 200
     data = response.get_json()
     assert "transactions" in data
@@ -368,7 +368,7 @@ def test_get_transactions_with_date_filters(authenticated_client, user, app):
         db.session.commit()
 
     # Test with start date only
-    response = authenticated_client.get("/api/transactions?startDate=2024-02-01")
+    response = authenticated_client.get("/api/v1/transactions?startDate=2024-02-01")
     assert response.status_code == 200
     data = response.get_json()
     # Should only include February and March transactions
@@ -378,7 +378,7 @@ def test_get_transactions_with_date_filters(authenticated_client, user, app):
     assert any("2024-03-01" in date for date in transaction_dates)
 
     # Test with end date only
-    response = authenticated_client.get("/api/transactions?endDate=2024-02-01")
+    response = authenticated_client.get("/api/v1/transactions?endDate=2024-02-01")
     assert response.status_code == 200
     data = response.get_json()
     # Should only include January and February transactions
@@ -389,7 +389,7 @@ def test_get_transactions_with_date_filters(authenticated_client, user, app):
 
     # Test with both start and end date
     response = authenticated_client.get(
-        "/api/transactions?startDate=2024-02-01&endDate=2024-02-28"
+        "/api/v1/transactions?startDate=2024-02-01&endDate=2024-02-28"
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -427,7 +427,7 @@ def test_get_transaction_by_id(authenticated_client, user, app):
         transaction_id = tx.id
 
     # Test retrieving the transaction
-    response = authenticated_client.get(f"/api/transactions/{transaction_id}")
+    response = authenticated_client.get(f"/api/v1/transactions/{transaction_id}")
     assert response.status_code == 200
     data = response.get_json()
 
@@ -443,7 +443,7 @@ def test_get_transaction_by_id(authenticated_client, user, app):
 
 def test_get_transaction_by_id_not_found(authenticated_client):
     """Test retrieving a non-existent transaction by ID."""
-    response = authenticated_client.get("/api/transactions/99999")  # Non-existent ID
+    response = authenticated_client.get("/api/v1/transactions/99999")  # Non-existent ID
     assert response.status_code == 404
     assert "error" in response.get_json()
 
@@ -494,7 +494,7 @@ def test_get_related_transactions(authenticated_client, user, app):
         transaction_id = tx1.id
 
     # Test retrieving related transactions
-    response = authenticated_client.get(f"/api/transactions/{transaction_id}/related")
+    response = authenticated_client.get(f"/api/v1/transactions/{transaction_id}/related")
     assert response.status_code == 200
     data = response.get_json()
 
@@ -514,7 +514,7 @@ def test_get_related_transactions(authenticated_client, user, app):
 def test_get_related_transactions_not_found(authenticated_client):
     """Test retrieving related transactions for a non-existent transaction."""
     response = authenticated_client.get(
-        "/api/transactions/99999/related"
+        "/api/v1/transactions/99999/related"
     )  # Non-existent ID
     assert response.status_code == 404
     assert "error" in response.get_json()
@@ -557,7 +557,7 @@ def test_update_transaction_with_postings(authenticated_client, user, app):
 
     # Test updating the transaction with multiple postings
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}/update_with_postings",
+        f"/api/v1/transactions/{transaction_id}/update_with_postings",
         json={
             "date": "2024-01-26",
             "payee": "Updated Payee",
@@ -628,7 +628,7 @@ def test_update_transaction_with_postings_invalid_data(authenticated_client, use
 
     # Test with missing date
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}/update_with_postings",
+        f"/api/v1/transactions/{transaction_id}/update_with_postings",
         json={
             "payee": "Updated Payee",
             "postings": [
@@ -645,7 +645,7 @@ def test_update_transaction_with_postings_invalid_data(authenticated_client, use
 
     # Test with missing payee
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}/update_with_postings",
+        f"/api/v1/transactions/{transaction_id}/update_with_postings",
         json={
             "date": "2024-01-26",
             "postings": [
@@ -662,7 +662,7 @@ def test_update_transaction_with_postings_invalid_data(authenticated_client, use
 
     # Test with missing postings
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}/update_with_postings",
+        f"/api/v1/transactions/{transaction_id}/update_with_postings",
         json={
             "date": "2024-01-26",
             "payee": "Updated Payee",
@@ -674,7 +674,7 @@ def test_update_transaction_with_postings_invalid_data(authenticated_client, use
 
     # Test with invalid account in postings
     response = authenticated_client.put(
-        f"/api/transactions/{transaction_id}/update_with_postings",
+        f"/api/v1/transactions/{transaction_id}/update_with_postings",
         json={
             "date": "2024-01-26",
             "payee": "Updated Payee",
@@ -719,7 +719,7 @@ def test_delete_transaction(authenticated_client, user, app):
         transaction_id = tx.id
 
     # Test deleting the transaction
-    response = authenticated_client.delete(f"/api/transactions/{transaction_id}")
+    response = authenticated_client.delete(f"/api/v1/transactions/{transaction_id}")
     assert response.status_code == 200
     data = response.get_json()
 
@@ -728,13 +728,13 @@ def test_delete_transaction(authenticated_client, user, app):
     assert "deleted" in data["message"].lower()
 
     # Verify the transaction was actually deleted
-    get_response = authenticated_client.get(f"/api/transactions/{transaction_id}")
+    get_response = authenticated_client.get(f"/api/v1/transactions/{transaction_id}")
     assert get_response.status_code == 404
 
 
 def test_delete_transaction_not_found(authenticated_client):
     """Test deleting a non-existent transaction."""
-    response = authenticated_client.delete("/api/transactions/99999")  # Non-existent ID
+    response = authenticated_client.delete("/api/v1/transactions/99999")  # Non-existent ID
     assert response.status_code == 404
     assert "error" in response.get_json()
 
@@ -759,7 +759,7 @@ def test_add_transaction(
             {"account": "Expenses:Food", "amount": 25.00, "currency": "INR"},
         ],
     }
-    response = authenticated_client.post("/api/transactions", json=transaction_data)
+    response = authenticated_client.post("/api/v1/transactions", json=transaction_data)
     assert response.status_code == 201
     data = response.get_json()
     assert "Transaction created successfully" in data["message"]
@@ -782,7 +782,7 @@ def test_add_transaction_missing_fields(authenticated_client):
         "payee": "Store",
         "currency": "INR",
     }
-    response = authenticated_client.post("/api/transactions", json=transaction_data)
+    response = authenticated_client.post("/api/v1/transactions", json=transaction_data)
     assert response.status_code == 400  # Expect Bad Request
     data = response.get_json()
     assert "error" in data
@@ -806,7 +806,7 @@ def test_add_transaction_unbalanced(authenticated_client, account, mock_ledger_c
             # Intentionally missing the balancing posting
         ],
     }
-    response = authenticated_client.post("/api/transactions", json=transaction_data)
+    response = authenticated_client.post("/api/v1/transactions", json=transaction_data)
 
     # We expect success since the application doesn't currently validate balancing
     assert response.status_code == 201

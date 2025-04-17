@@ -90,11 +90,11 @@ def test_get_transactions(authenticated_client, app, db_session, user):
         }
 
         post_response = authenticated_client.post(
-            "/api/transactions", json=transaction_data
+            "/api/v1/transactions", json=transaction_data
         )
         assert post_response.status_code == 201
 
-        get_response = authenticated_client.get("/api/transactions")
+        get_response = authenticated_client.get("/api/v1/transactions")
         assert get_response.status_code == 200
         response_data = get_response.get_json()
         assert isinstance(response_data, dict)

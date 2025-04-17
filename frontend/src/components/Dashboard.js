@@ -28,7 +28,7 @@ function Dashboard() {
 
   const fetchRecentTransactions = () => {
     const token = getToken(); // Get token
-    axios.get('/api/transactions', { 
+    axios.get('/api/v1/transactions', { 
       params: { limit: 5 },
       headers: { 'Authorization': `Bearer ${token}` } // Add header
     })

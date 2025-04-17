@@ -393,7 +393,7 @@ paths:
           description: Account not found
   
   # Transaction Endpoints
-  /api/transactions:
+  /api/v1/transactions:
     get:
       tags:
         - Transactions
@@ -464,7 +464,7 @@ paths:
         404:
           description: Account not found
   
-  /api/transactions/{transactionId}:
+  /api/v1/transactions/{transactionId}:
     get:
       tags:
         - Transactions
@@ -536,7 +536,7 @@ paths:
         404:
           description: Transaction not found
   
-  /api/transactions/{transactionId}/update_with_postings:
+  /api/v1/transactions/{transactionId}/update_with_postings:
     put:
       tags:
         - Transactions
@@ -572,7 +572,7 @@ paths:
         404:
           description: Transaction or account not found
   
-  /api/transactions/{transactionId}/related:
+  /api/v1/transactions/{transactionId}/related:
     get:
       tags:
         - Transactions

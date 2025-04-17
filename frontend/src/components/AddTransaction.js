@@ -102,7 +102,7 @@ function AddTransaction() {
 
     const token = getToken(); // Get token
     // Send to backend
-    axios.post('/api/transactions', transactionData, {
+    axios.post('/api/v1/transactions', transactionData, {
       headers: { 'Authorization': `Bearer ${token}` } // Add header
     })
       .then(response => {

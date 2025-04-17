@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 transactions = Blueprint("transactions", __name__)
 
 
-@transactions.route("/api/transactions", methods=["POST"])
+@transactions.route("/api/v1/transactions", methods=["POST"])
 @api_token_required
 def create_transaction():
     """Create a new transaction from the provided JSON data."""
@@ -145,14 +145,14 @@ def create_transaction():
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
 
-@transactions.route("/api/transactions", methods=["GET"])
+@transactions.route("/api/v1/transactions", methods=["GET"])
 @api_token_required
 def get_transactions():
     current_app.logger.debug("Entered get_transactions route")
     try:
         # Log request
         current_app.logger.debug(
-            f"GET /api/transactions request with params: {request.args}"
+            f"GET /api/v1/transactions request with params: {request.args}"
         )
 
         limit = request.args.get("limit", type=int)
@@ -243,13 +243,13 @@ def get_transactions():
         return jsonify({"error": "Failed to retrieve transactions"}), 500
 
 
-@transactions.route("/api/transactions/<int:transaction_id>", methods=["GET"])
+@transactions.route("/api/v1/transactions/<int:transaction_id>", methods=["GET"])
 @api_token_required
 def get_transaction(transaction_id):
     """Get a single transaction by ID"""
     try:
         # Log request
-        current_app.logger.debug(f"GET /api/transactions/{transaction_id}")
+        current_app.logger.debug(f"GET /api/v1/transactions/{transaction_id}")
 
         # Get the transaction
         transaction = Transaction.query.filter_by(
@@ -294,7 +294,7 @@ def get_transaction(transaction_id):
         return jsonify({"error": "Failed to retrieve transaction"}), 500
 
 
-@transactions.route("/api/transactions/<int:transaction_id>", methods=["PUT"])
+@transactions.route("/api/v1/transactions/<int:transaction_id>", methods=["PUT"])
 @api_token_required
 def update_transaction(transaction_id):
     """Update a transaction"""
@@ -417,7 +417,7 @@ def update_transaction(transaction_id):
 
 
 @transactions.route(
-    "/api/transactions/<int:transaction_id>/update_with_postings", methods=["PUT"]
+    "/api/v1/transactions/<int:transaction_id>/update_with_postings", methods=["PUT"]
 )
 @api_token_required
 def update_transaction_with_postings(transaction_id):
@@ -579,13 +579,13 @@ def update_transaction_with_postings(transaction_id):
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
 
-@transactions.route("/api/transactions/<int:transaction_id>/related", methods=["GET"])
+@transactions.route("/api/v1/transactions/<int:transaction_id>/related", methods=["GET"])
 @api_token_required
 def get_related_transactions(transaction_id):
     """Get a transaction and all its related transactions (by date and payee)"""
     try:
         # Log request
-        current_app.logger.debug(f"GET /api/transactions/{transaction_id}/related")
+        current_app.logger.debug(f"GET /api/v1/transactions/{transaction_id}/related")
 
         # Get the transaction to find its date and payee
         transaction = Transaction.query.filter_by(
@@ -652,7 +652,7 @@ def get_related_transactions(transaction_id):
         return jsonify({"error": "Failed to retrieve related transactions"}), 500
 
 
-@transactions.route("/api/transactions/<int:transaction_id>", methods=["DELETE"])
+@transactions.route("/api/v1/transactions/<int:transaction_id>", methods=["DELETE"])
 @api_token_required
 def delete_transaction(transaction_id):
     """Delete a specific transaction."""
@@ -680,7 +680,7 @@ def delete_transaction(transaction_id):
 
 
 @transactions.route(
-    "/api/transactions/<int:transaction_id>/related", methods=["DELETE"]
+    "/api/v1/transactions/<int:transaction_id>/related", methods=["DELETE"]
 )
 @api_token_required
 def delete_related_transactions(transaction_id):

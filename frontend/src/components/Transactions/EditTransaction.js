@@ -49,7 +49,7 @@ function EditTransaction() {
     
     try {
       // Use the related transactions endpoint to get all postings
-      const response = await axios.get(`/api/transactions/${id}/related`, {
+      const response = await axios.get(`/api/v1/transactions/${id}/related`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -256,7 +256,7 @@ function EditTransaction() {
     
     try {
       // We'll use the update endpoint that handles multiple postings
-      await axios.put(`/api/transactions/${id}/update_with_postings`, transactionData, {
+      await axios.put(`/api/v1/transactions/${id}/update_with_postings`, transactionData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

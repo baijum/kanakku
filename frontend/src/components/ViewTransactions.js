@@ -58,7 +58,7 @@ function ViewTransactions() {
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
 
-    axios.get('/api/transactions', { 
+    axios.get('/api/v1/transactions', { 
       params, 
       headers: { 'Authorization': `Bearer ${token}` } // Add header
     })
@@ -148,7 +148,7 @@ function ViewTransactions() {
     }
 
     const token = getToken();
-    const endpoint = `/api/transactions/${transactionToDelete}/related`;
+    const endpoint = `/api/v1/transactions/${transactionToDelete}/related`;
 
     axios.delete(endpoint, {
       headers: { 'Authorization': `Bearer ${token}` }

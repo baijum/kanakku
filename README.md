@@ -74,8 +74,8 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
     *   `PUT /api/accounts/<int:account_id>` - Update a specific account. (Body: `{ "name": "...", "type": "...", ... }`)
     *   `DELETE /api/accounts/<int:account_id>` - Delete a specific account.
 *   **Transactions (`transactions.py`)** (Auth Required)
-    *   `POST /api/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "description": "...", "amount": ..., "account_name": "...", "payee": "..." (optional), "currency": "..." (optional) }`)
-    *   `GET /api/transactions` - Get all transactions for the current user (supports `?limit=N` query parameter).
+    *   `POST /api/v1/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "description": "...", "amount": ..., "account_name": "...", "payee": "..." (optional), "currency": "..." (optional) }`)
+    *   `GET /api/v1/transactions` - Get all transactions for the current user (supports `?limit=N` query parameter).
 *   **Ledger (`ledger.py`)** (Auth Required)
     *   `GET /api/v1/ledgertransactions` - Get all transactions for the current user in Ledger text format.
 *   **Reports (`reports.py`)**
