@@ -61,7 +61,7 @@ kanakku/
 The main API endpoints are served under the `/api/` prefix by the Flask backend. Authentication via JWT (Bearer token in Authorization header) is required for most endpoints.
 
 *   **Health Check (`api.py`)**
-    *   `GET /api/health` (No Auth Required) - Basic health check.
+    *   `GET /api/v1/health` (No Auth Required) - Basic health check.
 *   **Authentication (`auth.py`)**
     *   `POST /api/v1/auth/register` - Register a new user. (Body: `{ "username": "...", "email": "...", "password": "..." }`)
     *   `POST /api/v1/auth/login` - Log in a user. (Body: `{ "username": "...", "password": "..." }`)

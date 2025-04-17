@@ -21,7 +21,7 @@ tags:
     description: Preamble management for ledger files
 
 paths:
-  /api/health:
+  /api/v1/health:
     get:
       summary: Health check
       responses:

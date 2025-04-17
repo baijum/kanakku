@@ -17,7 +17,7 @@ def test_404_error(client):
 
 def test_405_error(client):
     """Test 405 error handling."""
-    response = client.post("/api/health")  # GET endpoint, but using POST
+    response = client.post("/api/v1/health")  # GET endpoint, but using POST
     assert response.status_code == 405
     assert "error" in response.json
 
