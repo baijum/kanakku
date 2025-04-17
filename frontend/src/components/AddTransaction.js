@@ -12,6 +12,7 @@ import {
   MenuItem,
   IconButton,
   Divider,
+  Alert,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -33,6 +34,7 @@ function AddTransaction() {
   ]);
   const [accounts, setAccounts] = useState([]);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     const token = getToken(); // Get token
@@ -74,6 +76,7 @@ function AddTransaction() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     // Validate postings
     const total = postings.reduce((sum, posting) => {
@@ -114,7 +117,7 @@ function AddTransaction() {
           { account: '', amount: '', currency: '₹' },
           { account: '', amount: '', currency: '₹' },
         ]);
-        alert('Transaction added successfully!');
+        setSuccess('Transaction added successfully!');
       })
       .catch(error => {
         console.error('Error adding transaction:', error);
@@ -128,6 +131,11 @@ function AddTransaction() {
         Add Transaction
       </Typography>
       <Paper sx={{ p: 3 }}>
+        {success && (
+          <Alert severity="success" sx={{ mb: 3 }}>
+            {success}
+          </Alert>
+        )}
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
