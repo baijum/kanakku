@@ -50,7 +50,7 @@ function Dashboard() {
 
   const fetchBalanceReport = () => {
     const token = getToken(); // Get token
-    axios.get('/api/reports/balance', { 
+    axios.get('/api/v1/reports/balance', { 
       params: { depth: 1 },
       headers: { 'Authorization': `Bearer ${token}` } // Add header
     })

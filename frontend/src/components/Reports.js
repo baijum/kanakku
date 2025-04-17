@@ -54,7 +54,7 @@ function Reports() {
     if (selectedAccount) params.account = selectedAccount;
     if (depth) params.depth = depth;
 
-    axios.get('/api/reports/balance', { 
+    axios.get('/api/v1/reports/balance', { 
       params,
       headers: { 'Authorization': `Bearer ${token}` } 
     })
@@ -70,7 +70,7 @@ function Reports() {
     const token = getToken();
     if (!selectedAccount) return;
 
-    axios.get('/api/reports/register', { 
+    axios.get('/api/v1/reports/register', { 
       params: { account: selectedAccount },
       headers: { 'Authorization': `Bearer ${token}` }
     })

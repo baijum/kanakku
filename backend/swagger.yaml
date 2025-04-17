@@ -615,7 +615,7 @@ paths:
           description: Transaction not found
   
   # Report Endpoints
-  /api/reports/balance:
+  /api/v1/reports/balance:
     get:
       tags:
         - Reports
@@ -642,7 +642,7 @@ paths:
                   balance:
                     type: string
   
-  /api/reports/register:
+  /api/v1/reports/register:
     get:
       tags:
         - Reports
@@ -669,7 +669,7 @@ paths:
                   register:
                     type: string
   
-  /api/reports/balance_report:
+  /api/v1/reports/balance_report:
     get:
       tags:
         - Reports
@@ -687,7 +687,7 @@ paths:
                   balance_report:
                     type: string
   
-  /api/reports/income_statement:
+  /api/v1/reports/income_statement:
     get:
       tags:
         - Reports

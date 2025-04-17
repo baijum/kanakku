@@ -29,7 +29,7 @@ def test_get_balance(authenticated_client, user, app):
         db.session.commit()
 
     # Test without filters
-    response = authenticated_client.get("/api/reports/balance")
+    response = authenticated_client.get("/api/v1/reports/balance")
     assert response.status_code == 200
     data = response.get_json()
     assert "balance" in data
@@ -39,7 +39,7 @@ def test_get_balance(authenticated_client, user, app):
     assert "1000.00 INR" in balance_lines[0]
 
     # Test with account filter
-    response = authenticated_client.get("/api/reports/balance?account=Assets:Bank")
+    response = authenticated_client.get("/api/v1/reports/balance?account=Assets:Bank")
     assert response.status_code == 200
     data = response.get_json()
     balance_lines = data["balance"].split("\n")
@@ -47,7 +47,7 @@ def test_get_balance(authenticated_client, user, app):
     assert "Liabilities" not in data["balance"]
 
     # Test with depth filter
-    response = authenticated_client.get("/api/reports/balance?depth=2")
+    response = authenticated_client.get("/api/v1/reports/balance?depth=2")
     assert response.status_code == 200
     data = response.get_json()
     balance_lines = data["balance"].split("\n")
@@ -91,7 +91,7 @@ def test_get_register(authenticated_client, user, app):
         db.session.commit()
 
     # Test without filters
-    response = authenticated_client.get("/api/reports/register")
+    response = authenticated_client.get("/api/v1/reports/register")
     assert response.status_code == 200
     data = response.get_json()
     assert "register" in data
@@ -102,13 +102,13 @@ def test_get_register(authenticated_client, user, app):
     assert "-100.00 INR" in register_lines[1]
 
     # Test with account filter
-    response = authenticated_client.get("/api/reports/register?account=Assets:Bank")
+    response = authenticated_client.get("/api/v1/reports/register?account=Assets:Bank")
     assert response.status_code == 200
     data = response.get_json()
     assert "Assets:Bank:Checking" in data["register"]
 
     # Test with limit
-    response = authenticated_client.get("/api/reports/register?limit=1")
+    response = authenticated_client.get("/api/v1/reports/register?limit=1")
     assert response.status_code == 200
     data = response.get_json()
     register_lines = data["register"].split("\n")
@@ -154,7 +154,7 @@ def test_get_balance_report(authenticated_client, user, app):
         db.session.add_all(accounts)
         db.session.commit()
 
-    response = authenticated_client.get("/api/reports/balance_report")
+    response = authenticated_client.get("/api/v1/reports/balance_report")
     assert response.status_code == 200
     data = response.get_json()
     assert "balance_report" in data
@@ -204,7 +204,7 @@ def test_get_income_statement(authenticated_client, user, app):
         db.session.add_all(accounts)
         db.session.commit()
 
-    response = authenticated_client.get("/api/reports/income_statement")
+    response = authenticated_client.get("/api/v1/reports/income_statement")
     assert response.status_code == 200
     data = response.get_json()
     assert "income_statement" in data
@@ -247,7 +247,7 @@ def test_balance_report(authenticated_client, user, app):
         db.session.commit()
 
     # Test balance report generation
-    response = authenticated_client.get("/api/reports/balance")
+    response = authenticated_client.get("/api/v1/reports/balance")
     assert response.status_code == 200
     data = response.get_json()
 
@@ -379,7 +379,7 @@ def test_income_statement(authenticated_client, user, app):
         db.session.commit()
 
     # Test income statement generation
-    response = authenticated_client.get("/api/reports/income_statement")
+    response = authenticated_client.get("/api/v1/reports/income_statement")
     assert response.status_code == 200
     data = response.get_json()
 
@@ -490,7 +490,7 @@ def test_report_date_range(authenticated_client, user, app):
     end_date = (today + timedelta(days=1)).isoformat()
 
     response = authenticated_client.get(
-        f"/api/reports/income_statement?start_date={start_date}&end_date={end_date}"
+        f"/api/v1/reports/income_statement?start_date={start_date}&end_date={end_date}"
     )
     assert response.status_code == 200
     data = response.get_json()

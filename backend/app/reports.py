@@ -5,7 +5,7 @@ from .extensions import api_token_required
 reports = Blueprint("reports", __name__)
 
 
-@reports.route("/api/reports/balance", methods=["GET"])
+@reports.route("/api/v1/reports/balance", methods=["GET"])
 @api_token_required
 def get_balance():
     """Get balance report, optionally filtered by account and limited by depth"""
@@ -51,7 +51,7 @@ def get_balance():
         return jsonify({"error": str(e)}), 500
 
 
-@reports.route("/api/reports/register", methods=["GET"])
+@reports.route("/api/v1/reports/register", methods=["GET"])
 @api_token_required
 def get_register():
     """Get transaction register, optionally filtered by account and limited by count"""
@@ -106,7 +106,7 @@ def get_register():
         return jsonify({"error": str(e)}), 500
 
 
-@reports.route("/api/reports/balance_report", methods=["GET"])
+@reports.route("/api/v1/reports/balance_report", methods=["GET"])
 @api_token_required
 def get_balance_report():
     """Get a full balance report for all accounts"""
@@ -174,7 +174,7 @@ def get_balance_report():
         return jsonify({"error": str(e)}), 500
 
 
-@reports.route("/api/reports/income_statement", methods=["GET"])
+@reports.route("/api/v1/reports/income_statement", methods=["GET"])
 @api_token_required
 def get_income_statement():
     """Generate an income statement (Income vs Expenses)"""
