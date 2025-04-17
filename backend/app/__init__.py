@@ -79,7 +79,7 @@ def create_app(config_name="default"):
     app.config.from_object(Config)
 
     # Configure CORS to allow any origin
-    CORS(app, origins=["*", "http://localhost:3000"])
+    CORS(app, origins=[app.config["FRONTEND_URL"]])
 
     # Initialize extensions
     db.init_app(app)
