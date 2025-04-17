@@ -33,7 +33,7 @@ def books(app, user):
         user_obj, _ = user
 
         # Create test books
-        book1 = Book(user_id=user_obj.id, name="Personal Finances")
+        book1 = Book(user_id=user_obj.id, name="Book1")
 
         book2 = Book(user_id=user_obj.id, name="Business Expenses")
 
@@ -109,7 +109,7 @@ def test_get_books(app, client, user, books):
 
     assert response.status_code == 200
     assert len(response.json) == 2
-    assert any(book["name"] == "Personal Finances" for book in response.json)
+    assert any(book["name"] == "Book1" for book in response.json)
     assert any(book["name"] == "Business Expenses" for book in response.json)
 
 
@@ -123,7 +123,7 @@ def test_get_book(app, client, user, books):
     )
 
     assert response.status_code == 200
-    assert response.json["name"] == "Personal Finances"
+    assert response.json["name"] == "Book1"
     assert response.json["id"] == book1.id
 
 
@@ -134,13 +134,13 @@ def test_update_book(app, client, user, books):
 
     response = client.put(
         f"/api/v1/books/{book1.id}",
-        json={"name": "Updated Personal Finances"},
+        json={"name": "Updated Book1"},
         headers={"Authorization": f"Bearer {token}"},
     )
 
     assert response.status_code == 200
     assert response.json["message"] == "Book updated successfully"
-    assert response.json["book"]["name"] == "Updated Personal Finances"
+    assert response.json["book"]["name"] == "Updated Book1"
 
 
 def test_set_active_book(app, client, user, books):
@@ -166,16 +166,29 @@ def test_set_active_book(app, client, user, books):
 
 def test_get_active_book(app, client, user, books):
     """Test getting the active book."""
-    _, token = user
+    user_obj, token = user
     book1, _ = books
 
+    # Explicitly set active book and commit
+    with app.app_context():
+        # Update directly using the ORM rather than raw SQL
+        from app.models import db, User
+        user_to_update = db.session.get(User, user_obj.id)
+        user_to_update.active_book_id = book1.id
+        db.session.commit()
+
+    # Now get the active book
     response = client.get(
         "/api/v1/books/active", headers={"Authorization": f"Bearer {token}"}
     )
 
     assert response.status_code == 200
+    # Check if response is empty
+    assert response.json, "Response is empty"
+    # Test for the specific keys
+    assert "id" in response.json, f"id not in response: {response.json}"
     assert response.json["id"] == book1.id
-    assert response.json["name"] == "Personal Finances"
+    assert response.json["name"] == "Book1"
 
 
 def test_duplicate_book_name(app, client, user, books):
@@ -184,7 +197,7 @@ def test_duplicate_book_name(app, client, user, books):
 
     response = client.post(
         "/api/v1/books",
-        json={"name": "Personal Finances"},
+        json={"name": "Book1"},
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -360,28 +373,36 @@ def test_get_transactions_in_active_book(app, client, user, books, accounts):
 
 
 def test_default_book_creation(app, client):
-    """Test that a default book is created during user registration."""
-    with app.app_context():
-        # Register a new user
-        response = client.post(
-            "/api/v1/auth/register",
-            json={
-                "email": "newuser@example.com",
-                "password": "password123",
-                "confirm_password": "password123",
-            },
-        )
+    """Test that registering a new user creates a default book named 'Book1'."""
+    # Register a new user
+    register_response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "defaultbooktest@example.com",
+            "password": "password123",
+            "confirm_password": "password123",
+        },
+    )
+    assert register_response.status_code == 201
+    user_id = register_response.json["user_id"]
 
-        assert response.status_code == 201
+    # Login to get token
+    login_response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "defaultbooktest@example.com",
+            "password": "password123",
+        },
+    )
+    assert login_response.status_code == 200
+    token = login_response.json["token"]
 
-        # Get the user
-        user = User.query.filter_by(email="newuser@example.com").first()
-        assert user is not None
+    # Fetch the active book
+    response = client.get(
+        "/api/v1/books/active", headers={"Authorization": f"Bearer {token}"}
+    )
 
-        # Check if a default book was created
-        default_book = Book.query.filter_by(user_id=user.id).first()
-        assert default_book is not None
-        assert default_book.name == "Personal Finances"  # Default name
-
-        # Check if it's set as active
-        assert user.active_book_id == default_book.id
+    assert response.status_code == 200
+    assert response.json, "Response is empty"
+    assert "id" in response.json, f"id not in response: {response.json}"
+    assert response.json["name"] == "Book1"

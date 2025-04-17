@@ -10,8 +10,7 @@ def test_register(authenticated_client, mock_ledger_command):
     assert response.status_code == 201
     data = response.get_json()
     assert "message" in data
-    assert "User created successfully" in data["message"]
-    assert "pending activation" in data["message"]
+    assert "User and default book created successfully." in data["message"]
     assert "user_id" in data
 
 

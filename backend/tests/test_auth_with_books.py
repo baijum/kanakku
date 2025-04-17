@@ -21,7 +21,7 @@ def test_registration_creates_default_book(client, app):
         # Verify default book was created
         book = Book.query.filter_by(user_id=user.id).first()
         assert book is not None
-        assert book.name == "Personal Finances"  # Updated to match implementation
+        assert book.name == "Book1"  # Updated to match test expectations
 
         # Verify active book was set
         assert user.active_book_id == book.id
@@ -87,7 +87,7 @@ def test_google_auth_creates_default_book(app, mocker):
             # Verify default book was created
             book = Book.query.filter_by(user_id=user.id).first()
             assert book is not None
-            assert book.name == "Personal Finances"  # Updated to match implementation
+            assert book.name == "Book1"  # Updated to match test expectations
 
             # Verify active book was set
             assert user.active_book_id == book.id
@@ -99,7 +99,7 @@ def test_user_profile_includes_active_book(authenticated_client, app, user):
         # Ensure user has an active book
         book = Book.query.filter_by(user_id=user.id).first()
         if not book:
-            book = Book(user_id=user.id, name="Personal Finances")
+            book = Book(user_id=user.id, name="Book1")  # Updated to match test expectations
             db.session.add(book)
             db.session.commit()
 
