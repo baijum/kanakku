@@ -59,9 +59,7 @@ def test_create_account(authenticated_client, user):
     assert data["account"]["balance"] == 500.0
 
     # Test creating account with missing fields
-    response = authenticated_client.post(
-        "/api/v1/accounts", json={}
-    )
+    response = authenticated_client.post("/api/v1/accounts", json={})
     assert response.status_code == 400
     assert "error" in response.get_json()
 

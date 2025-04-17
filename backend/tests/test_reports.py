@@ -158,7 +158,6 @@ def test_get_balance_report(authenticated_client, user, app):
     assert response.status_code == 200
     data = response.get_json()
     assert "balance_report" in data
-    report_lines = data["balance_report"].split("\n")
 
     # Verify report structure
     assert "assets" in data["balance_report"].lower()

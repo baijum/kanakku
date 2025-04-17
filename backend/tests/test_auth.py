@@ -26,7 +26,8 @@ def user(app):
 
 def test_register(client):
     response = client.post(
-        "/api/v1/auth/register", json={"email": "new@example.com", "password": "password"}
+        "/api/v1/auth/register",
+        json={"email": "new@example.com", "password": "password"},
     )
     assert response.status_code == 201
     data = response.get_json()
@@ -45,7 +46,8 @@ def test_login(client, user, app):
         db.session.commit()
 
     response = client.post(
-        "/api/v1/auth/login", json={"email": "test@example.com", "password": "password123"}
+        "/api/v1/auth/login",
+        json={"email": "test@example.com", "password": "password123"},
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -56,7 +58,8 @@ def test_login(client, user, app):
 
 def test_invalid_login(client):
     response = client.post(
-        "/api/v1/auth/login", json={"email": "wrong@example.com", "password": "wrongpass"}
+        "/api/v1/auth/login",
+        json={"email": "wrong@example.com", "password": "wrongpass"},
     )
     assert response.status_code == 401
 
@@ -248,7 +251,9 @@ def test_google_callback_success(client, app, mocker):
         session["oauth_state"] = "test-state"
 
     # Test callback
-    response = client.get("/api/v1/auth/google/callback?state=test-state&code=test-code")
+    response = client.get(
+        "/api/v1/auth/google/callback?state=test-state&code=test-code"
+    )
     assert response.status_code == 302  # Redirect
     assert "/google-auth-callback?token=" in response.location
 
@@ -308,7 +313,9 @@ def test_google_callback_existing_user(client, app, mocker):
         session["oauth_state"] = "test-state"
 
     # Test callback
-    response = client.get("/api/v1/auth/google/callback?state=test-state&code=test-code")
+    response = client.get(
+        "/api/v1/auth/google/callback?state=test-state&code=test-code"
+    )
     assert response.status_code == 302  # Redirect
     assert "/google-auth-callback?token=" in response.location
 

@@ -113,9 +113,7 @@ def get_balance_report():
     try:
         # Query all accounts and their balances
         accounts = (
-            db.session.query(
-                Account.name, Account.currency, Account.balance
-            )
+            db.session.query(Account.name, Account.currency, Account.balance)
             .filter(Account.user_id == g.current_user.id)
             .order_by(Account.name)
             .all()
@@ -129,7 +127,7 @@ def get_balance_report():
         for acct in accounts:
             # Extract type from account name (first part before colon)
             account_type = acct.name.split(":")[0] if ":" in acct.name else "Other"
-            
+
             # Add type header if it's a new type
             if account_type != current_type:
                 if current_type is not None:
@@ -190,7 +188,9 @@ def get_income_statement():
         # Query Expense accounts
         expenses = (
             db.session.query(Account.name, Account.currency, Account.balance)
-            .filter(Account.user_id == g.current_user.id, Account.name.like("Expenses:%"))
+            .filter(
+                Account.user_id == g.current_user.id, Account.name.like("Expenses:%")
+            )
             .order_by(Account.name)
             .all()
         )

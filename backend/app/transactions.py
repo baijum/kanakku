@@ -579,7 +579,9 @@ def update_transaction_with_postings(transaction_id):
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
 
-@transactions.route("/api/v1/transactions/<int:transaction_id>/related", methods=["GET"])
+@transactions.route(
+    "/api/v1/transactions/<int:transaction_id>/related", methods=["GET"]
+)
 @api_token_required
 def get_related_transactions(transaction_id):
     """Get a transaction and all its related transactions (by date and payee)"""

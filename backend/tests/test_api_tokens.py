@@ -56,7 +56,8 @@ def test_create_token(authenticated_client, user, db_session):
     # Test creating a token with expiry
     expiry_date = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
     response = authenticated_client.post(
-        "/api/v1/auth/tokens", json={"name": "Expiring Token", "expires_at": expiry_date}
+        "/api/v1/auth/tokens",
+        json={"name": "Expiring Token", "expires_at": expiry_date},
     )
     assert response.status_code == 201
     data = response.get_json()
@@ -92,7 +93,8 @@ def test_create_token_validation(authenticated_client):
 
     # Test creating a token with invalid expiry format
     response = authenticated_client.post(
-        "/api/v1/auth/tokens", json={"name": "Invalid Token", "expires_at": "not-a-date"}
+        "/api/v1/auth/tokens",
+        json={"name": "Invalid Token", "expires_at": "not-a-date"},
     )
     assert response.status_code == 400
     data = response.get_json()

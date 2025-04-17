@@ -94,9 +94,9 @@ def create_app(config_name="default"):
     jwt.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)
-    
+
     # Initialize Flask-Migrate
-    migrate = Migrate(app, db)
+    _ = Migrate(app, db)
 
     # Setup logging after config is loaded
     setup_logging(app)

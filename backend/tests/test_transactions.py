@@ -494,7 +494,9 @@ def test_get_related_transactions(authenticated_client, user, app):
         transaction_id = tx1.id
 
     # Test retrieving related transactions
-    response = authenticated_client.get(f"/api/v1/transactions/{transaction_id}/related")
+    response = authenticated_client.get(
+        f"/api/v1/transactions/{transaction_id}/related"
+    )
     assert response.status_code == 200
     data = response.get_json()
 
@@ -734,7 +736,9 @@ def test_delete_transaction(authenticated_client, user, app):
 
 def test_delete_transaction_not_found(authenticated_client):
     """Test deleting a non-existent transaction."""
-    response = authenticated_client.delete("/api/v1/transactions/99999")  # Non-existent ID
+    response = authenticated_client.delete(
+        "/api/v1/transactions/99999"
+    )  # Non-existent ID
     assert response.status_code == 404
     assert "error" in response.get_json()
 

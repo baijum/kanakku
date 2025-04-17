@@ -117,7 +117,7 @@ def test_create_account(authenticated_client, user, db_session):
     account_data = {
         "name": "Assets:Savings",
         "currency": "INR",
-        "description": "A savings account"
+        "description": "A savings account",
     }
 
     # WHEN I submit a POST request with valid account data

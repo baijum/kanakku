@@ -23,7 +23,8 @@ def test_login(authenticated_client, mock_ledger_command, db_session):
     db_session.commit()
 
     response = authenticated_client.post(
-        "/api/v1/auth/login", json={"email": "test@example.com", "password": "password123"}
+        "/api/v1/auth/login",
+        json={"email": "test@example.com", "password": "password123"},
     )
     assert response.status_code == 200
     data = response.get_json()
