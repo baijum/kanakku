@@ -50,7 +50,7 @@ function Dashboard() {
           currency: tx.currency || 'INR'
         }));
         
-        // Return updated transaction with all postings
+        // Return updated transaction with all postings and preserve status
         return {
           ...transaction,
           postings: allPostings
@@ -69,8 +69,8 @@ function Dashboard() {
     setLoading(true);
     try {
       const token = getToken();
-      const response = await axios.get('/api/v1/transactions', { 
-        params: { limit: 5 },
+      const response = await axios.get('/api/v1/transactions/recent', { 
+        params: { limit: 7 },
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -152,7 +152,9 @@ function Dashboard() {
                       {recentTransactions.map((transaction, index) => (
                         <TableRow key={index}>
                           <TableCell>{transaction.date}</TableCell>
-                          <TableCell>{transaction.payee}</TableCell>
+                          <TableCell>
+                            {transaction.status && transaction.status.trim() ? `${transaction.status} ${transaction.payee}` : transaction.payee}
+                          </TableCell>
                           <TableCell>
                             {transaction.postings && transaction.postings.map((posting, pIndex) => (
                               <Box 

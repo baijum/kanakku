@@ -769,6 +769,84 @@ def delete_related_transactions(transaction_id):
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
 
+@transactions.route("/api/v1/transactions/recent", methods=["GET"])
+@api_token_required
+def get_recent_transactions():
+    """Get recent transactions, grouped by date and payee, but ensuring we return the requested number of groups"""
+    current_app.logger.debug("Entered get_recent_transactions route")
+    try:
+        # Log request
+        current_app.logger.debug(
+            f"GET /api/v1/transactions/recent request with params: {request.args}"
+        )
+
+        limit = request.args.get("limit", type=int, default=7)
+        
+        # Fetch more raw transactions than we need to ensure we have enough after grouping
+        fetch_limit = limit * 4  # Fetch 4x the requested limit to ensure we have enough groups
+        
+        # Start with base query
+        query = Transaction.query.filter_by(user_id=g.current_user.id)
+
+        # Apply ordering
+        query = query.order_by(Transaction.date.desc())
+        
+        # Fetch more transactions than needed to ensure we have enough groups
+        query = query.limit(fetch_limit)
+        
+        transactions_list = query.all()
+
+        # Group transactions by date and payee to create the expected structure
+        grouped_transactions = {}
+
+        for tx in transactions_list:
+            # Get account name
+            if not tx.account_id:
+                current_app.logger.error("Transaction has no account_id")
+                continue
+            account = db.session.get(Account, tx.account_id)
+            if not account:
+                current_app.logger.error("Account not found for transaction")
+                continue
+            account_name = account.name
+
+            # Create a unique key for grouping
+            key = f"{tx.date.isoformat()}|{tx.payee}"
+
+            # Create or update transaction group
+            if key not in grouped_transactions:
+                grouped_transactions[key] = {
+                    "id": tx.id,  # Include the ID of the first transaction in the group
+                    "date": tx.date.isoformat(),
+                    "payee": tx.payee,
+                    "status": tx.status or "",  # Use the status from database
+                    "postings": [],
+                }
+
+            # Add posting to transaction group
+            grouped_transactions[key]["postings"].append(
+                {
+                    "id": tx.id,  # Include the transaction ID with each posting
+                    "account": account_name,
+                    "amount": str(tx.amount),
+                    "currency": tx.currency,
+                }
+            )
+
+        # Convert grouped transactions to a list and limit to exactly the requested number
+        formatted_transactions = list(grouped_transactions.values())[:limit]
+
+        # Return in the format expected by the frontend
+        response = {"transactions": formatted_transactions, "total": len(formatted_transactions)}
+
+        return jsonify(response)
+    except Exception as e:
+        current_app.logger.error(
+            f"Error in get_recent_transactions: {str(e)} - Traceback: {traceback.format_exc()}"
+        )
+        return jsonify({"error": "Failed to retrieve recent transactions"}), 500
+
+
 # Add a decorator function for consistent error handling
 def handle_errors(func):
     """Decorator to provide consistent error handling for transaction routes."""
