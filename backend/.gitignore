@@ -3,3 +3,4 @@ venv/
 instance/app.db
 .env
 logs/*.log
+.coverage
