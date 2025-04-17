@@ -8,7 +8,7 @@ accounts = Blueprint("accounts", __name__)
 def get_active_book_id():
     """Get the active book ID for the current user or raise an error if not set."""
     user = g.current_user
-    
+
     if not user.active_book_id:
         # Try to find first book ordered by ID
         first_book = Book.query.filter_by(user_id=user.id).order_by(Book.id).first()
@@ -22,7 +22,7 @@ def get_active_book_id():
             db.session.flush()
             user.active_book_id = default_book.id
             db.session.commit()
-    
+
     return user.active_book_id
 
 
@@ -33,8 +33,7 @@ def get_accounts():
     """Get all accounts for the current user and active book."""
     active_book_id = get_active_book_id()
     accounts_list = Account.query.filter_by(
-        user_id=g.current_user.id,
-        book_id=active_book_id
+        user_id=g.current_user.id, book_id=active_book_id
     ).all()
 
     # For Add Transaction dropdown, we just need the account names
@@ -54,8 +53,7 @@ def get_accounts_details():
     """Get all accounts with full details for the current user and active book."""
     active_book_id = get_active_book_id()
     accounts_list = Account.query.filter_by(
-        user_id=g.current_user.id,
-        book_id=active_book_id
+        user_id=g.current_user.id, book_id=active_book_id
     ).all()
 
     # Return full account details
@@ -78,13 +76,14 @@ def create_account():
 
     # Check if account with the same name already exists in this book
     existing = Account.query.filter_by(
-        user_id=user_id,
-        book_id=active_book_id,
-        name=data["name"]
+        user_id=user_id, book_id=active_book_id, name=data["name"]
     ).first()
-    
+
     if existing:
-        return jsonify({"error": "Account with this name already exists in this book"}), 400
+        return (
+            jsonify({"error": "Account with this name already exists in this book"}),
+            400,
+        )
 
     # Create the account - use g.current_user.id and active book ID
     account = Account(
@@ -113,12 +112,10 @@ def get_account(account_id):
     current_app.logger.debug(f"Entered get_account route for ID: {account_id}")
     """Get a specific account."""
     active_book_id = get_active_book_id()
-    
+
     # Use g.current_user and active book
     account = Account.query.filter_by(
-        id=account_id,
-        user_id=g.current_user.id,
-        book_id=active_book_id
+        id=account_id, user_id=g.current_user.id, book_id=active_book_id
     ).first_or_404()
 
     return jsonify(account.to_dict())
@@ -134,9 +131,7 @@ def update_account(account_id):
 
     # Use g.current_user and active book
     account = Account.query.filter_by(
-        id=account_id,
-        user_id=g.current_user.id,
-        book_id=active_book_id
+        id=account_id, user_id=g.current_user.id, book_id=active_book_id
     ).first_or_404()
 
     if "name" in data:
@@ -145,14 +140,19 @@ def update_account(account_id):
             Account.user_id == g.current_user.id,
             Account.book_id == active_book_id,
             Account.name == data["name"],
-            Account.id != account_id
+            Account.id != account_id,
         ).first()
-        
+
         if existing:
-            return jsonify({"error": "Account with this name already exists in this book"}), 400
-            
+            return (
+                jsonify(
+                    {"error": "Account with this name already exists in this book"}
+                ),
+                400,
+            )
+
         account.name = data["name"]
-        
+
     if "description" in data:
         account.description = data["description"]
     if "currency" in data:
@@ -173,12 +173,10 @@ def delete_account(account_id):
     current_app.logger.debug(f"Entered delete_account route for ID: {account_id}")
     """Delete an account."""
     active_book_id = get_active_book_id()
-    
+
     # Use g.current_user and active book
     account = Account.query.filter_by(
-        id=account_id,
-        user_id=g.current_user.id,
-        book_id=active_book_id
+        id=account_id, user_id=g.current_user.id, book_id=active_book_id
     ).first_or_404()
 
     # Check if there are any transactions associated with this account

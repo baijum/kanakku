@@ -240,21 +240,15 @@ function App() {
                   <MenuIcon />
                 </IconButton>
               )}
-              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                <img src={logo} alt="Kanakku Logo" style={{ height: '40px', marginRight: '10px' }} />
-                <Typography variant="h6" noWrap component="div">
-                  Kanakku
-                </Typography>
-              </Box>
+              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+                Kanakku
+              </Typography>
               
               {isLoggedIn && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
-                  <BookSelector />
-                </Box>
-              )}
-              
-              {isLoggedIn ? (
                 <>
+                  <Box sx={{ mr: 2 }}>
+                    <BookSelector isLoggedIn={isLoggedIn} />
+                  </Box>
                   <IconButton
                     color="inherit"
                     onClick={handleUserMenuOpen}
@@ -263,28 +257,31 @@ function App() {
                   >
                     <AccountCircleIcon />
                   </IconButton>
-                  <Menu
-                    id="user-menu"
-                    anchorEl={userMenuAnchorEl}
-                    keepMounted
-                    open={Boolean(userMenuAnchorEl)}
-                    onClose={handleUserMenuClose}
-                  >
-                    <MenuItem component={RouterLink} to="/profile" onClick={handleUserMenuClose}>
-                      <ListItemIcon>
-                        <SettingsIcon fontSize="small" />
-                      </ListItemIcon>
-                      Profile Settings
-                    </MenuItem>
-                    <Divider />
-                    <MenuItem onClick={handleLogout}>
-                      <ListItemIcon>
-                        <LogoutIcon fontSize="small" />
-                      </ListItemIcon>
-                      Logout
-                    </MenuItem>
-                  </Menu>
                 </>
+              )}
+              
+              {isLoggedIn ? (
+                <Menu
+                  id="user-menu"
+                  anchorEl={userMenuAnchorEl}
+                  keepMounted
+                  open={Boolean(userMenuAnchorEl)}
+                  onClose={handleUserMenuClose}
+                >
+                  <MenuItem component={RouterLink} to="/profile" onClick={handleUserMenuClose}>
+                    <ListItemIcon>
+                      <SettingsIcon fontSize="small" />
+                    </ListItemIcon>
+                    Profile Settings
+                  </MenuItem>
+                  <Divider />
+                  <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                      <LogoutIcon fontSize="small" />
+                    </ListItemIcon>
+                    Logout
+                  </MenuItem>
+                </Menu>
               ) : (
                 <Button color="inherit" component={RouterLink} to="/login">
                   Login

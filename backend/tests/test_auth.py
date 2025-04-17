@@ -341,9 +341,7 @@ def test_google_token_auth(client, app, mocker):
     )
 
     # Test the direct token authentication endpoint
-    response = client.post(
-        "/api/v1/auth/google", json={"token": "fake-token"}
-    )
+    response = client.post("/api/v1/auth/google", json={"token": "fake-token"})
     assert response.status_code == 200
     data = response.get_json()
     assert "token" in data
@@ -361,10 +359,11 @@ def test_google_token_auth(client, app, mocker):
 
         # Verify default book was created
         from app.models import Book
+
         book = Book.query.filter_by(user_id=user.id).first()
         assert book is not None
-        assert book.name == "Personal Finances" 
-        
+        assert book.name == "Personal Finances"
+
         # Verify active book was set
         assert user.active_book_id == book.id
 

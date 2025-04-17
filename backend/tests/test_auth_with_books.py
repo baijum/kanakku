@@ -1,7 +1,4 @@
-import pytest
 from app.models import User, Book, db
-from flask import g
-import json
 
 
 def test_registration_creates_default_book(client, app):
@@ -15,17 +12,17 @@ def test_registration_creates_default_book(client, app):
         },
     )
     assert response.status_code == 201
-    
+
     with app.app_context():
         # Verify user was created
         user = User.query.filter_by(email="booktest@example.com").first()
         assert user is not None
-        
+
         # Verify default book was created
         book = Book.query.filter_by(user_id=user.id).first()
         assert book is not None
         assert book.name == "Personal Finances"  # Updated to match implementation
-        
+
         # Verify active book was set
         assert user.active_book_id == book.id
 
@@ -39,16 +36,16 @@ def test_login_returns_user_with_active_book(client, app):
         user.is_active = True
         db.session.add(user)
         db.session.commit()
-        
+
         # Create a book
         book = Book(user_id=user.id, name="Test Book")
         db.session.add(book)
         db.session.commit()
-        
+
         # Set as active book
         user.active_book_id = book.id
         db.session.commit()
-    
+
     # Login
     response = client.post(
         "/api/v1/auth/login",
@@ -56,7 +53,7 @@ def test_login_returns_user_with_active_book(client, app):
     )
     assert response.status_code == 200
     data = response.get_json()
-    
+
     # Verify active book is included
     assert "active_book_id" in data["user"]
     assert data["user"]["active_book_id"] is not None
@@ -65,30 +62,33 @@ def test_login_returns_user_with_active_book(client, app):
 def test_google_auth_creates_default_book(app, mocker):
     """Test that Google Auth creates a default book for new users."""
     # Mock Google OAuth verification
-    mocker.patch("app.auth.verify_oauth_token", return_value={
-        "sub": "12345",
-        "email": "googleuser@example.com",
-        "name": "Google User",
-        "picture": "https://example.com/photo.jpg"
-    })
-    
+    mocker.patch(
+        "app.auth.verify_oauth_token",
+        return_value={
+            "sub": "12345",
+            "email": "googleuser@example.com",
+            "name": "Google User",
+            "picture": "https://example.com/photo.jpg",
+        },
+    )
+
     with app.test_client() as client:
         response = client.post(
             "/api/v1/auth/google",
             json={"token": "fake_token"},
         )
         assert response.status_code == 200
-        
+
         with app.app_context():
             # Verify user was created
             user = User.query.filter_by(email="googleuser@example.com").first()
             assert user is not None
-            
+
             # Verify default book was created
             book = Book.query.filter_by(user_id=user.id).first()
             assert book is not None
             assert book.name == "Personal Finances"  # Updated to match implementation
-            
+
             # Verify active book was set
             assert user.active_book_id == book.id
 
@@ -102,18 +102,18 @@ def test_user_profile_includes_active_book(authenticated_client, app, user):
             book = Book(user_id=user.id, name="Personal Finances")
             db.session.add(book)
             db.session.commit()
-        
+
         user.active_book_id = book.id
         db.session.commit()
-        
+
         # Store the book ID separately
         book_id = book.id
-    
+
     # Get user profile
     response = authenticated_client.get("/api/v1/auth/profile")
     assert response.status_code == 200
     data = response.get_json()
-    
+
     # Verify active book is included
     assert "active_book_id" in data
-    assert data["active_book_id"] == book_id 
+    assert data["active_book_id"] == book_id

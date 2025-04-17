@@ -14,7 +14,7 @@ def test_create_transaction(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account1 = Account(
             user_id=user.id,
             book_id=book.id,
@@ -118,7 +118,7 @@ def test_update_transaction(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -175,7 +175,7 @@ def test_update_transaction_invalid_data(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -244,7 +244,7 @@ def test_delete_related_transactions(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -289,8 +289,6 @@ def test_delete_related_transactions(authenticated_client, user, app):
         db.session.add_all([tx1, tx2, tx3])
         db.session.commit()
         tx1_id = tx1.id
-        tx2_id = tx2.id
-        tx3_id = tx3.id
 
     # Test getting related transactions for tx1
     response = authenticated_client.get(f"/api/v1/transactions/{tx1_id}/related")
@@ -303,9 +301,7 @@ def test_delete_related_transactions(authenticated_client, user, app):
     assert data["transactions"][0]["amount"] == 100.0
 
     # Test deleting tx1 and its related transactions
-    response = authenticated_client.delete(
-        f"/api/v1/transactions/{tx1_id}/related"
-    )
+    response = authenticated_client.delete(f"/api/v1/transactions/{tx1_id}/related")
     assert response.status_code == 200
     assert "message" in response.get_json()
 
@@ -382,7 +378,7 @@ def test_get_transactions_with_date_filters(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -399,7 +395,9 @@ def test_get_transactions_with_date_filters(authenticated_client, user, app):
             user_id=user.id,
             book_id=book.id,
             account_id=account.id,
-            date=date.today().replace(day=1, month=(date.today().month - 1 if date.today().month > 1 else 12)),
+            date=date.today().replace(
+                day=1, month=(date.today().month - 1 if date.today().month > 1 else 12)
+            ),
             description="Past Transaction",
             amount=100.0,
             currency="INR",
@@ -408,6 +406,7 @@ def test_get_transactions_with_date_filters(authenticated_client, user, app):
 
         # Recent transaction (5 days ago)
         from datetime import timedelta
+
         recent_tx = Transaction(
             user_id=user.id,
             book_id=book.id,
@@ -434,6 +433,7 @@ def test_get_transactions_with_date_filters(authenticated_client, user, app):
 
     # Test filter by start date (include recent and today)
     from datetime import timedelta
+
     start_date = (date.today() - timedelta(days=7)).isoformat()
     response = authenticated_client.get(f"/api/v1/transactions?startDate={start_date}")
     assert response.status_code == 200
@@ -466,7 +466,7 @@ def test_get_transaction_by_id(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -523,7 +523,7 @@ def test_get_related_transactions(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account1 = Account(
             user_id=user.id,
             book_id=book.id,
@@ -609,7 +609,7 @@ def test_update_transaction_with_postings(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         # Create accounts
         assets = Account(
             user_id=user.id,
@@ -697,7 +697,7 @@ def test_update_transaction_with_postings_invalid_data(authenticated_client, use
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -799,7 +799,7 @@ def test_delete_transaction(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-            
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -983,7 +983,7 @@ def transaction(db_session, user):
         db_session.commit()
         user.active_book_id = book.id
         db_session.commit()
-    
+
     account = Account(name="Test Account", user_id=user.id, book_id=book.id)
     db_session.add(account)
     db_session.commit()
@@ -995,7 +995,7 @@ def transaction(db_session, user):
         amount=100.00,
         account_id=account.id,
         user_id=user.id,
-        book_id=book.id
+        book_id=book.id,
     )
     db_session.add(tx)
     db_session.commit()

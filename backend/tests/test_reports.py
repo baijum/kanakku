@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from app.models import User, Book, Account, Transaction, db
+from app.models import Book, Account, Transaction, db
 import pytest
 
 
@@ -8,24 +8,32 @@ def test_get_balance(authenticated_client, setup_test_data):
     # Call the endpoint
     response = authenticated_client.get("/api/v1/reports/balance")
     assert response.status_code == 200
-    
+
     # Check response structure and content
     data = response.get_json()
     assert isinstance(data, dict)
     assert "assets" in data
     assert "expenses" in data
     assert "income" in data
-    
+
     # Check account balances
     assert any(account["name"] == "Assets:Checking" for account in data["assets"])
     assert any(account["name"] == "Expenses:Groceries" for account in data["expenses"])
     assert any(account["name"] == "Income:Salary" for account in data["income"])
-    
+
     # Verify specific balances
-    assets_checking = next(account for account in data["assets"] if account["name"] == "Assets:Checking")
-    expenses_groceries = next(account for account in data["expenses"] if account["name"] == "Expenses:Groceries")
-    income_salary = next(account for account in data["income"] if account["name"] == "Income:Salary")
-    
+    assets_checking = next(
+        account for account in data["assets"] if account["name"] == "Assets:Checking"
+    )
+    expenses_groceries = next(
+        account
+        for account in data["expenses"]
+        if account["name"] == "Expenses:Groceries"
+    )
+    income_salary = next(
+        account for account in data["income"] if account["name"] == "Income:Salary"
+    )
+
     assert assets_checking["balance"] == 1350.0  # 1000 - 100 + 500 - 50
     assert expenses_groceries["balance"] == 150.0  # 100 + 50
     assert income_salary["balance"] == 500.0  # 500
@@ -34,14 +42,16 @@ def test_get_balance(authenticated_client, setup_test_data):
 def test_get_register(authenticated_client, setup_test_data):
     """Test the get_register API endpoint."""
     # Call the endpoint
-    response = authenticated_client.get("/api/v1/reports/register?account=Assets:Checking")
+    response = authenticated_client.get(
+        "/api/v1/reports/register?account=Assets:Checking"
+    )
     assert response.status_code == 200
-    
+
     # Check response structure and content
     data = response.get_json()
     assert isinstance(data, list)
     assert len(data) == 3  # Should have 3 transactions for this account
-    
+
     # Verify transaction details are included
     txs = sorted(data, key=lambda x: x["date"])
     assert txs[0]["description"] == "Groceries"
@@ -57,12 +67,12 @@ def test_get_balance_report(authenticated_client, setup_test_data):
     # Call the endpoint
     response = authenticated_client.get("/api/v1/reports/balance_report")
     assert response.status_code == 200
-    
+
     # Check response structure and content
     data = response.get_json()
     assert isinstance(data, dict)
     assert "accounts" in data
-    
+
     # Verify accounts are properly categorized
     account_names = [account["name"] for account in data["accounts"]]
     assert "Assets:Checking" in account_names
@@ -75,13 +85,13 @@ def test_get_income_statement(authenticated_client, setup_test_data):
     # Call the endpoint
     response = authenticated_client.get("/api/v1/reports/income_statement")
     assert response.status_code == 200
-    
+
     # Check response structure and content
     data = response.get_json()
     assert isinstance(data, dict)
     assert "income" in data
     assert "expenses" in data
-    
+
     # Verify income and expense totals
     assert sum(account["balance"] for account in data["income"]) == 500.0
     assert sum(account["balance"] for account in data["expenses"]) == 150.0
@@ -96,11 +106,11 @@ def test_balance_report(authenticated_client, user, app):
             book = Book(name="Test Book", user_id=user.id)
             db.session.add(book)
             db.session.flush()
-            
+
             # Update user's active book
             user.active_book_id = book.id
             db.session.commit()
-        
+
         # Create accounts
         checking = Account(
             user_id=user.id,
@@ -155,11 +165,11 @@ def test_income_statement(authenticated_client, user, app):
             book = Book(name="Test Book", user_id=user.id)
             db.session.add(book)
             db.session.flush()
-            
+
             # Update user's active book
             user.active_book_id = book.id
             db.session.commit()
-        
+
         # Create accounts
         checking = Account(
             user_id=user.id,
@@ -308,11 +318,11 @@ def test_report_date_range(authenticated_client, user, app):
             book = Book(name="Test Book", user_id=user.id)
             db.session.add(book)
             db.session.flush()
-            
+
             # Update user's active book
             user.active_book_id = book.id
             db.session.commit()
-        
+
         # Create accounts
         checking = Account(
             user_id=user.id,
@@ -436,11 +446,11 @@ def test_get_balance_with_all_top_level_accounts(authenticated_client, user, app
             book = Book(name="Test Book", user_id=user.id)
             db.session.add(book)
             db.session.flush()
-    
+
             # Update user's active book
             user.active_book_id = book.id
             db.session.commit()
-    
+
         # Create accounts with hierarchical structure
         checking = Account(
             user_id=user.id,
@@ -499,7 +509,9 @@ def test_get_balance_with_all_top_level_accounts(authenticated_client, user, app
             balance=-1500.0,  # Credit balance for liability
             currency="INR",
         )
-        db.session.add_all([checking, savings, cash, groceries, rent, salary, interest, credit_card])
+        db.session.add_all(
+            [checking, savings, cash, groceries, rent, salary, interest, credit_card]
+        )
         db.session.commit()
 
         # Test with depth=1 to get top-level accounts
@@ -512,7 +524,9 @@ def test_get_balance_with_all_top_level_accounts(authenticated_client, user, app
         balance_lines = data["balance"].split("\n")
 
         # Get account names from the report
-        account_names = [line.split()[0].strip() for line in balance_lines if line.strip()]
+        account_names = [
+            line.split()[0].strip() for line in balance_lines if line.strip()
+        ]
 
         # Verify all top-level account types with accounts are included
         assert "Assets" in account_names
@@ -544,36 +558,36 @@ def setup_test_data(app, user):
             book = Book(name="Test Book", user_id=user.id)
             db.session.add(book)
             db.session.flush()
-            
+
             # Update user's active book
             user.active_book_id = book.id
             db.session.commit()
-            
+
         # Create accounts
         checking = Account(
             user_id=user.id,
             book_id=book.id,
             name="Assets:Checking",
             balance=1000.0,
-            currency="INR"
+            currency="INR",
         )
         groceries = Account(
             user_id=user.id,
             book_id=book.id,
             name="Expenses:Groceries",
             balance=0.0,
-            currency="INR"
+            currency="INR",
         )
         salary = Account(
             user_id=user.id,
             book_id=book.id,
             name="Income:Salary",
             balance=0.0,
-            currency="INR"
+            currency="INR",
         )
         db.session.add_all([checking, groceries, salary])
         db.session.commit()
-        
+
         # Create transactions
         tx1 = Transaction(
             user_id=user.id,
@@ -582,7 +596,7 @@ def setup_test_data(app, user):
             date=date.today() - timedelta(days=10),
             description="Groceries",
             amount=-100.0,
-            currency="INR"
+            currency="INR",
         )
         tx2 = Transaction(
             user_id=user.id,
@@ -591,7 +605,7 @@ def setup_test_data(app, user):
             date=date.today() - timedelta(days=10),
             description="Groceries",
             amount=100.0,
-            currency="INR"
+            currency="INR",
         )
         tx3 = Transaction(
             user_id=user.id,
@@ -600,7 +614,7 @@ def setup_test_data(app, user):
             date=date.today() - timedelta(days=5),
             description="Salary deposit",
             amount=500.0,
-            currency="INR"
+            currency="INR",
         )
         tx4 = Transaction(
             user_id=user.id,
@@ -609,7 +623,7 @@ def setup_test_data(app, user):
             date=date.today() - timedelta(days=5),
             description="Salary deposit",
             amount=-500.0,
-            currency="INR"
+            currency="INR",
         )
         tx5 = Transaction(
             user_id=user.id,
@@ -618,7 +632,7 @@ def setup_test_data(app, user):
             date=date.today() - timedelta(days=2),
             description="More groceries",
             amount=-50.0,
-            currency="INR"
+            currency="INR",
         )
         tx6 = Transaction(
             user_id=user.id,
@@ -627,19 +641,19 @@ def setup_test_data(app, user):
             date=date.today() - timedelta(days=2),
             description="More groceries",
             amount=50.0,
-            currency="INR"
+            currency="INR",
         )
         db.session.add_all([tx1, tx2, tx3, tx4, tx5, tx6])
-        
+
         # Update account balances
         checking.balance = 1350.0  # 1000 - 100 + 500 - 50
         groceries.balance = 150.0  # 100 + 50
         salary.balance = -500.0  # -500 (income is negative)
-        
+
         db.session.commit()
-        
+
         yield
-        
+
         # Clean up
         db.session.query(Transaction).delete()
         db.session.query(Account).delete()

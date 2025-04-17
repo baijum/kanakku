@@ -14,63 +14,80 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import axiosInstance from '../../api/axiosInstance';
 
-const BookSelector = () => {
+const BookSelector = ({ isLoggedIn }) => {
   const [books, setBooks] = useState([]);
   const [activeBook, setActiveBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchBooks = async () => {
+  const fetchBooks = async (retryAttempt = 0) => {
     try {
-      setLoading(true);
-      console.log("BookSelector: Fetching books list");
-      const response = await axiosInstance.get('/api/v1/books');
-      
-      if (response.data && Array.isArray(response.data)) {
-        setBooks(response.data);
-        console.log(`BookSelector: Found ${response.data.length} books`);
-      } else {
-        console.error("BookSelector: Invalid books response format", response.data);
-        setBooks([]);
+      // Only set loading true on the first attempt
+      if (retryAttempt === 0) {
+        setLoading(true);
       }
-      
-      // Get active book
+      console.log(`BookSelector: Fetching books list (Attempt ${retryAttempt + 1})`);
+      const response = await axiosInstance.get('/api/v1/books');
+      const fetchedBooks = (response.data && Array.isArray(response.data)) ? response.data : [];
+      // Update books state only on the first attempt or if they change
+      if (retryAttempt === 0 || JSON.stringify(fetchedBooks) !== JSON.stringify(books)) {
+          setBooks(fetchedBooks);
+      }
+      console.log(`BookSelector: Found ${fetchedBooks.length} books`);
+
       console.log("BookSelector: Fetching active book");
       const activeResponse = await axiosInstance.get('/api/v1/books/active');
-      
-      if (activeResponse.data && Object.keys(activeResponse.data).length > 0) {
-        console.log("BookSelector: Active book found", activeResponse.data);
-        setActiveBook(activeResponse.data);
+      let fetchedActiveBook = (activeResponse.data && Object.keys(activeResponse.data).length > 0) ? activeResponse.data : null;
+
+      if (fetchedActiveBook) {
+        console.log("BookSelector: Active book found", fetchedActiveBook);
+        setActiveBook(fetchedActiveBook);
+        setLoading(false); // Success, stop loading
       } else {
-        console.log("BookSelector: No active book returned, checking available books");
-        
-        // If we have books but no active book, set the first book as active
-        if (response.data && response.data.length > 0) {
-          console.log("BookSelector: Setting first available book as active", response.data[0]);
-          await axiosInstance.post(`/api/v1/books/${response.data[0].id}/set-active`);
-          setActiveBook(response.data[0]);
-        } else {
-          // Create a default book if none exists
-          console.log("BookSelector: Creating default book");
-          try {
-            const createResponse = await axiosInstance.post('/api/v1/books', { 
-              name: "Book 1" 
-            });
-            
-            // Set it as active
-            if (createResponse.data && createResponse.data.id) {
-              console.log("BookSelector: Setting new book as active", createResponse.data);
-              await axiosInstance.post(`/api/v1/books/${createResponse.data.id}/set-active`);
-              setActiveBook(createResponse.data);
-              setBooks([createResponse.data]);
+         console.log("BookSelector: No active book returned by API.");
+         // If books exist (or potentially were just created) but no active one is set yet,
+         // maybe wait briefly and try fetching active book again. Check length based on latest fetch.
+         if (fetchedBooks.length > 0 && retryAttempt < 2) {
+            console.log(`BookSelector: Books found, but no active book. Retrying fetch (Attempt ${retryAttempt + 2})...`);
+            setTimeout(() => fetchBooks(retryAttempt + 1), 500); // Retry after 500ms
+            // Keep loading true until retry completes or fails
+            return;
+         }
+
+         // If still no active book after retries, or no books exist at all
+         console.log("BookSelector: Retries exhausted or no books found. Checking fallback conditions.");
+         if (fetchedBooks.length > 0) {
+            // If an active book wasn't found via API after retries, but we have books,
+            // Let's check if the user *has* an active_book_id set (maybe fetch /auth/me?)
+            // For now, we will just use the first book as a visual fallback in the render logic below.
+            // We won't try to set it active from here anymore, as the backend should handle it.
+            console.log("BookSelector: No active book found after retries, will rely on render fallback using first book.");
+            setActiveBook(null); // Explicitly set to null if API failed
+         } else {
+            // If no books exist after fetches
+            console.log("BookSelector: No books found and no active book set.");
+            setActiveBook(null);
+            // The backend should create a default book on registration.
+            // If we reach here after login, it implies an issue with that process or the API.
+            // Removing client-side creation attempt:
+            /*
+            console.log("BookSelector: Creating default book");
+            try {
+              const createResponse = await axiosInstance.post('/api/v1/books', { name: "Book 1" });
+              if (createResponse.data && createResponse.data.id) {
+                console.log("BookSelector: Setting new book as active", createResponse.data);
+                await axiosInstance.post(`/api/v1/books/${createResponse.data.id}/set-active`);
+                setActiveBook(createResponse.data);
+                setBooks([createResponse.data]);
+              }
+            } catch (createErr) {
+              console.error('BookSelector: Error creating default book:', createErr);
             }
-          } catch (createErr) {
-            console.error('BookSelector: Error creating default book:', createErr);
-          }
-        }
+            */
+         }
+         setLoading(false); // Stop loading after retries/fallbacks
       }
-      
-      setLoading(false);
+
     } catch (err) {
       console.error('BookSelector: Error fetching books:', err);
       setError('Failed to load books');
@@ -78,10 +95,21 @@ const BookSelector = () => {
     }
   };
 
-  // Fetch books on component mount
+  // Fetch books on component mount and when login status changes
   useEffect(() => {
-    fetchBooks();
-  }, []);
+    // Only fetch if logged in
+    if (isLoggedIn) {
+      console.log('BookSelector: isLoggedIn is true, fetching books...');
+      fetchBooks();
+    } else {
+      // Clear state if logged out
+      console.log('BookSelector: isLoggedIn is false, clearing state.');
+      setBooks([]);
+      setActiveBook(null);
+      setLoading(false); // Not loading if not logged in
+      setError(null);
+    }
+  }, [isLoggedIn]); // Add isLoggedIn to dependency array
 
   // Handle book selection change
   const handleChange = async (event) => {

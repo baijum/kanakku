@@ -101,11 +101,8 @@ def book(app, db_session, user):
         book = Book.query.filter_by(user_id=user.id).first()
         if book:
             return book
-            
-        book = Book(
-            user_id=user.id,
-            name="Test Book"
-        )
+
+        book = Book(user_id=user.id, name="Test Book")
         db_session.add(book)
         db_session.commit()
         return book
@@ -117,12 +114,12 @@ def sample_transactions(app, db_session, user, book):
     with app.app_context():
         # Use the book from the fixture
         book = Book.query.filter_by(user_id=user.id).first()
-        
+
         # Set as active book if not already
         if not user.active_book_id:
             user.active_book_id = book.id
             db.session.commit()
-            
+
         # Check for account
         test_account = Account.query.filter_by(
             user_id=user.id, name="Test Account"
@@ -249,12 +246,12 @@ def test_get_transactions(authenticated_client, app, db_session, user):
             book = Book(user_id=user.id, name="Test Book")
             db_session.add(book)
             db_session.commit()
-        
+
         # Set as active book if not already
         if not user.active_book_id:
             user.active_book_id = book.id
             db_session.commit()
-            
+
         # Fetch the known test account within this session using the user
         test_account = (
             db_session.query(Account)
@@ -356,7 +353,7 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
     with app.app_context():
         # Fetch user and the specific test account within this session context
         attached_user = db_session.get(User, user.id)
-        
+
         # First, ensure user has an active book
         book = Book.query.filter_by(user_id=user.id).first()
         if not book:
@@ -364,12 +361,12 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
             book = Book(user_id=user.id, name="Test Book")
             db_session.add(book)
             db_session.commit()
-        
+
         # Set as active book if not already
         if not user.active_book_id:
             user.active_book_id = book.id
             db_session.commit()
-            
+
         # Fetch account by name and user ID
         test_account = (
             db_session.query(Account)

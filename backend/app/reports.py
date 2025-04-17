@@ -28,7 +28,7 @@ def get_balance():
         # Parse into hierarchical structure based on account name components
         # For depth limiting, we'll parse the account names and limit display depth
         result = []
-        
+
         # Dictionary to hold account types and their balances
         account_types = {}
 
@@ -44,7 +44,9 @@ def get_balance():
 
                 # Get top-level account name based on depth
                 display_name = ":".join(components[: int(depth)])
-                account_type = components[0].lower()  # Get first component for categorization
+                account_type = components[
+                    0
+                ].lower()  # Get first component for categorization
 
                 # For income accounts, we flip the sign for reporting purposes
                 balance = acct.balance
@@ -60,24 +62,26 @@ def get_balance():
                     top_level_accounts[display_name] = {
                         "balance": balance,
                         "currency": acct.currency,
-                        "type": account_type
+                        "type": account_type,
                     }
 
             # Convert aggregated top-level accounts to result format and categorize by type
             for display_name, data in top_level_accounts.items():
                 balance_str = f"{data['balance']:.2f} {data['currency']}"
-                account_type = data['type']
-                
+                account_type = data["type"]
+
                 if account_type not in account_types:
                     account_types[account_type] = []
-                    
-                account_types[account_type].append({
-                    "name": display_name,
-                    "balance": data['balance'],
-                    "currency": data['currency'],
-                    "display": f"{display_name:<40} {balance_str:>15}"
-                })
-                
+
+                account_types[account_type].append(
+                    {
+                        "name": display_name,
+                        "balance": data["balance"],
+                        "currency": data["currency"],
+                        "display": f"{display_name:<40} {balance_str:>15}",
+                    }
+                )
+
                 result.append(f"{display_name:<40} {balance_str:>15}")
         else:
             # Original behavior for no depth limitation
@@ -87,20 +91,24 @@ def get_balance():
                 balance = acct.balance
                 if acct.name.split(":")[0].lower() == "income":
                     balance = -balance
-                
+
                 balance_str = f"{balance:.2f} {acct.currency}"
-                account_type = acct.name.split(":")[0].lower() if ":" in acct.name else "other"
-                
+                account_type = (
+                    acct.name.split(":")[0].lower() if ":" in acct.name else "other"
+                )
+
                 if account_type not in account_types:
                     account_types[account_type] = []
-                    
-                account_types[account_type].append({
-                    "name": display_name,
-                    "balance": balance,
-                    "currency": acct.currency,
-                    "display": f"{display_name:<40} {balance_str:>15}"
-                })
-                
+
+                account_types[account_type].append(
+                    {
+                        "name": display_name,
+                        "balance": balance,
+                        "currency": acct.currency,
+                        "display": f"{display_name:<40} {balance_str:>15}",
+                    }
+                )
+
                 result.append(f"{display_name:<40} {balance_str:>15}")
 
         # Join all lines with newlines to match ledger CLI output format
@@ -110,7 +118,7 @@ def get_balance():
         response = {
             "balance": output,  # Keep for backward compatibility
         }
-        
+
         # Add all account types to the response
         for account_type, accounts in account_types.items():
             response[account_type] = accounts
@@ -164,7 +172,7 @@ def get_register():
         # Format results similar to ledger register output
         text_result = []
         data_result = []
-        
+
         for tx in transactions:
             date_str = tx.date.strftime("%Y-%m-%d")
             description = tx.description or ""
@@ -177,19 +185,21 @@ def get_register():
             payee_text = f"Payee: {payee}" if payee else ""
             line = f"{date_str} {description} {payee_text}\n    {account}    {amount:.2f} {currency}"
             text_result.append(line)
-            
+
             # Format structured data
-            data_result.append({
-                "date": date_str,
-                "description": description,
-                "payee": payee,
-                "account": account,
-                "amount": amount,
-                "currency": currency
-            })
+            data_result.append(
+                {
+                    "date": date_str,
+                    "description": description,
+                    "payee": payee,
+                    "account": account,
+                    "amount": amount,
+                    "currency": currency,
+                }
+            )
 
         # Join all lines with newlines to match ledger CLI output format
-        text_output = "\n".join(text_result)
+        # text_output = "\n".join(text_result)
 
         # Return both formatted text and structured data
         # Main response is the array format expected by tests
@@ -230,7 +240,9 @@ def get_balance_report():
                         if currency == "INR":
                             text_result.append(f"    {'':<38} {'₹'}{amount:.2f}")
                         else:
-                            text_result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
+                            text_result.append(
+                                f"    {'':<38} {amount:.2f} {currency:>3}"
+                            )
                     text_result.append("")  # Empty line between sections
 
                 current_type = account_type
@@ -243,13 +255,11 @@ def get_balance_report():
             else:
                 balance_str = f"{acct.balance:.2f} {acct.currency}"
             text_result.append(f"    {acct.name:<38} {balance_str:>15}")
-            
+
             # Add account to structured data
-            accounts_data.append({
-                "name": acct.name,
-                "balance": acct.balance,
-                "currency": acct.currency
-            })
+            accounts_data.append(
+                {"name": acct.name, "balance": acct.balance, "currency": acct.currency}
+            )
 
             # Track total by currency
             if acct.currency not in total_by_type:
@@ -270,7 +280,7 @@ def get_balance_report():
         # Construct response with both text and structured data
         response = {
             "balance_report": text_output,  # Keep for backward compatibility
-            "accounts": accounts_data  # Flat list of accounts as expected by tests
+            "accounts": accounts_data,  # Flat list of accounts as expected by tests
         }
 
         return jsonify(response)
@@ -305,7 +315,7 @@ def get_income_statement():
         # Format results
         text_result = ["Income"]
         income_total = {}
-        
+
         # Structured data - list format for test compatibility
         income_data = []
         expense_data = []
@@ -316,13 +326,17 @@ def get_income_statement():
             else:
                 balance_str = f"{acct.balance:.2f} {acct.currency}"
             text_result.append(f"    {acct.name:<38} {balance_str:>15}")
-            
+
             # Add to structured data - abs(balance) for test expectations
-            income_data.append({
-                "name": acct.name,
-                "balance": abs(acct.balance),  # Use absolute value for test compatibility
-                "currency": acct.currency
-            })
+            income_data.append(
+                {
+                    "name": acct.name,
+                    "balance": abs(
+                        acct.balance
+                    ),  # Use absolute value for test compatibility
+                    "currency": acct.currency,
+                }
+            )
 
             if acct.currency not in income_total:
                 income_total[acct.currency] = 0
@@ -345,13 +359,11 @@ def get_income_statement():
             else:
                 balance_str = f"{acct.balance:.2f} {acct.currency}"
             text_result.append(f"    {acct.name:<38} {balance_str:>15}")
-            
+
             # Add to structured data
-            expense_data.append({
-                "name": acct.name,
-                "balance": acct.balance,
-                "currency": acct.currency
-            })
+            expense_data.append(
+                {"name": acct.name, "balance": acct.balance, "currency": acct.currency}
+            )
 
             if acct.currency not in expense_total:
                 expense_total[acct.currency] = 0
@@ -387,7 +399,7 @@ def get_income_statement():
         response = {
             "income_statement": text_output,  # Keep for backward compatibility
             "income": income_data,  # Flat list for test compatibility
-            "expenses": expense_data  # Flat list for test compatibility
+            "expenses": expense_data,  # Flat list for test compatibility
         }
 
         return jsonify(response)

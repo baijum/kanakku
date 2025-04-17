@@ -21,17 +21,14 @@ def user(db_session):
 @pytest.fixture
 def book(db_session, user):
     """Create a test book."""
-    book = Book(
-        user_id=user.id,
-        name="Test Book"
-    )
+    book = Book(user_id=user.id, name="Test Book")
     db_session.add(book)
     db_session.commit()
-    
+
     # Set as active book
     user.active_book_id = book.id
     db_session.commit()
-    
+
     return book
 
 

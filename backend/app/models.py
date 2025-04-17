@@ -37,9 +37,7 @@ class Book(db.Model):
         "Transaction", back_populates="book", lazy=True, cascade="all, delete-orphan"
     )
 
-    __table_args__ = (
-        UniqueConstraint("user_id", "name", name="uq_book_user_name"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "name", name="uq_book_user_name"),)
 
     def to_dict(self):
         return {
@@ -208,9 +206,7 @@ class Account(db.Model):
     # Relationships
     book = relationship("Book", back_populates="accounts")
 
-    __table_args__ = (
-        UniqueConstraint("book_id", "name", name="uq_account_book_name"),
-    )
+    __table_args__ = (UniqueConstraint("book_id", "name", name="uq_account_book_name"),)
 
     def to_dict(self):
         return {

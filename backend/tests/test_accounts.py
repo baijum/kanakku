@@ -11,7 +11,7 @@ def test_get_accounts(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-        
+
         account1 = Account(
             user_id=user.id,
             book_id=book.id,
@@ -61,7 +61,7 @@ def test_create_account(authenticated_client, user, app):
             user.active_book_id = book.id
             db.session.commit()
         book_id = book.id
-    
+
     # Test successful account creation
     response = authenticated_client.post(
         "/api/v1/accounts",
@@ -102,7 +102,7 @@ def test_get_specific_account(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-        
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -135,7 +135,7 @@ def test_update_account(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-        
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -187,7 +187,7 @@ def test_delete_account(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-        
+
         account = Account(
             user_id=user.id,
             book_id=book.id,
@@ -223,7 +223,7 @@ def test_delete_account_with_transactions(authenticated_client, user, app):
             book = Book(user_id=user.id, name="Test Book")
             db.session.add(book)
             db.session.commit()
-        
+
         account = Account(
             user_id=user.id,
             book_id=book.id,

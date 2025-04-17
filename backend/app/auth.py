@@ -27,10 +27,10 @@ def verify_oauth_token(token):
     """
     Verify an OAuth token and return user information.
     For Google OAuth, this would normally call the Google API to verify the token.
-    
+
     Args:
         token: The OAuth token to verify
-        
+
     Returns:
         A dictionary containing user information from the verified token
     """
@@ -39,7 +39,9 @@ def verify_oauth_token(token):
         # Only make a real request if not in testing mode
         if not current_app.config.get("TESTING", False):
             # Make request to Google's tokeninfo endpoint
-            response = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={token}")
+            response = requests.get(
+                f"https://oauth2.googleapis.com/tokeninfo?id_token={token}"
+            )
             response.raise_for_status()  # Raise an exception for 4XX/5XX responses
             return response.json()
         else:
@@ -48,7 +50,7 @@ def verify_oauth_token(token):
                 "sub": "12345",
                 "email": "googleuser@example.com",
                 "name": "Google User",
-                "picture": "https://example.com/photo.jpg"
+                "picture": "https://example.com/photo.jpg",
             }
     except Exception as e:
         current_app.logger.error(f"Error verifying OAuth token: {e}")
@@ -65,38 +67,61 @@ def register():
     if User.query.filter_by(email=data["email"]).first():
         return jsonify({"error": "Email already exists"}), 400
 
-    # Create new user
-    user = User(
-        email=data["email"],
-        is_active=True,  # Changed to True for testing purposes
-    )
-    user.set_password(data["password"])
+    try:
+        # Create new user
+        user = User(
+            email=data["email"],
+            is_active=True,  # Assuming auto-activation for now
+        )
+        user.set_password(data["password"])
+        db.session.add(user)
+        db.session.flush()  # Assigns user.id within the transaction
+        current_app.logger.info(
+            f"User object created for {user.email}, flushed (ID: {user.id})"
+        )
 
-    db.session.add(user)
-    db.session.commit()
+        # Create a default book for the user
+        from app.models import Book
 
-    # Create a default book for the user
-    from app.models import Book
-    default_book = Book(
-        user_id=user.id,
-        name="Personal Finances"
-    )
-    db.session.add(default_book)
-    db.session.commit()
+        default_book = Book(user_id=user.id, name="Book1")
+        db.session.add(default_book)
+        db.session.flush()  # Assigns default_book.id within the transaction
+        current_app.logger.info(
+            f"Default book created for user {user.id}, flushed (Book ID: {default_book.id})"
+        )
 
-    # Set the default book as active
-    user.active_book_id = default_book.id
-    db.session.commit()
+        # Set the default book as active
+        user.active_book_id = default_book.id
+        current_app.logger.info(
+            f"Setting active_book_id to {default_book.id} for user {user.id}"
+        )
 
-    return (
-        jsonify(
-            {
-                "message": "User created successfully. Your account is pending activation.",
-                "user_id": user.id,
-            }
-        ),
-        201,
-    )
+        # Commit all changes at once
+        db.session.commit()
+        current_app.logger.info(f"Committed transaction for user {user.id}")
+
+        # Get the committed user ID for the response
+        user_id = user.id
+
+        return (
+            jsonify(
+                {
+                    "message": "User and default book created successfully.",  # Updated message
+                    "user_id": user_id,
+                }
+            ),
+            201,
+        )
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Error during registration for {data.get('email')}: {str(e)}",
+            exc_info=True,
+        )
+        return (
+            jsonify({"error": "An internal error occurred during registration."}),
+            500,
+        )
 
 
 # Add OPTIONS handler for CORS preflight requests
@@ -162,25 +187,27 @@ def login():
         try:
             # Ensure identity is string
             token = create_access_token(identity=str(user.id))
-            
+
             # Get user data for response
             user_data = user.to_dict()
-            
+
             # Ensure the user has an active book
             if not user.active_book_id:
                 from app.models import Book
+
                 # Find any book or create one
                 book = Book.query.filter_by(user_id=user.id).first()
                 if book:
                     user.active_book_id = book.id
                     db.session.commit()
                     user_data["active_book_id"] = book.id
-            
-            return jsonify({
-                "message": "Login successful", 
-                "token": token,
-                "user": user_data
-            }), 200
+
+            return (
+                jsonify(
+                    {"message": "Login successful", "token": token, "user": user_data}
+                ),
+                200,
+            )
         except Exception as e:
             current_app.logger.error("Token generation error: {}".format(str(e)))
             return jsonify({"error": "Error generating token"}), 500
@@ -224,24 +251,25 @@ def get_user_profile():
     if not user:
         # This case should not happen if decorator works correctly
         return jsonify({"error": "User not found"}), 404
-    
+
     # Create profile data
     profile = user.to_dict()
-    
+
     # Ensure active_book_id is included
     if not profile.get("active_book_id") and user.active_book_id:
         profile["active_book_id"] = user.active_book_id
-    
+
     # If we don't have an active book yet, set one
     if not user.active_book_id:
         from app.models import Book
+
         # Find any book or create one
         book = Book.query.filter_by(user_id=user.id).first()
         if book:
             user.active_book_id = book.id
             db.session.commit()
             profile["active_book_id"] = book.id
-    
+
     return jsonify(profile), 200
 
 
@@ -470,7 +498,7 @@ def google_callback():
     }
 
     try:
-        current_app.logger.debug(f"Exchanging code for token with Google")
+        current_app.logger.debug("Exchanging code for token with Google")
         token_response = requests.post(token_url, data=token_data)
         token_response.raise_for_status()
         tokens = token_response.json()
@@ -493,21 +521,50 @@ def google_callback():
             user = User.query.filter_by(email=userinfo["email"]).first()
             if user:
                 # Update existing user with Google ID
-                current_app.logger.debug(f"Updating existing user with Google ID: {user.email}")
+                current_app.logger.debug(
+                    f"Updating existing user with Google ID: {user.email}"
+                )
                 user.google_id = userinfo["sub"]
                 user.picture = userinfo.get("picture")
             else:
                 # Create new user
-                current_app.logger.debug(f"Creating new user from Google auth: {userinfo['email']}")
+                current_app.logger.debug(
+                    f"Creating new user from Google auth: {userinfo['email']}"
+                )
                 user = User(
                     email=userinfo["email"],
                     google_id=userinfo["sub"],
                     picture=userinfo.get("picture"),
                     is_active=True,  # Auto-activate Google users
                 )
+                db.session.add(user)
+                db.session.flush()  # Get user ID
+                current_app.logger.info(
+                    f"Google OAuth: New user created and flushed (ID: {user.id})"
+                )
 
-            db.session.add(user)
+                # --- Add Default Book Creation ---
+                from app.models import Book
+
+                default_book = Book(user_id=user.id, name="Book1")
+                db.session.add(default_book)
+                db.session.flush()  # Get book ID
+                current_app.logger.info(
+                    f"Google OAuth: Default book created and flushed (ID: {default_book.id}) for user {user.id}"
+                )
+
+                # Set active book ID
+                user.active_book_id = default_book.id
+                current_app.logger.info(
+                    f"Google OAuth: Setting active_book_id to {default_book.id} for user {user.id}"
+                )
+                # --- End Default Book Creation ---
+
+            # Commit user creation/update and potentially book creation
             db.session.commit()
+            current_app.logger.info(
+                f"Google OAuth: Committed transaction for user {user.email} (ID: {user.id})"
+            )
 
         # Generate JWT token (Use user ID as identity, standard practice)
         token = create_access_token(identity=str(user.id))
@@ -530,16 +587,16 @@ def google_token_auth():
     """Handle Google authentication with a token directly from the frontend."""
     # Get token from request
     data = request.get_json()
-    if not data or 'token' not in data:
+    if not data or "token" not in data:
         return jsonify({"error": "No token provided"}), 400
-    
+
     try:
         # Verify the token
-        userinfo = verify_oauth_token(data['token'])
-        
+        userinfo = verify_oauth_token(data["token"])
+
         # Check if user exists by Google ID
         user = User.query.filter_by(google_id=userinfo["sub"]).first()
-        
+
         if not user:
             # Check if email exists
             user = User.query.filter_by(email=userinfo["email"]).first()
@@ -555,36 +612,35 @@ def google_token_auth():
                     picture=userinfo.get("picture"),
                     is_active=True,  # Auto-activate Google users
                 )
-            
+
             db.session.add(user)
             db.session.commit()
-            
+
             # Create a default book for the user if they don't have one
             from app.models import Book
+
             book = Book.query.filter_by(user_id=user.id).first()
             if not book:
-                default_book = Book(
-                    user_id=user.id,
-                    name="Personal Finances"
-                )
+                default_book = Book(user_id=user.id, name="Book1")
                 db.session.add(default_book)
                 db.session.commit()
-                
+
                 # Set the default book as active
                 user.active_book_id = default_book.id
                 db.session.commit()
-        
+
         # Generate JWT token
         # Ensure identity is string
         token = create_access_token(identity=str(user.id))
-        
+
         # Return user info and token
-        return jsonify({
-            "message": "Login successful", 
-            "token": token,
-            "user": user.to_dict()
-        }), 200
-        
+        return (
+            jsonify(
+                {"message": "Login successful", "token": token, "user": user.to_dict()}
+            ),
+            200,
+        )
+
     except Exception as e:
         current_app.logger.error(f"Error in Google token auth: {str(e)}")
         return jsonify({"error": "Failed to authenticate with Google"}), 500

@@ -12,7 +12,7 @@ transactions = Blueprint("transactions", __name__)
 def get_active_book_id():
     """Get the active book ID for the current user or raise an error if not set."""
     user = g.current_user
-    
+
     if not user.active_book_id:
         # Try to find first book ordered by ID
         first_book = Book.query.filter_by(user_id=user.id).order_by(Book.id).first()
@@ -26,7 +26,7 @@ def get_active_book_id():
             db.session.flush()
             user.active_book_id = default_book.id
             db.session.commit()
-    
+
     return user.active_book_id
 
 
@@ -36,7 +36,7 @@ def create_transaction():
     """Create a new transaction from the provided JSON data."""
     # request_id = getattr(request, "request_id", "unknown") # Removed unused variable
     current_app.logger.info("Processing transaction creation request")
-    
+
     active_book_id = get_active_book_id()
 
     try:
@@ -106,9 +106,7 @@ def create_transaction():
             # Find the account in the active book
             account_name = posting["account"]
             account = Account.query.filter_by(
-                name=account_name,
-                user_id=user.id,
-                book_id=active_book_id
+                name=account_name, user_id=user.id, book_id=active_book_id
             ).first()
 
             if not account:
@@ -190,8 +188,7 @@ def get_transactions():
 
         # Start with base query - filter by user and active book
         query = Transaction.query.filter_by(
-            user_id=g.current_user.id,
-            book_id=active_book_id
+            user_id=g.current_user.id, book_id=active_book_id
         )
 
         # Apply date filters if provided
@@ -556,9 +553,7 @@ def update_transaction_with_postings(transaction_id):
             # Find the account in the active book
             account_name = posting["account"]
             account = Account.query.filter_by(
-                name=account_name, 
-                user_id=g.current_user.id,
-                book_id=active_book_id
+                name=account_name, user_id=g.current_user.id, book_id=active_book_id
             ).first()
 
             if not account:
@@ -741,9 +736,7 @@ def delete_related_transactions(transaction_id):
 
         # Find all transactions with the same date and payee
         related_transactions = Transaction.query.filter_by(
-            user_id=g.current_user.id, 
-            date=transaction.date, 
-            payee=transaction.payee
+            user_id=g.current_user.id, date=transaction.date, payee=transaction.payee
         ).all()
 
         if not related_transactions:

@@ -72,7 +72,7 @@ function Login({ setIsLoggedIn }) {
           console.log('Storage event dispatched');
           
           console.log('Navigating to dashboard...');
-          // Use React Router navigation instead of window.location
+          // Use React Router navigation
           navigate('/');
         } catch (storageError) {
           console.error('Error storing token:', storageError);

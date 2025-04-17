@@ -75,12 +75,11 @@ def user(app, db_session):
 
     # Create a default book for the user
     book = Book(
-        user_id=user.id,
-        name="Personal Finances"  # Match the name in the auth module
+        user_id=user.id, name="Personal Finances"  # Match the name in the auth module
     )
     db_session.add(book)
     db_session.commit()
-    
+
     # Set as active book
     user.active_book_id = book.id
     db_session.commit()
@@ -187,24 +186,26 @@ def transaction(app, db_session, user):
         # Create a default book
         book = Book(
             user_id=user.id,
-            name="Personal Finances"  # Match the name in the user fixture
+            name="Personal Finances",  # Match the name in the user fixture
         )
         db_session.add(book)
         db_session.commit()
-        
+
         # Set as active book for user
         user.active_book_id = book.id
         db_session.commit()
-    
+
     # Check if there's an account for this transaction
-    account = db_session.query(Account).filter_by(user_id=user.id, book_id=book.id).first()
+    account = (
+        db_session.query(Account).filter_by(user_id=user.id, book_id=book.id).first()
+    )
     if not account:
         account = Account(
             user_id=user.id,
             book_id=book.id,
             name="Test Account",
             balance=1000.0,
-            currency="INR"
+            currency="INR",
         )
         db_session.add(account)
         db_session.commit()
@@ -217,7 +218,7 @@ def transaction(app, db_session, user):
         payee="Test payee",
         amount=100.0,
         currency="INR",
-        account_id=account.id  # Set the account ID
+        account_id=account.id,  # Set the account ID
     )
     db_session.add(transaction)
     db_session.commit()
@@ -249,11 +250,11 @@ def account(app, db_session, user):
         # Create a new book
         book = Book(
             user_id=user.id,
-            name="Personal Finances"  # Match the user fixture's book name
+            name="Personal Finances",  # Match the user fixture's book name
         )
         db_session.add(book)
         db_session.commit()
-        
+
         # Set as active book for user
         user.active_book_id = book.id
         db_session.commit()
@@ -264,7 +265,7 @@ def account(app, db_session, user):
         book_id=book.id,
         name="Test Account",
         balance=1000.0,
-        currency="INR"
+        currency="INR",
     )
     db_session.add(account)
     db_session.commit()

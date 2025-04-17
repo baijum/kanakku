@@ -57,7 +57,7 @@ function Register({ setIsLoggedIn }) {
           // Also dispatch storage event for other tabs
           window.dispatchEvent(new Event('storage'));
           
-          // Navigate to dashboard
+          // Use React Router navigation
           navigate('/');
         } catch (storageError) {
           console.error('Error storing token:', storageError);
