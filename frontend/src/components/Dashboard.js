@@ -115,9 +115,68 @@ function Dashboard() {
               <Typography variant="h6" gutterBottom>
                 Account Balances
               </Typography>
-              <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
-                {balanceReport}
-              </pre>
+              {balanceReport ? (
+                <Box sx={{ fontFamily: 'monospace' }}>
+                  {(() => {
+                    // Process the balance report to group by account name
+                    const balanceMap = new Map();
+                    
+                    balanceReport.split('\n').forEach(line => {
+                      if (!line.trim()) return;
+                      
+                      // Split each line into account name and balance parts
+                      const parts = line.trim().split(/\s+(?=[\d₹])/);
+                      const accountName = parts[0];
+                      const balanceStr = parts[1] || '';
+                      
+                      // Extract numeric value from balance string
+                      const numericValue = parseFloat(balanceStr.replace(/[^\d.-]/g, ''));
+                      
+                      if (!isNaN(numericValue)) {
+                        // Get currency symbol/code
+                        const currencyMatch = balanceStr.match(/[^\d.\s-]+/);
+                        const currency = currencyMatch ? currencyMatch[0] : '';
+                        
+                        // Use account name as key, store currency and sum value
+                        if (balanceMap.has(accountName)) {
+                          const existing = balanceMap.get(accountName);
+                          existing.value += numericValue;
+                        } else {
+                          balanceMap.set(accountName, { 
+                            value: numericValue, 
+                            currency 
+                          });
+                        }
+                      }
+                    });
+                    
+                    // Convert map back to array for rendering
+                    return Array.from(balanceMap).map(([accountName, data], index) => {
+                      const { value, currency } = data;
+                      const formattedBalance = currency === '₹' 
+                        ? `${currency}${value.toFixed(2)}` 
+                        : `${value.toFixed(2)} ${currency}`;
+                      
+                      return (
+                        <Box 
+                          key={index} 
+                          sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between',
+                            mb: 0.5,
+                            wordBreak: 'break-word'
+                          }}
+                        >
+                          <Box sx={{ mr: 2, maxWidth: '70%' }}>{accountName}</Box>
+                          <Box sx={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{formattedBalance}</Box>
+                        </Box>
+                      );
+                    });
+                  })()}
+                </Box>
+              ) : (
+                <Typography>No balance data available</Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
