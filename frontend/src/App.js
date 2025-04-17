@@ -38,6 +38,9 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import GoogleAuthCallback from './components/Auth/GoogleAuthCallback';
 import ForgotPassword from './components/Auth/ForgotPassword';
 import ResetPassword from './components/Auth/ResetPassword';
+import Terms from './components/Pages/Terms';
+import Privacy from './components/Pages/Privacy';
+import Footer from './components/Footer';
 import axiosInstance from './api/axiosInstance';
 import { createBrowserHistory } from 'history';
 import logo from './logo.svg';
@@ -199,12 +202,8 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {/*
-        Use HistoryRouter to allow passing the `future` prop for React Router v7 compatibility.
-        This enables the v7_startTransition flag to remove the warning and future-proof navigation.
-      */}
       <HistoryRouter history={history} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
           <AppBar
             position="fixed"
             sx={{
@@ -290,94 +289,105 @@ function App() {
           </Box>
           <Box
             component="main"
-            sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+            sx={{ 
+              flexGrow: 1,
+              p: 3,
+              width: { sm: `calc(100% - ${drawerWidth}px)` },
+              display: 'flex',
+              flexDirection: 'column'
+            }}
           >
             <Toolbar />
-            <Routes>
-              <Route 
-                path="/" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/add" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <AddTransaction />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/transactions" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <ViewTransactions />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/transactions/edit/:id" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <EditTransaction />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/accounts" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <AccountsList />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/accounts/new" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <AccountForm />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/accounts/edit/:id" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <EditAccount />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/preambles" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <PreambleList />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <ProfileSettings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-              <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
-              <Route path="/google-auth-callback" element={<GoogleAuthCallback setIsLoggedIn={setIsLoggedIn} />} />
-              <Route 
-                path="*" 
-                element={
-                  isLoggedIn ? <Navigate to="/" replace /> : <Navigate to="/login" replace />
-                } 
-              />
-            </Routes>
+            <Box sx={{ flexGrow: 1 }}>
+              <Routes>
+                <Route 
+                  path="/" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/add" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <AddTransaction />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/transactions" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <ViewTransactions />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/transactions/edit/:id" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <EditTransaction />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/accounts" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <AccountsList />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/accounts/new" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <AccountForm />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/accounts/edit/:id" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <EditAccount />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/preambles" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <PreambleList />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <ProfileSettings />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+                <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
+                <Route path="/google-auth-callback" element={<GoogleAuthCallback setIsLoggedIn={setIsLoggedIn} />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route 
+                  path="*" 
+                  element={
+                    isLoggedIn ? <Navigate to="/" replace /> : <Navigate to="/login" replace />
+                  } 
+                />
+              </Routes>
+            </Box>
+            <Footer />
           </Box>
         </Box>
       </HistoryRouter>
