@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { FormControl, Select, MenuItem, Typography, Box, CircularProgress } from '@mui/material';
+import { 
+  FormControl, 
+  Select, 
+  MenuItem, 
+  Typography, 
+  Box, 
+  CircularProgress, 
+  Paper,
+  Button,
+  Chip
+} from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import StarIcon from '@mui/icons-material/Star';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import axiosInstance from '../../api/axiosInstance';
 
 const BookSelector = () => {
@@ -96,52 +106,96 @@ const BookSelector = () => {
   // Modified this condition to create a default UI for when there are no books
   if ((!activeBook || books.length === 0) && !loading) {
     return (
-      <Box sx={{ 
+      <Paper elevation={2} sx={{ 
         display: 'flex', 
-        alignItems: 'center', 
-        p: 1,
-        minWidth: 150
+        alignItems: 'center',
+        py: 1,
+        px: 2,
+        borderRadius: 2,
+        backgroundColor: 'background.paper',
+        minWidth: 180
       }}>
-        <MenuBookIcon sx={{ mr: 1, color: 'text.secondary' }} />
-        <Typography variant="body2">Default Book</Typography>
-      </Box>
+        <MenuBookIcon sx={{ mr: 1.5, color: 'primary.main' }} />
+        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Default Book</Typography>
+      </Paper>
     );
   }
 
   return (
-    <Box sx={{ 
-      display: 'flex',
-      alignItems: 'center',
-      minWidth: 150,
-      p: 1
-    }}>
-      <MenuBookIcon sx={{ mr: 1, color: 'text.secondary' }} />
-      <Box sx={{ 
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1
-      }}>
-        <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'primary.main' }}>
-          {activeBook.name}
-        </Typography>
-        <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
-          <Select
-            value={activeBook.id}
-            onChange={handleChange}
-            displayEmpty
-            variant="outlined"
-            size="small"
-          >
-            {books.map((book) => (
-              <MenuItem key={book.id} value={book.id}>
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+    <Box>
+      <FormControl fullWidth size="small">
+        <Select
+          value={activeBook.id}
+          onChange={handleChange}
+          displayEmpty
+          variant="outlined"
+          IconComponent={KeyboardArrowDownIcon}
+          renderValue={() => (
+            <Paper elevation={2} sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              py: 1,
+              px: 2,
+              borderRadius: 2,
+              backgroundColor: 'background.paper',
+              minWidth: 180,
+              border: '1px solid',
+              borderColor: 'primary.light',
+              '&:hover': {
+                borderColor: 'primary.main',
+                boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.2)'
+              }
+            }}>
+              <MenuBookIcon sx={{ mr: 1.5, color: 'primary.main' }} />
+              <Box>
+                <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                  Current Book
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'text.primary' }}>
+                  {activeBook.name}
+                </Typography>
+              </Box>
+            </Paper>
+          )}
+          sx={{
+            '& .MuiOutlinedInput-notchedOutline': { 
+              border: 'none' 
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': { 
+              border: 'none' 
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+              border: 'none' 
+            }
+          }}
+        >
+          {books.map((book) => (
+            <MenuItem key={book.id} value={book.id} sx={{ py: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                <MenuBookIcon sx={{ mr: 1.5, color: book.id === activeBook.id ? 'primary.main' : 'text.secondary' }} />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: book.id === activeBook.id ? 'bold' : 'regular',
+                    color: book.id === activeBook.id ? 'primary.main' : 'text.primary'
+                  }}
+                >
                   {book.name}
-                </Box>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+                  {book.id === activeBook.id && (
+                    <Chip 
+                      label="Active" 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined" 
+                      sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} 
+                    />
+                  )}
+                </Typography>
+              </Box>
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
     </Box>
   );
 };
