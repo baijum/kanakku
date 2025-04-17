@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, Response, g
 from .models import db, Account, Transaction, Preamble
 from .extensions import api_token_required
 import logging
+from datetime import datetime
 
 # from flask_login import login_required, current_user # Keep if used elsewhere
 
@@ -27,6 +28,8 @@ def get_transactions_ledger_format():
 
         # Get preamble id if provided in query params
         preamble_id = request.args.get("preamble_id")
+        start_date = request.args.get("startDate")
+        end_date = request.args.get("endDate")
 
         # Get preamble content
         preamble_content = ""
@@ -43,14 +46,30 @@ def get_transactions_ledger_format():
             if default_preamble:
                 preamble_content = default_preamble.content + "\n\n"
 
-        # Fetch transactions joined with account names for the user - use g.current_user.id
-        transactions = (
+        # Start building the query
+        query = (
             db.session.query(Transaction, Account.name)
             .join(Account, Transaction.account_id == Account.id)
             .filter(Transaction.user_id == user.id)
-            .order_by(Transaction.date.asc())
-            .all()
         )
+
+        # Apply date filters if provided
+        if start_date:
+            try:
+                start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+                query = query.filter(Transaction.date >= start_date_obj)
+            except ValueError:
+                logging.error(f"Invalid start date format: {start_date}")
+
+        if end_date:
+            try:
+                end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+                query = query.filter(Transaction.date <= end_date_obj)
+            except ValueError:
+                logging.error(f"Invalid end date format: {end_date}")
+
+        # Complete the query with ordering
+        transactions = query.order_by(Transaction.date.asc()).all()
 
         if not transactions and not preamble_content:
             return Response(

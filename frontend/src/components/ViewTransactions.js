@@ -282,8 +282,25 @@ function ViewTransactions() {
       
       // Prepare URL with preamble ID if selected
       let url = '/api/v1/ledgertransactions';
+      const params = new URLSearchParams();
+      
       if (selectedPreamble) {
-        url += `?preamble_id=${selectedPreamble}`;
+        params.append('preamble_id', selectedPreamble);
+      }
+      
+      // Add date filters if set
+      if (startDate) {
+        params.append('startDate', startDate);
+      }
+      
+      if (endDate) {
+        params.append('endDate', endDate);
+      }
+      
+      // Append params to URL if any exist
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
       }
       
       const response = await axios.get(url, {

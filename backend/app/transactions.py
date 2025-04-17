@@ -354,7 +354,7 @@ def update_transaction(transaction_id):
 
         if "currency" in data:
             transaction.currency = data["currency"]
-            
+
         if "status" in data:
             transaction.status = data["status"]
 
