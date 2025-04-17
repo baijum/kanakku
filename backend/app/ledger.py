@@ -39,12 +39,12 @@ def get_transactions_ledger_format():
             if preamble:
                 preamble_content = preamble.content + "\n\n"
         else:
-            # Otherwise try to get default preamble - use g.current_user.id
-            default_preamble = Preamble.query.filter_by(
-                user_id=user.id, is_default=True
+            # Get first preamble instead of default - use g.current_user.id
+            first_preamble = Preamble.query.filter_by(
+                user_id=user.id
             ).first()
-            if default_preamble:
-                preamble_content = default_preamble.content + "\n\n"
+            if first_preamble:
+                preamble_content = first_preamble.content + "\n\n"
 
         # Start building the query
         query = (

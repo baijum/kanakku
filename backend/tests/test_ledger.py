@@ -1,7 +1,7 @@
 import pytest
 from datetime import date, timedelta
 from app import db
-from app.models import User, Transaction, Account, Preamble
+from app.models import User, Transaction, Account, Preamble, Book
 
 
 @pytest.fixture
@@ -95,16 +95,42 @@ def non_default_preamble(app, db_session, user):
 
 
 @pytest.fixture
-def sample_transactions(app, db_session, user):
+def book(app, db_session, user):
+    """Create a test book for the user"""
+    with app.app_context():
+        book = Book.query.filter_by(user_id=user.id).first()
+        if book:
+            return book
+            
+        book = Book(
+            user_id=user.id,
+            name="Test Book"
+        )
+        db_session.add(book)
+        db_session.commit()
+        return book
+
+
+@pytest.fixture
+def sample_transactions(app, db_session, user, book):
     """Create sample transactions for testing date filtering."""
     with app.app_context():
-        # First, ensure we have an account
+        # Use the book from the fixture
+        book = Book.query.filter_by(user_id=user.id).first()
+        
+        # Set as active book if not already
+        if not user.active_book_id:
+            user.active_book_id = book.id
+            db.session.commit()
+            
+        # Check for account
         test_account = Account.query.filter_by(
             user_id=user.id, name="Test Account"
         ).first()
         if not test_account:
             test_account = Account(
                 user_id=user.id,
+                book_id=book.id,
                 name="Test Account",
                 balance=1000.0,
                 currency="INR",
@@ -141,6 +167,7 @@ def sample_transactions(app, db_session, user):
         # Past transaction
         past_tx = Transaction(
             user_id=user.id,
+            book_id=book.id,
             account_id=test_account.id,
             date=date.today() - timedelta(days=30),
             description="Past Transaction",
@@ -154,6 +181,7 @@ def sample_transactions(app, db_session, user):
         # Recent transaction
         recent_tx = Transaction(
             user_id=user.id,
+            book_id=book.id,
             account_id=test_account.id,
             date=date.today() - timedelta(days=5),
             description="Recent Transaction",
@@ -167,6 +195,7 @@ def sample_transactions(app, db_session, user):
         # Today's transaction
         today_tx = Transaction(
             user_id=user.id,
+            book_id=book.id,
             account_id=test_account.id,
             date=date.today(),
             description="Today Transaction",
@@ -180,6 +209,7 @@ def sample_transactions(app, db_session, user):
         # Transaction with USD currency
         usd_tx = Transaction(
             user_id=user.id,
+            book_id=book.id,
             account_id=test_account.id,
             date=date.today() - timedelta(days=2),
             description="USD Transaction",
@@ -193,6 +223,7 @@ def sample_transactions(app, db_session, user):
         # Transaction with pending status
         pending_tx = Transaction(
             user_id=user.id,
+            book_id=book.id,
             account_id=test_account.id,
             date=date.today() - timedelta(days=1),
             description="Pending Transaction",
@@ -211,6 +242,19 @@ def sample_transactions(app, db_session, user):
 def test_get_transactions(authenticated_client, app, db_session, user):
     """Test getting transactions for a user."""
     with db_session.no_autoflush:
+        # First, ensure user has an active book
+        book = Book.query.filter_by(user_id=user.id).first()
+        if not book:
+            # Create a book if it doesn't exist
+            book = Book(user_id=user.id, name="Test Book")
+            db_session.add(book)
+            db_session.commit()
+        
+        # Set as active book if not already
+        if not user.active_book_id:
+            user.active_book_id = book.id
+            db_session.commit()
+            
         # Fetch the known test account within this session using the user
         test_account = (
             db_session.query(Account)
@@ -221,6 +265,7 @@ def test_get_transactions(authenticated_client, app, db_session, user):
             # If it doesn't exist for some reason (e.g., fixture failed), create it
             test_account = Account(
                 user_id=user.id,
+                book_id=book.id,  # Set the book_id here
                 name="Test Account",
                 balance=1000.0,
                 currency="INR",
@@ -311,6 +356,20 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
     with app.app_context():
         # Fetch user and the specific test account within this session context
         attached_user = db_session.get(User, user.id)
+        
+        # First, ensure user has an active book
+        book = Book.query.filter_by(user_id=user.id).first()
+        if not book:
+            # Create a book if it doesn't exist
+            book = Book(user_id=user.id, name="Test Book")
+            db_session.add(book)
+            db_session.commit()
+        
+        # Set as active book if not already
+        if not user.active_book_id:
+            user.active_book_id = book.id
+            db_session.commit()
+            
         # Fetch account by name and user ID
         test_account = (
             db_session.query(Account)
@@ -324,6 +383,7 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
             # If the account doesn't exist (e.g., fixture setup issue), create it here
             test_account = Account(
                 user_id=user.id,
+                book_id=book.id,  # Set the book_id here
                 name="Test Account",
                 balance=1000.0,
                 currency="INR",
@@ -341,6 +401,7 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
 
         transaction = Transaction(
             user_id=attached_user.id,
+            book_id=book.id,  # Set the book_id here for the transaction
             account_id=test_account.id,  # Use ID from fetched account
             date=date(2024, 7, 27),
             description="Grocery Shopping",

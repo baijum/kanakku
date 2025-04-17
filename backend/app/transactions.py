@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, g
-from app.models import db, Transaction, Account
+from app.models import db, Transaction, Account, Book
 from .extensions import api_token_required
 from datetime import datetime
 import traceback
@@ -9,12 +9,35 @@ from sqlalchemy.exc import SQLAlchemyError
 transactions = Blueprint("transactions", __name__)
 
 
+def get_active_book_id():
+    """Get the active book ID for the current user or raise an error if not set."""
+    user = g.current_user
+    
+    if not user.active_book_id:
+        # Try to find first book ordered by ID
+        first_book = Book.query.filter_by(user_id=user.id).order_by(Book.id).first()
+        if first_book:
+            user.active_book_id = first_book.id
+            db.session.commit()
+        else:
+            # Create a default book
+            default_book = Book(user_id=user.id, name="Book 1")
+            db.session.add(default_book)
+            db.session.flush()
+            user.active_book_id = default_book.id
+            db.session.commit()
+    
+    return user.active_book_id
+
+
 @transactions.route("/api/v1/transactions", methods=["POST"])
 @api_token_required
 def create_transaction():
     """Create a new transaction from the provided JSON data."""
     # request_id = getattr(request, "request_id", "unknown") # Removed unused variable
     current_app.logger.info("Processing transaction creation request")
+    
+    active_book_id = get_active_book_id()
 
     try:
         # Parse and validate the request data
@@ -80,19 +103,22 @@ def create_transaction():
                     400,
                 )
 
-            # Find the account
+            # Find the account in the active book
             account_name = posting["account"]
             account = Account.query.filter_by(
-                name=account_name, user_id=user.id
+                name=account_name,
+                user_id=user.id,
+                book_id=active_book_id
             ).first()
 
             if not account:
                 current_app.logger.error("Account not found: {}".format(account_name))
-                return jsonify({"error": "Account not found"}), 404
+                return jsonify({"error": "Account not found in the active book"}), 404
 
-            # Create transaction object
+            # Create transaction object within the active book
             new_transaction = Transaction(
                 user_id=user.id,
+                book_id=active_book_id,
                 account_id=account.id,
                 date=transaction_date,
                 description=data["payee"],  # Use payee as description
@@ -156,13 +182,17 @@ def get_transactions():
             f"GET /api/v1/transactions request with params: {request.args}"
         )
 
+        active_book_id = get_active_book_id()
         limit = request.args.get("limit", type=int)
         start_date = request.args.get("startDate")
         end_date = request.args.get("endDate")
         offset = request.args.get("offset", type=int, default=0)
 
-        # Start with base query
-        query = Transaction.query.filter_by(user_id=g.current_user.id)
+        # Start with base query - filter by user and active book
+        query = Transaction.query.filter_by(
+            user_id=g.current_user.id,
+            book_id=active_book_id
+        )
 
         # Apply date filters if provided
         if start_date:
@@ -425,40 +455,37 @@ def update_transaction(transaction_id):
 )
 @api_token_required
 def update_transaction_with_postings(transaction_id):
-    """Update a transaction with multiple postings"""
-    current_app.logger.debug(
-        f"Entered update_transaction_with_postings route for id: {transaction_id}"
-    )
+    """Update a transaction with multiple postings."""
     try:
-        # Log the request for debugging
-        current_app.logger.debug(f"Update transaction request: {request.data}")
+        # Log request
+        current_app.logger.debug(
+            f"PUT /api/v1/transactions/{transaction_id}/update_with_postings"
+        )
 
-        try:
-            data = request.get_json()
-            if data is None:
-                current_app.logger.error(
-                    "Failed to parse JSON: {}".format(request.data)
-                )
-                return jsonify({"error": "Request must be valid JSON"}), 400
-        except Exception as json_error:
-            current_app.logger.error(
-                f"JSON parsing error: {str(json_error)}: {request.data}"
-            )
-            return jsonify({"error": "Invalid JSON format"}), 400
+        # Get active book ID for the current user
+        active_book_id = get_active_book_id()
+
+        # Parse and validate the request data
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Request must be valid JSON"}), 400
 
         # Validate required fields
+        missing_fields = []
         if "date" not in data:
-            return jsonify({"error": "Missing required field: date"}), 400
-
+            missing_fields.append("date")
         if "payee" not in data or not data["payee"]:
-            return jsonify({"error": "Missing required field: payee"}), 400
-
+            missing_fields.append("payee")
         if (
             "postings" not in data
             or not isinstance(data["postings"], list)
             or len(data["postings"]) < 1
         ):
-            return jsonify({"error": "Missing or invalid postings"}), 400
+            missing_fields.append("postings")
+
+        if missing_fields:
+            error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+            return jsonify({"error": error_msg}), 400
 
         # Validate date format
         try:
@@ -466,7 +493,7 @@ def update_transaction_with_postings(transaction_id):
         except ValueError:
             return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
-        # Get all original transaction IDs to be replaced
+        # Get original transaction IDs, with default being the single ID in the URL
         original_transaction_ids = data.get(
             "original_transaction_ids", [transaction_id]
         )
@@ -526,19 +553,23 @@ def update_transaction_with_postings(transaction_id):
                     400,
                 )
 
-            # Find the account
+            # Find the account in the active book
             account_name = posting["account"]
             account = Account.query.filter_by(
-                name=account_name, user_id=g.current_user.id
+                name=account_name, 
+                user_id=g.current_user.id,
+                book_id=active_book_id
             ).first()
 
             if not account:
                 current_app.logger.error("Account not found: {}".format(account_name))
-                return jsonify({"error": "Account not found"}), 404
+                db.session.rollback()
+                return jsonify({"error": "Account not found in active book"}), 404
 
-            # Create transaction object
+            # Create transaction object with book_id
             new_transaction = Transaction(
                 user_id=g.current_user.id,
+                book_id=active_book_id,
                 account_id=account.id,
                 date=transaction_date,
                 description=data["payee"],  # Use payee as description
@@ -643,7 +674,7 @@ def get_related_transactions(transaction_id):
             }
             formatted_transactions.append(formatted_transaction)
 
-        # Prepare the response
+        # Prepare the response - format it to match test expectations
         response = {
             "transactions": formatted_transactions,
             "date": transaction.date.isoformat(),
@@ -710,7 +741,9 @@ def delete_related_transactions(transaction_id):
 
         # Find all transactions with the same date and payee
         related_transactions = Transaction.query.filter_by(
-            user_id=g.current_user.id, date=transaction.date, payee=transaction.payee
+            user_id=g.current_user.id, 
+            date=transaction.date, 
+            payee=transaction.payee
         ).all()
 
         if not related_transactions:

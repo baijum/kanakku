@@ -146,6 +146,10 @@ def create_app(config_name="default"):
 
         app.register_blueprint(preamble_blueprint)
 
+        from .books import books as books_blueprint
+
+        app.register_blueprint(books_blueprint)
+
         from .errors import errors as errors_blueprint
 
         app.register_blueprint(errors_blueprint)

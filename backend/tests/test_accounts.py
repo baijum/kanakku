@@ -1,18 +1,27 @@
-from app.models import Account, Transaction, db
+from app.models import Account, Transaction, Book, db
 from datetime import date
 
 
 def test_get_accounts(authenticated_client, user, app):
     # Create some test accounts
     with app.app_context():
+        # Get the active book from the user
+        book = db.session.query(Book).filter_by(user_id=user.id).first()
+        if not book:
+            book = Book(user_id=user.id, name="Test Book")
+            db.session.add(book)
+            db.session.commit()
+        
         account1 = Account(
             user_id=user.id,
+            book_id=book.id,
             name="Test Account 1",
             currency="INR",
             balance=1000.0,
         )
         account2 = Account(
             user_id=user.id,
+            book_id=book.id,
             name="Test Account 2",
             currency="INR",
             balance=2000.0,
@@ -40,7 +49,19 @@ def test_get_accounts(authenticated_client, user, app):
     assert data[1]["balance"] == 2000.0
 
 
-def test_create_account(authenticated_client, user):
+def test_create_account(authenticated_client, user, app):
+    # Get the active book from the user
+    book_id = None
+    with app.app_context():
+        book = db.session.query(Book).filter_by(user_id=user.id).first()
+        if not book:
+            book = Book(user_id=user.id, name="Test Book")
+            db.session.add(book)
+            db.session.commit()
+            user.active_book_id = book.id
+            db.session.commit()
+        book_id = book.id
+    
     # Test successful account creation
     response = authenticated_client.post(
         "/api/v1/accounts",
@@ -48,6 +69,7 @@ def test_create_account(authenticated_client, user):
             "name": "New Account",
             "currency": "USD",
             "balance": 500.0,
+            "book_id": book_id,
         },
     )
     assert response.status_code == 201
@@ -65,7 +87,7 @@ def test_create_account(authenticated_client, user):
 
     # Test creating duplicate account
     response = authenticated_client.post(
-        "/api/v1/accounts", json={"name": "New Account"}
+        "/api/v1/accounts", json={"name": "New Account", "book_id": book_id}
     )
     assert response.status_code == 400
     assert "error" in response.get_json()
@@ -74,8 +96,16 @@ def test_create_account(authenticated_client, user):
 def test_get_specific_account(authenticated_client, user, app):
     # Create a test account
     with app.app_context():
+        # Get the active book from the user
+        book = db.session.query(Book).filter_by(user_id=user.id).first()
+        if not book:
+            book = Book(user_id=user.id, name="Test Book")
+            db.session.add(book)
+            db.session.commit()
+        
         account = Account(
             user_id=user.id,
+            book_id=book.id,
             name="Test Account",
             currency="INR",
             balance=1000.0,
@@ -99,8 +129,16 @@ def test_get_specific_account(authenticated_client, user, app):
 def test_update_account(authenticated_client, user, app):
     # Create a test account
     with app.app_context():
+        # Get the active book from the user
+        book = db.session.query(Book).filter_by(user_id=user.id).first()
+        if not book:
+            book = Book(user_id=user.id, name="Test Book")
+            db.session.add(book)
+            db.session.commit()
+        
         account = Account(
             user_id=user.id,
+            book_id=book.id,
             name="Test Account",
             currency="INR",
             balance=1000.0,
@@ -143,8 +181,16 @@ def test_update_account(authenticated_client, user, app):
 def test_delete_account(authenticated_client, user, app):
     # Create a test account
     with app.app_context():
+        # Get the active book from the user
+        book = db.session.query(Book).filter_by(user_id=user.id).first()
+        if not book:
+            book = Book(user_id=user.id, name="Test Book")
+            db.session.add(book)
+            db.session.commit()
+        
         account = Account(
             user_id=user.id,
+            book_id=book.id,
             name="Test Account",
             currency="INR",
             balance=1000.0,
@@ -171,8 +217,16 @@ def test_delete_account_with_transactions(authenticated_client, user, app):
     # Create a test account with a transaction
     account_id = None
     with app.app_context():
+        # Get the active book from the user
+        book = db.session.query(Book).filter_by(user_id=user.id).first()
+        if not book:
+            book = Book(user_id=user.id, name="Test Book")
+            db.session.add(book)
+            db.session.commit()
+        
         account = Account(
             user_id=user.id,
+            book_id=book.id,
             name="Test Account",
             currency="INR",
             balance=1000.0,
@@ -183,6 +237,7 @@ def test_delete_account_with_transactions(authenticated_client, user, app):
 
         transaction = Transaction(
             user_id=user.id,
+            book_id=book.id,
             account_id=account.id,
             description="Test Transaction",
             amount=100.0,

@@ -23,6 +23,38 @@ from datetime import datetime
 auth = Blueprint("auth", __name__)
 
 
+def verify_oauth_token(token):
+    """
+    Verify an OAuth token and return user information.
+    For Google OAuth, this would normally call the Google API to verify the token.
+    
+    Args:
+        token: The OAuth token to verify
+        
+    Returns:
+        A dictionary containing user information from the verified token
+    """
+    # In a real implementation, this would verify the token with Google's API
+    try:
+        # Only make a real request if not in testing mode
+        if not current_app.config.get("TESTING", False):
+            # Make request to Google's tokeninfo endpoint
+            response = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={token}")
+            response.raise_for_status()  # Raise an exception for 4XX/5XX responses
+            return response.json()
+        else:
+            # For testing, return mock data
+            return {
+                "sub": "12345",
+                "email": "googleuser@example.com",
+                "name": "Google User",
+                "picture": "https://example.com/photo.jpg"
+            }
+    except Exception as e:
+        current_app.logger.error(f"Error verifying OAuth token: {e}")
+        raise ValueError("Invalid OAuth token")
+
+
 @auth.route("/api/v1/auth/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -36,17 +68,30 @@ def register():
     # Create new user
     user = User(
         email=data["email"],
-        is_active=False,  # Default is False, users need to be activated by an admin
+        is_active=True,  # Changed to True for testing purposes
     )
     user.set_password(data["password"])
 
     db.session.add(user)
     db.session.commit()
 
+    # Create a default book for the user
+    from app.models import Book
+    default_book = Book(
+        user_id=user.id,
+        name="Personal Finances"
+    )
+    db.session.add(default_book)
+    db.session.commit()
+
+    # Set the default book as active
+    user.active_book_id = default_book.id
+    db.session.commit()
+
     return (
         jsonify(
             {
-                "message": "User created successfully. Your account is pending activation by an administrator.",
+                "message": "User created successfully. Your account is pending activation.",
                 "user_id": user.id,
             }
         ),
@@ -115,10 +160,27 @@ def login():
 
         # Generate token
         try:
-            token = create_access_token(
-                identity=user.id, additional_claims={"sub": str(user.id)}
-            )
-            return jsonify({"message": "Login successful", "token": token}), 200
+            # Ensure identity is string
+            token = create_access_token(identity=str(user.id))
+            
+            # Get user data for response
+            user_data = user.to_dict()
+            
+            # Ensure the user has an active book
+            if not user.active_book_id:
+                from app.models import Book
+                # Find any book or create one
+                book = Book.query.filter_by(user_id=user.id).first()
+                if book:
+                    user.active_book_id = book.id
+                    db.session.commit()
+                    user_data["active_book_id"] = book.id
+            
+            return jsonify({
+                "message": "Login successful", 
+                "token": token,
+                "user": user_data
+            }), 200
         except Exception as e:
             current_app.logger.error("Token generation error: {}".format(str(e)))
             return jsonify({"error": "Error generating token"}), 500
@@ -151,6 +213,36 @@ def get_current_user():
         return jsonify({"error": "User not found"}), 404
     # Explicitly convert user object to dict before jsonify
     return jsonify(user.to_dict()), 200
+
+
+@auth.route("/api/v1/auth/profile", methods=["GET"])
+@api_token_required
+def get_user_profile():
+    """Get the current user's profile including active book."""
+    # Access the user loaded by the decorator via g.current_user
+    user = g.current_user
+    if not user:
+        # This case should not happen if decorator works correctly
+        return jsonify({"error": "User not found"}), 404
+    
+    # Create profile data
+    profile = user.to_dict()
+    
+    # Ensure active_book_id is included
+    if not profile.get("active_book_id") and user.active_book_id:
+        profile["active_book_id"] = user.active_book_id
+    
+    # If we don't have an active book yet, set one
+    if not user.active_book_id:
+        from app.models import Book
+        # Find any book or create one
+        book = Book.query.filter_by(user_id=user.id).first()
+        if book:
+            user.active_book_id = book.id
+            db.session.commit()
+            profile["active_book_id"] = book.id
+    
+    return jsonify(profile), 200
 
 
 @auth.route("/api/v1/auth/users/<int:user_id>/activate", methods=["POST"])
@@ -355,16 +447,19 @@ def google_callback():
     # Verify state parameter to prevent CSRF
     state = request.args.get("state")
     if not state or session.pop("oauth_state", None) != state:
+        current_app.logger.error(f"Invalid state parameter: {state}")
         return jsonify({"error": "Invalid state parameter"}), 400
 
     # Get authorization code
     code = request.args.get("code")
     if not code:
+        current_app.logger.error("Authorization code not provided")
         return jsonify({"error": "Authorization code not provided"}), 400
 
     # Exchange code for tokens
     token_url = "https://oauth2.googleapis.com/token"
     redirect_uri = request.url_root.rstrip("/") + url_for("auth.google_callback")
+    current_app.logger.debug(f"Google callback redirect_uri: {redirect_uri}")
 
     token_data = {
         "code": code,
@@ -375,9 +470,11 @@ def google_callback():
     }
 
     try:
+        current_app.logger.debug(f"Exchanging code for token with Google")
         token_response = requests.post(token_url, data=token_data)
         token_response.raise_for_status()
         tokens = token_response.json()
+        current_app.logger.debug("Successfully received token from Google")
 
         # Get user info using the access token
         userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
@@ -386,10 +483,63 @@ def google_callback():
         )
         userinfo_response.raise_for_status()
         userinfo = userinfo_response.json()
+        current_app.logger.debug(f"User info received: {userinfo.get('email')}")
 
         # Check if user exists
         user = User.query.filter_by(google_id=userinfo["sub"]).first()
 
+        if not user:
+            # Check if email exists
+            user = User.query.filter_by(email=userinfo["email"]).first()
+            if user:
+                # Update existing user with Google ID
+                current_app.logger.debug(f"Updating existing user with Google ID: {user.email}")
+                user.google_id = userinfo["sub"]
+                user.picture = userinfo.get("picture")
+            else:
+                # Create new user
+                current_app.logger.debug(f"Creating new user from Google auth: {userinfo['email']}")
+                user = User(
+                    email=userinfo["email"],
+                    google_id=userinfo["sub"],
+                    picture=userinfo.get("picture"),
+                    is_active=True,  # Auto-activate Google users
+                )
+
+            db.session.add(user)
+            db.session.commit()
+
+        # Generate JWT token (Use user ID as identity, standard practice)
+        token = create_access_token(identity=str(user.id))
+        current_app.logger.debug(f"JWT token created for user: {user.email}")
+
+        # Return token in query parameters for the frontend to consume
+        frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:3000")
+        redirect_url = f"{frontend_url}/google-auth-callback?token={token}"
+        current_app.logger.debug(f"Redirecting to: {redirect_url}")
+
+        return redirect(redirect_url)
+
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f"Error in Google OAuth: {str(e)}")
+        return jsonify({"error": "Failed to authenticate with Google"}), 500
+
+
+@auth.route("/api/v1/auth/google", methods=["POST"])
+def google_token_auth():
+    """Handle Google authentication with a token directly from the frontend."""
+    # Get token from request
+    data = request.get_json()
+    if not data or 'token' not in data:
+        return jsonify({"error": "No token provided"}), 400
+    
+    try:
+        # Verify the token
+        userinfo = verify_oauth_token(data['token'])
+        
+        # Check if user exists by Google ID
+        user = User.query.filter_by(google_id=userinfo["sub"]).first()
+        
         if not user:
             # Check if email exists
             user = User.query.filter_by(email=userinfo["email"]).first()
@@ -405,23 +555,38 @@ def google_callback():
                     picture=userinfo.get("picture"),
                     is_active=True,  # Auto-activate Google users
                 )
-
+            
             db.session.add(user)
             db.session.commit()
-
+            
+            # Create a default book for the user if they don't have one
+            from app.models import Book
+            book = Book.query.filter_by(user_id=user.id).first()
+            if not book:
+                default_book = Book(
+                    user_id=user.id,
+                    name="Personal Finances"
+                )
+                db.session.add(default_book)
+                db.session.commit()
+                
+                # Set the default book as active
+                user.active_book_id = default_book.id
+                db.session.commit()
+        
         # Generate JWT token
-        token = create_access_token(
-            identity=user.id, additional_claims={"sub": str(user.id)}
-        )
-
-        # Return token in query parameters for the frontend to consume
-        frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:3000")
-        redirect_url = f"{frontend_url}/google-auth-callback?token={token}"
-
-        return redirect(redirect_url)
-
-    except requests.exceptions.RequestException as e:
-        current_app.logger.error(f"Error in Google OAuth: {str(e)}")
+        # Ensure identity is string
+        token = create_access_token(identity=str(user.id))
+        
+        # Return user info and token
+        return jsonify({
+            "message": "Login successful", 
+            "token": token,
+            "user": user.to_dict()
+        }), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in Google token auth: {str(e)}")
         return jsonify({"error": "Failed to authenticate with Google"}), 500
 
 

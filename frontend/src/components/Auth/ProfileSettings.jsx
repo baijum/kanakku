@@ -33,6 +33,7 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import UpdatePassword from './UpdatePassword';
+import BookManagement from '../Books/BookManagement';
 import { add } from 'date-fns';
 
 const ProfileSettings = () => {
@@ -301,220 +302,269 @@ const ProfileSettings = () => {
   }
 
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Profile Settings
-        </Typography>
-        {user && (
-          <Box mb={3}>
-            <Typography variant="body1">
-              <strong>Email:</strong> {user.email}
-            </Typography>
-          </Box>
-        )}
-      </Paper>
-
-      <Paper elevation={3}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
-          centered
-        >
-          <Tab label="Change Password" />
-          <Tab label="API Tokens" />
-        </Tabs>
-        <Divider />
-        
-        <Box p={3}>
-          {tabValue === 0 && <UpdatePassword />}
-          
-          {tabValue === 1 && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                API Access Tokens
-              </Typography>
-              <Typography variant="body2" color="textSecondary" paragraph>
-                Create API tokens to access your account programmatically. Tokens can be set to expire automatically.
-              </Typography>
-              
-              {tokenError && !loadingTokens && (
-                <Alert 
-                  severity="error" 
-                  sx={{ mb: 2 }}
-                  action={
-                    <Button 
-                      color="inherit" 
-                      size="small"
-                      onClick={checkAuthStatus}
-                    >
-                      Test Auth
-                    </Button>
-                  }
-                >
-                  {tokenError}
-                </Alert>
-              )}
-              
-              {showNewToken && (
-                <Alert 
-                  severity="info" 
-                  sx={{ mb: 3 }}
-                  action={
-                    <IconButton 
-                      aria-label="copy" 
-                      color="inherit" 
-                      size="small"
-                      onClick={copyTokenToClipboard}
-                    >
-                      <ContentCopyIcon />
-                    </IconButton>
-                  }
-                >
-                  <Typography variant="body2">
-                    Your new token: <strong>{newTokenValue}</strong>
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    Make sure to copy this token now. You won't be able to see it again!
-                  </Typography>
-                </Alert>
-              )}
-              
-              <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Create a New Token
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <TextField
-                    label="Token Name"
-                    value={tokenName}
-                    onChange={(e) => setTokenName(e.target.value)}
-                    fullWidth
-                    placeholder="e.g., Development, Data Import, etc."
-                    variant="outlined"
-                    size="small"
-                  />
-                  
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Expiration</InputLabel>
-                    <Select
-                      value={expiryOption}
-                      onChange={handleExpiryOptionChange}
-                      label="Expiration"
-                    >
-                      <MenuItem value="never">Never expires</MenuItem>
-                      <MenuItem value="30days">30 days</MenuItem>
-                      <MenuItem value="90days">90 days</MenuItem>
-                      <MenuItem value="1year">1 year</MenuItem>
-                      <MenuItem value="custom">Custom date</MenuItem>
-                    </Select>
-                  </FormControl>
-                  
-                  {expiryOption === 'custom' && (
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Expiry Date"
-                        value={expiryDate}
-                        onChange={(date) => setExpiryDate(date)}
-                        slots={{
-                          textField: (params) => <TextField {...params} fullWidth size="small" />
-                        }}
-                        disablePast
-                      />
-                    </LocalizationProvider>
-                  )}
-                  
-                  <Button 
-                    variant="contained" 
-                    color="primary"
-                    onClick={handleCreateToken}
-                    sx={{ alignSelf: 'flex-start' }}
-                  >
-                    Create Token
-                  </Button>
-                </Box>
-              </Paper>
-              
-              <Typography variant="subtitle1" gutterBottom>
-                Your Tokens
-              </Typography>
-              
-              {loadingTokens ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-                  <CircularProgress size={24} />
-                </Box>
-              ) : tokens.length === 0 ? (
-                <Typography variant="body2" color="textSecondary">
-                  You don't have any tokens yet.
-                </Typography>
-              ) : (
-                <TableContainer component={Paper} variant="outlined">
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell><strong>Name</strong></TableCell>
-                        <TableCell><strong>Created</strong></TableCell>
-                        <TableCell><strong>Expires</strong></TableCell>
-                        <TableCell><strong>Last Used</strong></TableCell>
-                        <TableCell></TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {tokens.map((token) => (
-                        <TableRow key={token.id}>
-                          <TableCell>{token.name}</TableCell>
-                          <TableCell>{new Date(token.created_at).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            {token.expires_at 
-                              ? new Date(token.expires_at).toLocaleDateString()
-                              : 'Never'}
-                          </TableCell>
-                          <TableCell>
-                            {token.last_used_at
-                              ? new Date(token.last_used_at).toLocaleDateString()
-                              : 'Never used'}
-                          </TableCell>
-                          <TableCell>
-                            <IconButton 
-                              size="small" 
-                              color="error"
-                              onClick={() => handleDeleteToken(token.id)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-              
-              {/* Delete confirmation dialog */}
-              <Dialog
-                open={deleteDialogOpen}
-                onClose={() => setDeleteDialogOpen(false)}
-              >
-                <DialogTitle>Delete Token</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>
-                    Are you sure you want to delete this API token? 
-                    This action cannot be undone and applications using this token will no longer be able to access your account.
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={confirmDeleteToken} color="error" autoFocus>
-                    Delete
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            </Box>
-          )}
+    <Container maxWidth="lg" sx={{ mt: 10, mb: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Profile Settings
+      </Typography>
+      
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+          <CircularProgress />
         </Box>
-      </Paper>
+      ) : error ? (
+        <Alert severity="error">{error}</Alert>
+      ) : (
+        <>
+          <Paper sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Account Information
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body1">
+                <strong>Email:</strong> {user?.email}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Account Created:</strong>{' '}
+                {user?.created_at
+                  ? new Date(user.created_at).toLocaleString()
+                  : 'Unknown'}
+              </Typography>
+              <Typography variant="body1">
+                <strong>Account Status:</strong>{' '}
+                {user?.is_active ? 'Active' : 'Inactive'}
+              </Typography>
+            </Box>
+          </Paper>
+
+          <Paper sx={{ p: 3, mb: 4 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+              <Tabs value={tabValue} onChange={handleTabChange}>
+                <Tab label="Update Password" />
+                <Tab label="API Tokens" />
+                <Tab label="Books" />
+              </Tabs>
+            </Box>
+            
+            {tabValue === 0 && (
+              <UpdatePassword />
+            )}
+            
+            {tabValue === 1 && (
+              <Box>
+                {tokenError && (
+                  <Alert 
+                    severity="error" 
+                    sx={{ mb: 2 }}
+                    onClose={() => setTokenError(null)}
+                  >
+                    {tokenError}
+                  </Alert>
+                )}
+                
+                {/* API Token Creation Form */}
+                <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'background.paper' }}>
+                  <Typography variant="h6" gutterBottom>
+                    Create New API Token
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 'sm' }}>
+                    <TextField
+                      label="Token Name"
+                      value={tokenName}
+                      onChange={(e) => setTokenName(e.target.value)}
+                      fullWidth
+                      required
+                      size="small"
+                      helperText="Give your token a descriptive name for its intended use"
+                    />
+                    
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Expiration</InputLabel>
+                      <Select
+                        value={expiryOption}
+                        onChange={handleExpiryOptionChange}
+                        label="Expiration"
+                      >
+                        <MenuItem value="never">Never</MenuItem>
+                        <MenuItem value="30days">30 Days</MenuItem>
+                        <MenuItem value="90days">90 Days</MenuItem>
+                        <MenuItem value="1year">1 Year</MenuItem>
+                        <MenuItem value="custom">Custom Date</MenuItem>
+                      </Select>
+                    </FormControl>
+                    
+                    {expiryOption === 'custom' && (
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
+                          label="Expiry Date"
+                          value={expiryDate}
+                          onChange={(newDate) => setExpiryDate(newDate)}
+                          renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                          minDate={new Date()}
+                        />
+                      </LocalizationProvider>
+                    )}
+                    
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      onClick={handleCreateToken}
+                      sx={{ alignSelf: 'flex-start' }}
+                    >
+                      Create Token
+                    </Button>
+                  </Box>
+                </Paper>
+                
+                {/* Display newly created token */}
+                {showNewToken && newTokenValue && (
+                  <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'background.paper' }}>
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                      Token created successfully! Save this token now - you won't be able to see it again.
+                    </Alert>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <TextField
+                        value={newTokenValue}
+                        variant="outlined"
+                        fullWidth
+                        size="small"
+                        InputProps={{
+                          readOnly: true,
+                        }}
+                      />
+                      <IconButton 
+                        color="primary"
+                        onClick={() => copyTokenToClipboard()}
+                        sx={{ ml: 1 }}
+                      >
+                        <ContentCopyIcon />
+                      </IconButton>
+                    </Box>
+                    <Button 
+                      variant="outlined" 
+                      onClick={() => setShowNewToken(false)}
+                      size="small"
+                    >
+                      Close
+                    </Button>
+                  </Paper>
+                )}
+                
+                {/* Token List */}
+                <Typography variant="h6" gutterBottom>
+                  Your API Tokens
+                </Typography>
+                
+                {loadingTokens ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={24} />
+                  </Box>
+                ) : tokens.length === 0 ? (
+                  <Typography variant="body2" color="textSecondary">
+                    You haven't created any API tokens yet. API tokens allow you to access your data
+                    programmatically without having to log in through the web interface.
+                  </Typography>
+                ) : (
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table sx={{ minWidth: 650 }} size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell><strong>Name</strong></TableCell>
+                          <TableCell><strong>Created</strong></TableCell>
+                          <TableCell><strong>Last Used</strong></TableCell>
+                          <TableCell><strong>Expires</strong></TableCell>
+                          <TableCell><strong>Status</strong></TableCell>
+                          <TableCell><strong>Actions</strong></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {tokens.map((token) => (
+                          <TableRow key={token.id}>
+                            <TableCell>{token.name}</TableCell>
+                            <TableCell>
+                              {new Date(token.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              {token.last_used_at 
+                                ? new Date(token.last_used_at).toLocaleDateString()
+                                : 'Never used'}
+                            </TableCell>
+                            <TableCell>
+                              {token.expires_at 
+                                ? new Date(token.expires_at).toLocaleDateString()
+                                : 'Never'}
+                            </TableCell>
+                            <TableCell>
+                              {token.is_active 
+                                ? (token.expires_at && new Date(token.expires_at) < new Date() 
+                                  ? 'Expired' 
+                                  : 'Active')
+                                : 'Revoked'}
+                            </TableCell>
+                            <TableCell>
+                              <IconButton 
+                                color="error" 
+                                onClick={() => handleDeleteToken(token.id)}
+                                size="small"
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+                
+                <Box sx={{ mt: 3 }}>
+                  <Button 
+                    variant="outlined" 
+                    onClick={checkAuthStatus}
+                    size="small"
+                  >
+                    Test Current Auth Token
+                  </Button>
+                  <Button
+                    variant="text"
+                    onClick={fetchTokens}
+                    sx={{ ml: 2 }}
+                    size="small"
+                  >
+                    Refresh Token List
+                  </Button>
+                </Box>
+                
+                {/* Delete Confirmation Dialog */}
+                <Dialog
+                  open={deleteDialogOpen}
+                  onClose={() => setDeleteDialogOpen(false)}
+                >
+                  <DialogTitle>Delete Token</DialogTitle>
+                  <DialogContent>
+                    <DialogContentText>
+                      Are you sure you want to delete this API token? This action cannot be undone.
+                      Any applications using this token will no longer be able to access your account.
+                    </DialogContentText>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+                      Cancel
+                    </Button>
+                    <Button onClick={confirmDeleteToken} color="error">
+                      Delete
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </Box>
+            )}
+            
+            {tabValue === 2 && (
+              <BookManagement />
+            )}
+          </Paper>
+        </>
+      )}
     </Container>
   );
 };

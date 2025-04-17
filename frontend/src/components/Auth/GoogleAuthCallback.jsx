@@ -11,9 +11,12 @@ function GoogleAuthCallback({ setIsLoggedIn }) {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        console.log('Google Auth Callback - Location:', location);
         // Parse the URL search params to get the token
         const params = new URLSearchParams(location.search);
         const token = params.get('token');
+        
+        console.log('Google Auth Callback - Token present:', !!token);
 
         if (!token) {
           setError('No authentication token received from Google');
@@ -22,16 +25,21 @@ function GoogleAuthCallback({ setIsLoggedIn }) {
         }
 
         // Store the token
+        console.log('Storing token in localStorage');
         localStorage.setItem('token', token);
+        console.log('Token stored successfully:', !!localStorage.getItem('token'));
         
         // Update login state
+        console.log('Setting isLoggedIn state to true');
         setIsLoggedIn(true);
         
         // Dispatch storage event for other tabs
+        console.log('Dispatching storage event');
         window.dispatchEvent(new Event('storage'));
         
-        // Redirect to the dashboard
-        navigate('/');
+        // Redirect to the dashboard with a full page reload
+        console.log('Navigating to dashboard with full reload');
+        window.location.href = '/';
       } catch (err) {
         console.error('Error processing Google authentication:', err);
         setError('Failed to complete Google authentication');

@@ -1,5 +1,5 @@
 import pytest
-from app.models import User, Transaction, Account
+from app.models import User, Transaction, Account, Book
 from datetime import date
 
 
@@ -18,16 +18,34 @@ def user(db_session):
     return user
 
 
+@pytest.fixture
+def book(db_session, user):
+    """Create a test book."""
+    book = Book(
+        user_id=user.id,
+        name="Test Book"
+    )
+    db_session.add(book)
+    db_session.commit()
+    
+    # Set as active book
+    user.active_book_id = book.id
+    db_session.commit()
+    
+    return book
+
+
 def test_user_creation(db_session, user):
     """Test creating a user."""
     assert user.email == "test@example.com"
     assert user.check_password("password123")
 
 
-def test_transaction_creation(db_session, user):
+def test_transaction_creation(db_session, user, book):
     """Test creating a transaction."""
     transaction = Transaction(
         user_id=user.id,
+        book_id=book.id,
         date=date(2024, 1, 1),
         description="Test transaction",
         payee="Test payee",
@@ -43,10 +61,11 @@ def test_transaction_creation(db_session, user):
     assert transaction.amount == 100.0
 
 
-def test_account_creation(db_session, user):
+def test_account_creation(db_session, user, book):
     """Test creating an account."""
     account = Account(
         user_id=user.id,
+        book_id=book.id,
         name="Test Account",
         currency="INR",
         balance=1000.0,
@@ -60,10 +79,11 @@ def test_account_creation(db_session, user):
     assert account.balance == 1000.0
 
 
-def test_user_transactions_relationship(db_session, user):
+def test_user_transactions_relationship(db_session, user, book):
     """Test the relationship between a user and their transactions."""
     transaction = Transaction(
         user_id=user.id,
+        book_id=book.id,
         date=date(2024, 1, 1),
         description="Test transaction",
         payee="Test payee",
@@ -80,10 +100,11 @@ def test_user_transactions_relationship(db_session, user):
     assert transaction.user.email == "test@example.com"
 
 
-def test_user_accounts_relationship(db_session, user):
+def test_user_accounts_relationship(db_session, user, book):
     """Test the relationship between a user and their accounts."""
     account = Account(
         user_id=user.id,
+        book_id=book.id,
         name="Test Account",
         currency="INR",
         balance=1000.0,

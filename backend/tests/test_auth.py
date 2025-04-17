@@ -326,3 +326,47 @@ def test_google_callback_existing_user(client, app, mocker):
         assert user.id == existing_user_id
         assert user.google_id == "google-user-id"
         assert user.picture == "https://example.com/photo.jpg"
+
+
+def test_google_token_auth(client, app, mocker):
+    """Test the google_token_auth endpoint for direct token authentication."""
+    # Mock verify_oauth_token function
+    mock_verify_oauth_token = mocker.patch(
+        "app.auth.verify_oauth_token",
+        return_value={
+            "sub": "google-test-id",
+            "email": "google-token@example.com",
+            "picture": "https://example.com/token-photo.jpg",
+        },
+    )
+
+    # Test the direct token authentication endpoint
+    response = client.post(
+        "/api/v1/auth/google", json={"token": "fake-token"}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "token" in data
+    assert "user" in data
+    assert "message" in data
+    assert data["message"] == "Login successful"
+
+    # Verify user was created
+    with app.app_context():
+        user = User.query.filter_by(email="google-token@example.com").first()
+        assert user is not None
+        assert user.is_active
+        assert user.google_id == "google-test-id"
+        assert user.picture == "https://example.com/token-photo.jpg"
+
+        # Verify default book was created
+        from app.models import Book
+        book = Book.query.filter_by(user_id=user.id).first()
+        assert book is not None
+        assert book.name == "Personal Finances" 
+        
+        # Verify active book was set
+        assert user.active_book_id == book.id
+
+    # Verify the token verification was called with the right argument
+    mock_verify_oauth_token.assert_called_once_with("fake-token")

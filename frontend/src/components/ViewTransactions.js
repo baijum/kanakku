@@ -159,10 +159,9 @@ function ViewTransactions() {
       if (response.data && Array.isArray(response.data.preambles)) {
         setPreambles(response.data.preambles);
         
-        // Find and set default preamble if available
-        const defaultPreamble = response.data.preambles.find(p => p.is_default);
-        if (defaultPreamble) {
-          setSelectedPreamble(defaultPreamble.id.toString());
+        // Set first preamble if available
+        if (response.data.preambles.length > 0) {
+          setSelectedPreamble(response.data.preambles[0].id.toString());
         }
       }
     } catch (error) {
@@ -510,7 +509,7 @@ function ViewTransactions() {
               </MenuItem>
               {preambles.map((preamble) => (
                 <MenuItem key={preamble.id} value={preamble.id.toString()}>
-                  {preamble.name} {preamble.is_default ? '(Default)' : ''}
+                  {preamble.name}
                 </MenuItem>
               ))}
             </Select>

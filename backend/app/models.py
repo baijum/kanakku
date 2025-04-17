@@ -17,12 +17,48 @@ from .extensions import db
 import secrets
 
 
+class Book(db.Model):
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relationships
+    user = relationship("User", back_populates="books", foreign_keys=[user_id])
+    accounts = relationship(
+        "Account", back_populates="book", lazy=True, cascade="all, delete-orphan"
+    )
+    transactions = relationship(
+        "Transaction", back_populates="book", lazy=True, cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="uq_book_user_name"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+
 class User(UserMixin, db.Model):
     id = Column(Integer, primary_key=True)
-    email = Column(String(120), unique=True, nullable=False)
-    password_hash = Column(String(128))
-    is_active = Column(db.Boolean, default=False)
-    is_admin = Column(db.Boolean, default=False, nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
+    password_hash = Column(String(255))
+    name = Column(String(100))
+    active_book_id = Column(Integer, ForeignKey("book.id"), nullable=True)
+    is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime,
@@ -51,6 +87,8 @@ class User(UserMixin, db.Model):
     api_tokens = relationship(
         "ApiToken", backref="user", lazy=True, foreign_keys="ApiToken.user_id"
     )
+    books = relationship("Book", back_populates="user", foreign_keys="Book.user_id")
+    active_book = relationship("Book", foreign_keys=[active_book_id])
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -112,6 +150,7 @@ class User(UserMixin, db.Model):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "picture": self.picture,
+            "active_book_id": self.active_book_id,
         }
 
     def __repr__(self):
@@ -121,6 +160,7 @@ class User(UserMixin, db.Model):
 class Transaction(db.Model):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
     account_id = Column(Integer, ForeignKey("account.id"))
     date = Column(Date, nullable=False)
     description = Column(String(200), nullable=False)
@@ -130,7 +170,8 @@ class Transaction(db.Model):
     status = Column(String(1), nullable=True)  # * for cleared, ! for pending
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    # Relationships already defined via backref in User and Account models
+    # Relationships
+    book = relationship("Book", back_populates="transactions")
 
     @staticmethod
     def from_dict(data):
@@ -143,6 +184,7 @@ class Transaction(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "book_id": self.book_id,
             "account_id": self.account_id,
             "date": self.date.isoformat(),
             "description": self.description,
@@ -156,18 +198,25 @@ class Transaction(db.Model):
 class Account(db.Model):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
     name = Column(String(100), nullable=False)
     description = Column(String(200))
     currency = Column(String(3), default="INR")
     balance = Column(Float, default=0.0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    # Relationships already defined via backref in User model
+    # Relationships
+    book = relationship("Book", back_populates="accounts")
+
+    __table_args__ = (
+        UniqueConstraint("book_id", "name", name="uq_account_book_name"),
+    )
 
     def to_dict(self):
         return {
             "id": self.id,
             "user_id": self.user_id,
+            "book_id": self.book_id,
             "name": self.name,
             "description": self.description,
             "currency": self.currency,

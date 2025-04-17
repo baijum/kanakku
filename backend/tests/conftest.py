@@ -4,7 +4,7 @@ from datetime import date
 from flask_jwt_extended import create_access_token
 from app import create_app
 from app.extensions import db
-from app.models import User, Transaction, Account
+from app.models import User, Transaction, Account, Book
 
 
 @pytest.fixture(scope="function")
@@ -72,6 +72,18 @@ def user(app, db_session):
     db_session.add(user)
     db_session.commit()
     user_id = user.id  # Get ID after commit
+
+    # Create a default book for the user
+    book = Book(
+        user_id=user.id,
+        name="Personal Finances"  # Match the name in the auth module
+    )
+    db_session.add(book)
+    db_session.commit()
+    
+    # Set as active book
+    user.active_book_id = book.id
+    db_session.commit()
 
     # Fetch the user using the session to ensure it's attached
     attached_user = db_session.get(User, user_id)
@@ -169,15 +181,43 @@ def transaction(app, db_session, user):
     if existing_tx:
         return existing_tx
 
+    # Get or create a book for the user
+    book = db_session.query(Book).filter_by(user_id=user.id).first()
+    if not book:
+        # Create a default book
+        book = Book(
+            user_id=user.id,
+            name="Personal Finances"  # Match the name in the user fixture
+        )
+        db_session.add(book)
+        db_session.commit()
+        
+        # Set as active book for user
+        user.active_book_id = book.id
+        db_session.commit()
+    
+    # Check if there's an account for this transaction
+    account = db_session.query(Account).filter_by(user_id=user.id, book_id=book.id).first()
+    if not account:
+        account = Account(
+            user_id=user.id,
+            book_id=book.id,
+            name="Test Account",
+            balance=1000.0,
+            currency="INR"
+        )
+        db_session.add(account)
+        db_session.commit()
+
     transaction = Transaction(
         user_id=user.id,
+        book_id=book.id,
         date=date(2024, 1, 1),
         description="Test transaction",
         payee="Test payee",
         amount=100.0,
         currency="INR",
-        # Ensure account_id is set if needed, maybe link to account fixture?
-        # account_id=account.id # Example if account fixture is also used
+        account_id=account.id  # Set the account ID
     )
     db_session.add(transaction)
     db_session.commit()
@@ -200,12 +240,31 @@ def account(app, db_session, user):
     if existing_account:
         return existing_account
 
-    # Create a new account
+    # Create a default book for testing first
+    # Check if user already has a book
+    existing_book = db_session.query(Book).filter_by(user_id=user.id).first()
+    if existing_book:
+        book = existing_book
+    else:
+        # Create a new book
+        book = Book(
+            user_id=user.id,
+            name="Personal Finances"  # Match the user fixture's book name
+        )
+        db_session.add(book)
+        db_session.commit()
+        
+        # Set as active book for user
+        user.active_book_id = book.id
+        db_session.commit()
+
+    # Create a new account with book_id
     account = Account(
         user_id=user.id,
+        book_id=book.id,
         name="Test Account",
-        currency="INR",
         balance=1000.0,
+        currency="INR"
     )
     db_session.add(account)
     db_session.commit()

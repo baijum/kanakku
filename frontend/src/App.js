@@ -45,6 +45,7 @@ import ResetPassword from './components/Auth/ResetPassword';
 import Terms from './components/Pages/Terms';
 import Privacy from './components/Pages/Privacy';
 import Footer from './components/Footer';
+import BookSelector from './components/Books/BookSelector';
 import axiosInstance from './api/axiosInstance';
 import { createBrowserHistory } from 'history';
 import logo from './logo.svg';
@@ -93,6 +94,13 @@ function App() {
     const validateToken = async () => {
       const token = localStorage.getItem('token');
       console.log('Auth check - Token found in localStorage:', !!token);
+      
+      // Skip validation if on Google auth callback page as it will handle its own authentication
+      if (window.location.pathname === '/google-auth-callback') {
+        console.log('On Google auth callback page, skipping token validation');
+        setAuthLoading(false);
+        return;
+      }
 
       if (token) {
         try {
@@ -238,6 +246,13 @@ function App() {
                   Kanakku
                 </Typography>
               </Box>
+              
+              {isLoggedIn && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+                  <BookSelector />
+                </Box>
+              )}
+              
               {isLoggedIn ? (
                 <>
                   <IconButton
@@ -251,22 +266,11 @@ function App() {
                   <Menu
                     id="user-menu"
                     anchorEl={userMenuAnchorEl}
+                    keepMounted
                     open={Boolean(userMenuAnchorEl)}
                     onClose={handleUserMenuClose}
-                    anchorOrigin={{
-                      vertical: 'bottom',
-                      horizontal: 'right',
-                    }}
-                    transformOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
-                    }}
                   >
-                    <MenuItem 
-                      component={RouterLink} 
-                      to="/profile" 
-                      onClick={handleUserMenuClose}
-                    >
+                    <MenuItem component={RouterLink} to="/profile" onClick={handleUserMenuClose}>
                       <ListItemIcon>
                         <SettingsIcon fontSize="small" />
                       </ListItemIcon>
@@ -282,23 +286,9 @@ function App() {
                   </Menu>
                 </>
               ) : (
-                <>
-                  <Button 
-                    color="inherit" 
-                    component={RouterLink} 
-                    to="/login"
-                    sx={{ mr: 1 }}
-                  >
-                    Login
-                  </Button>
-                  <Button 
-                    color="inherit" 
-                    component={RouterLink} 
-                    to="/register"
-                  >
-                    Register
-                  </Button>
-                </>
+                <Button color="inherit" component={RouterLink} to="/login">
+                  Login
+                </Button>
               )}
             </Toolbar>
           </AppBar>
