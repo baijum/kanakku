@@ -52,7 +52,23 @@ def test_get_balance(authenticated_client, user, app):
     data = response.get_json()
     balance_lines = data["balance"].split("\n")
     assert "Assets:Bank" in data["balance"]
-    assert "Checking" not in data["balance"]
+    assert "Checking" not in data["balance"]  # Account names should be truncated to the specified depth
+    
+    # Test with depth=1 to verify aggregation of accounts
+    response = authenticated_client.get("/api/v1/reports/balance?depth=1")
+    assert response.status_code == 200
+    data = response.get_json()
+    balance_lines = data["balance"].split("\n")
+    
+    # Should aggregate to just two top-level accounts: Assets and Liabilities
+    assert len(balance_lines) == 2
+    
+    # Find the Assets line 
+    assets_line = next((line for line in balance_lines if line.startswith("Assets")), None)
+    assert assets_line is not None
+    
+    # Check that balance is aggregated (1000 + 2000 = 3000)
+    assert "3000.00 INR" in assets_line
 
 
 def test_get_register(authenticated_client, user, app):
@@ -503,3 +519,69 @@ def test_report_date_range(authenticated_client, user, app):
     assert "9000.00" in statement  # Total income (5000 + 4000)
     assert "Old Salary" not in statement
     assert "4000.00" not in statement
+
+
+def test_get_balance_with_all_top_level_accounts(authenticated_client, user, app):
+    """Test that the balance report includes all top-level accounts with the depth parameter"""
+    # Create test accounts of different types
+    with app.app_context():
+        accounts = [
+            # Assets accounts
+            Account(
+                user_id=user.id,
+                name="Assets:Bank:Checking",
+                balance=1000.0,
+                currency="INR",
+            ),
+            # Liabilities accounts
+            Account(
+                user_id=user.id,
+                name="Liabilities:Credit Card",
+                balance=-500.0,
+                currency="INR",
+            ),
+            # Income accounts
+            Account(
+                user_id=user.id,
+                name="Income:Salary",
+                balance=-5000.0,
+                currency="INR",
+            ),
+            # Expenses accounts
+            Account(
+                user_id=user.id,
+                name="Expenses:Groceries",
+                balance=100.0,
+                currency="INR",
+            ),
+            # But no Equity accounts
+        ]
+        db.session.add_all(accounts)
+        db.session.commit()
+
+    # Test with depth=1 to get top-level accounts
+    response = authenticated_client.get("/api/v1/reports/balance?depth=1")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "balance" in data
+    
+    # The report should contain all top-level account types that have accounts
+    balance_lines = data["balance"].split("\n")
+    
+    # Get account names from the report
+    account_names = [line.split()[0].strip() for line in balance_lines if line.strip()]
+    
+    # Verify all top-level account types with accounts are included
+    assert "Assets" in account_names
+    assert "Liabilities" in account_names
+    assert "Income" in account_names
+    assert "Expenses" in account_names
+    
+    # Check balances are properly aggregated at the top level
+    assets_line = next((line for line in balance_lines if line.startswith("Assets")), None)
+    assert assets_line is not None
+    assert "1000.00 INR" in assets_line
+    
+    expenses_line = next((line for line in balance_lines if line.startswith("Expenses")), None)
+    assert expenses_line is not None
+    assert "100.00 INR" in expenses_line
