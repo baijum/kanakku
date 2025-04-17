@@ -19,7 +19,6 @@ function EditAccount() {
   const navigate = useNavigate();
   
   const [accountName, setAccountName] = useState('');
-  const [accountType, setAccountType] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -49,7 +48,6 @@ function EditAccount() {
           
           if (response.data) {
             setAccountName(response.data.name || '');
-            setAccountType(response.data.type || '');
             setDescription(response.data.description || '');
             setLoading(false);
             return;
@@ -70,7 +68,6 @@ function EditAccount() {
             const accountInfo = detailsResponse.data.find(a => a.id === parseInt(id));
             if (accountInfo) {
               setAccountName(accountInfo.name || '');
-              setAccountType(accountInfo.type || '');
               setDescription(accountInfo.description || '');
               setLoading(false);
               return;
@@ -92,11 +89,9 @@ function EditAccount() {
             const accountInfo = {
               id: id,
               name: accountsResponse.data.accounts[accountIndex],
-              type: '',
               description: ''
             };
             setAccountName(accountInfo.name);
-            setAccountType('');
             setDescription('');
           } else {
             throw new Error('Account not found');
@@ -125,14 +120,13 @@ function EditAccount() {
     setError('');
     setSuccess('');
 
-    if (!accountName || !accountType) {
-      setError('Account Name and Type are required.');
+    if (!accountName) {
+      setError('Account Name is required.');
       return;
     }
 
     const updatedAccount = {
       name: accountName,
-      type: accountType,
       description: description,
     };
 
@@ -211,15 +205,6 @@ function EditAccount() {
             value={accountName}
             onChange={(e) => setAccountName(e.target.value)}
             autoFocus
-          />
-          <TextField
-            required
-            fullWidth
-            id="account-type"
-            label="Account Type"
-            name="accountType"
-            value={accountType}
-            onChange={(e) => setAccountType(e.target.value)}
           />
           <TextField
             fullWidth

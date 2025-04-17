@@ -162,8 +162,7 @@ function EditTransaction() {
         setAccounts(detailsResponse.data.map(account => ({
           id: account.id,
           name: account.name,
-          type: account.type,
-          fullName: `${account.name} (${account.type})`
+          fullName: account.name
         })));
         return;
       }

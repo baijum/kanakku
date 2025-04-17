@@ -43,7 +43,7 @@ def test_get_transactions(authenticated_client, mock_ledger_command):
 def test_add_transaction(authenticated_client, mock_ledger_command):
     """Test adding a transaction."""
     # First create an account
-    account_data = {"name": "Assets:Checking", "type": "asset", "currency": "INR"}
+    account_data = {"name": "Assets:Checking", "currency": "INR"}
     account_response = authenticated_client.post("/api/accounts", json=account_data)
     assert account_response.status_code == 201
 
@@ -78,7 +78,7 @@ def test_add_account(authenticated_client):
     """Test adding an account."""
     response = authenticated_client.post(
         "/api/accounts",
-        json={"name": "Test Account", "type": "asset", "currency": "INR"},
+        json={"name": "Test Account", "currency": "INR"},
     )
     assert response.status_code == 201
     assert "Test Account" in response.json["account"]["name"]

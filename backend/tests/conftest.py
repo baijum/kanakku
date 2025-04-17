@@ -200,10 +200,10 @@ def account(app, db_session, user):
     if existing_account:
         return existing_account
 
+    # Create a new account
     account = Account(
         user_id=user.id,
         name="Test Account",
-        type="asset",
         currency="INR",
         balance=1000.0,
     )

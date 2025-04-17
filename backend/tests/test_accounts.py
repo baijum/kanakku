@@ -8,14 +8,12 @@ def test_get_accounts(authenticated_client, user, app):
         account1 = Account(
             user_id=user.id,
             name="Test Account 1",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
         account2 = Account(
             user_id=user.id,
             name="Test Account 2",
-            type="liability",
             currency="INR",
             balance=2000.0,
         )
@@ -37,10 +35,8 @@ def test_get_accounts(authenticated_client, user, app):
     data = response.get_json()
     assert len(data) == 2
     assert data[0]["name"] == "Test Account 1"
-    assert data[0]["type"] == "asset"
     assert data[0]["balance"] == 1000.0
     assert data[1]["name"] == "Test Account 2"
-    assert data[1]["type"] == "liability"
     assert data[1]["balance"] == 2000.0
 
 
@@ -50,7 +46,6 @@ def test_create_account(authenticated_client, user):
         "/api/accounts",
         json={
             "name": "New Account",
-            "type": "asset",
             "currency": "USD",
             "balance": 500.0,
         },
@@ -60,20 +55,19 @@ def test_create_account(authenticated_client, user):
     assert "message" in data
     assert "account" in data
     assert data["account"]["name"] == "New Account"
-    assert data["account"]["type"] == "asset"
     assert data["account"]["currency"] == "USD"
     assert data["account"]["balance"] == 500.0
 
     # Test creating account with missing fields
     response = authenticated_client.post(
-        "/api/accounts", json={"name": "Incomplete Account"}
+        "/api/accounts", json={}
     )
     assert response.status_code == 400
     assert "error" in response.get_json()
 
     # Test creating duplicate account
     response = authenticated_client.post(
-        "/api/accounts", json={"name": "New Account", "type": "asset"}
+        "/api/accounts", json={"name": "New Account"}
     )
     assert response.status_code == 400
     assert "error" in response.get_json()
@@ -85,7 +79,6 @@ def test_get_specific_account(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Test Account",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
@@ -98,7 +91,6 @@ def test_get_specific_account(authenticated_client, user, app):
     assert response.status_code == 200
     data = response.get_json()
     assert data["name"] == "Test Account"
-    assert data["type"] == "asset"
     assert data["balance"] == 1000.0
 
     # Test getting non-existent account
@@ -112,7 +104,6 @@ def test_update_account(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Test Account",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
@@ -125,7 +116,6 @@ def test_update_account(authenticated_client, user, app):
         f"/api/accounts/{account_id}",
         json={
             "name": "Updated Account",
-            "type": "liability",
             "currency": "USD",
             "balance": 2000.0,
         },
@@ -133,7 +123,6 @@ def test_update_account(authenticated_client, user, app):
     assert response.status_code == 200
     data = response.get_json()
     assert data["account"]["name"] == "Updated Account"
-    assert data["account"]["type"] == "liability"
     assert data["account"]["currency"] == "USD"
     assert data["account"]["balance"] == 2000.0
 
@@ -144,7 +133,7 @@ def test_update_account(authenticated_client, user, app):
     assert response.status_code == 200
     data = response.get_json()
     assert data["account"]["name"] == "Partially Updated Account"
-    assert data["account"]["type"] == "liability"  # unchanged
+    assert data["account"]["currency"] == "USD"  # unchanged
 
     # Test updating non-existent account
     response = authenticated_client.put(
@@ -159,7 +148,6 @@ def test_delete_account(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Test Account",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
@@ -188,7 +176,6 @@ def test_delete_account_with_transactions(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Test Account",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )

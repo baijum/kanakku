@@ -1,5 +1,6 @@
 from flask import Flask, request, g, has_request_context
 from flask_cors import CORS
+from flask_migrate import Migrate
 import logging
 import uuid
 import sys
@@ -93,6 +94,9 @@ def create_app(config_name="default"):
     jwt.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)
+    
+    # Initialize Flask-Migrate
+    migrate = Migrate(app, db)
 
     # Setup logging after config is loaded
     setup_logging(app)

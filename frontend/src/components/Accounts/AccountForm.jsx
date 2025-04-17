@@ -5,7 +5,6 @@ import axiosInstance from '../../api/axiosInstance'; // Import the configured in
 
 function AccountForm() {
   const [accountName, setAccountName] = useState('');
-  const [accountType, setAccountType] = useState(''); // Consider using a Select component for predefined types
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -15,14 +14,13 @@ function AccountForm() {
     setError('');
     setSuccess('');
 
-    if (!accountName || !accountType) {
-      setError('Account Name and Type are required.');
+    if (!accountName) {
+      setError('Account Name is required.');
       return;
     }
 
     const newAccount = {
       name: accountName,
-      type: accountType,
       description: description,
     };
 
@@ -41,7 +39,6 @@ function AccountForm() {
         setSuccess(`Account '${accountName}' created successfully!`);
         // Clear the form
         setAccountName('');
-        setAccountType('');
         setDescription('');
         // Optionally: trigger a refresh of an account list or navigate
       } else {
@@ -86,15 +83,6 @@ function AccountForm() {
         autoFocus
       />
       <TextField
-        required
-        fullWidth
-        id="account-type"
-        label="Account Type (e.g., Assets, Liabilities, Income)"
-        name="accountType"
-        value={accountType}
-        onChange={(e) => setAccountType(e.target.value)}
-      />
-      <TextField
         fullWidth
         id="description"
         label="Description (Optional)"
@@ -118,6 +106,7 @@ function AccountForm() {
         type="submit"
         fullWidth
         variant="contained"
+        color="primary"
         sx={{ mt: 2 }}
       >
         Create Account

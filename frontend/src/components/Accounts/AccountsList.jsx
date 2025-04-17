@@ -63,7 +63,6 @@ function AccountsList() {
         const accountObjects = accountsResponse.data.accounts.map((name, idx) => ({
           id: idx + 1,  // Temporary ID for rendering
           name: name,
-          type: '-',    // Placeholder
           description: '' // Placeholder
         }));
         setAccounts(accountObjects);
@@ -174,7 +173,6 @@ function AccountsList() {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Type</TableCell>
               <TableCell>Description</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -184,7 +182,6 @@ function AccountsList() {
               accounts.map((account, index) => (
                 <TableRow key={account.id || index}>
                   <TableCell>{account.name || ''}</TableCell>
-                  <TableCell>{account.type || '-'}</TableCell>
                   <TableCell>{account.description || ''}</TableCell>
                   <TableCell>
                     <IconButton 
@@ -206,7 +203,7 @@ function AccountsList() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={3} align="center">
                   No accounts found.
                 </TableCell>
               </TableRow>

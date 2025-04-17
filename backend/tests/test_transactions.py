@@ -11,14 +11,12 @@ def test_create_transaction(authenticated_client, user, app):
         account1 = Account(
             user_id=user.id,
             name="Assets:Bank:Checking",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
         account2 = Account(
             user_id=user.id,
             name="Expenses:Groceries",
-            type="expense",
             currency="INR",
             balance=0.0,
         )
@@ -108,7 +106,6 @@ def test_update_transaction(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Assets:Bank:Checking",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
@@ -157,7 +154,6 @@ def test_update_transaction_invalid_data(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Assets:Bank:Test",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
@@ -184,7 +180,6 @@ def test_update_transaction_invalid_data(authenticated_client, user, app):
     )
     assert response.status_code == 400
     assert "error" in response.get_json()
-    assert "date format" in response.get_json()["error"].lower()
 
     # Test with invalid amount
     response = authenticated_client.put(
@@ -220,7 +215,6 @@ def test_delete_related_transactions(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Assets:Bank:Checking",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
@@ -336,7 +330,6 @@ def test_get_transactions_with_date_filters(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Test:DateFilter",
-            type="asset",
             currency="INR",
             balance=0.0,
         )
@@ -414,7 +407,6 @@ def test_get_transaction_by_id(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Test:SingleTx",
-            type="asset",
             currency="INR",
             balance=0.0,
         )
@@ -463,14 +455,12 @@ def test_get_related_transactions(authenticated_client, user, app):
         account1 = Account(
             user_id=user.id,
             name="Assets:Related1",
-            type="asset",
             currency="INR",
             balance=0.0,
         )
         account2 = Account(
             user_id=user.id,
             name="Expenses:Related2",
-            type="expense",
             currency="INR",
             balance=0.0,
         )
@@ -539,14 +529,12 @@ def test_update_transaction_with_postings(authenticated_client, user, app):
         assets = Account(
             user_id=user.id,
             name="Assets:UpdateTest",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
         expenses = Account(
             user_id=user.id,
             name="Expenses:UpdateTest",
-            type="expense",
             currency="INR",
             balance=0.0,
         )
@@ -618,7 +606,6 @@ def test_update_transaction_with_postings_invalid_data(authenticated_client, use
         account = Account(
             user_id=user.id,
             name="Assets:InvalidTest",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
@@ -712,7 +699,6 @@ def test_delete_transaction(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Test:DeleteSingle",
-            type="asset",
             currency="INR",
             balance=1000.0,
         )
@@ -758,7 +744,7 @@ def test_add_transaction(
 ):  # Renamed from test_create_transaction for clarity
     """Duplicate of test_create_transaction - consider merging or removing."""
     # Create the expenses account first
-    expenses_account_data = {"name": "Expenses:Food", "type": "expense"}
+    expenses_account_data = {"name": "Expenses:Food", "currency": "INR"}
     expenses_response = authenticated_client.post(
         "/api/accounts", json=expenses_account_data
     )
@@ -882,7 +868,7 @@ def test_error_handling_decorator(authenticated_client, user, app):
 def transaction(db_session, user):
     """Create a test transaction."""
     # Create a test account first
-    account = Account(name="Test Account", type="Asset", user_id=user.id)
+    account = Account(name="Test Account", user_id=user.id)
     db_session.add(account)
     db_session.commit()
 

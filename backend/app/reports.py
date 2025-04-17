@@ -15,7 +15,7 @@ def get_balance():
 
         # Build base query to get account balances
         query = db.session.query(
-            Account.name, Account.type, Account.currency, Account.balance
+            Account.name, Account.currency, Account.balance
         ).filter(Account.user_id == g.current_user.id)
 
         # Filter by account name if provided
@@ -114,10 +114,10 @@ def get_balance_report():
         # Query all accounts and their balances
         accounts = (
             db.session.query(
-                Account.name, Account.type, Account.currency, Account.balance
+                Account.name, Account.currency, Account.balance
             )
             .filter(Account.user_id == g.current_user.id)
-            .order_by(Account.type, Account.name)
+            .order_by(Account.name)
             .all()
         )
 
@@ -127,8 +127,11 @@ def get_balance_report():
         total_by_type = {}
 
         for acct in accounts:
+            # Extract type from account name (first part before colon)
+            account_type = acct.name.split(":")[0] if ":" in acct.name else "Other"
+            
             # Add type header if it's a new type
-            if acct.type != current_type:
+            if account_type != current_type:
                 if current_type is not None:
                     # Add subtotal for previous type
                     for currency, amount in total_by_type.items():
@@ -138,7 +141,7 @@ def get_balance_report():
                             result.append(f"    {'':<38} {amount:.2f} {currency:>3}")
                     result.append("")  # Empty line between sections
 
-                current_type = acct.type
+                current_type = account_type
                 result.append(f"{current_type}")
                 total_by_type = {}
 
@@ -179,7 +182,7 @@ def get_income_statement():
         # Query Income accounts
         income = (
             db.session.query(Account.name, Account.currency, Account.balance)
-            .filter(Account.user_id == g.current_user.id, Account.type == "Income")
+            .filter(Account.user_id == g.current_user.id, Account.name.like("Income:%"))
             .order_by(Account.name)
             .all()
         )
@@ -187,7 +190,7 @@ def get_income_statement():
         # Query Expense accounts
         expenses = (
             db.session.query(Account.name, Account.currency, Account.balance)
-            .filter(Account.user_id == g.current_user.id, Account.type == "Expenses")
+            .filter(Account.user_id == g.current_user.id, Account.name.like("Expenses:%"))
             .order_by(Account.name)
             .all()
         )

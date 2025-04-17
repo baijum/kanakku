@@ -44,7 +44,6 @@ def account(app, db_session):
         account = Account(
             user_id=user.id,
             name="Test Account",
-            type="asset",
             balance=1000.00,
             currency="INR",
         )
@@ -67,7 +66,6 @@ def test_get_transactions(authenticated_client, app, db_session, user):
             test_account = Account(
                 user_id=user.id,
                 name="Test Account",
-                type="asset",
                 balance=1000.0,
                 currency="INR",
             )
@@ -114,18 +112,27 @@ def test_get_transactions(authenticated_client, app, db_session, user):
 
 
 def test_create_account(authenticated_client, user, db_session):
-    """Test creating a new account."""
+    """Test creating an account via the API."""
+    # GIVEN a user and form data for a new account
+    account_data = {
+        "name": "Assets:Savings",
+        "currency": "INR",
+        "description": "A savings account"
+    }
+
+    # WHEN I submit a POST request with valid account data
+    response = authenticated_client.post("/api/accounts", json=account_data)
+
+    # THEN the response should indicate success
+    assert response.status_code == 201, f"Failed to create account: {response.data}"
+    data = response.get_json()
+    assert "account" in data
+    assert data["account"]["name"] == "Assets:Savings"
+
+    # AND the account should exist in the database
     with db_session.no_autoflush:
-        account_data = {"name": "Assets:Savings", "type": "asset", "currency": "INR"}
-
-        response = authenticated_client.post("/api/accounts", json=account_data)
-        assert response.status_code == 201
-        response_data = response.get_json()
-        assert "message" in response_data
-        assert "created successfully" in response_data["message"].lower()
-
-        # Verify account was actually created in DB for this user
-        attached_user = db_session.get(User, user.id)  # Ensure user is attached
+        # Fetch user within this session context
+        attached_user = db_session.get(User, user.id)
         if not attached_user:
             pytest.fail("User fixture could not be re-fetched in session")
         new_account = (
@@ -134,7 +141,6 @@ def test_create_account(authenticated_client, user, db_session):
             .first()
         )
         assert new_account is not None
-        assert new_account.type == "asset"
 
 
 def test_get_transactions_ledger_format(authenticated_client, app, db_session, user):
@@ -154,9 +160,8 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
         if not test_account:
             # If the account doesn't exist (e.g., fixture setup issue), create it here
             test_account = Account(
-                user_id=attached_user.id,
+                user_id=user.id,
                 name="Test Account",
-                type="asset",
                 balance=1000.0,
                 currency="INR",
             )
@@ -165,7 +170,7 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
             # Re-fetch after commit
             test_account = (
                 db_session.query(Account)
-                .filter_by(user_id=attached_user.id, name="Test Account")
+                .filter_by(user_id=user.id, name="Test Account")
                 .first()
             )
             if not test_account:

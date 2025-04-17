@@ -9,23 +9,20 @@ def test_get_balance(authenticated_client, user, app):
             Account(
                 user_id=user.id,
                 name="Assets:Bank:Checking",
-                type="asset",
-                currency="INR",
                 balance=1000.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Assets:Bank:Savings",
-                type="asset",
-                currency="INR",
                 balance=2000.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Liabilities:Credit Card",
-                type="liability",
-                currency="INR",
                 balance=-500.0,
+                currency="INR",
             ),
         ]
         db.session.add_all(accounts)
@@ -64,9 +61,8 @@ def test_get_register(authenticated_client, user, app):
         account = Account(
             user_id=user.id,
             name="Assets:Bank:Checking",
-            type="asset",
-            currency="INR",
             balance=1000.0,
+            currency="INR",
         )
         db.session.add(account)
         db.session.commit()
@@ -127,37 +123,32 @@ def test_get_balance_report(authenticated_client, user, app):
             Account(
                 user_id=user.id,
                 name="Assets:Bank:Checking",
-                type="asset",
-                currency="INR",
                 balance=1000.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Assets:Bank:Savings",
-                type="asset",
-                currency="INR",
                 balance=2000.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Liabilities:Credit Card",
-                type="liability",
-                currency="INR",
                 balance=-500.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Income:Salary",
-                type="income",
-                currency="INR",
                 balance=-5000.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Expenses:Groceries",
-                type="expense",
-                currency="INR",
                 balance=100.0,
+                currency="INR",
             ),
         ]
         db.session.add_all(accounts)
@@ -170,11 +161,13 @@ def test_get_balance_report(authenticated_client, user, app):
     report_lines = data["balance_report"].split("\n")
 
     # Verify report structure
-    assert "asset" in report_lines[0].lower()
+    assert "assets" in data["balance_report"].lower()
+    assert "expenses" in data["balance_report"].lower()
+    assert "income" in data["balance_report"].lower()
+    assert "liabilities" in data["balance_report"].lower()
     assert "Assets:Bank:Checking" in data["balance_report"]
     assert "Assets:Bank:Savings" in data["balance_report"]
     assert "₹3000.00" in data["balance_report"]  # Total assets
-    assert "liability" in data["balance_report"].lower()
     assert "Liabilities:Credit Card" in data["balance_report"]
     assert "₹-500.00" in data["balance_report"]
 
@@ -186,30 +179,26 @@ def test_get_income_statement(authenticated_client, user, app):
             Account(
                 user_id=user.id,
                 name="Income:Salary",
-                type="Income",
-                currency="INR",
                 balance=-5000.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Income:Interest",
-                type="Income",
-                currency="INR",
                 balance=-100.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Expenses:Groceries",
-                type="Expenses",
-                currency="INR",
                 balance=300.0,
+                currency="INR",
             ),
             Account(
                 user_id=user.id,
                 name="Expenses:Rent",
-                type="Expenses",
-                currency="INR",
                 balance=1000.0,
+                currency="INR",
             ),
         ]
         db.session.add_all(accounts)
@@ -239,23 +228,20 @@ def test_balance_report(authenticated_client, user, app):
         checking = Account(
             user_id=user.id,
             name="Assets:Bank:Checking",
-            type="asset",
-            currency="INR",
             balance=1000.0,
+            currency="INR",
         )
         savings = Account(
             user_id=user.id,
             name="Assets:Bank:Savings",
-            type="asset",
-            currency="INR",
             balance=5000.0,
+            currency="INR",
         )
         credit = Account(
             user_id=user.id,
             name="Liabilities:Credit Card",
-            type="liability",
-            currency="INR",
             balance=-2000.0,
+            currency="INR",
         )
         db.session.add_all([checking, savings, credit])
         db.session.commit()
@@ -287,30 +273,26 @@ def test_income_statement(authenticated_client, user, app):
         checking = Account(
             user_id=user.id,
             name="Assets:Bank:Checking",
-            type="asset",
-            currency="INR",
             balance=0.0,  # Start with zero balance
+            currency="INR",
         )
         salary = Account(
             user_id=user.id,
             name="Income:Salary",
-            type="Income",
-            currency="INR",
             balance=0.0,
+            currency="INR",
         )
         groceries = Account(
             user_id=user.id,
             name="Expenses:Groceries",
-            type="Expenses",
-            currency="INR",
             balance=0.0,
+            currency="INR",
         )
         rent = Account(
             user_id=user.id,
             name="Expenses:Rent",
-            type="Expenses",
-            currency="INR",
             balance=0.0,
+            currency="INR",
         )
         db.session.add_all([checking, salary, groceries, rent])
         db.session.commit()
@@ -422,18 +404,28 @@ def test_report_date_range(authenticated_client, user, app):
         checking = Account(
             user_id=user.id,
             name="Assets:Bank:Checking",
-            type="asset",
-            currency="INR",
             balance=0.0,  # Start with zero balance
+            currency="INR",
         )
         salary = Account(
             user_id=user.id,
             name="Income:Salary",
-            type="Income",
-            currency="INR",
             balance=0.0,
+            currency="INR",
         )
-        db.session.add_all([checking, salary])
+        groceries = Account(
+            user_id=user.id,
+            name="Expenses:Groceries",
+            balance=0.0,
+            currency="INR",
+        )
+        rent = Account(
+            user_id=user.id,
+            name="Expenses:Rent",
+            balance=0.0,
+            currency="INR",
+        )
+        db.session.add_all([checking, salary, groceries, rent])
         db.session.commit()
 
         # Create transactions in different months

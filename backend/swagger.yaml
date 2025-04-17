@@ -904,9 +904,6 @@ components:
           type: integer
         name:
           type: string
-        type:
-          type: string
-          enum: [asset, liability, equity, income, expense]
         currency:
           type: string
           default: INR
@@ -920,13 +917,9 @@ components:
       type: object
       required:
         - name
-        - type
       properties:
         name:
           type: string
-        type:
-          type: string
-          enum: [asset, liability, equity, income, expense]
         currency:
           type: string
           default: INR
@@ -939,9 +932,6 @@ components:
       properties:
         name:
           type: string
-        type:
-          type: string
-          enum: [asset, liability, equity, income, expense]
         currency:
           type: string
         balance:

@@ -48,7 +48,6 @@ def test_account_creation(db_session, user):
     account = Account(
         user_id=user.id,
         name="Test Account",
-        type="asset",
         currency="INR",
         balance=1000.0,
     )
@@ -86,7 +85,6 @@ def test_user_accounts_relationship(db_session, user):
     account = Account(
         user_id=user.id,
         name="Test Account",
-        type="asset",
         currency="INR",
         balance=1000.0,
     )

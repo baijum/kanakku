@@ -101,11 +101,8 @@ def create_transaction():
                 currency=posting.get("currency", "INR"),
             )
 
-            # Update the account balance based on account type
-            if account.type.lower() in ["liability", "equity", "income"]:
-                account.balance -= amount_float
-            else:
-                account.balance += amount_float
+            # Update the account balance - no longer using account type
+            account.balance += amount_float
 
             db.session.add(new_transaction)
             transaction_responses.append(new_transaction)
@@ -384,12 +381,8 @@ def update_transaction(transaction_id):
             ).first()
             if account:
                 current_app.logger.debug("Current balance: {}".format(account.balance))
-                if account.type.lower() in ["liability", "equity", "income"]:
-                    # For these types, positive amounts decrease balance
-                    account.balance -= amount_difference
-                else:
-                    # For asset and expense, positive amounts increase balance
-                    account.balance += amount_difference
+                # No longer checking account type, simply add the difference
+                account.balance += amount_difference
                 current_app.logger.debug("New balance: {}".format(account.balance))
 
         # Commit changes
@@ -501,10 +494,8 @@ def update_transaction_with_postings(transaction_id):
             # Reverse the effect on the original account
             original_account = db.session.get(Account, original_transaction.account_id)
             if original_account:
-                if original_account.type.lower() in ["liability", "equity", "income"]:
-                    original_account.balance += original_transaction.amount
-                else:
-                    original_account.balance -= original_transaction.amount
+                # No longer checking account type, simply add the amount back
+                original_account.balance += original_transaction.amount
 
             # Delete the original transaction
             db.session.delete(original_transaction)
@@ -552,11 +543,8 @@ def update_transaction_with_postings(transaction_id):
                 currency=posting.get("currency", "INR"),
             )
 
-            # Update the account balance based on account type
-            if account.type.lower() in ["liability", "equity", "income"]:
-                account.balance -= amount_float
-            else:
-                account.balance += amount_float
+            # Update the account balance - no longer using account type
+            account.balance += amount_float
 
             db.session.add(new_transaction)
             new_transactions.append(new_transaction)
@@ -642,7 +630,6 @@ def get_related_transactions(transaction_id):
                 "payee": tx.payee,
                 "account_id": tx.account_id,
                 "account_name": account_name,
-                "account_type": account.type if account else "",
                 "amount": tx.amount,
                 "currency": tx.currency,
             }
@@ -738,11 +725,8 @@ def delete_related_transactions(transaction_id):
                 current_app.logger.error("Account not found for transaction")
                 continue
 
-            # Reverse the effect based on account type
-            if account.type.lower() in ["liability", "equity", "income"]:
-                account.balance += tx.amount
-            else:
-                account.balance -= tx.amount
+            # Simply reverse the transaction amount
+            account.balance -= tx.amount
 
             # Delete the transaction
             db.session.delete(tx)

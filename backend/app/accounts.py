@@ -40,8 +40,8 @@ def create_account():
     """Create a new account."""
     data = request.get_json()
 
-    if not all(key in data for key in ["name", "type"]):
-        return jsonify({"error": "Missing required fields"}), 400
+    if "name" not in data:
+        return jsonify({"error": "Missing required field: name"}), 400
 
     # Use g.current_user
     user_id = g.current_user.id
@@ -55,7 +55,6 @@ def create_account():
     account = Account(
         user_id=user_id,
         name=data["name"],
-        type=data["type"],
         currency=data.get("currency", "INR"),
         balance=data.get("balance", 0.0),
     )
@@ -98,8 +97,6 @@ def update_account(account_id):
 
     if "name" in data:
         account.name = data["name"]
-    if "type" in data:
-        account.type = data["type"]
     if "currency" in data:
         account.currency = data["currency"]
     if "balance" in data:
