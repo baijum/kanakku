@@ -70,8 +70,10 @@ function EditTransaction() {
         setDate(new Date(transactionData.date));
         setPayee(transactionData.payee || '');
         
-        // Initialize postings from all related transactions
+        // Set status from the first transaction if available
         if (transactionData.transactions && transactionData.transactions.length > 0) {
+          setStatus(transactionData.transactions[0].status || '');
+          
           const initialPostings = transactionData.transactions.map(tx => ({
             id: tx.id,
             account: tx.account_name || '',

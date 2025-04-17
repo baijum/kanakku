@@ -99,6 +99,7 @@ def create_transaction():
                 payee=data["payee"],
                 amount=amount_float,
                 currency=posting.get("currency", "INR"),
+                status=data.get("status"),  # Save the status if provided
             )
 
             # Update the account balance - no longer using account type
@@ -215,7 +216,7 @@ def get_transactions():
                     "id": tx.id,  # Include the ID of the first transaction in the group
                     "date": tx.date.isoformat(),
                     "payee": tx.payee,
-                    "status": "",  # Status not stored in database, using empty string
+                    "status": tx.status or "",  # Use the status from database
                     "postings": [],
                 }
 
@@ -353,6 +354,9 @@ def update_transaction(transaction_id):
 
         if "currency" in data:
             transaction.currency = data["currency"]
+            
+        if "status" in data:
+            transaction.status = data["status"]
 
         if "account_id" in data:
             new_account_id = data["account_id"]
@@ -541,6 +545,7 @@ def update_transaction_with_postings(transaction_id):
                 payee=data["payee"],
                 amount=amount_float,
                 currency=posting.get("currency", "INR"),
+                status=data.get("status"),  # Include status if provided
             )
 
             # Update the account balance - no longer using account type
@@ -634,6 +639,7 @@ def get_related_transactions(transaction_id):
                 "account_name": account_name,
                 "amount": tx.amount,
                 "currency": tx.currency,
+                "status": tx.status or "",
             }
             formatted_transactions.append(formatted_transaction)
 

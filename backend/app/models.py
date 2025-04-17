@@ -127,6 +127,7 @@ class Transaction(db.Model):
     payee = Column(String(100))
     amount = Column(Float, nullable=False)
     currency = Column(String(3), default="INR")
+    status = Column(String(1), nullable=True)  # * for cleared, ! for pending
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships already defined via backref in User and Account models
@@ -147,6 +148,7 @@ class Transaction(db.Model):
             "description": self.description,
             "amount": self.amount,
             "currency": self.currency,
+            "status": self.status,
             "created_at": self.created_at.isoformat(),
         }
 
