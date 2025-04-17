@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   Divider,
   Paper,
@@ -20,6 +21,7 @@ import {
   FormControlLabel
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
@@ -32,6 +34,8 @@ const BookManagement = () => {
   const [editBook, setEditBook] = useState(null);
   const [editBookName, setEditBookName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -91,6 +95,35 @@ const BookManagement = () => {
     setEditBook(book);
     setEditBookName(book.name);
     setIsDialogOpen(true);
+  };
+
+  const handleDeleteClick = (book) => {
+    setBookToDelete(book);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteBook = async () => {
+    try {
+      await axiosInstance.delete(`/api/v1/books/${bookToDelete.id}`);
+      
+      setSuccessMessage('Book deleted successfully!');
+      setIsDeleteDialogOpen(false);
+      fetchBooks();
+      
+      // If we deleted the active book, reload the page to update UI
+      if (activeBook && bookToDelete && activeBook.id === bookToDelete.id) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+      
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+    } catch (err) {
+      console.error('Error deleting book:', err);
+      setError(err.response?.data?.error || 'Failed to delete book');
+    }
   };
 
   const handleEditSave = async () => {
@@ -186,12 +219,22 @@ const BookManagement = () => {
             <ListItem
               key={book.id}
               secondaryAction={
-                <IconButton
-                  edge="end"
-                  onClick={() => handleEditClick(book)}
-                >
-                  <EditIcon />
-                </IconButton>
+                <Box>
+                  <IconButton
+                    edge="end"
+                    onClick={() => handleEditClick(book)}
+                    sx={{ mr: 1 }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    edge="end"
+                    onClick={() => handleDeleteClick(book)}
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
               }
             >
               <ListItemText 
@@ -224,6 +267,23 @@ const BookManagement = () => {
         <DialogActions>
           <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleEditSave} variant="contained">Save</Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Delete confirmation dialog */}
+      <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Book</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the book "{bookToDelete?.name}"?
+            <br /><br />
+            <strong>Warning:</strong> This will permanently delete all accounts associated with this book.
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteBook} variant="contained" color="error">Delete</Button>
         </DialogActions>
       </Dialog>
     </Paper>

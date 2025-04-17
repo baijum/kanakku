@@ -150,11 +150,11 @@ class User(UserMixin, db.Model):
             "picture": self.picture,
             "active_book_id": self.active_book_id,
         }
-        
+
         # Include active_book information if available
         if self.active_book_id and self.active_book:
             data["active_book"] = self.active_book.to_dict()
-        
+
         return data
 
     def __repr__(self):

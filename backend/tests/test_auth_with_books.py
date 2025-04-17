@@ -99,7 +99,9 @@ def test_user_profile_includes_active_book(authenticated_client, app, user):
         # Ensure user has an active book
         book = Book.query.filter_by(user_id=user.id).first()
         if not book:
-            book = Book(user_id=user.id, name="Book1")  # Updated to match test expectations
+            book = Book(
+                user_id=user.id, name="Book1"
+            )  # Updated to match test expectations
             db.session.add(book)
             db.session.commit()
 

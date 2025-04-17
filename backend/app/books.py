@@ -148,3 +148,32 @@ def get_active_book():
         f"Successfully found active book: {active_book.name} (ID: {active_book.id})"
     )
     return jsonify(active_book.to_dict())
+
+
+@books.route("/api/v1/books/<int:book_id>", methods=["DELETE"])
+@api_token_required
+def delete_book(book_id):
+    """Delete a book and all its associated accounts and transactions."""
+    current_app.logger.debug(f"Entered delete_book route for ID: {book_id}")
+
+    # Make sure book exists and belongs to user
+    book = Book.query.filter_by(id=book_id, user_id=g.current_user.id).first_or_404()
+
+    # Check if it's the active book
+    user = g.current_user
+    is_active = user.active_book_id == book_id
+
+    # Delete book (associated accounts and transactions will be deleted via cascade)
+    db.session.delete(book)
+
+    # If this was the active book, set a new active book if one is available
+    if is_active:
+        new_active = Book.query.filter_by(user_id=g.current_user.id).first()
+        if new_active:
+            user.active_book_id = new_active.id
+        else:
+            user.active_book_id = None
+
+    db.session.commit()
+
+    return jsonify({"message": "Book and all associated accounts deleted successfully"})

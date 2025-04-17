@@ -342,19 +342,17 @@ def test_google_token_auth(client, app, mocker):
     }
 
     # Test successful token authentication (new user)
-    response = client.post(
-        "/api/v1/auth/google", json={"token": "mock_id_token"}
-    )
+    response = client.post("/api/v1/auth/google", json={"token": "mock_id_token"})
     assert response.status_code == 200
     data = response.get_json()
     assert "token" in data
     assert "user" in data
     assert data["user"]["email"] == "google_token@example.com"
-    
+
     # Instead of checking the active_book directly, check that active_book_id is set
     assert "active_book_id" in data["user"]
     assert data["user"]["active_book_id"] is not None
-    
+
     # Verify that the default book was created (we'll confirm this separately with a db query)
     with app.app_context():
         user = User.query.filter_by(email="google_token@example.com").first()
@@ -366,19 +364,15 @@ def test_google_token_auth(client, app, mocker):
 
     # Test successful token authentication (existing user)
     # Make the mock return the same email, simulating existing user
-    response = client.post(
-        "/api/v1/auth/google", json={"token": "mock_id_token_again"}
-    )
-    assert response.status_code == 200 # Should still be 200 for existing user login
+    response = client.post("/api/v1/auth/google", json={"token": "mock_id_token_again"})
+    assert response.status_code == 200  # Should still be 200 for existing user login
     data = response.get_json()
     assert "token" in data
     assert "user" in data
     assert data["user"]["email"] == "google_token@example.com"
-    
+
     # Test invalid token
     mock_verify.side_effect = ValueError("Invalid token")
-    response = client.post(
-        "/api/v1/auth/google", json={"token": "invalid_token"}
-    )
+    response = client.post("/api/v1/auth/google", json={"token": "invalid_token"})
     # Accept either 401 or 500 status code for now
     assert response.status_code in (401, 500)

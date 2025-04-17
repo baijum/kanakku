@@ -1,6 +1,5 @@
 import pytest
-from app.models import User, Book, Account, Transaction
-from app.extensions import db
+from app.models import User, Book, Account, Transaction, db
 from datetime import datetime
 
 
@@ -173,6 +172,7 @@ def test_get_active_book(app, client, user, books):
     with app.app_context():
         # Update directly using the ORM rather than raw SQL
         from app.models import db, User
+
         user_to_update = db.session.get(User, user_obj.id)
         user_to_update.active_book_id = book1.id
         db.session.commit()
@@ -384,7 +384,6 @@ def test_default_book_creation(app, client):
         },
     )
     assert register_response.status_code == 201
-    user_id = register_response.json["user_id"]
 
     # Login to get token
     login_response = client.post(
@@ -406,3 +405,167 @@ def test_default_book_creation(app, client):
     assert response.json, "Response is empty"
     assert "id" in response.json, f"id not in response: {response.json}"
     assert response.json["name"] == "Book1"
+
+
+def test_delete_book(app, client, user, books, accounts):
+    """Test deleting a book and verifying cascade deletion of accounts."""
+    _, token = user
+    book1, _ = books
+    account1, account2, _ = accounts
+
+    # Verify book and accounts exist before deletion
+    with app.app_context():
+        assert Book.query.get(book1.id) is not None
+        assert Account.query.get(account1.id) is not None
+        assert Account.query.get(account2.id) is not None
+
+    # Delete the book
+    response = client.delete(
+        f"/api/v1/books/{book1.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+    assert (
+        response.json["message"]
+        == "Book and all associated accounts deleted successfully"
+    )
+
+    # Verify book and its accounts are deleted
+    with app.app_context():
+        assert Book.query.get(book1.id) is None
+        assert Account.query.get(account1.id) is None
+        assert Account.query.get(account2.id) is None
+
+
+def test_delete_active_book_and_reassign(app, client, user, books):
+    """Test deleting the active book and verifying active book reassignment."""
+    user_obj, token = user
+    book1, book2 = books
+
+    # Ensure book1 is active
+    with app.app_context():
+        user_to_update = db.session.get(User, user_obj.id)
+        user_to_update.active_book_id = book1.id
+        db.session.commit()
+
+    # Delete the active book
+    response = client.delete(
+        f"/api/v1/books/{book1.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+
+    # Verify the active book was reassigned to book2
+    with app.app_context():
+        user_from_db = User.query.get(user_obj.id)
+        assert user_from_db.active_book_id == book2.id
+
+
+def test_delete_last_book(app, client, user, books):
+    """Test deleting the last book and verifying active_book_id is set to None."""
+    user_obj, token = user
+    book1, book2 = books
+
+    # Delete book2 first
+    client.delete(
+        f"/api/v1/books/{book2.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    # Delete last book (book1)
+    response = client.delete(
+        f"/api/v1/books/{book1.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+
+    # Verify active_book_id is set to None
+    with app.app_context():
+        user_from_db = User.query.get(user_obj.id)
+        assert user_from_db.active_book_id is None
+
+
+def test_delete_nonexistent_book(app, client, user):
+    """Test attempting to delete a non-existent book."""
+    _, token = user
+
+    response = client.delete(
+        "/api/v1/books/99999",  # Non-existent book ID
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 404  # Should return 404 Not Found
+
+
+def test_delete_book_with_transactions(app, client, user, books, accounts):
+    """Test deleting a book that has transactions and verifying cascade deletion."""
+    _, token = user
+    book1, _ = books
+    checking_account, _, _ = accounts
+
+    # Create a transaction in book1
+    tx_response = client.post(
+        "/api/v1/transactions",
+        json={
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "payee": "Test Transaction",
+            "postings": [{"account": "Checking", "amount": "-100.00"}],
+        },
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert tx_response.status_code == 201
+    transaction_id = tx_response.json["transactions"][0]["id"]
+
+    # Verify transaction exists
+    with app.app_context():
+        assert Transaction.query.get(transaction_id) is not None
+
+    # Delete the book
+    response = client.delete(
+        f"/api/v1/books/{book1.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 200
+
+    # Verify book, accounts and transactions are deleted
+    with app.app_context():
+        assert Book.query.get(book1.id) is None
+        assert Transaction.query.get(transaction_id) is None
+
+
+def test_delete_unauthorized_book(app, client, user, books):
+    """Test attempting to delete another user's book."""
+    _, token = user
+    book1, _ = books
+
+    # Create another user with their own book
+    with app.app_context():
+        new_user = User(email="otheruser@example.com")
+        new_user.set_password("password123")
+        new_user.is_active = True
+        db.session.add(new_user)
+        db.session.flush()
+
+        other_book = Book(user_id=new_user.id, name="Other User's Book")
+        db.session.add(other_book)
+        db.session.commit()
+
+        other_book_id = other_book.id
+
+    # Attempt to delete the other user's book
+    response = client.delete(
+        f"/api/v1/books/{other_book_id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    # Should return 404 not found (as if book doesn't exist for this user)
+    assert response.status_code == 404
+
+    # Verify other user's book still exists
+    with app.app_context():
+        assert Book.query.get(other_book_id) is not None
