@@ -65,14 +65,21 @@ function AccountsList() {
           name: name,
           description: '' // Placeholder
         }));
+        
+        // Sort accounts alphabetically by name
+        accountObjects.sort((a, b) => a.name.localeCompare(b.name));
+        
         setAccounts(accountObjects);
         setTotalCount(accountObjects.length);
         
         // After successfully getting names, try to get full details
         if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
           // If we get details successfully, update with the full account objects
-          setAccounts(detailsResponse.data);
-          setTotalCount(detailsResponse.data.length);
+          const sortedDetails = [...detailsResponse.data].sort((a, b) => 
+            a.name.localeCompare(b.name)
+          );
+          setAccounts(sortedDetails);
+          setTotalCount(sortedDetails.length);
         }
       } else {
         console.error('Unexpected response structure for accounts:', accountsResponse.data);
