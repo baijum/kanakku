@@ -95,8 +95,23 @@ def get_transactions_ledger_format():
         # Format output with grouped transactions
         ledger_output = []
         for (date, description), postings in transaction_groups.items():
-            # Create header without payee
-            header = f"{date} * {description}"
+            # Get the transaction to access its status
+            # We need to get the first transaction in the group to determine the status
+            first_transaction = next(
+                (
+                    t
+                    for t, a in transactions
+                    if t.date.strftime("%Y-%m-%d") == date
+                    and t.description == description
+                ),
+                None,
+            )
+
+            # Create header with the correct status
+            if first_transaction and first_transaction.status:
+                header = f"{date} {first_transaction.status} {description}"
+            else:
+                header = f"{date} {description}"
 
             # Add all postings under this header
             entry = f"{header}\n{chr(10).join(postings)}\n"

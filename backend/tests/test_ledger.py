@@ -195,6 +195,6 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
 
         # Check the key parts of the response instead of the exact format
         text = response.text
-        assert "2024-07-27 * Grocery Shopping" in text
+        assert "2024-07-27 Grocery Shopping" in text
         assert "Test Account" in text
         assert "-75.50" in text
