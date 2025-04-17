@@ -155,6 +155,7 @@ class Account(db.Model):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     name = Column(String(100), nullable=False)
+    description = Column(String(200))
     currency = Column(String(3), default="INR")
     balance = Column(Float, default=0.0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -166,6 +167,7 @@ class Account(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "name": self.name,
+            "description": self.description,
             "currency": self.currency,
             "balance": self.balance,
             "created_at": self.created_at.isoformat(),

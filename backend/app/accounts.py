@@ -55,6 +55,7 @@ def create_account():
     account = Account(
         user_id=user_id,
         name=data["name"],
+        description=data.get("description", ""),
         currency=data.get("currency", "INR"),
         balance=data.get("balance", 0.0),
     )
@@ -97,6 +98,8 @@ def update_account(account_id):
 
     if "name" in data:
         account.name = data["name"]
+    if "description" in data:
+        account.description = data["description"]
     if "currency" in data:
         account.currency = data["currency"]
     if "balance" in data:
