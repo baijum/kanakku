@@ -35,6 +35,10 @@ import EditTransaction from './components/Transactions/EditTransaction';
 import PreambleList from './components/Preambles/PreambleList';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Divider from '@mui/material/Divider';
 import GoogleAuthCallback from './components/Auth/GoogleAuthCallback';
 import ForgotPassword from './components/Auth/ForgotPassword';
 import ResetPassword from './components/Auth/ResetPassword';
@@ -82,6 +86,7 @@ function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
 
   // Check if user is logged in by validating token
   useEffect(() => {
@@ -135,7 +140,16 @@ function App() {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
     setAuthLoading(false);
+    setUserMenuAnchorEl(null);
     window.location.href = '/login';
+  };
+
+  const handleUserMenuOpen = (event) => {
+    setUserMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchorEl(null);
   };
 
   const drawerContent = (
@@ -172,12 +186,6 @@ function App() {
               <DescriptionIcon />
             </ListItemIcon>
             <ListItemText primary="Preambles" />
-          </ListItem>
-          <ListItem button component={RouterLink} to="/profile" onClick={isMobile ? handleDrawerToggle : undefined}>
-            <ListItemIcon>
-              <SettingsIcon />
-            </ListItemIcon>
-            <ListItemText primary="Profile Settings" />
           </ListItem>
         </List>
       </Box>
@@ -231,13 +239,48 @@ function App() {
                 </Typography>
               </Box>
               {isLoggedIn ? (
-                <Button 
-                  color="inherit" 
-                  onClick={handleLogout}
-                  startIcon={<LogoutIcon />}
-                >
-                  Logout
-                </Button>
+                <>
+                  <IconButton
+                    color="inherit"
+                    onClick={handleUserMenuOpen}
+                    aria-controls="user-menu"
+                    aria-haspopup="true"
+                  >
+                    <AccountCircleIcon />
+                  </IconButton>
+                  <Menu
+                    id="user-menu"
+                    anchorEl={userMenuAnchorEl}
+                    open={Boolean(userMenuAnchorEl)}
+                    onClose={handleUserMenuClose}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                  >
+                    <MenuItem 
+                      component={RouterLink} 
+                      to="/profile" 
+                      onClick={handleUserMenuClose}
+                    >
+                      <ListItemIcon>
+                        <SettingsIcon fontSize="small" />
+                      </ListItemIcon>
+                      Profile Settings
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem onClick={handleLogout}>
+                      <ListItemIcon>
+                        <LogoutIcon fontSize="small" />
+                      </ListItemIcon>
+                      Logout
+                    </MenuItem>
+                  </Menu>
+                </>
               ) : (
                 <>
                   <Button 
