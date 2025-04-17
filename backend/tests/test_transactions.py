@@ -1,6 +1,6 @@
 import pytest
 from app.models import Transaction, db, Account
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 # Removed local app fixture
 
@@ -438,7 +438,7 @@ def test_get_transaction_by_id(authenticated_client, user, app):
     response = authenticated_client.get(f"/api/transactions/{transaction_id}")
     assert response.status_code == 200
     data = response.get_json()
-    
+
     # Verify transaction data
     assert data["id"] == transaction_id
     assert data["date"] == "2024-01-15"
@@ -480,7 +480,7 @@ def test_get_related_transactions(authenticated_client, user, app):
         # Create two related transactions (same date and payee)
         tx_date = date(2024, 1, 20)
         tx_payee = "Related Transaction Test"
-        
+
         tx1 = Transaction(
             user_id=user.id,
             account_id=account1.id,
@@ -507,13 +507,13 @@ def test_get_related_transactions(authenticated_client, user, app):
     response = authenticated_client.get(f"/api/transactions/{transaction_id}/related")
     assert response.status_code == 200
     data = response.get_json()
-    
+
     # Verify response structure
     assert "transactions" in data
     assert "date" in data
     assert "payee" in data
     assert "primary_transaction_id" in data
-    
+
     # Verify data values
     assert data["date"] == "2024-01-20"
     assert data["payee"] == tx_payee
@@ -523,7 +523,9 @@ def test_get_related_transactions(authenticated_client, user, app):
 
 def test_get_related_transactions_not_found(authenticated_client):
     """Test retrieving related transactions for a non-existent transaction."""
-    response = authenticated_client.get("/api/transactions/99999/related")  # Non-existent ID
+    response = authenticated_client.get(
+        "/api/transactions/99999/related"
+    )  # Non-existent ID
     assert response.status_code == 404
     assert "error" in response.get_json()
 
@@ -587,12 +589,12 @@ def test_update_transaction_with_postings(authenticated_client, user, app):
     )
     assert response.status_code == 200
     data = response.get_json()
-    
+
     # Verify response structure
     assert "message" in data
     assert "transactions" in data
     assert len(data["transactions"]) == 2
-    
+
     # Check that the updated transactions have the correct values
     # The structure might be different depending on the to_dict() implementation
     # Check description or payee field, whichever is available
@@ -601,7 +603,7 @@ def test_update_transaction_with_postings(authenticated_client, user, app):
             assert tx["payee"] == "Updated Payee"
         else:
             assert tx["description"] == "Updated Payee"
-    
+
     # One transaction should have a negative amount, the other positive
     amounts = [tx["amount"] for tx in data["transactions"]]
     assert any(amount < 0 for amount in amounts)
@@ -734,11 +736,11 @@ def test_delete_transaction(authenticated_client, user, app):
     response = authenticated_client.delete(f"/api/transactions/{transaction_id}")
     assert response.status_code == 200
     data = response.get_json()
-    
+
     # Verify response
     assert "message" in data
     assert "deleted" in data["message"].lower()
-    
+
     # Verify the transaction was actually deleted
     get_response = authenticated_client.get(f"/api/transactions/{transaction_id}")
     assert get_response.status_code == 404
@@ -836,22 +838,22 @@ def test_error_handling_decorator(authenticated_client, user, app):
     # Instead of trying to mock a route, test the decorator directly
     from app.transactions import handle_errors
     from sqlalchemy.exc import SQLAlchemyError
-    
+
     # Create test functions that will be wrapped by the decorator
     def func_value_error():
         raise ValueError("Test value error")
-    
+
     def func_sqlalchemy_error():
         raise SQLAlchemyError("Test SQLAlchemy error")
-    
+
     def func_generic_error():
         raise Exception("Test generic error")
-    
+
     # Apply the decorator
     wrapped_value_error = handle_errors(func_value_error)
     wrapped_sqlalchemy_error = handle_errors(func_sqlalchemy_error)
     wrapped_generic_error = handle_errors(func_generic_error)
-    
+
     # Test with app context
     with app.test_request_context():
         # Test ValueError handling
@@ -860,14 +862,14 @@ def test_error_handling_decorator(authenticated_client, user, app):
         data = response[0].get_json()
         assert "error" in data
         assert "Test value error" in data["error"]
-        
+
         # Test SQLAlchemyError handling
         response = wrapped_sqlalchemy_error()
         assert response[1] == 500  # Check status code
         data = response[0].get_json()
         assert "error" in data
         assert "Database error occurred" in data["error"]
-        
+
         # Test generic Exception handling
         response = wrapped_generic_error()
         assert response[1] == 500  # Check status code
