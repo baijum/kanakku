@@ -1,5 +1,5 @@
 import pytest
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from app import db
 from app.models import User, Transaction, Account, Preamble
 
@@ -56,7 +56,9 @@ def account(app, db_session):
 def preamble(app, db_session, user):
     """Create a test preamble for the user."""
     with app.app_context():
-        existing_preamble = Preamble.query.filter_by(user_id=user.id, is_default=True).first()
+        existing_preamble = Preamble.query.filter_by(
+            user_id=user.id, is_default=True
+        ).first()
         if existing_preamble:
             return existing_preamble
 
@@ -64,7 +66,7 @@ def preamble(app, db_session, user):
             user_id=user.id,
             name="Default Preamble",
             content="account Assets:Cash INR\naccount Expenses:Food INR",
-            is_default=True
+            is_default=True,
         )
         db_session.add(preamble)
         db_session.commit()
@@ -76,7 +78,8 @@ def non_default_preamble(app, db_session, user):
     """Create a non-default test preamble for the user."""
     with app.app_context():
         existing_preamble = Preamble.query.filter_by(
-            user_id=user.id, name="Non-Default Preamble").first()
+            user_id=user.id, name="Non-Default Preamble"
+        ).first()
         if existing_preamble:
             return existing_preamble
 
@@ -84,7 +87,7 @@ def non_default_preamble(app, db_session, user):
             user_id=user.id,
             name="Non-Default Preamble",
             content="account Assets:Bank INR\naccount Expenses:Entertainment INR",
-            is_default=False
+            is_default=False,
         )
         db_session.add(preamble)
         db_session.commit()
@@ -96,7 +99,9 @@ def sample_transactions(app, db_session, user):
     """Create sample transactions for testing date filtering."""
     with app.app_context():
         # First, ensure we have an account
-        test_account = Account.query.filter_by(user_id=user.id, name="Test Account").first()
+        test_account = Account.query.filter_by(
+            user_id=user.id, name="Test Account"
+        ).first()
         if not test_account:
             test_account = Account(
                 user_id=user.id,
@@ -106,25 +111,33 @@ def sample_transactions(app, db_session, user):
             )
             db_session.add(test_account)
             db_session.commit()
-            # Refresh 
-            test_account = Account.query.filter_by(user_id=user.id, name="Test Account").first()
-        
+            # Refresh
+            test_account = Account.query.filter_by(
+                user_id=user.id, name="Test Account"
+            ).first()
+
         # Create transactions with different dates
         transactions = []
-        
+
         # Check if transactions already exist for this test
         existing_tx = Transaction.query.filter_by(
-            user_id=user.id, description="Past Transaction").first()
+            user_id=user.id, description="Past Transaction"
+        ).first()
         if existing_tx:
             # If transactions for this test already exist, return them
             return Transaction.query.filter(
                 Transaction.user_id == user.id,
-                Transaction.description.in_([
-                    "Past Transaction", "Recent Transaction", 
-                    "Today Transaction", "USD Transaction", "Pending Transaction"
-                ])
+                Transaction.description.in_(
+                    [
+                        "Past Transaction",
+                        "Recent Transaction",
+                        "Today Transaction",
+                        "USD Transaction",
+                        "Pending Transaction",
+                    ]
+                ),
             ).all()
-        
+
         # Past transaction
         past_tx = Transaction(
             user_id=user.id,
@@ -137,7 +150,7 @@ def sample_transactions(app, db_session, user):
         )
         db_session.add(past_tx)
         transactions.append(past_tx)
-        
+
         # Recent transaction
         recent_tx = Transaction(
             user_id=user.id,
@@ -150,7 +163,7 @@ def sample_transactions(app, db_session, user):
         )
         db_session.add(recent_tx)
         transactions.append(recent_tx)
-        
+
         # Today's transaction
         today_tx = Transaction(
             user_id=user.id,
@@ -163,7 +176,7 @@ def sample_transactions(app, db_session, user):
         )
         db_session.add(today_tx)
         transactions.append(today_tx)
-        
+
         # Transaction with USD currency
         usd_tx = Transaction(
             user_id=user.id,
@@ -176,7 +189,7 @@ def sample_transactions(app, db_session, user):
         )
         db_session.add(usd_tx)
         transactions.append(usd_tx)
-        
+
         # Transaction with pending status
         pending_tx = Transaction(
             user_id=user.id,
@@ -190,7 +203,7 @@ def sample_transactions(app, db_session, user):
         )
         db_session.add(pending_tx)
         transactions.append(pending_tx)
-        
+
         db_session.commit()
         return transactions
 
@@ -357,21 +370,21 @@ def test_get_transactions_ledger_format_with_date_filters(
     # Set the start date to 7 days ago and end date to today
     start_date = (date.today() - timedelta(days=7)).strftime("%Y-%m-%d")
     end_date = date.today().strftime("%Y-%m-%d")
-    
+
     response = authenticated_client.get(
         f"/api/v1/ledgertransactions?startDate={start_date}&endDate={end_date}"
     )
-    
+
     assert response.status_code == 200
     assert response.mimetype == "text/plain"
-    
+
     # The response should include only transactions from the last 7 days
     text = response.text
     assert "Recent Transaction" in text
     assert "Today Transaction" in text
     assert "USD Transaction" in text
     assert "Pending Transaction" in text
-    
+
     # Should not include the past transaction (30 days ago)
     assert "Past Transaction" not in text
 
@@ -381,49 +394,55 @@ def test_get_transactions_ledger_format_with_default_preamble(
 ):
     """Test getting transactions with default preamble."""
     response = authenticated_client.get("/api/v1/ledgertransactions")
-    
+
     assert response.status_code == 200
     assert response.mimetype == "text/plain"
-    
+
     # Check that the default preamble content is included
     text = response.text
     assert "account Assets:Cash INR" in text
     assert "account Expenses:Food INR" in text
-    
+
     # Also verify transactions are included
     assert "Today Transaction" in text
 
 
 def test_get_transactions_ledger_format_with_specific_preamble(
-    authenticated_client, app, db_session, user, sample_transactions, 
-    preamble, non_default_preamble
+    authenticated_client,
+    app,
+    db_session,
+    user,
+    sample_transactions,
+    preamble,
+    non_default_preamble,
 ):
     """Test getting transactions with a specific preamble."""
     with app.app_context():
         # Get the preamble ID within the app context
         specific_preamble = Preamble.query.filter_by(
-            user_id=user.id, name="Non-Default Preamble").first()
-        
+            user_id=user.id, name="Non-Default Preamble"
+        ).first()
+
         if not specific_preamble:
             pytest.fail("Non-default preamble not found")
-            
+
         preamble_id = specific_preamble.id
-        
+
         response = authenticated_client.get(
             f"/api/v1/ledgertransactions?preamble_id={preamble_id}"
         )
-        
+
         assert response.status_code == 200
         assert response.mimetype == "text/plain"
-        
+
         # Check that the specific preamble content is included
         text = response.text
         assert "account Assets:Bank INR" in text
         assert "account Expenses:Entertainment INR" in text
-        
+
         # The default preamble content should not be present
         assert "account Assets:Cash INR" not in text
-        
+
         # Verify transactions are included
         assert "Today Transaction" in text
 
@@ -433,10 +452,10 @@ def test_get_transactions_ledger_format_status(
 ):
     """Test getting transactions in ledger format with a status."""
     response = authenticated_client.get("/api/v1/ledgertransactions")
-    
+
     assert response.status_code == 200
     assert response.mimetype == "text/plain"
-    
+
     # Check that the transaction status is included in the output
     text = response.text
     assert "pending Pending Transaction" in text
@@ -450,9 +469,9 @@ def test_get_transactions_ledger_format_empty(
     with app.app_context():
         Transaction.query.filter_by(user_id=user.id).delete()
         db.session.commit()
-    
+
     response = authenticated_client.get("/api/v1/ledgertransactions")
-    
+
     assert response.status_code == 200
     assert response.mimetype == "text/plain"
     assert response.text == ""
@@ -463,15 +482,15 @@ def test_get_transactions_ledger_format_currency_formatting(
 ):
     """Test that different currencies are formatted correctly in the ledger output."""
     response = authenticated_client.get("/api/v1/ledgertransactions")
-    
+
     assert response.status_code == 200
     assert response.mimetype == "text/plain"
-    
+
     text = response.text
-    
+
     # Check INR formatting - should use ₹ symbol
     assert "₹-10.00" in text
-    
+
     # Check USD formatting - should not use ₹ symbol
     assert "-15.00 USD" in text
 
@@ -479,7 +498,7 @@ def test_get_transactions_ledger_format_currency_formatting(
 def test_get_transactions_ledger_format_unauthorized(client):
     """Test that unauthorized users cannot access ledger transactions."""
     response = client.get("/api/v1/ledgertransactions")
-    
+
     assert response.status_code == 401
     assert "error" in response.json
     assert "Authentication required" in response.json["error"]
@@ -493,57 +512,50 @@ def test_get_transactions_ledger_format_invalid_date_formats(
     response = authenticated_client.get(
         "/api/v1/ledgertransactions?startDate=01-01-2024"  # MM-DD-YYYY instead of YYYY-MM-DD
     )
-    
-    assert response.status_code == 200  # Should still return 200 
+
+    assert response.status_code == 200  # Should still return 200
     assert response.mimetype == "text/plain"
-    
+
     # All transactions should be included since the invalid date was ignored
     text = response.text
     assert "Past Transaction" in text
     assert "Recent Transaction" in text
-    
+
     # Test with invalid end date format
     response = authenticated_client.get(
         "/api/v1/ledgertransactions?endDate=12/31/2024"  # MM/DD/YYYY instead of YYYY-MM-DD
     )
-    
+
     assert response.status_code == 200
     assert response.mimetype == "text/plain"
-    
+
     # All transactions should be included since the invalid date was ignored
     text = response.text
     assert "Past Transaction" in text
     assert "Recent Transaction" in text
 
 
-@pytest.mark.parametrize("exception_type", [
-    ValueError,
-    TypeError,
-    Exception
-])
+@pytest.mark.parametrize("exception_type", [ValueError, TypeError, Exception])
 def test_get_transactions_ledger_format_with_exceptions(
     authenticated_client, app, db_session, user, mocker, exception_type
 ):
     """Test ledger transactions endpoint with various exceptions."""
     # Mock the db.session.query to raise the specified exception
     mocker.patch(
-        "app.ledger.db.session.query", 
-        side_effect=exception_type("Test exception")
+        "app.ledger.db.session.query", side_effect=exception_type("Test exception")
     )
-    
+
     response = authenticated_client.get("/api/v1/ledgertransactions")
-    
+
     # Should return a 500 error with a specific error message
     assert response.status_code == 500
     assert response.json["error"] == "Failed to generate ledger format"
 
 
-def test_user_not_found_after_decorator(
-    client  # Use regular client without auth
-):
+def test_user_not_found_after_decorator(client):  # Use regular client without auth
     """Test scenario where user is not found after decorator execution."""
     # API endpoint should return 401 for unauthorized requests
     response = client.get("/api/v1/ledgertransactions")
-    
+
     assert response.status_code == 401
     assert response.json["error"] == "Authentication required"
