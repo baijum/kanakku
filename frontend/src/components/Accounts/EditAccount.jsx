@@ -42,7 +42,7 @@ function EditAccount() {
         // Try getting account details first from standard endpoint
         try {
           // Directly fetch account information using the specific account endpoint
-          const response = await axiosInstance.get(`/api/accounts/${id}`, config);
+          const response = await axiosInstance.get(`/api/v1/accounts/${id}`, config);
           
           console.log('Account API Response:', response.data);
           
@@ -60,7 +60,7 @@ function EditAccount() {
         // Fallback: try to get all accounts and find the one matching the ID
         try {
           // Get detailed account info
-          const detailsResponse = await axiosInstance.get('/api/accounts/details', config);
+          const detailsResponse = await axiosInstance.get('/api/v1/accounts/details', config);
           
           console.log('Accounts details response:', detailsResponse.data);
           
@@ -79,7 +79,7 @@ function EditAccount() {
         }
         
         // Final fallback: Get just account names
-        const accountsResponse = await axiosInstance.get('/api/accounts', config);
+        const accountsResponse = await axiosInstance.get('/api/v1/accounts', config);
         
         console.log('Accounts list response:', accountsResponse.data);
         
@@ -140,7 +140,7 @@ function EditAccount() {
       }
       const config = { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } };
 
-      const response = await axiosInstance.put(`/api/accounts/${id}`, updatedAccount, config);
+      const response = await axiosInstance.put(`/api/v1/accounts/${id}`, updatedAccount, config);
 
       console.log('Update response:', response.data);
 

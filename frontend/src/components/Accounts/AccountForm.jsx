@@ -28,7 +28,7 @@ function AccountForm() {
       const token = localStorage.getItem('token');
 
       // Use axiosInstance and add Authorization header
-      const response = await axiosInstance.post('/api/accounts', newAccount, {
+      const response = await axiosInstance.post('/api/v1/accounts', newAccount, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json' // Axios usually sets this, but good to be explicit

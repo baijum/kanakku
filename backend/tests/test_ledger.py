@@ -121,7 +121,7 @@ def test_create_account(authenticated_client, user, db_session):
     }
 
     # WHEN I submit a POST request with valid account data
-    response = authenticated_client.post("/api/accounts", json=account_data)
+    response = authenticated_client.post("/api/v1/accounts", json=account_data)
 
     # THEN the response should indicate success
     assert response.status_code == 201, f"Failed to create account: {response.data}"

@@ -37,7 +37,7 @@ function AddTransaction() {
   useEffect(() => {
     const token = getToken(); // Get token
     // Fetch list of accounts
-    axios.get('/api/accounts', { 
+    axios.get('/api/v1/accounts', { 
       headers: { 'Authorization': `Bearer ${token}` } // Add header
     })
       .then(response => {

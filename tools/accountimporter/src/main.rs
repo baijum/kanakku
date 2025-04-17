@@ -142,7 +142,7 @@ async fn create_account(
     headers: &HeaderMap,
     account: &Account,
 ) -> Result<ApiResponse> {
-    let url = format!("{}/api/accounts", api_url);
+    let url = format!("{}/api/v1/accounts", api_url);
     
     // Debugging information
     println!("Creating account: {}", account.name);

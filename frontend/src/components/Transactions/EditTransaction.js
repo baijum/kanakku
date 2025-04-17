@@ -57,7 +57,7 @@ function EditTransaction() {
       setOriginalTransaction(response.data);
 
       // Also fetch accounts to prepare for initializing postings
-      const accountsResponse = await axios.get('/api/accounts/details', {
+      const accountsResponse = await axios.get('/api/v1/accounts/details', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -153,7 +153,7 @@ function EditTransaction() {
     
     try {
       // Try to get the full account details first
-      const detailsResponse = await axios.get('/api/accounts/details', {
+      const detailsResponse = await axios.get('/api/v1/accounts/details', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -168,7 +168,7 @@ function EditTransaction() {
       }
       
       // Fallback to the regular accounts endpoint
-      const response = await axios.get('/api/accounts', {
+      const response = await axios.get('/api/v1/accounts', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

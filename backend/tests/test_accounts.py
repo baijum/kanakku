@@ -21,7 +21,7 @@ def test_get_accounts(authenticated_client, user, app):
         db.session.commit()
 
     # Test getting simple account list
-    response = authenticated_client.get("/api/accounts")
+    response = authenticated_client.get("/api/v1/accounts")
     assert response.status_code == 200
     data = response.get_json()
     assert "accounts" in data
@@ -30,7 +30,7 @@ def test_get_accounts(authenticated_client, user, app):
     assert "Test Account 2" in data["accounts"]
 
     # Test getting detailed account list
-    response = authenticated_client.get("/api/accounts/details")
+    response = authenticated_client.get("/api/v1/accounts/details")
     assert response.status_code == 200
     data = response.get_json()
     assert len(data) == 2
@@ -43,7 +43,7 @@ def test_get_accounts(authenticated_client, user, app):
 def test_create_account(authenticated_client, user):
     # Test successful account creation
     response = authenticated_client.post(
-        "/api/accounts",
+        "/api/v1/accounts",
         json={
             "name": "New Account",
             "currency": "USD",
@@ -60,14 +60,14 @@ def test_create_account(authenticated_client, user):
 
     # Test creating account with missing fields
     response = authenticated_client.post(
-        "/api/accounts", json={}
+        "/api/v1/accounts", json={}
     )
     assert response.status_code == 400
     assert "error" in response.get_json()
 
     # Test creating duplicate account
     response = authenticated_client.post(
-        "/api/accounts", json={"name": "New Account"}
+        "/api/v1/accounts", json={"name": "New Account"}
     )
     assert response.status_code == 400
     assert "error" in response.get_json()
@@ -87,14 +87,14 @@ def test_get_specific_account(authenticated_client, user, app):
         account_id = account.id
 
     # Test getting existing account
-    response = authenticated_client.get(f"/api/accounts/{account_id}")
+    response = authenticated_client.get(f"/api/v1/accounts/{account_id}")
     assert response.status_code == 200
     data = response.get_json()
     assert data["name"] == "Test Account"
     assert data["balance"] == 1000.0
 
     # Test getting non-existent account
-    response = authenticated_client.get("/api/accounts/999999")
+    response = authenticated_client.get("/api/v1/accounts/999999")
     assert response.status_code == 404
 
 
@@ -113,7 +113,7 @@ def test_update_account(authenticated_client, user, app):
 
     # Test updating all fields
     response = authenticated_client.put(
-        f"/api/accounts/{account_id}",
+        f"/api/v1/accounts/{account_id}",
         json={
             "name": "Updated Account",
             "currency": "USD",
@@ -128,7 +128,7 @@ def test_update_account(authenticated_client, user, app):
 
     # Test partial update
     response = authenticated_client.put(
-        f"/api/accounts/{account_id}", json={"name": "Partially Updated Account"}
+        f"/api/v1/accounts/{account_id}", json={"name": "Partially Updated Account"}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -137,7 +137,7 @@ def test_update_account(authenticated_client, user, app):
 
     # Test updating non-existent account
     response = authenticated_client.put(
-        "/api/accounts/999999", json={"name": "Non-existent Account"}
+        "/api/v1/accounts/999999", json={"name": "Non-existent Account"}
     )
     assert response.status_code == 404
 
@@ -156,16 +156,16 @@ def test_delete_account(authenticated_client, user, app):
         account_id = account.id
 
     # Test successful deletion
-    response = authenticated_client.delete(f"/api/accounts/{account_id}")
+    response = authenticated_client.delete(f"/api/v1/accounts/{account_id}")
     assert response.status_code == 200
     assert "message" in response.get_json()
 
     # Verify account was deleted
-    response = authenticated_client.get(f"/api/accounts/{account_id}")
+    response = authenticated_client.get(f"/api/v1/accounts/{account_id}")
     assert response.status_code == 404
 
     # Test deleting non-existent account
-    response = authenticated_client.delete("/api/accounts/999999")
+    response = authenticated_client.delete("/api/v1/accounts/999999")
     assert response.status_code == 404
 
 
@@ -195,7 +195,7 @@ def test_delete_account_with_transactions(authenticated_client, user, app):
         db.session.commit()
 
     # Test deleting account with transactions
-    response = authenticated_client.delete(f"/api/accounts/{account_id}")
+    response = authenticated_client.delete(f"/api/v1/accounts/{account_id}")
     assert response.status_code == 400
     data = response.get_json()
     assert "error" in data

@@ -746,7 +746,7 @@ def test_add_transaction(
     # Create the expenses account first
     expenses_account_data = {"name": "Expenses:Food", "currency": "INR"}
     expenses_response = authenticated_client.post(
-        "/api/accounts", json=expenses_account_data
+        "/api/v1/accounts", json=expenses_account_data
     )
     assert expenses_response.status_code == 201
 

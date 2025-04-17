@@ -255,7 +255,7 @@ paths:
           description: Invalid or expired token
   
   # Account Endpoints
-  /api/accounts:
+  /api/v1/accounts:
     get:
       tags:
         - Accounts
@@ -301,7 +301,7 @@ paths:
         400:
           description: Missing required fields or account already exists
   
-  /api/accounts/details:
+  /api/v1/accounts/details:
     get:
       tags:
         - Accounts
@@ -318,7 +318,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Account'
   
-  /api/accounts/{accountId}:
+  /api/v1/accounts/{accountId}:
     get:
       tags:
         - Accounts

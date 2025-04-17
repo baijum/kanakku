@@ -68,11 +68,11 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
     *   `POST /api/v1/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
     *   `GET /api/v1/auth/me` (Auth Required) - Get the current logged-in user's details.
 *   **Accounts (`accounts.py`)** (Auth Required)
-    *   `GET /api/accounts` - Get all accounts for the current user.
-    *   `POST /api/accounts` - Add a new account. (Body: `{ "name": "...", "type": "...", "currency": "..." (optional), "balance": ... (optional) }`)
-    *   `GET /api/accounts/<int:account_id>` - Get details for a specific account.
-    *   `PUT /api/accounts/<int:account_id>` - Update a specific account. (Body: `{ "name": "...", "type": "...", ... }`)
-    *   `DELETE /api/accounts/<int:account_id>` - Delete a specific account.
+    *   `GET /api/v1/accounts` - Get all accounts for the current user.
+    *   `POST /api/v1/accounts` - Add a new account. (Body: `{ "name": "...", "type": "...", "currency": "..." (optional), "balance": ... (optional) }`)
+    *   `GET /api/v1/accounts/<int:account_id>` - Get details for a specific account.
+    *   `PUT /api/v1/accounts/<int:account_id>` - Update a specific account. (Body: `{ "name": "...", "type": "...", ... }`)
+    *   `DELETE /api/v1/accounts/<int:account_id>` - Delete a specific account.
 *   **Transactions (`transactions.py`)** (Auth Required)
     *   `POST /api/v1/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "description": "...", "amount": ..., "account_name": "...", "payee": "..." (optional), "currency": "..." (optional) }`)
     *   `GET /api/v1/transactions` - Get all transactions for the current user (supports `?limit=N` query parameter).

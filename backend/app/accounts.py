@@ -5,7 +5,7 @@ from .extensions import api_token_required
 accounts = Blueprint("accounts", __name__)
 
 
-@accounts.route("/api/accounts", methods=["GET"])
+@accounts.route("/api/v1/accounts", methods=["GET"])
 @api_token_required
 def get_accounts():
     current_app.logger.debug("Entered get_accounts route")
@@ -22,7 +22,7 @@ def get_accounts():
     # return jsonify([account.to_dict() for account in accounts_list])
 
 
-@accounts.route("/api/accounts/details", methods=["GET"])
+@accounts.route("/api/v1/accounts/details", methods=["GET"])
 @api_token_required
 def get_accounts_details():
     current_app.logger.debug("Entered get_accounts_details route")
@@ -33,7 +33,7 @@ def get_accounts_details():
     return jsonify([account.to_dict() for account in accounts_list])
 
 
-@accounts.route("/api/accounts", methods=["POST"])
+@accounts.route("/api/v1/accounts", methods=["POST"])
 @api_token_required
 def create_account():
     current_app.logger.debug("Entered create_account route")
@@ -71,7 +71,7 @@ def create_account():
     )
 
 
-@accounts.route("/api/accounts/<int:account_id>", methods=["GET"])
+@accounts.route("/api/v1/accounts/<int:account_id>", methods=["GET"])
 @api_token_required
 def get_account(account_id):
     current_app.logger.debug(f"Entered get_account route for ID: {account_id}")
@@ -84,7 +84,7 @@ def get_account(account_id):
     return jsonify(account.to_dict())
 
 
-@accounts.route("/api/accounts/<int:account_id>", methods=["PUT"])
+@accounts.route("/api/v1/accounts/<int:account_id>", methods=["PUT"])
 @api_token_required
 def update_account(account_id):
     current_app.logger.debug(f"Entered update_account route for ID: {account_id}")
@@ -112,7 +112,7 @@ def update_account(account_id):
     )
 
 
-@accounts.route("/api/accounts/<int:account_id>", methods=["DELETE"])
+@accounts.route("/api/v1/accounts/<int:account_id>", methods=["DELETE"])
 @api_token_required
 def delete_account(account_id):
     current_app.logger.debug(f"Entered delete_account route for ID: {account_id}")

@@ -52,8 +52,8 @@ function AccountsList() {
     try {
       // Fetch main accounts list
       const [accountsResponse, detailsResponse] = await Promise.all([
-        axiosInstance.get('/api/accounts', fetchConfig),
-        axiosInstance.get('/api/accounts/details', fetchConfig)
+        axiosInstance.get('/api/v1/accounts', fetchConfig),
+        axiosInstance.get('/api/v1/accounts/details', fetchConfig)
       ]);
 
       console.log('Names API Response:', accountsResponse.data);
@@ -121,7 +121,7 @@ function AccountsList() {
     const token = getToken();
     
     try {
-      await axiosInstance.delete(`/api/accounts/${accountToDelete.id}`, {
+      await axiosInstance.delete(`/api/v1/accounts/${accountToDelete.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
