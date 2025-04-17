@@ -7,7 +7,9 @@ class Config:
 
     def __init__(self):
         # Initialize with environment variables or default values
-        self.SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-key-change-in-production"
+        self.SECRET_KEY = (
+            os.environ.get("SECRET_KEY") or "dev-secret-key-change-in-production"
+        )
         self.SQLALCHEMY_DATABASE_URI = os.environ.get(
             "DATABASE_URL"
         ) or "sqlite:///" + os.path.join(
@@ -32,7 +34,11 @@ class Config:
         # Mail Settings
         self.MAIL_SERVER = os.environ.get("MAIL_SERVER") or "smtp.gmail.com"
         self.MAIL_PORT = int(os.environ.get("MAIL_PORT") or 587)
-        self.MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "True").lower() in ["true", "on", "1"]
+        self.MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "True").lower() in [
+            "true",
+            "on",
+            "1",
+        ]
         self.MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
         self.MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
         self.MAIL_DEFAULT_SENDER = (
@@ -61,14 +67,19 @@ class DevelopmentConfig(Config):
 
 class TestConfig(Config):
     __test__ = False
+
     def __init__(self):
         super().__init__()
         self.TESTING = True
         self.SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
         self.WTF_CSRF_ENABLED = False
         self.JWT_SECRET_KEY = "test-secret-key"
-        self.SECRET_KEY = "test-secret-key"  # Ensure SECRET_KEY is also set for testing consistency
-        self.LEDGER_PATH = "/opt/homebrew/bin/ledger"  # Ensure path is set for testing if needed
+        self.SECRET_KEY = (
+            "test-secret-key"  # Ensure SECRET_KEY is also set for testing consistency
+        )
+        self.LEDGER_PATH = (
+            "/opt/homebrew/bin/ledger"  # Ensure path is set for testing if needed
+        )
 
 
 class ProductionConfig(Config):
