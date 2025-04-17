@@ -23,7 +23,6 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
 import CircularProgress from '@mui/material/CircularProgress';
-import Reports from './components/Reports';
 import AccountForm from './components/Accounts/AccountForm';
 import AccountsList from './components/Accounts/AccountsList';
 import EditAccount from './components/Accounts/EditAccount';
@@ -158,12 +157,6 @@ function App() {
               <ListIcon />
             </ListItemIcon>
             <ListItemText primary="Transactions" />
-          </ListItem>
-          <ListItem button component={RouterLink} to="/reports" onClick={isMobile ? handleDrawerToggle : undefined}>
-            <ListItemIcon>
-              <AccountBalanceIcon />
-            </ListItemIcon>
-            <ListItemText primary="Reports" />
           </ListItem>
           <ListItem button component={RouterLink} to="/accounts" onClick={isMobile ? handleDrawerToggle : undefined}>
             <ListItemIcon>
@@ -327,14 +320,6 @@ function App() {
                 element={
                   <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                     <EditTransaction />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/reports" 
-                element={
-                  <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
-                    <Reports />
                   </ProtectedRoute>
                 } 
               />
