@@ -19,4 +19,6 @@ authlib==1.2.1
 flask-dance==7.0.0
 # Swagger related
 flask-swagger-ui==4.11.1
-PyYAML==6.0.1 
+PyYAML==6.0.1
+# Production server
+gunicorn==21.2.0 

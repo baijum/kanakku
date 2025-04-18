@@ -1,0 +1,22 @@
+[Unit]
+Description=Kanakku Expense Tracker Backend
+After=network.target
+
+[Service]
+User=kanakku
+Group=kanakku
+WorkingDirectory=/opt/kanakku/backend
+Environment="PATH=/opt/kanakku/backend/venv/bin"
+ExecStart=/opt/kanakku/backend/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 'app:create_app()'
+Restart=on-failure
+RestartSec=5s
+
+# Security enhancements
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateDevices=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target 
