@@ -48,7 +48,6 @@ import Footer from './components/Footer';
 import BookSelector from './components/Books/BookSelector';
 import axiosInstance from './api/axiosInstance';
 import { createBrowserHistory } from 'history';
-import logo from './logo.svg';
 
 const drawerWidth = 240;
 

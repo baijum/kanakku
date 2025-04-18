@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -26,12 +26,6 @@ function Dashboard() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    fetchRecentTransactions();
-    fetchBalanceReport();
-  }, []);
 
   // Function to fetch all postings for a transaction
   const fetchTransactionWithAllPostings = async (transaction) => {
@@ -65,9 +59,9 @@ function Dashboard() {
       return transaction;
     }
   };
-
+  
   // Main function to fetch recent transactions
-  const fetchRecentTransactions = async () => {
+  const fetchRecentTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const token = getToken();
@@ -105,7 +99,12 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);  // empty dependency array as it doesn't depend on any props or state
+
+  useEffect(() => {
+    fetchRecentTransactions();
+    fetchBalanceReport();
+  }, [fetchRecentTransactions]); // Add fetchRecentTransactions to dependency array
 
   const fetchBalanceReport = () => {
     const token = getToken();

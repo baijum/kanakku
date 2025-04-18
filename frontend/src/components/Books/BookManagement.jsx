@@ -16,15 +16,10 @@ import {
   Divider,
   Paper,
   CircularProgress,
-  Alert,
-  Checkbox,
-  FormControlLabel
+  Alert
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
 import axiosInstance from '../../api/axiosInstance';
 
 const BookManagement = () => {

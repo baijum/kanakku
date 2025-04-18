@@ -217,22 +217,12 @@ function ViewTransactions() {
   };
 
   const handleDeleteTransaction = async () => {
-    if (!transactionToDelete) {
-      setOpenDeleteDialog(false);
-      setSnackbar({
-        open: true,
-        message: 'No transaction selected for deletion',
-        severity: 'error'
-      });
-      return;
-    }
-
     try {
       setLoading(true);
       const token = getToken();
       const endpoint = `/api/v1/transactions/${transactionToDelete}/related`;
 
-      const response = await axios.delete(endpoint, {
+      await axios.delete(endpoint, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   FormControl, 
   Select, 
@@ -7,7 +7,6 @@ import {
   Box, 
   CircularProgress, 
   Paper,
-  Button,
   Chip
 } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -20,7 +19,7 @@ const BookSelector = ({ isLoggedIn }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchBooks = async (retryAttempt = 0) => {
+  const fetchBooks = useCallback(async (retryAttempt = 0) => {
     try {
       // Only set loading true on the first attempt
       if (retryAttempt === 0) {
@@ -69,23 +68,6 @@ const BookSelector = ({ isLoggedIn }) => {
             // If no books exist after fetches
             console.log("BookSelector: No books found and no active book set.");
             setActiveBook(null);
-            // The backend should create a default book on registration.
-            // If we reach here after login, it implies an issue with that process or the API.
-            // Removing client-side creation attempt:
-            /*
-            console.log("BookSelector: Creating default book");
-            try {
-              const createResponse = await axiosInstance.post('/api/v1/books', { name: "Book 1" });
-              if (createResponse.data && createResponse.data.id) {
-                console.log("BookSelector: Setting new book as active", createResponse.data);
-                await axiosInstance.post(`/api/v1/books/${createResponse.data.id}/set-active`);
-                setActiveBook(createResponse.data);
-                setBooks([createResponse.data]);
-              }
-            } catch (createErr) {
-              console.error('BookSelector: Error creating default book:', createErr);
-            }
-            */
          }
          setLoading(false); // Stop loading after retries/fallbacks
       }
@@ -95,7 +77,7 @@ const BookSelector = ({ isLoggedIn }) => {
       setError('Failed to load books');
       setLoading(false);
     }
-  };
+  }, [books]); // Add books as a dependency
 
   // Fetch books on component mount and when login status changes
   useEffect(() => {
@@ -111,7 +93,7 @@ const BookSelector = ({ isLoggedIn }) => {
       setLoading(false); // Not loading if not logged in
       setError(null);
     }
-  }, [isLoggedIn]); // Add isLoggedIn to dependency array
+  }, [isLoggedIn, fetchBooks]); // Add fetchBooks to dependency array
 
   // Handle book selection change
   const handleChange = async (event) => {
