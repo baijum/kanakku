@@ -58,7 +58,7 @@ describe('AddTransaction Component', () => {
     // Wait for component to finish loading accounts 
     // and for the "Add Posting" button to be available
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /add posting/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add entry/i })).toBeInTheDocument();
     });
     
     // After waiting, check for all required elements

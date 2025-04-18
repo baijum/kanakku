@@ -22,6 +22,7 @@ class Book(db.Model):
     Book model represents an accounting book that contains accounts and transactions.
     Each user can have multiple books for different purposes (e.g., personal, business).
     """
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     name = Column(String(100), nullable=False)
@@ -59,6 +60,7 @@ class User(UserMixin, db.Model):
     User model represents application users with authentication and profile information.
     Supports both traditional username/password and Google OAuth authentication.
     """
+
     id = Column(Integer, primary_key=True)
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(255))
@@ -189,6 +191,7 @@ class Transaction(db.Model):
     Each transaction belongs to a specific user and book, and is associated with an account.
     Includes details like date, amount, currency, and status.
     """
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
@@ -233,10 +236,10 @@ class Transaction(db.Model):
         date_str = self.date.strftime("%Y-%m-%d")
         status_str = self.status if self.status else ""
         payee_str = self.payee if self.payee else ""
-        
+
         result = f"{date_str} {status_str} {payee_str}\n"
         result += f"    {self.description}  {self.amount} {self.currency}\n"
-        
+
         return result
 
     def __repr__(self):
@@ -249,6 +252,7 @@ class Account(db.Model):
     Each account belongs to a specific user and book, and can have multiple transactions.
     Accounts track balance and support different currencies.
     """
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
@@ -285,6 +289,7 @@ class Preamble(db.Model):
     Preamble model represents custom configurations or templates for ledger output.
     Users can create multiple preambles and set one as default.
     """
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
@@ -322,6 +327,7 @@ class ApiToken(db.Model):
     ApiToken model for API authentication without using JWT.
     Allows for long-lived, named API tokens for programmatic access.
     """
+
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     token = Column(String(64), unique=True, nullable=False)
@@ -365,7 +371,9 @@ class ApiToken(db.Model):
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat(),
-            "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
+            "last_used_at": (
+                self.last_used_at.isoformat() if self.last_used_at else None
+            ),
         }
 
     def __repr__(self):

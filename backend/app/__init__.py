@@ -1,4 +1,4 @@
-from flask import Flask, request, g, has_request_context
+from flask import Flask, request, g, has_request_context, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 import logging
@@ -7,7 +7,7 @@ import sys
 import os
 from logging.handlers import RotatingFileHandler
 
-from .extensions import db, login_manager, mail, jwt
+from .extensions import db, login_manager, mail, jwt, limiter
 from .config import config
 
 
@@ -94,6 +94,7 @@ def create_app(config_name="default"):
     jwt.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
 
     # Initialize Flask-Migrate
     _ = Migrate(app, db)
@@ -162,5 +163,13 @@ def create_app(config_name="default"):
         from .swagger import swagger as swagger_blueprint
 
         app.register_blueprint(swagger_blueprint)
+
+    # Rate limiting error handler
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        app.logger.warning(
+            f"Rate limit exceeded: {request.remote_addr} - {request.method} {request.path}"
+        )
+        return jsonify(error="Rate limit exceeded. Please try again later."), 429
 
     return app

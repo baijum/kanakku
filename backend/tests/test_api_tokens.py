@@ -117,9 +117,8 @@ def test_get_tokens(authenticated_client, api_token, db_session):
         if token["id"] == api_token.id:
             fixture_token_found = True
             assert token["name"] == api_token.name
-            assert (
-                "token" not in token
-            )  # Token value should not be included in the list
+            # In the new format, token value should not be included in the list response
+            assert "token" not in token
             break
     assert fixture_token_found, "Token from fixture not found in response"
 

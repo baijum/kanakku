@@ -5,11 +5,30 @@ from flask_jwt_extended import JWTManager
 from flask import request, g, current_app
 import functools
 from werkzeug.exceptions import NotFound
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import os
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
 jwt = JWTManager()
+
+
+# Configure storage based on environment
+def get_limiter_storage_uri():
+    redis_url = os.environ.get("REDIS_URL")
+    if redis_url and not os.environ.get("TESTING"):
+        return f"redis://{redis_url}"
+    return "memory://"
+
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri=get_limiter_storage_uri(),
+    strategy="fixed-window",
+)
 
 
 @login_manager.user_loader
@@ -156,3 +175,23 @@ def expired_token_callback(_jwt_header, _jwt_data):
 def unauthorized_callback(error):
     """Handle missing JWT token"""
     return {"error": "Missing or invalid authentication"}, 401
+
+
+# Custom decorator for rate-limited routes with different limits
+def auth_rate_limit(f):
+    @functools.wraps(f)
+    @limiter.limit("5 per minute")
+    def decorated_function(*args, **kwargs):
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+# More aggressive rate limiting for failed login attempts
+def failed_login_limit(f):
+    @functools.wraps(f)
+    @limiter.limit("3 per minute")
+    def decorated_function(*args, **kwargs):
+        return f(*args, **kwargs)
+
+    return decorated_function

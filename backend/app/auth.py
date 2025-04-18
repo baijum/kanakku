@@ -15,12 +15,45 @@ from flask_jwt_extended import (
 )
 from app.models import User, db
 from app.utils.email_utils import send_password_reset_email
-from app.extensions import api_token_required
+from app.extensions import (
+    api_token_required,
+    auth_rate_limit,
+    limiter,
+)
 import requests
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 
 auth = Blueprint("auth", __name__)
+
+# Keep track of failed login attempts
+# Structure: {ip_address: {email: [timestamp, timestamp, ...]}}
+failed_attempts = {}
+
+# Keep track of password reset attempts
+# Structure: {email: [timestamp, timestamp, ...]}
+reset_attempts = {}
+
+
+# Helper function to clean up old failed attempts
+def cleanup_failed_attempts():
+    now = datetime.now()
+    limit = now - timedelta(minutes=15)  # Remove attempts older than 15 minutes
+
+    for ip in list(failed_attempts.keys()):
+        for email in list(failed_attempts[ip].keys()):
+            # Filter out old timestamps
+            failed_attempts[ip][email] = [
+                ts for ts in failed_attempts[ip][email] if ts > limit
+            ]
+
+            # If no recent attempts remain, remove the email entry
+            if not failed_attempts[ip][email]:
+                del failed_attempts[ip][email]
+
+        # If no emails remain for this IP, remove the IP entry
+        if not failed_attempts[ip]:
+            del failed_attempts[ip]
 
 
 def verify_oauth_token(token):
@@ -58,6 +91,7 @@ def verify_oauth_token(token):
 
 
 @auth.route("/api/v1/auth/register", methods=["POST"])
+@auth_rate_limit
 def register():
     data = request.get_json()
     if not data:
@@ -135,6 +169,7 @@ def login_options():
 
 
 @auth.route("/api/v1/auth/login", methods=["POST"])
+@auth_rate_limit
 def login():
     """Simple login endpoint that accepts email/password and returns a token"""
     # Log the request for debugging
@@ -169,11 +204,42 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
 
+    # Get client IP address
+    ip_address = request.remote_addr
+
+    # Check if this IP + email combo has too many failed attempts
+    if ip_address in failed_attempts and email in failed_attempts[ip_address]:
+        # Apply stricter rate limiting if there are 3+ recent failures
+        recent_failures = failed_attempts[ip_address][email]
+        if len(recent_failures) >= 3:
+            current_app.logger.warning(
+                f"Multiple failed login attempts for email {email} from IP {ip_address}"
+            )
+            # Use the failed_login_limit decorator logic manually
+            remaining = limiter.limiter.get_window_stats(
+                "3 per minute", request.remote_addr
+            )[1]
+
+            if remaining <= 0:
+                cleanup_failed_attempts()  # Clean up old attempts
+                return (
+                    jsonify(
+                        {"error": "Too many login attempts. Please try again later."}
+                    ),
+                    429,
+                )
+
     # Find the user
     user = User.query.filter_by(email=email).first()
 
     # Check password
     if user and user.check_password(password):
+        # Success - reset failed attempts for this IP + email
+        if ip_address in failed_attempts and email in failed_attempts[ip_address]:
+            del failed_attempts[ip_address][email]
+            if not failed_attempts[ip_address]:
+                del failed_attempts[ip_address]
+
         # Check if user is active
         if not user.is_active:
             return (
@@ -200,20 +266,37 @@ def login():
                 if book:
                     user.active_book_id = book.id
                     db.session.commit()
-                    user_data["active_book_id"] = book.id
+                    user_data = user.to_dict()  # Refresh with updated data
 
-            return (
-                jsonify(
-                    {"message": "Login successful", "token": token, "user": user_data}
-                ),
-                200,
-            )
+            return jsonify({"token": token, "user": user_data}), 200
         except Exception as e:
-            current_app.logger.error("Token generation error: {}".format(str(e)))
-            return jsonify({"error": "Error generating token"}), 500
+            current_app.logger.error(
+                f"Error during token generation for user {email}: {str(e)}",
+                exc_info=True,
+            )
+            return jsonify({"error": "An error occurred during login"}), 500
+    else:
+        # Failed login - record the attempt
+        now = datetime.now()
 
-    # Invalid credentials
-    return jsonify({"error": "Invalid email or password"}), 401
+        if ip_address not in failed_attempts:
+            failed_attempts[ip_address] = {}
+
+        if email not in failed_attempts[ip_address]:
+            failed_attempts[ip_address][email] = []
+
+        failed_attempts[ip_address][email].append(now)
+
+        # Clean up old attempts periodically
+        if len(failed_attempts) > 100:  # Arbitrary threshold to avoid memory issues
+            cleanup_failed_attempts()
+
+        # Log the failed attempt
+        current_app.logger.warning(
+            f"Failed login attempt for email {email} from IP {ip_address}"
+        )
+
+        return jsonify({"error": "Invalid email or password"}), 401
 
 
 @auth.route("/api/v1/auth/logout", methods=["POST"])
@@ -338,104 +421,154 @@ def update_password():
 
 
 @auth.route("/api/v1/auth/forgot-password", methods=["POST"])
+@auth_rate_limit
 def forgot_password():
     """Request a password reset"""
-    # Get request data
     data = request.get_json()
-
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-
-    email = data.get("email")
-
-    if not email:
+    if not data or "email" not in data:
         return jsonify({"error": "Email is required"}), 400
 
-    # Find the user by email
+    email = data["email"]
+
+    # Check for repeated password reset attempts
+    if email in reset_attempts:
+        # Apply stricter rate limiting if there are many recent reset attempts
+        now = datetime.now()
+        recent_resets = [
+            ts for ts in reset_attempts[email] if (now - ts).total_seconds() < 3600
+        ]  # Last hour
+
+        if len(recent_resets) >= 3:
+            current_app.logger.warning(
+                f"Multiple password reset attempts for email {email}"
+            )
+            return (
+                jsonify(
+                    {
+                        "error": "Too many password reset attempts. Please try again later."
+                    }
+                ),
+                429,
+            )
+
+        # Update the attempts list
+        reset_attempts[email] = recent_resets + [now]
+    else:
+        reset_attempts[email] = [datetime.now()]
+
+    # Find the user
     user = User.query.filter_by(email=email).first()
 
-    # Even if user doesn't exist, return success to prevent email enumeration
-    if not user:
-        current_app.logger.warning(
-            f"Password reset requested for non-existent email: {email}"
-        )
-        return (
-            jsonify(
-                {
-                    "message": "If your email is registered, you will receive a password reset link"
-                }
-            ),
-            200,
-        )
+    # Whether we find a user or not, don't reveal this information
+    if user:
+        try:
+            reset_token = secrets.token_urlsafe(32)
+            user.reset_token = reset_token
+            user.reset_token_expires_at = datetime.now() + timedelta(hours=1)
+            db.session.commit()
 
-    # Check if user is active
-    if not user.is_active:
-        current_app.logger.warning(
-            f"Password reset requested for inactive account: {email}"
-        )
-        return (
-            jsonify(
-                {
-                    "message": "If your email is registered, you will receive a password reset link"
-                }
-            ),
-            200,
-        )
+            # Send password reset email
+            send_password_reset_email(user, reset_token)
+            current_app.logger.info(f"Password reset token generated for user {email}")
+        except Exception as e:
+            current_app.logger.error(
+                f"Error generating reset token for {email}: {str(e)}", exc_info=True
+            )
+            # Still return success to avoid leaking information
 
-    # Generate and store reset token
-    token = user.generate_reset_token()
-
-    # Send reset email
-    try:
-        send_password_reset_email(user, token)
-        return (
-            jsonify(
-                {
-                    "message": "If your email is registered, you will receive a password reset link"
-                }
-            ),
-            200,
-        )
-    except Exception as e:
-        current_app.logger.error(
-            f"Failed to send password reset email to {email}: {str(e)}"
-        )
-        return jsonify({"error": "Failed to send password reset email"}), 500
+    # Always return success to prevent email enumeration
+    return (
+        jsonify(
+            {
+                "message": "If an account exists with this email, a password reset link has been sent."
+            }
+        ),
+        200,
+    )
 
 
 @auth.route("/api/v1/auth/reset-password", methods=["POST"])
+@auth_rate_limit
 def reset_password():
     """Reset password using token"""
-    # Get request data
     data = request.get_json()
-
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    email = data.get("email")
     token = data.get("token")
     new_password = data.get("new_password")
 
-    if not email or not token or not new_password:
-        return jsonify({"error": "Email, token, and new password are required"}), 400
+    if not token or not new_password:
+        return jsonify({"error": "Token and new password are required"}), 400
 
-    # Find the user by email
-    user = User.query.filter_by(email=email).first()
+    # Get client IP address for rate limiting
+    ip_address = request.remote_addr
+
+    # Apply stricter rate limiting based on IP to prevent brute force attacks
+    now = datetime.now()
+    if ip_address in failed_attempts and "reset_token" in failed_attempts[ip_address]:
+        # Check for excessive attempts
+        recent_failures = [
+            ts
+            for ts in failed_attempts[ip_address]["reset_token"]
+            if (now - ts).total_seconds() < 900
+        ]  # Last 15 minutes
+
+        if len(recent_failures) >= 5:
+            current_app.logger.warning(
+                f"Multiple failed password reset attempts from IP {ip_address}"
+            )
+            return jsonify({"error": "Too many attempts. Please try again later."}), 429
+
+    # Find user by reset token
+    user = User.query.filter(
+        User.reset_token == token, User.reset_token_expires_at > datetime.now()
+    ).first()
 
     if not user:
-        return jsonify({"error": "Invalid or expired reset token"}), 400
+        # Record the failed attempt
+        if ip_address not in failed_attempts:
+            failed_attempts[ip_address] = {}
 
-    # Verify the token
-    if not user.verify_reset_token(token):
-        return jsonify({"error": "Invalid or expired reset token"}), 400
+        if "reset_token" not in failed_attempts[ip_address]:
+            failed_attempts[ip_address]["reset_token"] = []
 
-    # Update the password
-    user.set_password(new_password)
+        failed_attempts[ip_address]["reset_token"].append(now)
 
-    # Clear the reset token
-    user.clear_reset_token()
+        current_app.logger.warning(
+            f"Invalid or expired reset token attempt from IP {ip_address}"
+        )
+        return jsonify({"error": "Invalid or expired token"}), 400
 
-    return jsonify({"message": "Password has been reset successfully"}), 200
+    try:
+        # Update password
+        user.set_password(new_password)
+
+        # Clear reset token
+        user.reset_token = None
+        user.reset_token_expires_at = None
+
+        # Commit changes
+        db.session.commit()
+
+        # Clear any failed reset attempts from this IP
+        if (
+            ip_address in failed_attempts
+            and "reset_token" in failed_attempts[ip_address]
+        ):
+            del failed_attempts[ip_address]["reset_token"]
+            if not failed_attempts[ip_address]:
+                del failed_attempts[ip_address]
+
+        current_app.logger.info(f"Password reset successful for user {user.email}")
+
+        return jsonify({"message": "Password has been reset successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Error during password reset: {str(e)}", exc_info=True
+        )
+        return jsonify({"error": "Failed to reset password"}), 500
 
 
 # Google OAuth2 route
@@ -662,8 +795,16 @@ def get_tokens():
     current_app.logger.debug(f"Getting tokens for user ID: {user.id}")
 
     tokens = ApiToken.query.filter_by(user_id=user.id).all()
-    # Always return a 200 with an empty array if no tokens exist
-    return jsonify([token.to_dict() for token in tokens]), 200
+    # Return tokens without including the token value for security
+    return (
+        jsonify(
+            [
+                {k: v for k, v in token.to_dict().items() if k != "token"}
+                for token in tokens
+            ]
+        ),
+        200,
+    )
 
 
 @auth.route("/api/v1/auth/tokens", methods=["POST"])

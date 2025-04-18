@@ -146,8 +146,12 @@ def test_log_response_middleware():
     # It should be one of the functions registered to after_request
     log_response_func = None
     for func in app.after_request_funcs[None]:
-        # Look at the function name or code to identify the right one
-        if func.__name__ == "log_response":
+        # Check if it's a functools.partial object
+        if hasattr(func, "func") and func.func.__name__ == "log_response":
+            log_response_func = func
+            break
+        # Or a regular function
+        elif hasattr(func, "__name__") and func.__name__ == "log_response":
             log_response_func = func
             break
 

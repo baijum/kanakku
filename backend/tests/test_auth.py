@@ -52,8 +52,7 @@ def test_login(client, user, app):
     assert response.status_code == 200
     data = response.get_json()
     assert "token" in data
-    assert "message" in data
-    assert data["message"] == "Login successful"
+    assert "user" in data
 
 
 def test_invalid_login(client):
@@ -108,7 +107,6 @@ def test_reset_password(client, user, app, db_session):
     response = client.post(
         "/api/v1/auth/reset-password",
         json={
-            "email": "test@example.com",
             "token": token,
             "new_password": "newpassword123",
         },
@@ -134,7 +132,6 @@ def test_reset_password(client, user, app, db_session):
     response = client.post(
         "/api/v1/auth/reset-password",
         json={
-            "email": "test@example.com",
             "token": "invalidtoken",
             "new_password": "newpassword123",
         },
