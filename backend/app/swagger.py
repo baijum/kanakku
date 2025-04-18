@@ -1,4 +1,4 @@
-from flask import Blueprint, send_from_directory
+from flask import Blueprint, send_from_directory, jsonify
 import os
 
 swagger = Blueprint("swagger", __name__)
@@ -47,4 +47,7 @@ def swagger_ui():
 def serve_swagger_file():
     """Serve the swagger.yaml file"""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return send_from_directory(base_dir, "swagger.yaml")
+    try:
+        return send_from_directory(base_dir, "swagger.yaml")
+    except FileNotFoundError:
+        return jsonify({"error": "Swagger specification file not found"}), 404

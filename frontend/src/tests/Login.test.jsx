@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import Login from '../src/components/Auth/Login'; // Adjust the import path if necessary
+import '@testing-library/jest-dom';
+import Login from '../components/Auth/Login';
 import { MemoryRouter } from 'react-router-dom'; // Assuming you use react-router
 
 // Mock the API call (replace with your actual API call structure if different)

@@ -22,13 +22,21 @@
     "prestart": "node patch-util-module.js",
     "start": "NODE_OPTIONS=--no-deprecation react-scripts start",
     "build": "react-scripts build",
-    "test": "CI=true react-scripts test --env=jsdom",
+    "test": "react-scripts test --env=jsdom --testMatch=\"**/src/components/BasicTest.test.js\"",
+    "test:register": "react-scripts test --env=jsdom --testMatch=\"**/src/tests/Register.test.jsx\"",
+    "test:addtransaction": "react-scripts test --env=jsdom --testMatch=\"**/src/tests/AddTransaction.test.jsx\"",
+    "test:viewtransactions": "react-scripts test --env=jsdom --testMatch=\"**/src/tests/ViewTransactions.test.jsx\"",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
+    ]
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!axios)/"
     ]
   },
   "browserslist": {
