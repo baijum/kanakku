@@ -56,10 +56,16 @@ def test_api_token_expiry_validation(client, user):
     db.session.add(expired_token)
     db.session.commit()
 
-    # Try to use the expired token
-    headers = {"Authorization": f"Token {expired_token.token}"}
+    # Try to use the expired token with Authorization header
+    auth_headers = {"Authorization": f"Token {expired_token.token}"}
+    response = client.get("/api/v1/transactions", headers=auth_headers)
+    assert response.status_code == 401
+    data = json.loads(response.data)
+    assert "error" in data  # Just check for any error response
 
-    response = client.get("/api/v1/transactions", headers=headers)
+    # Try to use the expired token with X-API-Key header
+    api_key_headers = {"X-API-Key": expired_token.token}
+    response = client.get("/api/v1/transactions", headers=api_key_headers)
     assert response.status_code == 401
     data = json.loads(response.data)
     assert "error" in data  # Just check for any error response

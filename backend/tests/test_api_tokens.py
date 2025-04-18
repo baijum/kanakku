@@ -221,7 +221,7 @@ def test_update_nonexistent_token(authenticated_client):
 
 def test_token_authentication(app, client, api_token, db_session):
     """Test authenticating with an API token."""
-    # Test access with API token
+    # Test access with API token via Authorization header
     response = client.get(
         "/api/v1/auth/test", headers={"Authorization": f"Token {api_token.token}"}
     )
@@ -231,10 +231,24 @@ def test_token_authentication(app, client, api_token, db_session):
     assert "authentication successful" in data["message"].lower()
     assert data["auth_type"] == "API Token"
 
-    # Test with invalid token
+    # Test access with API token via X-API-Key header
+    response = client.get("/api/v1/auth/test", headers={"X-API-Key": api_token.token})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "message" in data
+    assert "authentication successful" in data["message"].lower()
+    assert data["auth_type"] == "API Token"
+
+    # Test with invalid token in Authorization header
     response = client.get(
         "/api/v1/auth/test", headers={"Authorization": "Token invalid-token"}
     )
+    assert response.status_code == 401
+    data = response.get_json()
+    assert "error" in data
+
+    # Test with invalid token in X-API-Key header
+    response = client.get("/api/v1/auth/test", headers={"X-API-Key": "invalid-token"})
     assert response.status_code == 401
     data = response.get_json()
     assert "error" in data
@@ -249,9 +263,13 @@ def test_token_authentication(app, client, api_token, db_session):
     )
     assert response.status_code == 401
 
-    # Test with expired token
+    # Reactivate the token for subsequent tests
     with app.app_context():
         api_token.is_active = True
+        db_session.commit()
+
+    # Test with expired token
+    with app.app_context():
         api_token.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
         db_session.commit()
 

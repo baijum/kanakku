@@ -69,6 +69,22 @@ def api_token_required(f):
                     f"JWT Auth failed/not provided: {jwt_error}. Trying API Token."
                 )
 
+                # Check for X-API-Key header first
+                x_api_key = request.headers.get("X-API-Key", "").strip()
+                if x_api_key:
+                    # Look up the token directly from the X-API-Key header
+                    api_token = ApiToken.query.filter_by(token=x_api_key).first()
+
+                    # If token exists and is valid
+                    if api_token and api_token.is_valid():
+                        user = db.session.get(User, api_token.user_id)
+                        if user:
+                            g.current_user = user
+                            api_token.update_last_used()
+                            # Call the actual route function if API token auth succeeds
+                            return f(*args, **kwargs)
+
+                # If X-API-Key didn't work, try Authorization header
                 auth_header = request.headers.get("Authorization", "").strip()
 
                 # If no Authorization header is provided at all

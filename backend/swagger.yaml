@@ -4,8 +4,11 @@ info:
   description: API documentation for Kanakku - A Simple Accounting Application
   version: 1.0.0
 servers:
-  - url: http://localhost:5000
+  - url: http://localhost:8000
     description: Local development server
+# Global security definition
+security:
+  - ApiKeyAuth: [] # Requires ApiKeyAuth for all paths unless overridden
 tags:
   - name: Auth
     description: Authentication and user management
@@ -139,8 +142,6 @@ paths:
       tags:
         - Auth
       summary: Logout (client-side token invalidation)
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: Logout successful
@@ -150,8 +151,6 @@ paths:
       tags:
         - Auth
       summary: Get current user information
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: User information
@@ -167,8 +166,6 @@ paths:
       tags:
         - Auth
       summary: Activate or deactivate a user
-      security:
-        - BearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -196,8 +193,6 @@ paths:
       tags:
         - Auth
       summary: Update user password
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -357,8 +352,6 @@ paths:
       tags:
         - Auth
       summary: Get all API tokens for the current user
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: List of API tokens
@@ -372,8 +365,6 @@ paths:
       tags:
         - Auth
       summary: Create a new API token
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -402,8 +393,6 @@ paths:
       tags:
         - Auth
       summary: Update an API token
-      security:
-        - BearerAuth: []
       parameters:
         - name: tokenId
           in: path
@@ -434,8 +423,6 @@ paths:
       tags:
         - Auth
       summary: Revoke an API token
-      security:
-        - BearerAuth: []
       parameters:
         - name: tokenId
           in: path
@@ -454,8 +441,6 @@ paths:
       tags:
         - Accounts
       summary: Get all account names
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: List of account names
@@ -472,8 +457,6 @@ paths:
       tags:
         - Accounts
       summary: Create a new account
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -500,8 +483,6 @@ paths:
       tags:
         - Accounts
       summary: Get all accounts with full details
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: List of accounts with details
@@ -517,8 +498,6 @@ paths:
       tags:
         - Accounts
       summary: Get a specific account
-      security:
-        - BearerAuth: []
       parameters:
         - name: accountId
           in: path
@@ -538,8 +517,6 @@ paths:
       tags:
         - Accounts
       summary: Update an account
-      security:
-        - BearerAuth: []
       parameters:
         - name: accountId
           in: path
@@ -570,8 +547,6 @@ paths:
       tags:
         - Accounts
       summary: Delete an account
-      security:
-        - BearerAuth: []
       parameters:
         - name: accountId
           in: path
@@ -592,8 +567,6 @@ paths:
       tags:
         - Transactions
       summary: Get all transactions
-      security:
-        - BearerAuth: []
       parameters:
         - name: limit
           in: query
@@ -631,8 +604,6 @@ paths:
       tags:
         - Transactions
       summary: Create a new transaction
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -663,8 +634,6 @@ paths:
       tags:
         - Transactions
       summary: Get a specific transaction
-      security:
-        - BearerAuth: []
       parameters:
         - name: transactionId
           in: path
@@ -684,8 +653,6 @@ paths:
       tags:
         - Transactions
       summary: Update a transaction
-      security:
-        - BearerAuth: []
       parameters:
         - name: transactionId
           in: path
@@ -716,8 +683,6 @@ paths:
       tags:
         - Transactions
       summary: Delete a transaction
-      security:
-        - BearerAuth: []
       parameters:
         - name: transactionId
           in: path
@@ -735,8 +700,6 @@ paths:
       tags:
         - Transactions
       summary: Update a transaction with multiple postings
-      security:
-        - BearerAuth: []
       parameters:
         - name: transactionId
           in: path
@@ -771,8 +734,6 @@ paths:
       tags:
         - Transactions
       summary: Get related transactions
-      security:
-        - BearerAuth: []
       parameters:
         - name: transactionId
           in: path
@@ -794,8 +755,6 @@ paths:
       tags:
         - Transactions
       summary: Delete related transactions
-      security:
-        - BearerAuth: []
       parameters:
         - name: transactionId
           in: path
@@ -814,8 +773,6 @@ paths:
       tags:
         - Reports
       summary: Get balance report
-      security:
-        - BearerAuth: []
       parameters:
         - name: account
           in: query
@@ -841,8 +798,6 @@ paths:
       tags:
         - Reports
       summary: Get transaction register
-      security:
-        - BearerAuth: []
       parameters:
         - name: account
           in: query
@@ -868,8 +823,6 @@ paths:
       tags:
         - Reports
       summary: Get balance report by account type
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: Balance report by account type
@@ -886,8 +839,6 @@ paths:
       tags:
         - Reports
       summary: Get income statement
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: Income statement
@@ -906,8 +857,6 @@ paths:
         - Ledger
       summary: Get transactions in ledger format
       description: Returns all transactions in ledger file format as plain text
-      security:
-        - BearerAuth: []
       parameters:
         - name: preamble_id
           in: query
@@ -944,8 +893,6 @@ paths:
       tags:
         - Preamble
       summary: Get all preambles
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: List of preambles
@@ -962,8 +909,6 @@ paths:
       tags:
         - Preamble
       summary: Create a new preamble
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -990,8 +935,6 @@ paths:
       tags:
         - Preamble
       summary: Get a specific preamble
-      security:
-        - BearerAuth: []
       parameters:
         - name: preambleId
           in: path
@@ -1011,8 +954,6 @@ paths:
       tags:
         - Preamble
       summary: Update a preamble
-      security:
-        - BearerAuth: []
       parameters:
         - name: preambleId
           in: path
@@ -1043,8 +984,6 @@ paths:
       tags:
         - Preamble
       summary: Delete a preamble
-      security:
-        - BearerAuth: []
       parameters:
         - name: preambleId
           in: path
@@ -1071,8 +1010,6 @@ paths:
       tags:
         - Preamble
       summary: Get default preamble
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: Default preamble
@@ -1089,8 +1026,6 @@ paths:
       tags:
         - Books
       summary: Get all books for the current user
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: List of books
@@ -1104,8 +1039,6 @@ paths:
       tags:
         - Books
       summary: Create a new book
-      security:
-        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -1138,8 +1071,6 @@ paths:
       tags:
         - Books
       summary: Get a specific book
-      security:
-        - BearerAuth: []
       parameters:
         - name: bookId
           in: path
@@ -1159,8 +1090,6 @@ paths:
       tags:
         - Books
       summary: Update a book
-      security:
-        - BearerAuth: []
       parameters:
         - name: bookId
           in: path
@@ -1197,8 +1126,6 @@ paths:
       tags:
         - Books
       summary: Delete a book and all its associated accounts and transactions
-      security:
-        - BearerAuth: []
       parameters:
         - name: bookId
           in: path
@@ -1216,8 +1143,6 @@ paths:
       tags:
         - Books
       summary: Set a book as active for the current user
-      security:
-        - BearerAuth: []
       parameters:
         - name: bookId
           in: path
@@ -1244,8 +1169,6 @@ paths:
       tags:
         - Books
       summary: Get the current user's active book
-      security:
-        - BearerAuth: []
       responses:
         200:
           description: Active book details or empty object if no active book
@@ -1256,11 +1179,15 @@ paths:
 
 components:
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT token obtained from the auth/login endpoint
+    ApiKeyAuth:
+      type: apiKey      # Specify the type as apiKey
+      in: header        # Specify the location of the key (header, query, or cookie)
+      name: X-API-Key   # Specify the exact name of the header
+      description: >    # Optional but recommended description
+        API Key authentication using the X-API-Key header.
+        You can use either the X-API-Key header with the raw token value or 
+        the Authorization header with the format "Token YOUR_TOKEN_VALUE".
+        Enter your API key value below.
   
   schemas:
     User:
