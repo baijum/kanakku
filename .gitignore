@@ -1,6 +1,7 @@
 # Common files
 .DS_Store
 *.log
+*.log.*
 *.swp
 .env.local
 .env.development.local
