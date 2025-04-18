@@ -41,6 +41,94 @@ struct Account {
     #[serde(skip_serializing_if = "Option::is_none")]
     balance: Option<f64>,
 }
+// Unit tests for create_account using mockito
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mockito::{mock, Matcher, server_url};
+    use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
+    use serde_json::json;
+
+    #[tokio::test]
+    async fn test_create_account_success() {
+        // Prepare test account and headers
+        let account = Account { name: "Test".to_string(), description: None, currency: None, balance: None };
+        let mut headers = HeaderMap::new();
+        headers.insert(AUTHORIZATION, HeaderValue::from_static("Token testtoken"));
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+
+        // Mock success response
+        let _m = mock("POST", "/api/v1/accounts")
+            .match_header("authorization", "Token testtoken")
+            .match_header("content-type", "application/json")
+            .match_body(Matcher::Json(json!({ "name": "Test" })))
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(json!({
+                "message": "Account created",
+                "account": { "id": 42, "name": "Test" }
+            }).to_string())
+            .create();
+
+        // Call the function under test
+        let client = reqwest::Client::new();
+        let result = create_account(&client, &server_url(), &headers, &account).await;
+        assert!(result.is_ok());
+        let resp = result.unwrap();
+        assert_eq!(resp.account.id, 42);
+        assert_eq!(resp.account.name, "Test");
+    }
+
+    #[tokio::test]
+    async fn test_create_account_error_json() {
+        // Prepare test account and headers
+        let account = Account { name: "ErrorTest".to_string(), description: None, currency: None, balance: None };
+        let mut headers = HeaderMap::new();
+        headers.insert(AUTHORIZATION, HeaderValue::from_static("Token testtoken"));
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+
+        // Mock error JSON response
+        let _m = mock("POST", "/api/v1/accounts")
+            .match_header("authorization", "Token testtoken")
+            .match_header("content-type", "application/json")
+            .match_body(Matcher::Json(json!({ "name": "ErrorTest" })))
+            .with_status(400)
+            .with_header("content-type", "application/json")
+            .with_body(json!({ "error": "Bad request" }).to_string())
+            .create();
+
+        // Call the function under test
+        let client = reqwest::Client::new();
+        let result = create_account(&client, &server_url(), &headers, &account).await;
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Bad request"));
+    }
+
+    #[tokio::test]
+    async fn test_create_account_error_no_body() {
+        // Prepare test account and headers
+        let account = Account { name: "NoBodyTest".to_string(), description: None, currency: None, balance: None };
+        let mut headers = HeaderMap::new();
+        headers.insert(AUTHORIZATION, HeaderValue::from_static("Token testtoken"));
+        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+
+        // Mock error response with no body
+        let _m = mock("POST", "/api/v1/accounts")
+            .match_header("authorization", "Token testtoken")
+            .match_header("content-type", "application/json")
+            .match_body(Matcher::Json(json!({ "name": "NoBodyTest" })))
+            .with_status(500)
+            .create();
+
+        // Call the function under test
+        let client = reqwest::Client::new();
+        let result = create_account(&client, &server_url(), &headers, &account).await;
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("HTTP Error"));
+    }
+}
 
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
