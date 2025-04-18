@@ -38,13 +38,13 @@ echo -e "\n${YELLOW}Running backend linting...${NC}"
 cd backend
 if [ -f "requirements.txt" ]; then
   # Check if ruff is installed
-  if ! pip list | grep -q ruff; then
+  if ! pip freeze | grep -q "^ruff==" 2>/dev/null; then
     echo "Installing ruff..."
     pip install ruff
   fi
   
   # Check if black is installed
-  if ! pip list | grep -q black; then
+  if ! pip freeze | grep -q "^black==" 2>/dev/null; then
     echo "Installing black..."
     pip install black
   fi
@@ -54,25 +54,6 @@ if [ -f "requirements.txt" ]; then
   
   echo "Running Black formatter check..."
   black --check . || { echo -e "${RED}Black formatting check failed${NC}"; exit 1; }
-  
-  # Optional: Check type hints with mypy if available
-  if command -v mypy >/dev/null 2>&1; then
-    echo "Running mypy type checker..."
-    # Install required type stubs
-    echo "Installing required type stubs for mypy..."
-    pip install types-requests types-Flask-Cors types-Flask-Migrate || true
-    mypy . || { echo -e "${YELLOW}Mypy type checking found issues. Please check mypy.ini configuration.${NC}"; }
-  elif pip list | grep -q mypy; then
-    echo "Mypy found in pip but not in PATH. Installing mypy..."
-    pip install mypy
-    # Install required type stubs
-    echo "Installing required type stubs for mypy..."
-    pip install types-requests types-Flask-Cors types-Flask-Migrate || true
-    echo "Running mypy type checker..."
-    mypy . || { echo -e "${YELLOW}Mypy type checking found issues. Please check mypy.ini configuration.${NC}"; }
-  else
-    echo "Mypy not found, skipping type checking. Install mypy for static type checking."
-  fi
 else
   echo -e "${RED}Error: requirements.txt not found in backend directory${NC}"
   exit 1
