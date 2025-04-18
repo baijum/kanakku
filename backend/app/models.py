@@ -54,7 +54,11 @@ class User(UserMixin, db.Model):
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(255))
     name = Column(String(100))
-    active_book_id = Column(Integer, ForeignKey("book.id"), nullable=True)
+    active_book_id = Column(
+        Integer,
+        ForeignKey("book.id", use_alter=True, name="fk_user_active_book"),
+        nullable=True,
+    )
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

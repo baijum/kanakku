@@ -159,7 +159,7 @@ def test_set_active_book(app, client, user, books):
     # Verify the user's active_book_id was updated
     user_obj, _ = user
     with app.app_context():
-        user_from_db = User.query.get(user_obj.id)
+        user_from_db = db.session.get(User, user_obj.id)
         assert user_from_db.active_book_id == book2.id
 
 
@@ -305,7 +305,7 @@ def test_create_transaction_in_active_book(app, client, user, books, accounts):
     # Verify transaction is in the active book
     transaction_id = response.json["transactions"][0]["id"]
     with app.app_context():
-        transaction = Transaction.query.get(transaction_id)
+        transaction = db.session.get(Transaction, transaction_id)
         assert transaction.book_id == book1.id
 
 
@@ -415,9 +415,9 @@ def test_delete_book(app, client, user, books, accounts):
 
     # Verify book and accounts exist before deletion
     with app.app_context():
-        assert Book.query.get(book1.id) is not None
-        assert Account.query.get(account1.id) is not None
-        assert Account.query.get(account2.id) is not None
+        assert db.session.get(Book, book1.id) is not None
+        assert db.session.get(Account, account1.id) is not None
+        assert db.session.get(Account, account2.id) is not None
 
     # Delete the book
     response = client.delete(
@@ -433,9 +433,9 @@ def test_delete_book(app, client, user, books, accounts):
 
     # Verify book and its accounts are deleted
     with app.app_context():
-        assert Book.query.get(book1.id) is None
-        assert Account.query.get(account1.id) is None
-        assert Account.query.get(account2.id) is None
+        assert db.session.get(Book, book1.id) is None
+        assert db.session.get(Account, account1.id) is None
+        assert db.session.get(Account, account2.id) is None
 
 
 def test_delete_active_book_and_reassign(app, client, user, books):
@@ -459,7 +459,7 @@ def test_delete_active_book_and_reassign(app, client, user, books):
 
     # Verify the active book was reassigned to book2
     with app.app_context():
-        user_from_db = User.query.get(user_obj.id)
+        user_from_db = db.session.get(User, user_obj.id)
         assert user_from_db.active_book_id == book2.id
 
 
@@ -484,7 +484,7 @@ def test_delete_last_book(app, client, user, books):
 
     # Verify active_book_id is set to None
     with app.app_context():
-        user_from_db = User.query.get(user_obj.id)
+        user_from_db = db.session.get(User, user_obj.id)
         assert user_from_db.active_book_id is None
 
 
@@ -522,7 +522,7 @@ def test_delete_book_with_transactions(app, client, user, books, accounts):
 
     # Verify transaction exists
     with app.app_context():
-        assert Transaction.query.get(transaction_id) is not None
+        assert db.session.get(Transaction, transaction_id) is not None
 
     # Delete the book
     response = client.delete(
@@ -534,8 +534,8 @@ def test_delete_book_with_transactions(app, client, user, books, accounts):
 
     # Verify book, accounts and transactions are deleted
     with app.app_context():
-        assert Book.query.get(book1.id) is None
-        assert Transaction.query.get(transaction_id) is None
+        assert db.session.get(Book, book1.id) is None
+        assert db.session.get(Transaction, transaction_id) is None
 
 
 def test_delete_unauthorized_book(app, client, user, books):
@@ -568,4 +568,4 @@ def test_delete_unauthorized_book(app, client, user, books):
 
     # Verify other user's book still exists
     with app.app_context():
-        assert Book.query.get(other_book_id) is not None
+        assert db.session.get(Book, other_book_id) is not None

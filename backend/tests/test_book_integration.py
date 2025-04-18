@@ -101,9 +101,9 @@ def test_create_transaction_in_correct_book(app, setup_books_and_accounts):
     data = setup_books_and_accounts
 
     with app.app_context():
-        user = User.query.get(data["user_id"])
-        personal_book = Book.query.get(data["personal_book_id"])
-        business_book = Book.query.get(data["business_book_id"])
+        user = db.session.get(User, data["user_id"])
+        personal_book = db.session.get(Book, data["personal_book_id"])
+        business_book = db.session.get(Book, data["business_book_id"])
 
         # Create a transaction in the personal book
         personal_checking = Account.query.filter_by(
@@ -190,10 +190,10 @@ def test_create_transaction_in_correct_book(app, setup_books_and_accounts):
         assert len(business_transactions) == 2
 
         # Verify account balances
-        assert Account.query.get(personal_checking.id).balance == 500.0
-        assert Account.query.get(personal_savings.id).balance == 5500.0
-        assert Account.query.get(business_checking.id).balance == 1800.0
-        assert Account.query.get(business_expense.id).balance == 200.0
+        assert db.session.get(Account, personal_checking.id).balance == 500.0
+        assert db.session.get(Account, personal_savings.id).balance == 5500.0
+        assert db.session.get(Account, business_checking.id).balance == 1800.0
+        assert db.session.get(Account, business_expense.id).balance == 200.0
 
 
 def test_switching_active_book(app, setup_books_and_accounts):
@@ -201,9 +201,9 @@ def test_switching_active_book(app, setup_books_and_accounts):
     data = setup_books_and_accounts
 
     with app.app_context():
-        user = User.query.get(data["user_id"])
-        personal_book = Book.query.get(data["personal_book_id"])
-        business_book = Book.query.get(data["business_book_id"])
+        user = db.session.get(User, data["user_id"])
+        personal_book = db.session.get(Book, data["personal_book_id"])
+        business_book = db.session.get(Book, data["business_book_id"])
 
         # Verify initial state (personal book is active)
         assert user.active_book_id == personal_book.id
@@ -213,7 +213,7 @@ def test_switching_active_book(app, setup_books_and_accounts):
         db.session.commit()
 
         # Verify active book changed
-        user_refreshed = User.query.get(user.id)
+        user_refreshed = db.session.get(User, user.id)
         assert user_refreshed.active_book_id == business_book.id
 
         # Check that accounts from active book are returned
@@ -234,9 +234,9 @@ def test_account_uniqueness_per_book(app, setup_books_and_accounts):
     data = setup_books_and_accounts
 
     with app.app_context():
-        user = User.query.get(data["user_id"])
-        personal_book = Book.query.get(data["personal_book_id"])
-        business_book = Book.query.get(data["business_book_id"])
+        user = db.session.get(User, data["user_id"])
+        personal_book = db.session.get(Book, data["personal_book_id"])
+        business_book = db.session.get(Book, data["business_book_id"])
 
         # Create an account with the same name in both books
         personal_account = Account(
@@ -293,9 +293,9 @@ def test_deleting_book_cascades_to_accounts_and_transactions(
     data = setup_books_and_accounts
 
     with app.app_context():
-        user = User.query.get(data["user_id"])
-        personal_book = Book.query.get(data["personal_book_id"])
-        business_book = Book.query.get(data["business_book_id"])
+        user = db.session.get(User, data["user_id"])
+        personal_book = db.session.get(Book, data["personal_book_id"])
+        business_book = db.session.get(Book, data["business_book_id"])
 
         # First create some transactions in the business book
         business_checking = Account.query.filter_by(
@@ -336,7 +336,7 @@ def test_deleting_book_cascades_to_accounts_and_transactions(
         db.session.commit()
 
         # Verify book is deleted
-        deleted_book = Book.query.get(business_book.id)
+        deleted_book = db.session.get(Book, business_book.id)
         assert deleted_book is None
 
         # Verify accounts are deleted
@@ -348,5 +348,5 @@ def test_deleting_book_cascades_to_accounts_and_transactions(
         assert len(transactions) == 0
 
         # Verify personal book still exists
-        personal_book_check = Book.query.get(personal_book.id)
+        personal_book_check = db.session.get(Book, personal_book.id)
         assert personal_book_check is not None

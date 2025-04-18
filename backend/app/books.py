@@ -127,7 +127,7 @@ def get_active_book():
     current_app.logger.debug(
         f"Fetching active book with ID: {active_book_id} for user {user.id}"
     )
-    active_book = Book.query.get(active_book_id)
+    active_book = db.session.get(Book, active_book_id)
 
     # Verify the fetched book belongs to the user and exists
     if not active_book:

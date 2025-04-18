@@ -305,10 +305,9 @@ def test_delete_related_transactions(authenticated_client, user, app):
     assert response.status_code == 200
     assert "message" in response.get_json()
 
-    # Verify all three transactions were deleted
+    # Verify transactions were deleted
     with app.app_context():
-        # Check that tx1 was deleted (the others have different dates, so won't be deleted)
-        tx1_exists = Transaction.query.get(tx1_id)
+        tx1_exists = db.session.get(Transaction, tx1_id)
         assert tx1_exists is None
 
 
