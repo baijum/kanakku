@@ -12,6 +12,7 @@ Thank you for your interest in contributing to Kanakku! This document provides g
 - Add docstrings for all public functions and classes
 - Use snake_case for variables and functions
 - Use PascalCase for class names
+- Default currency should be INR with proper symbol formatting
 
 Example:
 ```python
@@ -36,6 +37,8 @@ def process_transaction(transaction_data: dict) -> dict:
 - Use camelCase for variables and functions
 - Use PascalCase for component names
 - Use TypeScript for new components (if possible)
+- Use Material-UI (MUI) for UI components
+- Default currency should be displayed as ₹ (INR)
 
 Example:
 ```jsx
@@ -52,6 +55,18 @@ const TransactionForm = ({ onSubmit }) => {
   );
 };
 ```
+
+## API Documentation
+
+When adding or modifying API endpoints:
+
+1. Update the `backend/swagger.yaml` file with your changes
+2. Include:
+   - Endpoint path and method
+   - Request parameters and body schema
+   - Response schema
+   - Authentication requirements
+   - Example requests and responses
 
 ## Git Workflow
 
@@ -84,12 +99,22 @@ const TransactionForm = ({ onSubmit }) => {
 - Use pytest for testing
 - Aim for at least 80% test coverage
 - Include tests for error cases
+- Run tests with:
+  ```bash
+  cd backend
+  python -m pytest -v tests/
+  ```
 
 ### Frontend
 - Write tests for all new components
 - Use React Testing Library
 - Test component behavior, not implementation
 - Include tests for user interactions
+- Run tests with:
+  ```bash
+  cd frontend
+  npm test
+  ```
 
 ## Documentation
 
@@ -98,6 +123,7 @@ const TransactionForm = ({ onSubmit }) => {
 - Keep comments up to date
 - Use JSDoc for JavaScript functions
 - Use Python docstrings for Python functions
+- Document bug fixes in the `fixes/` directory for major issues
 
 ## Security
 
@@ -105,6 +131,7 @@ const TransactionForm = ({ onSubmit }) => {
 - Validate all user input
 - Use environment variables for configuration
 - Follow security best practices for both frontend and backend
+- Use JWT tokens properly (store identity as a string)
 
 ## Performance
 
@@ -150,13 +177,29 @@ const TransactionForm = ({ onSubmit }) => {
 5. Run tests:
    ```bash
    # Backend
-   pytest
+   cd backend
+   python -m pytest
    
    # Frontend
+   cd frontend
    npm test
    ```
 
 6. Submit a Pull Request
+
+## Running the Application
+
+### Backend
+```bash
+cd backend
+./run-backend.sh
+```
+
+### Frontend
+```bash
+cd frontend
+npm start
+```
 
 ## Questions?
 

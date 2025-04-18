@@ -10,6 +10,9 @@ Kanakku provides a user-friendly way to manage your financial transactions.
 - Modern, responsive web interface
 - JWT-based authentication
 - Google Sign-In integration
+- Default INR currency with proper symbol formatting
+- Book entries for advanced accounting
+- Comprehensive transaction reports
 
 ## Prerequisites
 
@@ -31,30 +34,40 @@ kanakku/
 │   │   ├── accounts.py # Account management routes
 │   │   ├── transactions.py # Transaction management routes
 │   │   ├── ledger.py  # Ledger-specific routes (e.g., ledger format export)
-│   │   ├── reports.py # Reporting routes (currently commented out)
+│   │   ├── reports.py # Reporting functionality
+│   │   ├── books.py   # Book entries for advanced accounting
+│   │   ├── preamble.py # Core utilities and constants
+│   │   ├── swagger.py # Swagger/OpenAPI documentation handlers
 │   │   └── errors.py  # Error handlers
+│   ├── swagger.yaml   # OpenAPI specification
 │   ├── tests/         # Pytest test suite
-│   ├── venv/          # Virtual environment
 │   ├── requirements.txt
 │   └── ...
 ├── frontend/          # React frontend
 │   ├── public/
 │   ├── src/           # Source code
+│   │   ├── components/ # React components
+│   │   ├── api/       # API client code
+│   │   └── ...
 │   ├── package.json
 │   └── ...
 ├── fixes/             # Documentation for major bug fixes
-    └── flask-jwt-extended-422-errors.md
+│   ├── currency-refactoring-usd-to-inr.md
+│   └── flask-jwt-extended-422-errors.md
 ```
 
 ## Architecture
 
 *   **Frontend:** React application (`frontend/`) providing the user interface. It communicates with the backend via API calls.
+    * Uses Material-UI (MUI) for component styling
+    * React Router for navigation
+    * Axios for API requests
 *   **Backend:** Flask application (`backend/`) serving a RESTful API. It handles:
-    *   **Business Logic:** Managing users, accounts, and transactions.
-    *   **Database Interaction:** Using SQLAlchemy (`backend/app/models.py`) with an SQLite database (`backend/app/app.db`) for application data (users, accounts, transactions).
-    *   **Authentication:** Utilizing Flask-JWT-Extended for token-based authentication (`backend/app/auth.py`, `backend/app/__init__.py`).
-    *   **Ledger Interaction:** Currently limited to exporting data in Ledger format (`backend/app/ledger.py`). Direct interaction with `ledger-cli` for reporting is present but commented out.
-*   **API:** Defined using Flask Blueprints, organized by functionality (auth, accounts, transactions, etc.). All endpoints are prefixed with `/api/`.
+    *   **Business Logic:** Managing users, accounts, transactions, and book entries.
+    *   **Database Interaction:** Using SQLAlchemy (`backend/app/models.py`) with an SQLite database (`backend/app/app.db`) for application data.
+    *   **Authentication:** Utilizing Flask-JWT-Extended for token-based authentication and Google OAuth integration.
+    *   **Ledger Interaction:** Exporting data in Ledger format and generating reports.
+*   **API:** Defined using Flask Blueprints, organized by functionality with Swagger/OpenAPI documentation. All endpoints are prefixed with `/api/`.
 
 ## API Endpoints
 
@@ -67,6 +80,8 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
     *   `POST /api/v1/auth/login` - Log in a user. (Body: `{ "username": "...", "password": "..." }`)
     *   `POST /api/v1/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
     *   `GET /api/v1/auth/me` (Auth Required) - Get the current logged-in user's details.
+    *   `GET /api/v1/auth/google` - Initiate Google OAuth login flow.
+    *   `GET /api/v1/auth/google/callback` - Callback for Google OAuth.
 *   **Accounts (`accounts.py`)** (Auth Required)
     *   `GET /api/v1/accounts` - Get all accounts for the current user.
     *   `POST /api/v1/accounts` - Add a new account. (Body: `{ "name": "...", "type": "...", "currency": "..." (optional), "balance": ... (optional) }`)
@@ -75,11 +90,17 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
     *   `DELETE /api/v1/accounts/<int:account_id>` - Delete a specific account.
 *   **Transactions (`transactions.py`)** (Auth Required)
     *   `POST /api/v1/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "description": "...", "amount": ..., "account_name": "...", "payee": "..." (optional), "currency": "..." (optional) }`)
-    *   `GET /api/v1/transactions` - Get all transactions for the current user (supports `?limit=N` query parameter).
+    *   `GET /api/v1/transactions` - Get all transactions for the current user (supports filtering parameters).
+    *   `PUT /api/v1/transactions/<int:transaction_id>` - Update a transaction.
+    *   `DELETE /api/v1/transactions/<int:transaction_id>` - Delete a transaction.
 *   **Ledger (`ledger.py`)** (Auth Required)
     *   `GET /api/v1/ledgertransactions` - Get all transactions for the current user in Ledger text format.
-*   **Reports (`reports.py`)**
-    *   (No active API endpoints currently - routes are commented out)
+*   **Reports (`reports.py`)** (Auth Required)
+    *   `GET /api/v1/reports/balance` - Get account balances.
+    *   `GET /api/v1/reports/register` - Get transaction register.
+*   **Books (`books.py`)** (Auth Required)
+    *   `GET /api/v1/books` - Get all book entries.
+    *   `POST /api/v1/books` - Add a new book entry.
 
 ## API Documentation
 
@@ -132,10 +153,10 @@ To enable Google Sign-In, you need to:
 2. Configure the OAuth consent screen
 3. Create OAuth client credentials (Web application type)
 4. Add authorized JavaScript origins:
-   - `http://localhost:5000` (backend development server)
+   - `http://localhost:8000` (backend development server)
    - `http://localhost:3000` (frontend development server)
 5. Add authorized redirect URIs:
-   - `http://localhost:5000/api/v1/auth/google/callback`
+   - `http://localhost:8000/api/v1/auth/google/callback`
 6. Copy the Client ID and Client Secret to your backend `.env` file:
    ```
    GOOGLE_CLIENT_ID=your-client-id
@@ -166,9 +187,9 @@ To enable Google Sign-In, you need to:
     *   `LEDGER_PATH`: Path to the `ledger` executable (if not in system PATH).
 5.  Run the backend server:
     ```bash
-    flask run
+    ./run-backend.sh
     ```
-    The backend will be available at `http://127.0.0.1:5000`.
+    The backend will be available at `http://localhost:8000`.
 
 ### Frontend Setup
 
@@ -201,8 +222,15 @@ To run the backend tests:
 2.  Navigate to the `kanakku` root directory.
 3.  Run pytest:
     ```bash
-    python -m pytest -v backend/tests/
+    cd backend
+    python -m pytest -v tests/
     ```
+
+To run frontend tests:
+```bash
+cd frontend
+npm test
+```
 
 ## Activating a User
 
@@ -213,3 +241,11 @@ $ flask shell
 >>> user = User.query.filter_by(email='user@example.com').first()
 >>> user.activate()
 ```
+
+## Recent Updates and Fixes
+
+### Currency Refactoring (INR)
+The application now uses Indian Rupee (INR) as the default currency, with proper ₹ symbol formatting. See `fixes/currency-refactoring-usd-to-inr.md` for details.
+
+### JWT Authentication Improvements
+Fixed issues with JWT token handling to properly support string user IDs. See `fixes/flask-jwt-extended-422-errors.md` for details.
