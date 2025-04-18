@@ -58,6 +58,8 @@ kanakku/
 
 ## Architecture
 
+Kanakku follows a modern, layered architecture with a clear separation between frontend and backend.
+
 *   **Frontend:** React application (`frontend/`) providing the user interface. It communicates with the backend via API calls.
     * Uses Material-UI (MUI) for component styling
     * React Router for navigation
@@ -68,6 +70,8 @@ kanakku/
     *   **Authentication:** Utilizing Flask-JWT-Extended for token-based authentication and Google OAuth integration.
     *   **Ledger Interaction:** Exporting data in Ledger format and generating reports.
 *   **API:** Defined using Flask Blueprints, organized by functionality with Swagger/OpenAPI documentation. All endpoints are prefixed with `/api/`.
+
+For a detailed architectural overview, including diagrams, security considerations, and future plans, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## API Endpoints
 

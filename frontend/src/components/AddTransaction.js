@@ -21,10 +21,22 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 
-// Function to get the token (assuming it's stored in localStorage)
+/**
+ * Helper function to retrieve JWT token from localStorage
+ * @returns {string|null} The stored token or null if not found
+ */
 const getToken = () => localStorage.getItem('token');
 
+/**
+ * AddTransaction Component
+ * 
+ * This component provides a form interface for users to add new financial transactions.
+ * It supports double-entry accounting by allowing users to add multiple postings
+ * that must balance to zero. The component fetches available accounts from the API
+ * and provides validation before submission.
+ */
 function AddTransaction() {
+  // State for transaction form fields
   const [date, setDate] = useState(new Date());
   const [status, setStatus] = useState('');
   const [payee, setPayee] = useState('');
@@ -36,11 +48,14 @@ function AddTransaction() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  /**
+   * Effect hook to fetch available accounts when component mounts
+   */
   useEffect(() => {
-    const token = getToken(); // Get token
+    const token = getToken();
     // Fetch list of accounts
     axios.get('/api/v1/accounts', { 
-      headers: { 'Authorization': `Bearer ${token}` } // Add header
+      headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(response => {
         // Ensure response.data exists and response.data.accounts is an array
@@ -57,28 +72,45 @@ function AddTransaction() {
       });
   }, []);
 
+  /**
+   * Adds a new empty posting to the transaction
+   */
   const handleAddPosting = () => {
     setPostings([...postings, { account: '', amount: '', currency: '₹' }]);
   };
 
+  /**
+   * Removes a posting at the specified index
+   * @param {number} index - The index of the posting to remove
+   */
   const handleRemovePosting = (index) => {
     const newPostings = [...postings];
     newPostings.splice(index, 1);
     setPostings(newPostings);
   };
 
+  /**
+   * Updates a specific field of a posting at the given index
+   * @param {number} index - The index of the posting to update
+   * @param {string} field - The field name to update ('account', 'amount', or 'currency')
+   * @param {string} value - The new value for the field
+   */
   const handlePostingChange = (index, field, value) => {
     const newPostings = [...postings];
     newPostings[index][field] = value;
     setPostings(newPostings);
   };
 
+  /**
+   * Handles form submission, validates entries, and sends to the API
+   * @param {Event} e - The form submission event
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    // Validate postings
+    // Validate postings - ensure they balance to zero (double-entry accounting)
     const total = postings.reduce((sum, posting) => {
       return sum + (parseFloat(posting.amount) || 0);
     }, 0);
@@ -88,7 +120,7 @@ function AddTransaction() {
       return;
     }
 
-    // Format date
+    // Format date for API (YYYY-MM-DD)
     const formattedDate = date.toISOString().split('T')[0];
 
     // Prepare transaction data
@@ -103,13 +135,13 @@ function AddTransaction() {
       })),
     };
 
-    const token = getToken(); // Get token
-    // Send to backend
+    const token = getToken();
+    // Send transaction to the API
     axios.post('/api/v1/transactions', transactionData, {
-      headers: { 'Authorization': `Bearer ${token}` } // Add header
+      headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(response => {
-        // Reset form
+        // Reset form on success
         setDate(new Date());
         setStatus('');
         setPayee('');
@@ -136,8 +168,14 @@ function AddTransaction() {
             {success}
           </Alert>
         )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
+            {/* Date picker field */}
             <Grid item xs={12} sm={6}>
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
@@ -150,6 +188,7 @@ function AddTransaction() {
                 />
               </LocalizationProvider>
             </Grid>
+            {/* Transaction status field */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Status</InputLabel>
@@ -164,6 +203,7 @@ function AddTransaction() {
                 </Select>
               </FormControl>
             </Grid>
+            {/* Payee field */}
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -173,6 +213,7 @@ function AddTransaction() {
                 required
               />
             </Grid>
+            {/* Posting entries (dynamic) */}
             {postings.map((posting, index) => (
               <React.Fragment key={index}>
                 <Grid item xs={12}>
@@ -203,40 +244,43 @@ function AddTransaction() {
                     value={posting.amount}
                     onChange={(e) => handlePostingChange(index, 'amount', e.target.value)}
                     required
+                    InputProps={{
+                      startAdornment: posting.currency,
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={2}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <IconButton
+                  {index >= 2 && (
+                    <IconButton 
                       onClick={() => handleRemovePosting(index)}
-                      disabled={postings.length <= 2}
+                      color="error"
+                      sx={{ mt: 1 }}
                     >
                       <DeleteIcon />
                     </IconButton>
-                  </Box>
+                  )}
                 </Grid>
               </React.Fragment>
             ))}
+            
+            {/* Add posting button */}
             <Grid item xs={12}>
               <Button
                 startIcon={<AddIcon />}
                 onClick={handleAddPosting}
-                variant="outlined"
+                sx={{ mt: 2 }}
               >
-                Add Posting
+                Add Entry
               </Button>
             </Grid>
-            {error && (
-              <Grid item xs={12}>
-                <Typography color="error">{error}</Typography>
-              </Grid>
-            )}
+            
+            {/* Submit button */}
             <Grid item xs={12}>
               <Button
-                type="submit"
                 variant="contained"
                 color="primary"
-                size="large"
+                type="submit"
+                sx={{ mt: 3 }}
               >
                 Add Transaction
               </Button>
