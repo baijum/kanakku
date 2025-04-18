@@ -1,8 +1,11 @@
 import axios from 'axios';
 
+// Get the API URL from environment variable, fallback to relative path for development
+const apiBaseUrl = process.env.REACT_APP_API_URL || '/';
+
 // Create an Axios instance
 const axiosInstance = axios.create({
-  baseURL: '/', // Use relative paths, assuming proxy is set up in package.json or server handles it
+  baseURL: apiBaseUrl, // Will use REACT_APP_API_URL in production, relative path in development
 });
 
 // Add a request interceptor to include the token

@@ -33,10 +33,9 @@ if [ ! -f "instance/app.db" ]; then
     python init_db.py
 fi
 
-# Run database migrations if needed
-# Uncomment if using Flask-Migrate
-# echo "Running database migrations..."
-# flask db upgrade
+# Run database migrations
+echo "Running database migrations..."
+flask db upgrade
 
 # Collect static files if applicable
 # Uncomment if your framework needs this
