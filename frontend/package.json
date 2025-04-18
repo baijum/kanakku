@@ -22,10 +22,12 @@
     "prestart": "node patch-util-module.js",
     "start": "NODE_OPTIONS=--no-deprecation react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom --testMatch=\"**/src/components/BasicTest.test.js\"",
-    "test:register": "react-scripts test --env=jsdom --testMatch=\"**/src/tests/Register.test.jsx\"",
-    "test:addtransaction": "react-scripts test --env=jsdom --testMatch=\"**/src/tests/AddTransaction.test.jsx\"",
-    "test:viewtransactions": "react-scripts test --env=jsdom --testMatch=\"**/src/tests/ViewTransactions.test.jsx\"",
+    "test": "react-scripts test --env=jsdom --testPathIgnorePatterns='src/tests'",
+    "test:ci": "CI=true react-scripts test --env=jsdom --testPathIgnorePatterns='src/tests'",
+    "test:basic": "react-scripts test --env=jsdom --testMatch=\"**/src/components/BasicTest.test.js\"",
+    "test:register": "react-scripts test --env=jsdom --testMatch=\"**/src/components/Auth/Register.test.jsx\"",
+    "test:addtransaction": "react-scripts test --env=jsdom --testMatch=\"**/src/components/AddTransaction.test.js\"",
+    "test:viewtransactions": "react-scripts test --env=jsdom --testMatch=\"**/src/components/ViewTransactions.test.js\"",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -36,8 +38,11 @@
   },
   "jest": {
     "transformIgnorePatterns": [
-      "/node_modules/(?!axios)/"
-    ]
+      "/node_modules/(?!(axios|@mui)/)/"
+    ],
+    "moduleNameMapper": {
+      "^axios$": "<rootDir>/node_modules/axios/dist/axios.js"
+    }
   },
   "browserslist": {
     "production": [
