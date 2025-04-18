@@ -3,13 +3,11 @@ name: Check formatting with Black
 on:
   push:
     paths:
-      - 'backend/app/**.py'
-      - 'backend/tests/**.py'
+      - 'backend/**.py'
       - '.github/workflows/lint-black.yml'
   pull_request:
     paths:
-      - 'backend/app/**.py'
-      - 'backend/tests/**.py'
+      - 'backend/**.py'
       - '.github/workflows/lint-black.yml'
 
 jobs:
@@ -28,4 +26,4 @@ jobs:
         run: pip install black
 
       - name: Check formatting with Black
-        run: black --check backend/app/ backend/tests/ 
+        run: black --check backend/

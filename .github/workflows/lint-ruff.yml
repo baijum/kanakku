@@ -3,13 +3,11 @@ name: Lint with Ruff
 on:
   push:
     paths:
-      - 'backend/app/**.py'
-      - 'backend/tests/**.py'
+      - 'backend/**.py'
       - '.github/workflows/lint-ruff.yml'
   pull_request:
     paths:
-      - 'backend/app/**.py'
-      - 'backend/tests/**.py'
+      - 'backend/**.py'
       - '.github/workflows/lint-ruff.yml'
 
 jobs:
@@ -28,4 +26,4 @@ jobs:
         run: pip install ruff
 
       - name: Run Ruff
-        run: ruff check backend/app/ backend/tests/ 
+        run: ruff check backend/ 
