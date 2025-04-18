@@ -12,6 +12,7 @@ def get_balance():
     try:
         account = request.args.get("account")
         depth = request.args.get("depth")
+        book_id = request.args.get("book_id", type=int)
 
         # Build base query to get account balances
         query = db.session.query(
@@ -21,6 +22,14 @@ def get_balance():
         # Filter by account name if provided
         if account:
             query = query.filter(Account.name.like(f"{account}%"))
+
+        # Filter by book_id if provided
+        if book_id:
+            query = query.filter(Account.book_id == book_id)
+        else:
+            # If no book_id is provided, use the user's active book
+            if g.current_user.active_book_id:
+                query = query.filter(Account.book_id == g.current_user.active_book_id)
 
         # Get all accounts
         accounts = query.all()

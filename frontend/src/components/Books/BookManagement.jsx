@@ -50,6 +50,11 @@ const BookManagement = () => {
       const activeResponse = await axiosInstance.get('/api/v1/books/active');
       setActiveBook(activeResponse.data);
       
+      // Save the active book ID to localStorage if it exists
+      if (activeResponse.data && activeResponse.data.id) {
+        localStorage.setItem('active_book_id', activeResponse.data.id);
+      }
+      
       setLoading(false);
     } catch (err) {
       console.error('Error fetching books:', err);

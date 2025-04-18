@@ -42,6 +42,8 @@ const BookSelector = ({ isLoggedIn }) => {
       if (fetchedActiveBook) {
         console.log("BookSelector: Active book found", fetchedActiveBook);
         setActiveBook(fetchedActiveBook);
+        // Save the active book ID to localStorage
+        localStorage.setItem('active_book_id', fetchedActiveBook.id);
         setLoading(false); // Success, stop loading
       } else {
          console.log("BookSelector: No active book returned by API.");
@@ -121,6 +123,8 @@ const BookSelector = ({ isLoggedIn }) => {
       // Update local state immediately for visual feedback
       if (selectedBook) {
         setActiveBook(selectedBook);
+        // Save the active book ID to localStorage
+        localStorage.setItem('active_book_id', selectedBook.id);
       }
       
       // Make the API call

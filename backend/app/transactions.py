@@ -807,6 +807,11 @@ def get_recent_transactions():
         )
 
         limit = request.args.get("limit", type=int, default=7)
+        book_id = request.args.get("book_id", type=int)
+
+        # If book_id is not provided, use the active book
+        if not book_id:
+            book_id = get_active_book_id()
 
         # Fetch more raw transactions than we need to ensure we have enough after grouping
         fetch_limit = (
@@ -814,7 +819,7 @@ def get_recent_transactions():
         )  # Fetch 4x the requested limit to ensure we have enough groups
 
         # Start with base query
-        query = Transaction.query.filter_by(user_id=g.current_user.id)
+        query = Transaction.query.filter_by(user_id=g.current_user.id, book_id=book_id)
 
         # Apply ordering
         query = query.order_by(Transaction.date.desc())

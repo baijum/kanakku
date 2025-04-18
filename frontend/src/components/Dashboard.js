@@ -72,7 +72,10 @@ function Dashboard() {
     try {
       const token = getToken();
       const response = await axios.get('/api/v1/transactions/recent', { 
-        params: { limit: 7 },
+        params: { 
+          limit: 7,
+          book_id: localStorage.getItem('active_book_id') // Include active book ID
+        },
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -109,9 +112,10 @@ function Dashboard() {
     setRefreshing(true);
     axios.get('/api/v1/reports/balance', { 
       headers: { 'Authorization': `Bearer ${token}` },
-      // Add a cache-busting parameter
+      // Add a cache-busting parameter and book_id
       params: { 
         depth: 1,
+        book_id: localStorage.getItem('active_book_id'), // Include active book ID
         _t: new Date().getTime() 
       }
     })
@@ -221,12 +225,6 @@ function Dashboard() {
                   {(() => {
                     // Process the balance report to group by account name
                     const balanceMap = new Map();
-                    
-                    // Ensure all standard account types are included, even if not in the report
-                    const standardAccounts = ['Assets', 'Liabilities', 'Equity', 'Income', 'Expenses'];
-                    standardAccounts.forEach(account => {
-                      balanceMap.set(account, { value: 0, currency: '₹' });
-                    });
                     
                     balanceReport.split('\n').forEach(line => {
                       if (!line.trim()) return;
