@@ -2,17 +2,19 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
-from flask import request, g, current_app
+from flask import request, g, current_app, jsonify
 import functools
 from werkzeug.exceptions import NotFound
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect
 import os
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
 jwt = JWTManager()
+csrf = CSRFProtect()
 
 
 # Configure storage based on environment
@@ -195,3 +197,25 @@ def failed_login_limit(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+# CSRF error handler
+def handle_csrf_error(e):
+    current_app.logger.warning(
+        f"CSRF validation failed: {request.remote_addr} - {request.method} {request.path}"
+    )
+    return jsonify(error="CSRF validation failed. Please try again."), 400
+
+
+# Decorator to exempt routes from CSRF protection
+def csrf_exempt(view):
+    """Mark a view as exempt from CSRF protection."""
+    if hasattr(view, "_csrf_exempt"):
+        return view
+
+    @functools.wraps(view)
+    def wrapped(*args, **kwargs):
+        return view(*args, **kwargs)
+
+    wrapped._csrf_exempt = True
+    return wrapped

@@ -19,6 +19,7 @@ from app.extensions import (
     api_token_required,
     auth_rate_limit,
     limiter,
+    csrf_exempt,
 )
 import requests
 import secrets
@@ -92,6 +93,7 @@ def verify_oauth_token(token):
 
 @auth.route("/api/v1/auth/register", methods=["POST"])
 @auth_rate_limit
+@csrf_exempt
 def register():
     data = request.get_json()
     if not data:
@@ -160,6 +162,7 @@ def register():
 
 # Add OPTIONS handler for CORS preflight requests
 @auth.route("/api/v1/auth/login", methods=["OPTIONS"])
+@csrf_exempt
 def login_options():
     response = Response()
     response.headers.add("Access-Control-Allow-Origin", "*")
@@ -170,6 +173,7 @@ def login_options():
 
 @auth.route("/api/v1/auth/login", methods=["POST"])
 @auth_rate_limit
+@csrf_exempt
 def login():
     """Simple login endpoint that accepts email/password and returns a token"""
     # Log the request for debugging
@@ -422,6 +426,7 @@ def update_password():
 
 @auth.route("/api/v1/auth/forgot-password", methods=["POST"])
 @auth_rate_limit
+@csrf_exempt
 def forgot_password():
     """Request a password reset"""
     data = request.get_json()
@@ -489,6 +494,7 @@ def forgot_password():
 
 @auth.route("/api/v1/auth/reset-password", methods=["POST"])
 @auth_rate_limit
+@csrf_exempt
 def reset_password():
     """Reset password using token"""
     data = request.get_json()
@@ -573,6 +579,7 @@ def reset_password():
 
 # Google OAuth2 route
 @auth.route("/api/v1/auth/google", methods=["GET"])
+@csrf_exempt
 def google_login():
     # Get Google OAuth2 configuration
     google_client_id = current_app.config.get("GOOGLE_CLIENT_ID")
@@ -604,6 +611,7 @@ def google_login():
 
 
 @auth.route("/api/v1/auth/google/callback", methods=["GET"])
+@csrf_exempt
 def google_callback():
     # Verify state parameter to prevent CSRF
     state = request.args.get("state")
@@ -716,6 +724,7 @@ def google_callback():
 
 
 @auth.route("/api/v1/auth/google", methods=["POST"])
+@csrf_exempt
 def google_token_auth():
     """Handle Google authentication with a token directly from the frontend."""
     # Get token from request

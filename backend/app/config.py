@@ -26,6 +26,13 @@ class Config:
         self.JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
         self.JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
+        # CSRF Settings
+        self.WTF_CSRF_ENABLED = True
+        self.WTF_CSRF_CHECK_DEFAULT = True
+        self.WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
+        self.WTF_CSRF_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
+        self.WTF_CSRF_SSL_STRICT = True
+
         # Ledger Settings
         self.LEDGER_PATH = (
             os.environ.get("LEDGER_PATH") or "/opt/homebrew/bin/ledger"

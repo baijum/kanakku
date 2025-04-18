@@ -46,7 +46,7 @@ import Terms from './components/Pages/Terms';
 import Privacy from './components/Pages/Privacy';
 import Footer from './components/Footer';
 import BookSelector from './components/Books/BookSelector';
-import axiosInstance from './api/axiosInstance';
+import axiosInstance, { fetchCsrfToken } from './api/axiosInstance';
 import { createBrowserHistory } from 'history';
 
 const drawerWidth = 240;
@@ -87,6 +87,19 @@ function App() {
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
+
+  // Fetch CSRF token when the app initializes
+  useEffect(() => {
+    const fetchInitialCsrfToken = async () => {
+      try {
+        await fetchCsrfToken();
+      } catch (error) {
+        console.error('Failed to fetch CSRF token:', error);
+      }
+    };
+
+    fetchInitialCsrfToken();
+  }, []);
 
   // Check if user is logged in by validating token
   useEffect(() => {

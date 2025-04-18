@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify
 from werkzeug.exceptions import MethodNotAllowed
+from flask_wtf.csrf import generate_csrf
 
 api = Blueprint("api", __name__)
 
@@ -8,6 +9,13 @@ api = Blueprint("api", __name__)
 @api.route("/api/v1/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "ok"})
+
+
+@api.route("/api/v1/csrf-token", methods=["GET"])
+def get_csrf_token():
+    """Get a CSRF token for the current session"""
+    token = generate_csrf()
+    return jsonify({"csrf_token": token})
 
 
 @api.errorhandler(MethodNotAllowed)

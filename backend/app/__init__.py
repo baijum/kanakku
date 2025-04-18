@@ -7,7 +7,7 @@ import sys
 import os
 from logging.handlers import RotatingFileHandler
 
-from .extensions import db, login_manager, mail, jwt, limiter
+from .extensions import db, login_manager, mail, jwt, limiter, csrf, handle_csrf_error
 from .config import config
 
 
@@ -87,7 +87,7 @@ def create_app(config_name="default"):
                 app.config[key] = value
 
     # Configure CORS to allow any origin
-    CORS(app, origins=[app.config["FRONTEND_URL"]])
+    CORS(app, origins=[app.config["FRONTEND_URL"]], supports_credentials=True)
 
     # Initialize extensions
     db.init_app(app)
@@ -95,6 +95,10 @@ def create_app(config_name="default"):
     mail.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
+
+    # Initialize CSRF protection
+    csrf.init_app(app)
+    app.register_error_handler(400, handle_csrf_error)
 
     # Initialize Flask-Migrate
     _ = Migrate(app, db)
