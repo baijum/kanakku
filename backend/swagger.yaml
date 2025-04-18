@@ -19,6 +19,8 @@ tags:
     description: Ledger file format operations
   - name: Preamble
     description: Preamble management for ledger files
+  - name: Books
+    description: Book management for organizing accounts and transactions
 
 paths:
   /api/v1/health:
@@ -27,6 +29,23 @@ paths:
       responses:
         200:
           description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  
+  /health:
+    get:
+      tags:
+        - Ledger
+      summary: Ledger health check
+      responses:
+        200:
+          description: Ledger API is healthy
           content:
             application/json:
               schema:
@@ -253,6 +272,181 @@ paths:
           description: Password reset successful
         400:
           description: Invalid or expired token
+  
+  /api/v1/auth/google:
+    get:
+      tags:
+        - Auth
+      summary: Initiate Google OAuth login
+      description: Returns the Google OAuth authentication URL to redirect the user to
+      responses:
+        200:
+          description: Google OAuth authentication URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth_url:
+                    type: string
+        500:
+          description: Google OAuth is not configured
+    post:
+      tags:
+        - Auth
+      summary: Authenticate with Google ID token
+      description: Handle Google authentication with a token directly from the frontend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Google OAuth ID token
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        400:
+          description: No token provided
+        500:
+          description: Failed to authenticate with Google
+  
+  /api/v1/auth/google/callback:
+    get:
+      tags:
+        - Auth
+      summary: Google OAuth callback
+      description: Callback endpoint for Google OAuth to handle the authorization code
+      parameters:
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        302:
+          description: Redirect to frontend with JWT token
+        400:
+          description: Invalid state parameter or authorization code not provided
+        500:
+          description: Failed to authenticate with Google
+  
+  /api/v1/auth/tokens:
+    get:
+      tags:
+        - Auth
+      summary: Get all API tokens for the current user
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: List of API tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiToken'
+    post:
+      tags:
+        - Auth
+      summary: Create a new API token
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "My API Token"
+                expires_in_days:
+                  type: integer
+                  example: 30
+      responses:
+        201:
+          description: Token created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiToken'
+  
+  /api/v1/auth/tokens/{tokenId}:
+    put:
+      tags:
+        - Auth
+      summary: Update an API token
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tokenId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                is_active:
+                  type: boolean
+      responses:
+        200:
+          description: Token updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiToken'
+        404:
+          description: Token not found
+    delete:
+      tags:
+        - Auth
+      summary: Revoke an API token
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tokenId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Token revoked successfully
+        404:
+          description: Token not found
   
   # Account Endpoints
   /api/v1/accounts:
@@ -711,13 +905,27 @@ paths:
       tags:
         - Ledger
       summary: Get transactions in ledger format
+      description: Returns all transactions in ledger file format as plain text
       security:
         - BearerAuth: []
       parameters:
         - name: preamble_id
           in: query
+          description: ID of a specific preamble to include
           schema:
             type: integer
+        - name: startDate
+          in: query
+          description: Filter transactions starting from this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: Filter transactions until this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
       responses:
         200:
           description: Transactions in ledger format
@@ -725,6 +933,10 @@ paths:
             text/plain:
               schema:
                 type: string
+        401:
+          description: Authentication required
+        500:
+          description: Failed to generate ledger format
   
   # Preamble Endpoints
   /api/v1/preambles:
@@ -870,6 +1082,177 @@ paths:
                 $ref: '#/components/schemas/Preamble'
         404:
           description: Default preamble not found
+  
+  # Book Endpoints
+  /api/v1/books:
+    get:
+      tags:
+        - Books
+      summary: Get all books for the current user
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: List of books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+    post:
+      tags:
+        - Books
+      summary: Create a new book
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "Personal Finances"
+      responses:
+        201:
+          description: Book created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  book:
+                    $ref: '#/components/schemas/Book'
+        400:
+          description: Missing required fields or book already exists
+  
+  /api/v1/books/{bookId}:
+    get:
+      tags:
+        - Books
+      summary: Get a specific book
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Book details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        404:
+          description: Book not found
+    put:
+      tags:
+        - Books
+      summary: Update a book
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Book Name"
+      responses:
+        200:
+          description: Book updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  book:
+                    $ref: '#/components/schemas/Book'
+        400:
+          description: Book with this name already exists
+        404:
+          description: Book not found
+    delete:
+      tags:
+        - Books
+      summary: Delete a book and all its associated accounts and transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Book and all associated accounts deleted successfully
+        404:
+          description: Book not found
+  
+  /api/v1/books/{bookId}/set-active:
+    post:
+      tags:
+        - Books
+      summary: Set a book as active for the current user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Book set as active successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  active_book:
+                    $ref: '#/components/schemas/Book'
+        404:
+          description: Book not found
+  
+  /api/v1/books/active:
+    get:
+      tags:
+        - Books
+      summary: Get the current user's active book
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Active book details or empty object if no active book
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
 
 components:
   securitySchemes:
@@ -877,6 +1260,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: JWT token obtained from the auth/login endpoint
   
   schemas:
     User:
@@ -1071,4 +1455,40 @@ components:
         content:
           type: string
         is_default:
-          type: boolean 
+          type: boolean
+    
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    ApiToken:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        token:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time 
