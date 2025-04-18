@@ -19,69 +19,46 @@ const BookSelector = ({ isLoggedIn }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchBooks = useCallback(async (retryAttempt = 0) => {
+  const fetchBooks = useCallback(async () => {
+    if (!isLoggedIn) return;
+    
     try {
-      // Only set loading true on the first attempt
-      if (retryAttempt === 0) {
-        setLoading(true);
-      }
-      console.log(`BookSelector: Fetching books list (Attempt ${retryAttempt + 1})`);
-      const response = await axiosInstance.get('/api/v1/books');
-      const fetchedBooks = (response.data && Array.isArray(response.data)) ? response.data : [];
-      // Update books state only on the first attempt or if they change
-      if (retryAttempt === 0 || JSON.stringify(fetchedBooks) !== JSON.stringify(books)) {
-          setBooks(fetchedBooks);
-      }
+      setLoading(true);
+      console.log('BookSelector: Fetching books list');
+      
+      // Fetch both books and active book in parallel to reduce flickering
+      const [booksResponse, activeResponse] = await Promise.all([
+        axiosInstance.get('/api/v1/books'),
+        axiosInstance.get('/api/v1/books/active')
+      ]);
+      
+      const fetchedBooks = (booksResponse.data && Array.isArray(booksResponse.data)) ? booksResponse.data : [];
+      setBooks(fetchedBooks);
       console.log(`BookSelector: Found ${fetchedBooks.length} books`);
-
-      console.log("BookSelector: Fetching active book");
-      const activeResponse = await axiosInstance.get('/api/v1/books/active');
-      let fetchedActiveBook = (activeResponse.data && Object.keys(activeResponse.data).length > 0) ? activeResponse.data : null;
-
+      
+      const fetchedActiveBook = (activeResponse.data && Object.keys(activeResponse.data).length > 0) 
+        ? activeResponse.data 
+        : null;
+      
       if (fetchedActiveBook) {
         console.log("BookSelector: Active book found", fetchedActiveBook);
         setActiveBook(fetchedActiveBook);
-        // Save the active book ID to localStorage
         localStorage.setItem('active_book_id', fetchedActiveBook.id);
-        setLoading(false); // Success, stop loading
-      } else {
-         console.log("BookSelector: No active book returned by API.");
-         // If books exist (or potentially were just created) but no active one is set yet,
-         // maybe wait briefly and try fetching active book again. Check length based on latest fetch.
-         if (fetchedBooks.length > 0 && retryAttempt < 2) {
-            console.log(`BookSelector: Books found, but no active book. Retrying fetch (Attempt ${retryAttempt + 2})...`);
-            setTimeout(() => fetchBooks(retryAttempt + 1), 500); // Retry after 500ms
-            // Keep loading true until retry completes or fails
-            return;
-         }
-
-         // If still no active book after retries, or no books exist at all
-         console.log("BookSelector: Retries exhausted or no books found. Checking fallback conditions.");
-         if (fetchedBooks.length > 0) {
-            // If an active book wasn't found via API after retries, but we have books,
-            // Let's check if the user *has* an active_book_id set (maybe fetch /auth/me?)
-            // For now, we will just use the first book as a visual fallback in the render logic below.
-            // We won't try to set it active from here anymore, as the backend should handle it.
-            console.log("BookSelector: No active book found after retries, will rely on render fallback using first book.");
-            setActiveBook(null); // Explicitly set to null if API failed
-         } else {
-            // If no books exist after fetches
-            console.log("BookSelector: No books found and no active book set.");
-            setActiveBook(null);
-         }
-         setLoading(false); // Stop loading after retries/fallbacks
+      } else if (fetchedBooks.length > 0) {
+        // If no active book but books exist, use the first one visually without making API call
+        console.log("BookSelector: No active book, using first book visually");
+        // We're intentionally not setting activeBook state here to avoid unnecessary renders
       }
-
     } catch (err) {
       console.error('BookSelector: Error fetching books:', err);
       setError('Failed to load books');
+    } finally {
       setLoading(false);
     }
-  }, [books]); // Add books as a dependency
+  }, [isLoggedIn]);
 
   // Fetch books on component mount and when login status changes
   useEffect(() => {
-    // Only fetch if logged in
     if (isLoggedIn) {
       console.log('BookSelector: isLoggedIn is true, fetching books...');
       fetchBooks();
@@ -90,10 +67,10 @@ const BookSelector = ({ isLoggedIn }) => {
       console.log('BookSelector: isLoggedIn is false, clearing state.');
       setBooks([]);
       setActiveBook(null);
-      setLoading(false); // Not loading if not logged in
+      setLoading(false);
       setError(null);
     }
-  }, [isLoggedIn, fetchBooks]); // Add fetchBooks to dependency array
+  }, [isLoggedIn, fetchBooks]);
 
   // Handle book selection change
   const handleChange = async (event) => {
@@ -105,14 +82,13 @@ const BookSelector = ({ isLoggedIn }) => {
       // Update local state immediately for visual feedback
       if (selectedBook) {
         setActiveBook(selectedBook);
-        // Save the active book ID to localStorage
         localStorage.setItem('active_book_id', selectedBook.id);
       }
       
       // Make the API call
       await axiosInstance.post(`/api/v1/books/${selectedBookId}/set-active`);
       
-      // Small delay and then reload the page to ensure all components reflect the change
+      // Reload the page with a small delay to ensure components reflect the change
       setTimeout(() => {
         window.location.reload();
       }, 200);
@@ -122,25 +98,26 @@ const BookSelector = ({ isLoggedIn }) => {
     }
   };
 
+  // Simple loading indicator
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', p: 1, minWidth: 180 }}>
         <CircularProgress size={20} sx={{ mr: 1 }} />
-        <Typography variant="body2">Loading books...</Typography>
+        <Typography variant="body2">Loading...</Typography>
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', p: 1, minWidth: 180 }}>
         <Typography variant="body2" color="error">{error}</Typography>
       </Box>
     );
   }
 
   // Only show default book message if there are truly no books
-  if (books.length === 0 && !loading) {
+  if (books.length === 0) {
     return (
       <Paper elevation={2} sx={{ 
         display: 'flex', 
@@ -158,8 +135,7 @@ const BookSelector = ({ isLoggedIn }) => {
   }
 
   // Handle the case where we have books but no active book is set yet
-  if (!activeBook && books.length > 0 && !loading) {
-    // Use the first book as a fallback
+  if (!activeBook && books.length > 0) {
     return (
       <Box>
         <FormControl fullWidth size="small">

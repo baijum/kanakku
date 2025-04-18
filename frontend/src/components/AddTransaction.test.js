@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AddTransaction from './AddTransaction';
 
@@ -53,17 +53,16 @@ describe('AddTransaction Component', () => {
   });
 
   test('renders add transaction form - basic elements', async () => {
-    await act(async () => {
-      render(<AddTransaction />);
+    render(<AddTransaction />);
+    
+    // Wait for component to finish loading accounts 
+    // and for the "Add Posting" button to be available
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add posting/i })).toBeInTheDocument();
     });
     
-    // Heading should be present
+    // After waiting, check for all required elements
     expect(screen.getByRole('heading', { name: /add transaction/i })).toBeInTheDocument();
-    
-    // Date picker should be rendered
     expect(screen.getByTestId('mock-date-picker')).toBeInTheDocument();
-    
-    // Only test for essential elements
-    expect(screen.getByRole('button', { name: /add posting/i })).toBeInTheDocument();
   });
 });

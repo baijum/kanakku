@@ -8,7 +8,7 @@ const MockBookSelectorLoading = () => {
   return (
     <div>
       <div data-testid="loading-spinner"></div>
-      <div>Loading books...</div>
+      <div>Loading...</div>
     </div>
   );
 };
@@ -50,8 +50,14 @@ jest.mock('./BookSelector', () => jest.fn());
 // Mock axios
 jest.mock('../../api/axiosInstance', () => ({
   get: jest.fn()
-    .mockImplementationOnce(() => Promise.resolve({ data: [{ id: 1, name: 'Book 1' }, { id: 2, name: 'Book 2' }] }))
-    .mockImplementationOnce(() => Promise.resolve({ data: { id: 1, name: 'Book 1' } })),
+    .mockImplementation((url) => {
+      if (url === '/api/v1/books') {
+        return Promise.resolve({ data: [{ id: 1, name: 'Book 1' }, { id: 2, name: 'Book 2' }] });
+      } else if (url === '/api/v1/books/active') {
+        return Promise.resolve({ data: { id: 1, name: 'Book 1' } });
+      }
+      return Promise.reject(new Error('Not found'));
+    }),
   post: jest.fn().mockResolvedValue({ data: {} })
 }));
 
@@ -68,7 +74,7 @@ describe('BookSelector Component', () => {
     
     // Check for loading elements
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
-    expect(screen.getByText('Loading books...')).toBeInTheDocument();
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
   test('renders book selector with books', () => {
