@@ -1,7 +1,7 @@
 """Remove account type
 
 Revision ID: bc80e1afec93
-Revises: 
+Revises:
 Create Date: 2025-04-17 08:27:57.148773
 
 """
