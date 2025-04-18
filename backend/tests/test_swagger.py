@@ -30,7 +30,8 @@ def test_swagger_yaml(client):
         for yaml_type in [
             "text/yaml",
             "application/x-yaml",
-            "application/octet-stream",  # Added this as a valid YAML content type
+            "application/yaml",
+            "application/octet-stream",
         ]
     ), f"Invalid content type: {content_type}"
 
