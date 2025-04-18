@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AddTransaction from './AddTransaction';
 
@@ -53,8 +53,9 @@ describe('AddTransaction Component', () => {
   });
 
   test('renders add transaction form - basic elements', async () => {
-    // Remove unnecessary act wrapper 
-    render(<AddTransaction />);
+    await act(async () => {
+      render(<AddTransaction />);
+    });
     
     // Heading should be present
     expect(screen.getByRole('heading', { name: /add transaction/i })).toBeInTheDocument();
