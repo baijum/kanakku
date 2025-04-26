@@ -253,7 +253,7 @@ function ViewTransactions() {
     try {
       setExportLoading(true);
       
-      let url = '/api/v1/export/ledger';
+      let url = '/api/v1/ledgertransactions';
       const params = [];
       
       // Add preamble if selected
