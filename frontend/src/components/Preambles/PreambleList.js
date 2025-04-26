@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -47,6 +47,8 @@ function PreambleList() {
     message: '',
     severity: 'success'
   });
+  const addButtonRef = useRef(null);
+  const editButtonsRef = useRef({});
 
   const fetchPreambles = useCallback(async () => {
     setLoading(true);
@@ -90,6 +92,7 @@ function PreambleList() {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    // Focus will be managed by Dialog's internals now
   };
 
   const handleOpenDeleteDialog = (preamble) => {
@@ -99,6 +102,7 @@ function PreambleList() {
 
   const handleCloseDeleteDialog = () => {
     setOpenDeleteDialog(false);
+    // Focus will be managed by Dialog's internals now
   };
 
   const handleInputChange = (e) => {
@@ -203,9 +207,11 @@ function PreambleList() {
 
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
+          ref={addButtonRef}
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
+          aria-label="add preamble"
         >
           Add Preamble
         </Button>
@@ -244,6 +250,7 @@ function PreambleList() {
                   <TableCell>{preamble.is_default ? 'Yes' : 'No'}</TableCell>
                   <TableCell>
                     <IconButton
+                      ref={(el) => { editButtonsRef.current[preamble.id] = el; }}
                       aria-label="edit"
                       onClick={() => handleOpenDialog(preamble)}
                     >
@@ -264,8 +271,35 @@ function PreambleList() {
       )}
 
       {/* Dialog for adding/editing preamble */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="md">
-        <DialogTitle>
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        fullWidth 
+        maxWidth="md"
+        disableEnforceFocus
+        keepMounted={false}
+        aria-labelledby="preamble-dialog-title"
+        container={() => document.body}
+        BackdropProps={{ 
+          invisible: false,
+          sx: { backdropFilter: 'none' }
+        }}
+        style={{ position: 'fixed' }}
+        TransitionProps={{
+          role: 'dialog',
+          onExit: () => {
+            // Focus the button that opened the dialog when it starts closing
+            setTimeout(() => {
+              if (currentPreamble && currentPreamble.id && editButtonsRef.current[currentPreamble.id]) {
+                editButtonsRef.current[currentPreamble.id].focus();
+              } else if (addButtonRef.current) {
+                addButtonRef.current.focus();
+              }
+            }, 0);
+          }
+        }}
+      >
+        <DialogTitle id="preamble-dialog-title">
           {currentPreamble ? 'Edit Preamble' : 'Add New Preamble'}
         </DialogTitle>
         <DialogContent>
@@ -302,11 +336,17 @@ function PreambleList() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button 
+            onClick={handleCloseDialog}
+            aria-label="cancel"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={loading}
+            aria-label="save preamble"
           >
             {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
@@ -314,20 +354,48 @@ function PreambleList() {
       </Dialog>
 
       {/* Dialog for confirming deletion */}
-      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>Confirm Delete</DialogTitle>
+      <Dialog 
+        open={openDeleteDialog} 
+        onClose={handleCloseDeleteDialog}
+        disableEnforceFocus
+        aria-labelledby="delete-dialog-title"
+        container={() => document.body}
+        BackdropProps={{ 
+          invisible: false,
+          sx: { backdropFilter: 'none' }
+        }}
+        style={{ position: 'fixed' }}
+        TransitionProps={{
+          role: 'dialog',
+          onExit: () => {
+            // Focus the edit button for the preamble when deletion dialog starts closing
+            setTimeout(() => {
+              if (currentPreamble && currentPreamble.id && editButtonsRef.current[currentPreamble.id]) {
+                editButtonsRef.current[currentPreamble.id].focus();
+              }
+            }, 0);
+          }
+        }}
+      >
+        <DialogTitle id="delete-dialog-title">Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Are you sure you want to delete the preamble "{currentPreamble?.name}"?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+          <Button 
+            onClick={handleCloseDeleteDialog}
+            aria-label="cancel deletion"
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleDelete}
             color="error"
             variant="contained"
             disabled={loading}
+            aria-label="confirm deletion"
           >
             {loading ? <CircularProgress size={24} /> : 'Delete'}
           </Button>

@@ -60,6 +60,48 @@ const theme = createTheme({
       main: '#dc004e',
     },
   },
+  typography: {
+    fontFamily: [
+      '-apple-system',
+      'BlinkMacSystemFont',
+      '"Segoe UI"',
+      'Roboto',
+      '"Helvetica Neue"',
+      'Arial',
+      'sans-serif',
+    ].join(','),
+  },
+  components: {
+    MuiContainer: {
+      styleOverrides: {
+        root: {
+          paddingLeft: 16,
+          paddingRight: 16,
+          '@media (min-width:600px)': {
+            paddingLeft: 24,
+            paddingRight: 24,
+          },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: '8px 16px',
+          '@media (max-width:600px)': {
+            padding: '6px 8px',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          overflow: 'hidden',
+        },
+      },
+    },
+  },
 });
 
 const history = createBrowserHistory();
@@ -290,7 +332,20 @@ function App() {
               
               {isLoggedIn && (
                 <>
-                  <Box sx={{ mr: 2 }}>
+                  <Box sx={{ 
+                    mr: 1,
+                    maxWidth: { xs: '120px', sm: '200px' },
+                    '& .MuiSelect-select': {
+                      py: { xs: 0.5 },
+                      pl: { xs: 0.5 },
+                      pr: { xs: 2 },
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                    },
+                    '& .MuiSvgIcon-root': {
+                      width: { xs: '0.9em' },
+                      right: { xs: 0 }
+                    }
+                  }}>
                     <BookSelector isLoggedIn={isLoggedIn} />
                   </Box>
                   <IconButton
@@ -298,6 +353,9 @@ function App() {
                     onClick={handleUserMenuOpen}
                     aria-controls="user-menu"
                     aria-haspopup="true"
+                    sx={{ 
+                      padding: { xs: '4px', sm: '8px' } 
+                    }}
                   >
                     <AccountCircleIcon />
                   </IconButton>
@@ -369,14 +427,15 @@ function App() {
             component="main"
             sx={{ 
               flexGrow: 1,
-              p: 3,
+              p: { xs: 2, sm: 3 },
               width: isLoggedIn ? { sm: `calc(100% - ${drawerWidth}px)` } : '100%',
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              overflow: 'hidden'
             }}
           >
             <Toolbar />
-            <Box sx={{ flexGrow: 1 }}>
+            <Box sx={{ flexGrow: 1, maxWidth: '100%', overflowX: 'hidden' }}>
               <Routes>
                 <Route 
                   path="/" 

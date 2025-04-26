@@ -29,6 +29,16 @@ console.error = (...args) => {
   ) {
     return; // Suppress these specific errors
   }
+  
+  // Suppress transaction update error messages in tests
+  if (
+    args[0] && 
+    typeof args[0] === 'string' && 
+    args[0].includes('Error updating transaction:')
+  ) {
+    return; // Suppress transaction update errors
+  }
+  
   originalError.apply(console, args);
 };
 

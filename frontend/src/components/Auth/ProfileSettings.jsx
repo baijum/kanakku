@@ -244,7 +244,7 @@ const ProfileSettings = () => {
         <Alert severity="error">{error}</Alert>
       ) : (
         <>
-          <Paper sx={{ p: 3, mb: 4 }}>
+          <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
             <Typography variant="h5" gutterBottom>
               Account Information
             </Typography>
@@ -266,9 +266,23 @@ const ProfileSettings = () => {
             </Box>
           </Paper>
 
-          <Paper sx={{ p: 3, mb: 4 }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-              <Tabs value={tabValue} onChange={handleTabChange}>
+          <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3, width: '100%', overflow: 'hidden' }}>
+              <Tabs 
+                value={tabValue} 
+                onChange={handleTabChange}
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
+                sx={{
+                  '.MuiTab-root': {
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    minWidth: { xs: '80px', sm: '120px' },
+                    py: { xs: 1 },
+                    px: { xs: 1, sm: 2 }
+                  }
+                }}
+              >
                 <Tab label="Books" />
                 <Tab label="Update Password" />
                 <Tab label="API Tokens" />
@@ -296,11 +310,11 @@ const ProfileSettings = () => {
                 )}
                 
                 {/* API Token Creation Form */}
-                <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'background.paper' }}>
+                <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, mb: 4, bgcolor: 'background.paper' }}>
                   <Typography variant="h6" gutterBottom>
                     Create New API Token
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 'sm' }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 }, maxWidth: 'sm' }}>
                     <TextField
                       label="Token Name"
                       value={tokenName}
@@ -351,7 +365,7 @@ const ProfileSettings = () => {
                 
                 {/* Display newly created token */}
                 {showNewToken && newTokenValue && (
-                  <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: 'background.paper' }}>
+                  <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, mb: 4, bgcolor: 'background.paper' }}>
                     <Alert severity="success" sx={{ mb: 2 }}>
                       Token created successfully! Save this token now - you won't be able to see it again.
                     </Alert>
@@ -398,8 +412,25 @@ const ProfileSettings = () => {
                     programmatically without having to log in through the web interface.
                   </Typography>
                 ) : (
-                  <TableContainer component={Paper} elevation={0}>
-                    <Table sx={{ minWidth: 650 }} size="small">
+                  <TableContainer 
+                    component={Paper} 
+                    elevation={0}
+                    sx={{ 
+                      maxWidth: '100%', 
+                      overflowX: 'auto' 
+                    }}
+                  >
+                    <Table 
+                      size="small"
+                      sx={{ 
+                        minWidth: { xs: 450, sm: 650 },
+                        "& .MuiTableCell-root": { 
+                          py: { xs: 1 }, 
+                          px: { xs: 1, sm: 2 },
+                          whiteSpace: { xs: 'nowrap' }
+                        }
+                      }}
+                    >
                       <TableHead>
                         <TableRow>
                           <TableCell><strong>Name</strong></TableCell>

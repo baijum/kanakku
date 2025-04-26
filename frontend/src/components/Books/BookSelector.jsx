@@ -101,17 +101,17 @@ const BookSelector = ({ isLoggedIn }) => {
   // Simple loading indicator
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', p: 1, minWidth: 180 }}>
-        <CircularProgress size={20} sx={{ mr: 1 }} />
-        <Typography variant="body2">Loading...</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', p: { xs: 0.5, sm: 1 }, minWidth: { xs: 100, sm: 180 } }}>
+        <CircularProgress size={16} sx={{ mr: 1 }} />
+        <Typography variant="body2" sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>Loading...</Typography>
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', p: 1, minWidth: 180 }}>
-        <Typography variant="body2" color="error">{error}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', p: { xs: 0.5, sm: 1 }, minWidth: { xs: 100, sm: 180 } }}>
+        <Typography variant="body2" color="error" sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>{error}</Typography>
       </Box>
     );
   }
@@ -122,14 +122,14 @@ const BookSelector = ({ isLoggedIn }) => {
       <Paper elevation={2} sx={{ 
         display: 'flex', 
         alignItems: 'center',
-        py: 1,
-        px: 2,
+        py: { xs: 0.5, sm: 1 },
+        px: { xs: 1, sm: 2 },
         borderRadius: 2,
         backgroundColor: 'background.paper',
-        minWidth: 180
+        minWidth: { xs: 100, sm: 180 }
       }}>
-        <MenuBookIcon sx={{ mr: 1.5, color: 'primary.main' }} />
-        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Default Book</Typography>
+        <MenuBookIcon sx={{ mr: { xs: 0.5, sm: 1.5 }, color: 'primary.main', fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+        <Typography variant="body2" sx={{ fontWeight: 'medium', fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>Default Book</Typography>
       </Paper>
     );
   }
@@ -149,11 +149,11 @@ const BookSelector = ({ isLoggedIn }) => {
               <Paper elevation={2} sx={{ 
                 display: 'flex', 
                 alignItems: 'center',
-                py: 1,
-                px: 2,
+                py: { xs: 0.5, sm: 1 },
+                px: { xs: 1, sm: 2 },
                 borderRadius: 2,
                 backgroundColor: 'background.paper',
-                minWidth: 180,
+                minWidth: { xs: 100, sm: 180 },
                 border: '1px solid',
                 borderColor: 'primary.light',
                 '&:hover': {
@@ -161,12 +161,31 @@ const BookSelector = ({ isLoggedIn }) => {
                   boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.2)'
                 }
               }}>
-                <MenuBookIcon sx={{ mr: 1.5, color: 'primary.main' }} />
-                <Box>
-                  <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                <MenuBookIcon sx={{ 
+                  mr: { xs: 0.5, sm: 1.5 }, 
+                  color: 'primary.main',
+                  fontSize: { xs: '1rem', sm: '1.25rem' } 
+                }} />
+                <Box sx={{ maxWidth: { xs: '70px', sm: 'none' }, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      display: { xs: 'none', sm: 'block' }, 
+                      color: 'text.secondary' 
+                    }}>
                     Current Book
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'text.primary' }}>
+                  <Typography 
+                    component="span"
+                    variant="body2" 
+                    sx={{ 
+                      fontWeight: 'medium', 
+                      color: 'text.primary',
+                      fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
                     {books[0].name}
                   </Typography>
                 </Box>
@@ -181,6 +200,9 @@ const BookSelector = ({ isLoggedIn }) => {
               },
               '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
                 border: 'none' 
+              },
+              '& .MuiSelect-icon': {
+                fontSize: { xs: '1rem', sm: '1.25rem' }
               }
             }}
           >
@@ -189,6 +211,7 @@ const BookSelector = ({ isLoggedIn }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                   <MenuBookIcon sx={{ mr: 1.5, color: book.id === books[0].id ? 'primary.main' : 'text.secondary' }} />
                   <Typography 
+                    component="span"
                     variant="body2" 
                     sx={{ 
                       fontWeight: book.id === books[0].id ? 'bold' : 'regular',
@@ -228,11 +251,11 @@ const BookSelector = ({ isLoggedIn }) => {
             <Paper elevation={2} sx={{ 
               display: 'flex', 
               alignItems: 'center',
-              py: 1,
-              px: 2,
+              py: { xs: 0.5, sm: 1 },
+              px: { xs: 1, sm: 2 },
               borderRadius: 2,
               backgroundColor: 'background.paper',
-              minWidth: 180,
+              minWidth: { xs: 100, sm: 180 },
               border: '1px solid',
               borderColor: 'primary.light',
               '&:hover': {
@@ -240,12 +263,31 @@ const BookSelector = ({ isLoggedIn }) => {
                 boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.2)'
               }
             }}>
-              <MenuBookIcon sx={{ mr: 1.5, color: 'primary.main' }} />
-              <Box>
-                <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+              <MenuBookIcon sx={{ 
+                mr: { xs: 0.5, sm: 1.5 }, 
+                color: 'primary.main',
+                fontSize: { xs: '1rem', sm: '1.25rem' } 
+              }} />
+              <Box sx={{ maxWidth: { xs: '70px', sm: 'none' }, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    display: { xs: 'none', sm: 'block' }, 
+                    color: 'text.secondary' 
+                  }}>
                   Current Book
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 'medium', color: 'text.primary' }}>
+                <Typography 
+                  component="span"
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: 'medium', 
+                    color: 'text.primary',
+                    fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
                   {activeBook.name}
                 </Typography>
               </Box>
@@ -260,6 +302,9 @@ const BookSelector = ({ isLoggedIn }) => {
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
               border: 'none' 
+            },
+            '& .MuiSelect-icon': {
+              fontSize: { xs: '1rem', sm: '1.25rem' }
             }
           }}
         >
@@ -268,6 +313,7 @@ const BookSelector = ({ isLoggedIn }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 <MenuBookIcon sx={{ mr: 1.5, color: book.id === activeBook.id ? 'primary.main' : 'text.secondary' }} />
                 <Typography 
+                  component="span"
                   variant="body2" 
                   sx={{ 
                     fontWeight: book.id === activeBook.id ? 'bold' : 'regular',
