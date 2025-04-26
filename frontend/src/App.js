@@ -6,7 +6,6 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -281,9 +280,13 @@ function App() {
                   <MenuIcon />
                 </IconButton>
               )}
-              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                Kanakku
-              </Typography>
+              <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+                <img 
+                  src="/logo.svg" 
+                  alt="Kanakku Logo" 
+                  style={{ height: '32px', marginRight: '10px' }} 
+                />
+              </Box>
               
               {isLoggedIn && (
                 <>
