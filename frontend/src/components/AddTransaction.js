@@ -13,6 +13,7 @@ import {
   IconButton,
   Divider,
   Alert,
+  Autocomplete,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -210,21 +211,22 @@ function AddTransaction() {
                   <Divider sx={{ my: 2 }} />
                 </Grid>
                 <Grid item xs={12} sm={5}>
-                  <FormControl fullWidth>
-                    <InputLabel>Account</InputLabel>
-                    <Select
-                      value={posting.account}
-                      onChange={(e) => handlePostingChange(index, 'account', e.target.value)}
-                      label="Account"
-                      required
-                    >
-                      {accounts.map((account) => (
-                        <MenuItem key={account} value={account}>
-                          {account}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <Autocomplete
+                    options={accounts}
+                    getOptionLabel={(option) => option}
+                    value={posting.account}
+                    onChange={(event, newValue) => {
+                      handlePostingChange(index, 'account', newValue || '');
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Account"
+                        required
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option === value || value === ''}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={5}>
                   <TextField
@@ -245,6 +247,7 @@ function AddTransaction() {
                       onClick={() => handleRemovePosting(index)}
                       color="error"
                       sx={{ mt: 1 }}
+                      aria-label="delete posting"
                     >
                       <DeleteIcon />
                     </IconButton>

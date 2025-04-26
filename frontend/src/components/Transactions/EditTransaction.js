@@ -15,6 +15,7 @@ import {
   Alert,
   IconButton,
   Divider,
+  Autocomplete,
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
@@ -324,8 +325,10 @@ function EditTransaction() {
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+                <InputLabel id="status-label-id">Status</InputLabel>
                 <Select
+                  labelId="status-label-id"
+                  id="status-select"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   label="Status"
@@ -354,26 +357,22 @@ function EditTransaction() {
                     <Divider sx={{ my: 2 }} />
                   </Grid>
                   <Grid item xs={12} sm={5}>
-                    <FormControl fullWidth>
-                      <InputLabel>Account</InputLabel>
-                      <Select
-                        value={posting.account || ''}
-                        onChange={(e) => handlePostingChange(index, 'account', e.target.value)}
-                        label="Account"
-                        required
-                        renderValue={(selected) => {
-                          // Find the account with matching name
-                          const selectedAccount = accounts.find(a => a.name === selected);
-                          return selectedAccount ? selectedAccount.fullName : '';
-                        }}
-                      >
-                        {accounts.map((account) => (
-                          <MenuItem key={account.id} value={account.name}>
-                            {account.fullName}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                    <Autocomplete
+                      options={accounts.map(acc => acc.name)}
+                      getOptionLabel={(option) => option}
+                      value={posting.account}
+                      onChange={(event, newValue) => {
+                        handlePostingChange(index, 'account', newValue || '');
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Account"
+                          required
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) => option === value || value === ''}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={5}>
                     <TextField
