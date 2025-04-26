@@ -104,6 +104,24 @@ function AddTransaction() {
     setError('');
     setSuccess('');
 
+    // Validate payee
+    if (!payee.trim()) {
+      setError('Payee is required');
+      return;
+    }
+
+    // Validate postings: account and amount format
+    for (const posting of postings) {
+      if (!posting.account) {
+        setError('All postings must have an account');
+        return;
+      }
+      if (!posting.amount || isNaN(Number(posting.amount))) {
+        setError('All postings must have a valid numeric amount');
+        return;
+      }
+    }
+
     // Validate postings - ensure they balance to zero (double-entry accounting)
     const total = postings.reduce((sum, posting) => {
       return sum + (parseFloat(posting.amount) || 0);
@@ -112,6 +130,28 @@ function AddTransaction() {
     if (Math.abs(total) > 0.01) {
       setError('Transaction does not balance');
       return;
+    }
+
+    // Validate that a single transaction doesn't debit and credit the same account
+    const accountDirections = {};
+    for (const posting of postings) {
+      const accountName = posting.account;
+      const amount = parseFloat(posting.amount || 0);
+
+      if (!accountName || isNaN(amount) || amount === 0) {
+        continue; // Skip incomplete postings or zero amounts for this check
+      }
+
+      const direction = amount > 0 ? 'debit' : 'credit';
+
+      if (accountName in accountDirections) {
+        if (accountDirections[accountName] !== direction) {
+          setError(`Cannot debit and credit the same account '${accountName}' in a single transaction.`);
+          return;
+        }
+      } else {
+        accountDirections[accountName] = direction;
+      }
     }
 
     // Format date for API (YYYY-MM-DD)

@@ -190,4 +190,43 @@ describe('AddTransaction Component', () => {
     expect(screen.getAllByLabelText(/Amount/i)).toHaveLength(2);
     expect(screen.queryByRole('button', { name: /delete posting/i })).not.toBeInTheDocument();
   });
+
+  test('prevents submitting if same account is debited and credited', async () => {
+    const user = userEvent.setup();
+    render(<AddTransaction />);
+
+    // Wait for accounts to load
+    await waitFor(() => {
+      expect(screen.getAllByLabelText(/Account/i)[0]).toBeInTheDocument();
+    });
+
+    // Fill form fields
+    await user.type(screen.getByLabelText(/Payee/i), 'Debit Credit Error');
+
+    const accountInputs = screen.getAllByLabelText(/Account/i);
+    const amountInputs = screen.getAllByLabelText(/Amount/i);
+
+    // Posting 1: Debit Assets:Bank
+    await user.click(accountInputs[0]);
+    const optionBank = await screen.findByRole('option', { name: sortedMockAccounts[0] }); // Assets:Bank
+    await user.click(optionBank);
+    await user.type(amountInputs[0], '100');
+
+    // Posting 2: Credit Assets:Bank (Error scenario)
+    await user.click(accountInputs[1]);
+    // Need to find the option again as the dropdown closes
+    const optionBank2 = await screen.findByRole('option', { name: sortedMockAccounts[0] }); // Assets:Bank
+    await user.click(optionBank2);
+    await user.type(amountInputs[1], '-100');
+
+    // Submit form
+    await user.click(screen.getByRole('button', { name: /add transaction/i }));
+
+    // Check for the specific error message
+    const expectedError = /Cannot debit and credit the same account 'Assets:Bank'/i;
+    expect(await screen.findByText(expectedError)).toBeInTheDocument();
+
+    // Check that the API call was NOT made
+    expect(axiosInstance.post).not.toHaveBeenCalled();
+  });
 });

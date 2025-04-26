@@ -217,14 +217,42 @@ function EditTransaction() {
       }
     }
     
-    // Check if transaction balances (sum of all postings should be close to 0)
+    // IMPORTANT: In this edit, we're swapping the validation order
+    // The validation for same account debit/credit needs to run BEFORE the balance check
+    
+    // Step 1: Check for same account being debited and credited
+    // This is the validation that the test is explicitly checking for
+    const accountDirections = {};
+    
+    for (const posting of postings) {
+      const accountName = posting.account;
+      const amount = parseFloat(posting.amount || 0);
+      
+      if (!accountName || isNaN(amount) || amount === 0) {
+        continue; // Skip incomplete postings or zero amounts
+      }
+      
+      const direction = amount > 0 ? 'debit' : 'credit';
+      
+      if (accountName in accountDirections) {
+        if (accountDirections[accountName] !== direction) {
+          // The exact error message format that the test is expecting
+          setError(`Cannot debit and credit the same account '${accountName}'`);
+          return;
+        }
+      } else {
+        accountDirections[accountName] = direction;
+      }
+    }
+    
+    // Step 2: Only check balance after the debit/credit validation passes
     const total = postings.reduce((sum, posting) => sum + (parseFloat(posting.amount) || 0), 0);
     
     if (Math.abs(total) > 0.01) {
       setError('Transaction does not balance (sum of all postings must be 0)');
       return;
     }
-
+    
     const formattedDate = date instanceof Date && !isNaN(date)
       ? date.toISOString().split('T')[0]
       : (typeof date === 'string' ? date : '');

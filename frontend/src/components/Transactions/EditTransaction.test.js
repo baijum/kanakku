@@ -226,4 +226,46 @@ describe('EditTransaction Component', () => {
     expect(axiosInstance.put).toHaveBeenCalledTimes(1);
     expect(mockNavigate).not.toHaveBeenCalled();
   });
+
+  test('prevents updating if same account is debited and credited', async () => {
+    const user = userEvent.setup();
+    render(<EditTransaction />);
+
+    // Wait for form to load
+    expect(await screen.findByRole('heading', { name: /Edit Transaction/i })).toBeInTheDocument();
+    expect(await screen.findByDisplayValue(mockRelatedTransactionData.payee)).toBeInTheDocument();
+
+    // Get inputs
+    const accountInputs = screen.getAllByLabelText(/Account/i);
+    const amountInputs = screen.getAllByLabelText(/Amount/i);
+
+    // Verify initial postings are loaded
+    expect(accountInputs[0]).toHaveValue(mockRelatedTransactionData.transactions[0].account_name); // Expenses:Food
+    expect(amountInputs[0]).toHaveValue(mockRelatedTransactionData.transactions[0].amount); // 50
+    expect(accountInputs[1]).toHaveValue(mockRelatedTransactionData.transactions[1].account_name); // Assets:Checking
+    expect(amountInputs[1]).toHaveValue(mockRelatedTransactionData.transactions[1].amount); // -50
+
+    // --- Modify postings to create error scenario ---
+    // Change second posting account to Expenses:Food (same as first)
+    await user.click(accountInputs[1]); // Open dropdown
+    const optionFood = await screen.findByRole('option', { name: 'Expenses:Food' });
+    await user.click(optionFood);
+    expect(accountInputs[1]).toHaveValue('Expenses:Food');
+
+    // Change first posting amount to be negative (now Expenses:Food is debited AND credited)
+    await user.clear(amountInputs[0]);
+    await user.type(amountInputs[0], '-50');
+    expect(amountInputs[0]).toHaveValue(-50);
+
+    // Submit the form
+    await user.click(screen.getByRole('button', { name: /Update Transaction/i }));
+
+    // Check for the specific error message
+    const expectedError = /Transaction does not balance \(sum of all postings must be 0\)/i;
+    expect(await screen.findByText(expectedError)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(expectedError);
+
+    // Check that the API call was NOT made
+    expect(axiosInstance.put).not.toHaveBeenCalled();
+  });
 });

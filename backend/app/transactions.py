@@ -5,6 +5,7 @@ from datetime import datetime
 import traceback
 import json
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 
 transactions = Blueprint("transactions", __name__)
 
@@ -80,6 +81,31 @@ def create_transaction():
         except ValueError:
             current_app.logger.warning(f"Invalid date format: {data['date']}")
             return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+        # Validate that a single transaction doesn't debit and credit the same account
+        account_directions = {}
+        for posting in data["postings"]:
+            account_name = posting.get("account")
+            amount_str = posting.get("amount")
+            if not account_name or amount_str is None:
+                # Basic validation handled later, skip here
+                continue
+            try:
+                amount_float = float(amount_str)
+                if amount_float == 0:
+                    continue  # Ignore zero amounts for this validation
+
+                direction = "debit" if amount_float > 0 else "credit"
+
+                if account_name not in account_directions:
+                    account_directions[account_name] = direction
+                elif account_directions[account_name] != direction:
+                    error_msg = f"Cannot debit and credit the same account '{account_name}' in a single transaction."
+                    current_app.logger.warning(f"Validation error: {error_msg}")
+                    return jsonify({"error": error_msg}), 400
+            except ValueError:
+                # Invalid amount format handled later, skip here
+                continue
 
         # Access current_user via g
         user = g.current_user
@@ -518,6 +544,8 @@ def update_transaction_with_postings(transaction_id):
             return jsonify({"error": "None of the original transactions found"}), 404
 
         # Start by reversing the effect of original transactions on their accounts
+        original_transaction_ids_to_delete = [tx.id for tx in original_transactions]
+
         for original_transaction in original_transactions:
             # Reverse the effect on the original account
             original_account = db.session.get(Account, original_transaction.account_id)
@@ -527,6 +555,50 @@ def update_transaction_with_postings(transaction_id):
 
             # Delete the original transaction
             db.session.delete(original_transaction)
+
+        # Commit the deletion of original transactions first
+        try:
+            db.session.commit()
+
+            # Double-check that transactions are actually deleted by using raw SQL
+            # This is to ensure the transactions are truly gone from the database
+            for tx_id in original_transaction_ids_to_delete:
+                stmt = text('DELETE FROM "transaction" WHERE id = :id')
+                db.session.execute(stmt, {"id": tx_id})
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(
+                f"Failed to delete original transactions: {str(e)}"
+            )
+            return jsonify({"error": "Failed to delete original transactions"}), 500
+
+        # Validate that a single transaction doesn't debit and credit the same account
+        account_directions = {}
+        for posting in data["postings"]:
+            account_name = posting.get("account")
+            amount_str = posting.get("amount")
+            if not account_name or amount_str is None:
+                # Basic validation handled later, skip here
+                continue
+            try:
+                amount_float = float(amount_str)
+                if amount_float == 0:
+                    continue  # Ignore zero amounts for this validation
+
+                direction = "debit" if amount_float > 0 else "credit"
+
+                if account_name not in account_directions:
+                    account_directions[account_name] = direction
+                elif account_directions[account_name] != direction:
+                    # Rollback changes made before this validation (deleting original transactions)
+                    db.session.rollback()
+                    error_msg = f"Cannot debit and credit the same account '{account_name}' in a single transaction."
+                    current_app.logger.warning(f"Validation error: {error_msg}")
+                    return jsonify({"error": error_msg}), 400
+            except ValueError:
+                # Invalid amount format handled later, skip here
+                continue
 
         # Process each new posting
         new_transactions = []
