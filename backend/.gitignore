@@ -1,0 +1,6 @@
+__pycache__
+venv/
+instance/app.db
+.env
+logs/*.log
+.coverage

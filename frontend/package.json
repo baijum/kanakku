@@ -1,0 +1,87 @@
+{
+  "name": "kanakku-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.10",
+    "@mui/material": "^5.15.10",
+    "@mui/x-date-pickers": "^6.19.4",
+    "axios": "^1.6.7",
+    "buffer": "^6.0.3",
+    "craco": "^0.0.3",
+    "date-fns": "^2.30.0",
+    "history": "^5.3.0",
+    "https-browserify": "^1.0.0",
+    "process": "^0.11.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.1",
+    "react-scripts": "5.0.1",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "url": "^0.11.4",
+    "util": "^0.12.5",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "prestart": "node patch-util-module.js",
+    "start": "NODE_OPTIONS=--no-deprecation craco start",
+    "build": "craco build",
+    "test": "craco test --env=jsdom",
+    "test:ci": "CI=true craco test --env=jsdom",
+    "test:basic": "craco test --env=jsdom --testMatch=\"**/src/components/BasicTest.test.js\"",
+    "test:register": "craco test --env=jsdom --testMatch=\"**/src/components/Auth/Register.test.jsx\"",
+    "test:addtransaction": "craco test --env=jsdom --testMatch=\"**/src/components/AddTransaction.test.js\"",
+    "test:viewtransactions": "craco test --env=jsdom --testMatch=\"**/src/components/ViewTransactions.test.js\"",
+    "eject": "react-scripts eject",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(axios|@mui)/)/"
+    ],
+    "moduleNameMapper": {
+      "^axios$": "<rootDir>/node_modules/axios/dist/axios.js"
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:8000",
+  "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "@playwright/test": "^1.52.0",
+    "@testing-library/dom": "^9.3.3",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
+    "assert": "^2.1.0",
+    "browser-process-hrtime": "^1.0.0",
+    "browserify-zlib": "^0.2.0",
+    "crypto-browserify": "^3.12.1",
+    "eslint-config-react-app": "^7.0.1",
+    "jest": "^29.7.0",
+    "os-browserify": "^0.3.0",
+    "path-browserify": "^1.0.1",
+    "querystring-es3": "^0.2.1"
+  }
+}

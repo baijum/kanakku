@@ -1,0 +1,1421 @@
+openapi: 3.0.0
+info:
+  title: Kanakku API
+  description: API documentation for Kanakku - A Simple Accounting Application
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+# Global security definition
+security:
+  - ApiKeyAuth: [] # Requires ApiKeyAuth for all paths unless overridden
+tags:
+  - name: Auth
+    description: Authentication and user management
+  - name: Accounts
+    description: Account management
+  - name: Transactions
+    description: Transaction management
+  - name: Reports
+    description: Financial reports
+  - name: Ledger
+    description: Ledger file format operations
+  - name: Preamble
+    description: Preamble management for ledger files
+  - name: Books
+    description: Book management for organizing accounts and transactions
+
+paths:
+  /api/v1/health:
+    get:
+      summary: Health check
+      responses:
+        200:
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  
+  /health:
+    get:
+      tags:
+        - Ledger
+      summary: Ledger health check
+      responses:
+        200:
+          description: Ledger API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  
+  # Authentication Endpoints
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        201:
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user_id:
+                    type: integer
+        400:
+          description: Email already exists or missing required fields
+  
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login to get authentication token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+        401:
+          description: Invalid email or password
+        403:
+          description: Account inactive
+  
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout (client-side token invalidation)
+      responses:
+        200:
+          description: Logout successful
+  
+  /api/v1/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user information
+      responses:
+        200:
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        404:
+          description: User not found
+  
+  /api/v1/auth/users/{userId}/activate:
+    post:
+      tags:
+        - Auth
+      summary: Activate or deactivate a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_active:
+                  type: boolean
+                  example: true
+      responses:
+        200:
+          description: User activation status updated
+        404:
+          description: User not found
+  
+  /api/v1/auth/password:
+    put:
+      tags:
+        - Auth
+      summary: Update user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - current_password
+                - new_password
+              properties:
+                current_password:
+                  type: string
+                  format: password
+                new_password:
+                  type: string
+                  format: password
+      responses:
+        200:
+          description: Password updated successfully
+        400:
+          description: Missing required fields or invalid current password
+  
+  /api/v1/auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        200:
+          description: Password reset instructions sent
+        404:
+          description: User not found
+  
+  /api/v1/auth/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - email
+                - new_password
+              properties:
+                token:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                new_password:
+                  type: string
+                  format: password
+      responses:
+        200:
+          description: Password reset successful
+        400:
+          description: Invalid or expired token
+  
+  /api/v1/auth/google:
+    get:
+      tags:
+        - Auth
+      summary: Initiate Google OAuth login
+      description: Returns the Google OAuth authentication URL to redirect the user to
+      responses:
+        200:
+          description: Google OAuth authentication URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth_url:
+                    type: string
+        500:
+          description: Google OAuth is not configured
+    post:
+      tags:
+        - Auth
+      summary: Authenticate with Google ID token
+      description: Handle Google authentication with a token directly from the frontend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Google OAuth ID token
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        400:
+          description: No token provided
+        500:
+          description: Failed to authenticate with Google
+  
+  /api/v1/auth/google/callback:
+    get:
+      tags:
+        - Auth
+      summary: Google OAuth callback
+      description: Callback endpoint for Google OAuth to handle the authorization code
+      parameters:
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        302:
+          description: Redirect to frontend with JWT token
+        400:
+          description: Invalid state parameter or authorization code not provided
+        500:
+          description: Failed to authenticate with Google
+  
+  /api/v1/auth/tokens:
+    get:
+      tags:
+        - Auth
+      summary: Get all API tokens for the current user
+      responses:
+        200:
+          description: List of API tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiToken'
+    post:
+      tags:
+        - Auth
+      summary: Create a new API token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "My API Token"
+                expires_in_days:
+                  type: integer
+                  example: 30
+      responses:
+        201:
+          description: Token created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiToken'
+  
+  /api/v1/auth/tokens/{tokenId}:
+    put:
+      tags:
+        - Auth
+      summary: Update an API token
+      parameters:
+        - name: tokenId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                is_active:
+                  type: boolean
+      responses:
+        200:
+          description: Token updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiToken'
+        404:
+          description: Token not found
+    delete:
+      tags:
+        - Auth
+      summary: Revoke an API token
+      parameters:
+        - name: tokenId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Token revoked successfully
+        404:
+          description: Token not found
+  
+  # Account Endpoints
+  /api/v1/accounts:
+    get:
+      tags:
+        - Accounts
+      summary: Get all account names
+      responses:
+        200:
+          description: List of account names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      type: string
+    post:
+      tags:
+        - Accounts
+      summary: Create a new account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreate'
+      responses:
+        201:
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  account:
+                    $ref: '#/components/schemas/Account'
+        400:
+          description: Missing required fields or account already exists
+  
+  /api/v1/accounts/details:
+    get:
+      tags:
+        - Accounts
+      summary: Get all accounts with full details
+      responses:
+        200:
+          description: List of accounts with details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+  
+  /api/v1/accounts/{accountId}:
+    get:
+      tags:
+        - Accounts
+      summary: Get a specific account
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        404:
+          description: Account not found
+    put:
+      tags:
+        - Accounts
+      summary: Update an account
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdate'
+      responses:
+        200:
+          description: Account updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  account:
+                    $ref: '#/components/schemas/Account'
+        404:
+          description: Account not found
+    delete:
+      tags:
+        - Accounts
+      summary: Delete an account
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Account deleted successfully
+        400:
+          description: Cannot delete account with existing transactions
+        404:
+          description: Account not found
+  
+  # Transaction Endpoints
+  /api/v1/transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Get all transactions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  total_count:
+                    type: integer
+    post:
+      tags:
+        - Transactions
+      summary: Create a new transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreate'
+      responses:
+        201:
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+        400:
+          description: Invalid input
+        404:
+          description: Account not found
+  
+  /api/v1/transactions/{transactionId}:
+    get:
+      tags:
+        - Transactions
+      summary: Get a specific transaction
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        404:
+          description: Transaction not found
+    put:
+      tags:
+        - Transactions
+      summary: Update a transaction
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionUpdate'
+      responses:
+        200:
+          description: Transaction updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  transaction:
+                    $ref: '#/components/schemas/Transaction'
+        404:
+          description: Transaction or account not found
+    delete:
+      tags:
+        - Transactions
+      summary: Delete a transaction
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Transaction deleted successfully
+        404:
+          description: Transaction not found
+  
+  /api/v1/transactions/{transactionId}/update_with_postings:
+    put:
+      tags:
+        - Transactions
+      summary: Update a transaction with multiple postings
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionWithPostingsUpdate'
+      responses:
+        200:
+          description: Transaction updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+        404:
+          description: Transaction or account not found
+  
+  /api/v1/transactions/{transactionId}/related:
+    get:
+      tags:
+        - Transactions
+      summary: Get related transactions
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Related transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        404:
+          description: Transaction not found
+    delete:
+      tags:
+        - Transactions
+      summary: Delete related transactions
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Related transactions deleted successfully
+        404:
+          description: Transaction not found
+  
+  # Report Endpoints
+  /api/v1/reports/balance:
+    get:
+      tags:
+        - Reports
+      summary: Get balance report
+      parameters:
+        - name: account
+          in: query
+          schema:
+            type: string
+        - name: depth
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Balance report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: string
+  
+  /api/v1/reports/register:
+    get:
+      tags:
+        - Reports
+      summary: Get transaction register
+      parameters:
+        - name: account
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Transaction register
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  register:
+                    type: string
+  
+  /api/v1/reports/balance_report:
+    get:
+      tags:
+        - Reports
+      summary: Get balance report by account type
+      responses:
+        200:
+          description: Balance report by account type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance_report:
+                    type: string
+  
+  /api/v1/reports/income_statement:
+    get:
+      tags:
+        - Reports
+      summary: Get income statement
+      responses:
+        200:
+          description: Income statement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  income_statement:
+                    type: string
+  
+  # Ledger Endpoints
+  /api/v1/ledgertransactions:
+    get:
+      tags:
+        - Ledger
+      summary: Get transactions in ledger format
+      description: Returns all transactions in ledger file format as plain text
+      parameters:
+        - name: preamble_id
+          in: query
+          description: ID of a specific preamble to include
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          description: Filter transactions starting from this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: Filter transactions until this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: Transactions in ledger format
+          content:
+            text/plain:
+              schema:
+                type: string
+        401:
+          description: Authentication required
+        500:
+          description: Failed to generate ledger format
+  
+  # Preamble Endpoints
+  /api/v1/preambles:
+    get:
+      tags:
+        - Preamble
+      summary: Get all preambles
+      responses:
+        200:
+          description: List of preambles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preambles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Preamble'
+    post:
+      tags:
+        - Preamble
+      summary: Create a new preamble
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreambleCreate'
+      responses:
+        201:
+          description: Preamble created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  preamble:
+                    $ref: '#/components/schemas/Preamble'
+        400:
+          description: Missing required fields
+  
+  /api/v1/preambles/{preambleId}:
+    get:
+      tags:
+        - Preamble
+      summary: Get a specific preamble
+      parameters:
+        - name: preambleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Preamble details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Preamble'
+        404:
+          description: Preamble not found
+    put:
+      tags:
+        - Preamble
+      summary: Update a preamble
+      parameters:
+        - name: preambleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreambleUpdate'
+      responses:
+        200:
+          description: Preamble updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  preamble:
+                    $ref: '#/components/schemas/Preamble'
+        404:
+          description: Preamble not found
+    delete:
+      tags:
+        - Preamble
+      summary: Delete a preamble
+      parameters:
+        - name: preambleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Preamble deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  was_default:
+                    type: boolean
+        404:
+          description: Preamble not found
+  
+  /api/v1/preambles/default:
+    get:
+      tags:
+        - Preamble
+      summary: Get default preamble
+      responses:
+        200:
+          description: Default preamble
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Preamble'
+        404:
+          description: Default preamble not found
+  
+  # Book Endpoints
+  /api/v1/books:
+    get:
+      tags:
+        - Books
+      summary: Get all books for the current user
+      responses:
+        200:
+          description: List of books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+    post:
+      tags:
+        - Books
+      summary: Create a new book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "Personal Finances"
+      responses:
+        201:
+          description: Book created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  book:
+                    $ref: '#/components/schemas/Book'
+        400:
+          description: Missing required fields or book already exists
+  
+  /api/v1/books/{bookId}:
+    get:
+      tags:
+        - Books
+      summary: Get a specific book
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Book details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        404:
+          description: Book not found
+    put:
+      tags:
+        - Books
+      summary: Update a book
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Book Name"
+      responses:
+        200:
+          description: Book updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  book:
+                    $ref: '#/components/schemas/Book'
+        400:
+          description: Book with this name already exists
+        404:
+          description: Book not found
+    delete:
+      tags:
+        - Books
+      summary: Delete a book and all its associated accounts and transactions
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Book and all associated accounts deleted successfully
+        404:
+          description: Book not found
+  
+  /api/v1/books/{bookId}/set-active:
+    post:
+      tags:
+        - Books
+      summary: Set a book as active for the current user
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Book set as active successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  active_book:
+                    $ref: '#/components/schemas/Book'
+        404:
+          description: Book not found
+  
+  /api/v1/books/active:
+    get:
+      tags:
+        - Books
+      summary: Get the current user's active book
+      responses:
+        200:
+          description: Active book details or empty object if no active book
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey      # Specify the type as apiKey
+      in: header        # Specify the location of the key (header, query, or cookie)
+      name: X-API-Key   # Specify the exact name of the header
+      description: >    # Optional but recommended description
+        API Key authentication using the X-API-Key header.
+        You can use either the X-API-Key header with the raw token value or 
+        the Authorization header with the format "Token YOUR_TOKEN_VALUE".
+        Enter your API key value below.
+  
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        picture:
+          type: string
+    
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        currency:
+          type: string
+          default: INR
+        balance:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+    
+    AccountCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        currency:
+          type: string
+          default: INR
+        balance:
+          type: number
+          default: 0
+    
+    AccountUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        currency:
+          type: string
+        balance:
+          type: number
+    
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        account_id:
+          type: integer
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        payee:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    
+    TransactionCreate:
+      type: object
+      required:
+        - date
+        - payee
+        - postings
+      properties:
+        date:
+          type: string
+          format: date
+          example: '2023-01-01'
+        payee:
+          type: string
+        postings:
+          type: array
+          items:
+            type: object
+            required:
+              - account
+              - amount
+            properties:
+              account:
+                type: string
+              amount:
+                type: string
+              currency:
+                type: string
+                default: INR
+    
+    TransactionUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        description:
+          type: string
+        payee:
+          type: string
+        account_id:
+          type: integer
+        amount:
+          type: number
+        currency:
+          type: string
+    
+    TransactionWithPostingsUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        payee:
+          type: string
+        postings:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              account:
+                type: string
+              amount:
+                type: string
+              currency:
+                type: string
+    
+    Preamble:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        content:
+          type: string
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    PreambleCreate:
+      type: object
+      required:
+        - name
+        - content
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+        is_default:
+          type: boolean
+          default: false
+    
+    PreambleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+        is_default:
+          type: boolean
+    
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    ApiToken:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        token:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time 
