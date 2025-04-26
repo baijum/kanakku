@@ -367,7 +367,7 @@ function EditTransaction() {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
+                  <Grid item xs={12} sm={5}>
                     <TextField
                       fullWidth
                       label="Amount"
@@ -377,20 +377,7 @@ function EditTransaction() {
                       required
                     />
                   </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <FormControl fullWidth>
-                      <InputLabel>Currency</InputLabel>
-                      <Select
-                        value={posting.currency || 'INR'}
-                        onChange={(e) => handlePostingChange(index, 'currency', e.target.value)}
-                        label="Currency"
-                        required
-                      >
-                        <MenuItem value="INR">INR</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12}>
+                  <Grid item xs={12} sm={2}>
                     <IconButton
                       onClick={() => handleRemovePosting(index)}
                       color="error"

@@ -43,12 +43,6 @@ const MockEditTransaction = () => {
             <label>Amount</label>
             <input type="number" defaultValue="100" />
           </div>
-          <div data-testid="currency-select">
-            <label>Currency</label>
-            <select>
-              <option value="INR">INR</option>
-            </select>
-          </div>
           <button aria-label="remove">Remove</button>
         </div>
         
@@ -163,7 +157,6 @@ describe('EditTransaction Component', () => {
     expect(screen.getByTestId('posting')).toBeInTheDocument();
     expect(screen.getByTestId('account-select')).toBeInTheDocument();
     expect(screen.getByTestId('amount-field')).toBeInTheDocument();
-    expect(screen.getByTestId('currency-select')).toBeInTheDocument();
     
     // Check for buttons
     expect(screen.getByRole('button', { name: /Update Transaction/i })).toBeInTheDocument();
