@@ -148,12 +148,16 @@ function EditTransaction() {
       const detailsResponse = await axiosInstance.get('/api/v1/accounts/details');
       
       if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
-        // Set accounts with full details
-        setAccounts(detailsResponse.data.map(account => ({
-          id: account.id,
-          name: account.name,
-          fullName: account.name
-        })));
+        // Create account objects and sort them alphabetically by name
+        const sortedAccounts = [...detailsResponse.data]
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map(account => ({
+            id: account.id,
+            name: account.name,
+            fullName: account.name
+          }));
+        
+        setAccounts(sortedAccounts);
         return;
       }
       
@@ -161,11 +165,15 @@ function EditTransaction() {
       const response = await axiosInstance.get('/api/v1/accounts');
       
       if (response.data && Array.isArray(response.data.accounts)) {
-        // Create account objects with just names
-        setAccounts(response.data.accounts.map(name => ({
-          name: name,
-          fullName: name
-        })));
+        // Create account objects with just names and sort alphabetically
+        const sortedAccounts = [...response.data.accounts]
+          .sort((a, b) => a.localeCompare(b))
+          .map(name => ({
+            name: name,
+            fullName: name
+          }));
+        
+        setAccounts(sortedAccounts);
       }
     } catch (err) {
       setError('Failed to load accounts. Please try again.');

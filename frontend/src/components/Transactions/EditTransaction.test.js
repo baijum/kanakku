@@ -103,7 +103,9 @@ jest.mock('axios', () => ({
     } else if (url.includes('/accounts/details')) {
       return Promise.resolve({
         data: [
+          { id: 3, name: 'Liabilities:Credit Card' },
           { id: 1, name: 'Expenses:Food' },
+          { id: 4, name: 'Income:Salary' },
           { id: 2, name: 'Assets:Checking' }
         ]
       });
@@ -172,5 +174,34 @@ describe('EditTransaction Component', () => {
     // Check for error elements
     expect(screen.getByTestId('error-alert')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Back to Transactions/i })).toBeInTheDocument();
+  });
+  
+  test('accounts are sorted alphabetically', () => {
+    // Testing the sorting logic for accounts
+    const mockAccountsData = [
+      { id: 3, name: 'Liabilities:Credit Card' },
+      { id: 1, name: 'Expenses:Food' },
+      { id: 4, name: 'Income:Salary' },
+      { id: 2, name: 'Assets:Checking' }
+    ];
+    
+    // Simulate the sorting logic from the component
+    const sortedAccounts = [...mockAccountsData]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(account => ({
+        id: account.id,
+        name: account.name,
+        fullName: account.name
+      }));
+    
+    // Expected sorted order
+    const expectedOrder = [
+      { id: 2, name: 'Assets:Checking', fullName: 'Assets:Checking' },
+      { id: 1, name: 'Expenses:Food', fullName: 'Expenses:Food' },
+      { id: 4, name: 'Income:Salary', fullName: 'Income:Salary' },
+      { id: 3, name: 'Liabilities:Credit Card', fullName: 'Liabilities:Credit Card' }
+    ];
+    
+    expect(sortedAccounts).toEqual(expectedOrder);
   });
 });

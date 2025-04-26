@@ -51,7 +51,9 @@ function AddTransaction() {
       .then(response => {
         // Ensure response.data exists and response.data.accounts is an array
         if (response.data && Array.isArray(response.data.accounts)) {
-          setAccounts(response.data.accounts);
+          // Sort accounts alphabetically
+          const sortedAccounts = [...response.data.accounts].sort((a, b) => a.localeCompare(b));
+          setAccounts(sortedAccounts);
         } else {
           console.error('Unexpected response structure for accounts:', response.data);
           setAccounts([]);
