@@ -1,4 +1,4 @@
-from flask import Flask, request, g, has_request_context, jsonify
+from flask import Flask, request, g, has_request_context, jsonify, send_from_directory, abort
 from flask_cors import CORS
 from flask_migrate import Migrate
 import logging
@@ -77,6 +77,15 @@ def setup_logging(app):
 def create_app(config_name="default"):
     app = Flask(__name__)
 
+    # Serve favicon.ico
+    @app.route('/favicon.ico')
+    def favicon():
+        # In a real app, you'd likely have a favicon.ico in a static folder
+        # return send_from_directory(os.path.join(app.root_path, 'static'),
+        #                            'favicon.ico', mimetype='image/vnd.microsoft.icon')
+        # For now, just return No Content to prevent 404s
+        return '', 204
+
     # Load configuration based on config_name
     config_instance = config[config_name]()
 
@@ -149,7 +158,10 @@ def create_app(config_name="default"):
 
         # Add security headers
         response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://unpkg.com; "
+            "img-src 'self' data:"
         )
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
