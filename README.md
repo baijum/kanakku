@@ -1,6 +1,7 @@
-# Kanakku - An expense tracker
+# Kanakku
+> **Personal Expense Tracker**
 
-Kanakku provides a user-friendly way to manage your financial transactions.
+Kanakku provides a user-friendly way to track your personal expenses.
 
 ## Features
 
