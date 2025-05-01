@@ -55,6 +55,9 @@ kanakku/
 ├── fixes/             # Documentation for major bug fixes
 │   ├── currency-refactoring-usd-to-inr.md
 │   └── flask-jwt-extended-422-errors.md
+├── docs/              # Project documentation
+│   ├── ARCHITECTURE.md # Detailed architecture documentation
+│   └── architecture_diagrams.md # Visual architecture diagrams
 ```
 
 ## Architecture
@@ -72,7 +75,9 @@ Kanakku follows a modern, layered architecture with a clear separation between f
     *   **Ledger Interaction:** Exporting data in Ledger format and generating reports.
 *   **API:** Defined using Flask Blueprints, organized by functionality with Swagger/OpenAPI documentation. All endpoints are prefixed with `/api/`.
 
-For a detailed architectural overview, including diagrams, security considerations, and future plans, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+For a detailed architectural overview, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+For visual architecture diagrams using Mermaid, see [architecture_diagrams.md](docs/architecture_diagrams.md).
 
 ## API Endpoints
 
