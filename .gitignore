@@ -9,6 +9,7 @@
 .env.production.local
 .env.production
 .coverage
+.cursorignore
 
 # Rust specific files
 tools/accountimporter/target/
