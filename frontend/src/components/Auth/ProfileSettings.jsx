@@ -34,6 +34,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import UpdatePassword from './UpdatePassword';
 import BookManagement from '../Books/BookManagement';
+import UserActivation from './UserActivation';
 import { add } from 'date-fns';
 import axiosInstance from '../../api/axiosInstance'; // Import the configured instance
 
@@ -214,6 +215,10 @@ const ProfileSettings = () => {
     }
   };
 
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   if (loading) {
     return (
       <Container maxWidth="md" sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -285,6 +290,7 @@ const ProfileSettings = () => {
               >
                 <Tab label="Books" />
                 <Tab label="Update Password" />
+                <Tab label="Account Status" />
                 <Tab label="API Tokens" />
               </Tabs>
             </Box>
@@ -298,6 +304,10 @@ const ProfileSettings = () => {
             )}
             
             {tabValue === 2 && (
+              <UserActivation user={user} onUserUpdate={handleUserUpdate} />
+            )}
+            
+            {tabValue === 3 && (
               <Box>
                 {tokenError && (
                   <Alert 

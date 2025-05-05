@@ -368,6 +368,37 @@ def get_user_profile():
     return jsonify(profile), 200
 
 
+@auth.route("/api/v1/auth/toggle-status", methods=["POST"])
+@api_token_required
+def toggle_user_status():
+    """Toggle active status for the current user"""
+    # Get the current user
+    current_user = g.current_user
+
+    # Get request data
+    data = request.get_json()
+    is_active = data.get("is_active")
+
+    if is_active is None:
+        return jsonify({"error": "is_active field is required"}), 400
+
+    # Update user active status
+    if is_active:
+        current_user.activate()
+    else:
+        current_user.deactivate()
+
+    return (
+        jsonify(
+            {
+                "message": f"Account {'activated' if is_active else 'deactivated'} successfully",
+                "user": current_user.to_dict(),
+            }
+        ),
+        200,
+    )
+
+
 @auth.route("/api/v1/auth/users/<int:user_id>/activate", methods=["POST"])
 @api_token_required
 def activate_user(user_id):
@@ -734,6 +765,17 @@ def google_callback():
                     f"Google OAuth: Committed transaction for user {user.email} (ID: {user.id})"
                 )
 
+            # Check if user is active
+            if not user.is_active:
+                current_app.logger.warning(
+                    f"Google OAuth: Inactive user attempted login: {user.email}"
+                )
+                frontend_url = current_app.config.get(
+                    "FRONTEND_URL", "http://localhost:3000"
+                )
+                redirect_url = f"{frontend_url}/login?error=account_inactive"
+                return redirect(redirect_url)
+
             # Generate JWT token (Use user ID as identity, standard practice)
             token = create_access_token(identity=str(user.id))
             current_app.logger.debug(f"JWT token created for user: {user.email}")
@@ -809,6 +851,15 @@ def google_token_auth():
                 # Set the default book as active
                 user.active_book_id = default_book.id
                 db.session.commit()
+
+        # Check if user is active
+        if not user.is_active:
+            return (
+                jsonify(
+                    {"error": "Account is inactive. Please contact an administrator."}
+                ),
+                403,
+            )
 
         # Generate JWT token
         # Ensure identity is string
@@ -986,3 +1037,25 @@ def auth_test():
         ),
         200,
     )
+
+
+@auth.route("/api/v1/auth/users", methods=["GET"])
+@api_token_required
+def get_all_users():
+    """Get all users in the system - admin only"""
+    # Check if user is admin
+    requesting_user = g.current_user
+    if not requesting_user.is_admin:
+        return jsonify({"error": "Admin privileges required"}), 403
+
+    # Query all users
+    users = User.query.all()
+
+    # Convert to list of dictionaries with additional admin info
+    user_list = []
+    for user in users:
+        user_data = user.to_dict()
+        user_data["is_admin"] = user.is_admin  # Include admin status
+        user_list.append(user_data)
+
+    return jsonify({"users": user_list}), 200

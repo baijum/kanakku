@@ -17,6 +17,7 @@ const MockProfileSettings = () => {
       <div data-testid="tabs">
         <button>Books</button>
         <button>Update Password</button>
+        <button>Account Status</button>
         <button>API Tokens</button>
       </div>
     </div>
@@ -31,6 +32,9 @@ jest.mock('./UpdatePassword', () => jest.fn());
 
 // Mock the BookManagement component
 jest.mock('../Books/BookManagement', () => jest.fn());
+
+// Mock the UserActivation component
+jest.mock('./UserActivation', () => jest.fn());
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -75,6 +79,10 @@ describe('ProfileSettings Component', () => {
     expect(screen.getByTestId('tabs')).toBeInTheDocument();
     expect(screen.getByText(/Books/i)).toBeInTheDocument();
     expect(screen.getByText(/Update Password/i)).toBeInTheDocument();
+    
+    // Fix: Use a more specific selector for "Account Status" button in tabs
+    expect(screen.getByRole('button', { name: /Account Status/i })).toBeInTheDocument();
+    
     expect(screen.getByText(/API Tokens/i)).toBeInTheDocument();
   });
 });

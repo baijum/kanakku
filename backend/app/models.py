@@ -170,6 +170,7 @@ class User(UserMixin, db.Model):
             "id": self.id,
             "email": self.email,
             "is_active": self.is_active,
+            "is_admin": self.is_admin,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "picture": self.picture,
             "active_book_id": self.active_book_id,

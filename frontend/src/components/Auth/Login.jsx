@@ -24,6 +24,16 @@ function Login({ setIsLoggedIn }) {
       // Clear the location state after using it
       navigate(location.pathname, { replace: true, state: {} });
     }
+    
+    // Check for account_inactive error in URL parameters
+    const params = new URLSearchParams(location.search);
+    const errorParam = params.get('error');
+    
+    if (errorParam === 'account_inactive') {
+      setError('Your account is inactive. Please use the Account Status tab in Profile Settings to reactivate it.');
+      // Remove the error parameter from URL to prevent showing the error after page refresh
+      navigate(location.pathname, { replace: true });
+    }
   }, [location, navigate]);
 
   const handleLogin = async (e) => {

@@ -201,6 +201,41 @@ def test_activate_user(authenticated_client, user, app):
     assert response.status_code == 404
 
 
+def test_toggle_status(authenticated_client, user, app):
+    """Test the toggle-status endpoint to activate/deactivate current user"""
+    # First set the user to active
+    with app.app_context():
+        user.activate()
+        db.session.commit()
+
+    # Test deactivating the user
+    response = authenticated_client.post(
+        "/api/v1/auth/toggle-status", json={"is_active": False}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "message" in data
+    assert "deactivated" in data["message"]
+    assert data["user"]["is_active"] is False
+
+    # Test activating the user
+    response = authenticated_client.post(
+        "/api/v1/auth/toggle-status", json={"is_active": True}
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "message" in data
+    assert "activated" in data["message"]
+    assert data["user"]["is_active"] is True
+
+    # Test missing is_active parameter
+    response = authenticated_client.post("/api/v1/auth/toggle-status", json={})
+    assert response.status_code == 400
+    data = response.get_json()
+    assert "error" in data
+    assert "is_active field is required" in data["error"]
+
+
 def test_google_login(client, app):
     # Configure Google OAuth in the app
     app.config["GOOGLE_CLIENT_ID"] = "test-client-id"
@@ -373,3 +408,135 @@ def test_google_token_auth(client, app, mocker):
     response = client.post("/api/v1/auth/google", json={"token": "invalid_token"})
     # Accept either 401 or 500 status code for now
     assert response.status_code in (401, 500)
+
+
+def test_google_token_auth_inactive_user(client, app, mocker):
+    """Test that inactive users cannot authenticate with Google"""
+    # Configure Google OAuth in the app
+    app.config["GOOGLE_CLIENT_ID"] = "test-client-id"
+    app.config["FRONTEND_URL"] = "http://localhost:3000"
+
+    # Create an inactive user with Google ID
+    with app.app_context():
+        user = User(
+            email="inactive_google@example.com",
+            google_id="google-inactive-id",
+            is_active=False,
+        )
+        db.session.add(user)
+        db.session.commit()
+
+    # Mock the verify_oauth_token function
+    mock_verify = mocker.patch("app.auth.verify_oauth_token")
+    mock_verify.return_value = {
+        "sub": "google-inactive-id",
+        "email": "inactive_google@example.com",
+        "picture": "https://example.com/inactive_photo.jpg",
+    }
+
+    # Test authentication with inactive Google user
+    response = client.post("/api/v1/auth/google", json={"token": "mock_inactive_token"})
+    assert response.status_code == 403
+    data = response.get_json()
+    assert "error" in data
+    assert "Account is inactive" in data["error"]
+
+
+def test_google_callback_inactive_user(client, app, mocker):
+    """Test that inactive users are redirected to login page with error in OAuth callback"""
+    app.config["GOOGLE_CLIENT_ID"] = "test-client-id"
+    app.config["GOOGLE_CLIENT_SECRET"] = "test-client-secret"
+    app.config["FRONTEND_URL"] = "http://localhost:3000"
+
+    # Create an inactive user
+    with app.app_context():
+        inactive_user = User(
+            email="inactive_oauth@example.com",
+            google_id="google-oauth-inactive-id",
+            is_active=False,
+        )
+        db.session.add(inactive_user)
+        db.session.commit()
+
+    # Mock requests library
+    mock_requests = mocker.patch("app.auth.requests")
+
+    # Mock token response
+    mock_token_response = mocker.Mock()
+    mock_token_response.raise_for_status.return_value = None
+    mock_token_response.json.return_value = {"access_token": "mock_token"}
+    mock_requests.post.return_value = mock_token_response
+
+    # Mock userinfo response matching our inactive user
+    mock_userinfo_response = mocker.Mock()
+    mock_userinfo_response.raise_for_status.return_value = None
+    mock_userinfo_response.json.return_value = {
+        "sub": "google-oauth-inactive-id",
+        "email": "inactive_oauth@example.com",
+        "picture": "https://example.com/inactive_photo.jpg",
+    }
+    mock_requests.get.return_value = mock_userinfo_response
+
+    # Set state in session
+    with client.session_transaction() as session:
+        session["oauth_state"] = "test-state"
+
+    # Test callback with inactive user
+    response = client.get(
+        "/api/v1/auth/google/callback?state=test-state&code=test-code"
+    )
+
+    # Should redirect to login page with error
+    assert response.status_code == 302
+    assert "/login?error=account_inactive" in response.location
+
+    # Verify user remained inactive
+    with app.app_context():
+        user = User.query.filter_by(email="inactive_oauth@example.com").first()
+        assert user is not None
+        assert not user.is_active
+
+
+def test_get_all_users_as_admin(authenticated_client, user, app):
+    """Test that admin users can access user list."""
+    # Ensure user is admin
+    with app.app_context():
+        user.is_admin = True
+        db.session.commit()
+
+    # Verify admin user can access the endpoint
+    response = authenticated_client.get("/api/v1/auth/users")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "users" in data
+    assert isinstance(data["users"], list)
+
+    # Verify that user data contains expected fields
+    if data["users"]:
+        user_obj = data["users"][0]
+        assert "id" in user_obj
+        assert "email" in user_obj
+        assert "is_active" in user_obj
+        assert "is_admin" in user_obj
+
+
+def test_get_all_users_as_non_admin(app, client):
+    """Test that non-admin users cannot access user list."""
+    # Create a non-admin user
+    with app.app_context():
+        non_admin = User(email="nonadmin@example.com", is_admin=False)
+        non_admin.set_password("password123")
+        non_admin.is_active = True
+        db.session.add(non_admin)
+        db.session.commit()
+
+        # Create token for non-admin user
+        from flask_jwt_extended import create_access_token
+
+        token = create_access_token(identity=str(non_admin.id))
+
+    # Test that non-admin user cannot access the endpoint
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/api/v1/auth/users", headers=headers)
+    assert response.status_code == 403
+    assert "Admin privileges required" in response.get_json()["error"]

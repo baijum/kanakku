@@ -45,8 +45,10 @@ import Terms from './components/Pages/Terms';
 import Privacy from './components/Pages/Privacy';
 import Footer from './components/Footer';
 import BookSelector from './components/Books/BookSelector';
+import AdminPanel from './components/Admin/AdminPanel';
 import axiosInstance, { fetchCsrfToken } from './api/axiosInstance';
 import { createBrowserHistory } from 'history';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const drawerWidth = 240;
 
@@ -121,6 +123,49 @@ const ProtectedRoute = ({ children, isLoggedIn, authLoading }) => {
   return children;
 };
 
+// ProtectedRoute that also checks for admin status
+const AdminRoute = ({ children, isLoggedIn, authLoading }) => {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await axiosInstance.get('/api/v1/auth/me');
+        if (response.data && response.data.is_admin) {
+          setIsAdmin(true);
+        }
+      } catch (err) {
+        console.error('Failed to verify admin status:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isLoggedIn && !authLoading) {
+      checkAdminStatus();
+    }
+  }, [isLoggedIn, authLoading]);
+
+  if (authLoading || loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -128,6 +173,7 @@ function App() {
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Fetch CSRF token when the app initializes
   useEffect(() => {
@@ -186,6 +232,11 @@ function App() {
             }
           });
           console.log('Token validation successful. Response:', response.data);
+          
+          // Check if user is admin
+          const userInfoResponse = await axiosInstance.get('/api/v1/auth/me');
+          setIsAdmin(userInfoResponse.data?.is_admin || false);
+          
           setIsLoggedIn(true);
         } catch (error) {
           console.error('Token validation failed:', error);
@@ -376,6 +427,16 @@ function App() {
                     </ListItemIcon>
                     Profile Settings
                   </MenuItem>
+                  
+                  {isAdmin && (
+                    <MenuItem component={RouterLink} to="/admin" onClick={handleUserMenuClose}>
+                      <ListItemIcon>
+                        <AdminPanelSettingsIcon fontSize="small" />
+                      </ListItemIcon>
+                      Admin Panel
+                    </MenuItem>
+                  )}
+                  
                   <Divider />
                   <MenuItem onClick={handleLogout}>
                     <ListItemIcon>
@@ -507,6 +568,14 @@ function App() {
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <ProfileSettings />
                     </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin" 
+                  element={
+                    <AdminRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
+                      <AdminPanel />
+                    </AdminRoute>
                   } 
                 />
                 <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />

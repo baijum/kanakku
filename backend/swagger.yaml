@@ -161,6 +161,44 @@ paths:
         404:
           description: User not found
   
+  /api/v1/auth/profile:
+    get:
+      tags:
+        - Auth
+      summary: Get current user profile information
+      responses:
+        200:
+          description: User profile information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        404:
+          description: User not found
+  
+  /api/v1/auth/toggle-status:
+    post:
+      tags:
+        - Auth
+      summary: Toggle active status for the current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_active:
+                  type: boolean
+                  example: true
+              required:
+                - is_active
+      responses:
+        200:
+          description: User status updated successfully
+        400:
+          description: Missing required fields
+  
   /api/v1/auth/users/{userId}/activate:
     post:
       tags:
@@ -187,6 +225,27 @@ paths:
           description: User activation status updated
         404:
           description: User not found
+  
+  /api/v1/auth/users:
+    get:
+      tags:
+        - Auth
+      summary: Get all users in the system (Admin only)
+      description: Retrieves a list of all users in the system. Only accessible by admin users.
+      responses:
+        200:
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        403:
+          description: Admin privileges required
   
   /api/v1/auth/password:
     put:

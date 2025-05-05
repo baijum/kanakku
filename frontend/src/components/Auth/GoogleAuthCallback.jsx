@@ -17,6 +17,15 @@ function GoogleAuthCallback({ setIsLoggedIn }) {
         // Parse the URL search params to get the token
         const params = new URLSearchParams(location.search);
         const token = params.get('token');
+        const errorParam = params.get('error');
+        
+        // Check for error parameter 
+        if (errorParam) {
+          console.log('Google Auth Callback - Error received:', errorParam);
+          // Redirect to login page with the error parameter
+          navigate(`/login?error=${errorParam}`);
+          return;
+        }
         
         console.log('Google Auth Callback - Token present:', !!token);
         console.log('Google Auth Callback - Token length:', token ? token.length : 0);
