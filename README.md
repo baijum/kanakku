@@ -14,6 +14,9 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - Default INR currency with proper symbol formatting
 - Book entries for advanced accounting
 - Comprehensive transaction reports
+- Rate limiting for API security
+- API token authentication support
+- Swagger/OpenAPI documentation
 
 ## Prerequisites
 
@@ -53,11 +56,15 @@ kanakku/
 │   ├── package.json
 │   └── ...
 ├── fixes/             # Documentation for major bug fixes
-│   ├── currency-refactoring-usd-to-inr.md
-│   └── flask-jwt-extended-422-errors.md
+│   └── transaction_update_with_postings_fix.md
 ├── docs/              # Project documentation
 │   ├── ARCHITECTURE.md # Detailed architecture documentation
-│   └── architecture_diagrams.md # Visual architecture diagrams
+│   ├── architecture_diagrams.md # Visual architecture diagrams
+│   ├── PRODUCTION_DEPLOYMENT.md # Production deployment guide
+│   ├── PRODUCTION_CHECKLIST.md # Pre-production checklist
+│   ├── rate-limit-configuration.md # Rate limiting documentation
+│   ├── faq.md # Frequently asked questions
+│   └── user_manual.md # User documentation
 ```
 
 ## Architecture
@@ -86,21 +93,28 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
 *   **Health Check (`api.py`)**
     *   `GET /api/v1/health` (No Auth Required) - Basic health check.
 *   **Authentication (`auth.py`)**
-    *   `POST /api/v1/auth/register` - Register a new user. (Body: `{ "username": "...", "email": "...", "password": "..." }`)
-    *   `POST /api/v1/auth/login` - Log in a user. (Body: `{ "username": "...", "password": "..." }`)
+    *   `POST /api/v1/auth/register` - Register a new user. (Body: `{ "email": "...", "password": "..." }`)
+    *   `POST /api/v1/auth/login` - Log in a user. (Body: `{ "email": "...", "password": "..." }`)
     *   `POST /api/v1/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
     *   `GET /api/v1/auth/me` (Auth Required) - Get the current logged-in user's details.
     *   `GET /api/v1/auth/google` - Initiate Google OAuth login flow.
     *   `GET /api/v1/auth/google/callback` - Callback for Google OAuth.
+    *   `POST /api/v1/auth/reset-password-request` - Request a password reset.
+    *   `POST /api/v1/auth/reset-password` - Reset password with token.
+    *   `GET /api/v1/auth/tokens` - Get all API tokens for the user.
+    *   `POST /api/v1/auth/tokens` - Create a new API token.
+    *   `PUT /api/v1/auth/tokens/<token_id>` - Update an API token.
+    *   `DELETE /api/v1/auth/tokens/<token_id>` - Delete an API token.
 *   **Accounts (`accounts.py`)** (Auth Required)
     *   `GET /api/v1/accounts` - Get all accounts for the current user.
-    *   `POST /api/v1/accounts` - Add a new account. (Body: `{ "name": "...", "type": "...", "currency": "..." (optional), "balance": ... (optional) }`)
+    *   `POST /api/v1/accounts` - Add a new account. (Body: `{ "name": "...", "description": "..." (optional), "currency": "..." (optional), "balance": ... (optional) }`)
     *   `GET /api/v1/accounts/<int:account_id>` - Get details for a specific account.
-    *   `PUT /api/v1/accounts/<int:account_id>` - Update a specific account. (Body: `{ "name": "...", "type": "...", ... }`)
+    *   `PUT /api/v1/accounts/<int:account_id>` - Update a specific account.
     *   `DELETE /api/v1/accounts/<int:account_id>` - Delete a specific account.
 *   **Transactions (`transactions.py`)** (Auth Required)
-    *   `POST /api/v1/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "description": "...", "amount": ..., "account_name": "...", "payee": "..." (optional), "currency": "..." (optional) }`)
+    *   `POST /api/v1/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "payee": "...", "postings": [...] }`)
     *   `GET /api/v1/transactions` - Get all transactions for the current user (supports filtering parameters).
+    *   `GET /api/v1/transactions/<int:transaction_id>` - Get a specific transaction.
     *   `PUT /api/v1/transactions/<int:transaction_id>` - Update a transaction.
     *   `DELETE /api/v1/transactions/<int:transaction_id>` - Delete a transaction.
 *   **Ledger (`ledger.py`)** (Auth Required)
@@ -108,9 +122,16 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
 *   **Reports (`reports.py`)** (Auth Required)
     *   `GET /api/v1/reports/balance` - Get account balances.
     *   `GET /api/v1/reports/register` - Get transaction register.
+    *   `GET /api/v1/reports/balance_report` - Get detailed balance report by account type.
+    *   `GET /api/v1/reports/income_statement` - Get income statement (income vs expenses).
 *   **Books (`books.py`)** (Auth Required)
-    *   `GET /api/v1/books` - Get all book entries.
-    *   `POST /api/v1/books` - Add a new book entry.
+    *   `GET /api/v1/books` - Get all books for the current user.
+    *   `POST /api/v1/books` - Create a new book.
+    *   `GET /api/v1/books/<int:book_id>` - Get a specific book.
+    *   `PUT /api/v1/books/<int:book_id>` - Update a book.
+    *   `DELETE /api/v1/books/<int:book_id>` - Delete a book.
+    *   `GET /api/v1/books/active` - Get the active book.
+    *   `PUT /api/v1/books/<int:book_id>/activate` - Set a book as active.
 
 ## API Documentation
 
@@ -159,14 +180,19 @@ The API documentation is defined in `backend/swagger.yaml`. When new endpoints a
 Kanakku supports two authentication methods:
 
 1. **Traditional username/password authentication**:
-   - Register with a username, email, and password
-   - Login with username and password
+   - Register with an email and password
+   - Login with email and password
    - User accounts require activation by an administrator
 
 2. **Google Sign-In**:
    - Sign in with your Google account
    - New users are automatically created and activated
    - Existing users can link their account with Google
+
+3. **API Token Authentication**:
+   - Create API tokens for programmatic access
+   - Use tokens for automation and integrations
+   - Each token can have specific permissions and expiration
 
 ### Setting up Google OAuth
 
@@ -265,10 +291,16 @@ $ flask shell
 >>> user.activate()
 ```
 
+## Deployment
+
+For detailed production deployment instructions, see [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md).
+
+For a pre-deployment checklist, see [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
+
 ## Recent Updates and Fixes
 
-### Currency Refactoring (INR)
-The application now uses Indian Rupee (INR) as the default currency, with proper ₹ symbol formatting. See `fixes/currency-refactoring-usd-to-inr.md` for details.
+### Transaction Updates with Postings
+Fixed issue with updating transactions with multiple postings. See `fixes/transaction_update_with_postings_fix.md` for details.
 
-### JWT Authentication Improvements
-Fixed issues with JWT token handling to properly support string user IDs. See `fixes/flask-jwt-extended-422-errors.md` for details.
+### Rate Limiting Implementation
+Added rate limiting for API security with configurable limits for different endpoints. See `docs/rate-limit-configuration.md` for configuration details.
