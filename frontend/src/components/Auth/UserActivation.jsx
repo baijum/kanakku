@@ -86,8 +86,9 @@ const UserActivation = ({ user, onUserUpdate }) => {
           
           {user?.is_active ? (
             <Typography variant="body2" color="text.secondary" paragraph>
-              An active account allows you to use all features of the application. If you deactivate your account, 
-              you won't be able to log in until you reactivate it.
+              An active account gives you access to all features of the application.
+              If your account is deactivated, you won’t be able to log in until an
+              administrator reactivates it.
             </Typography>
           ) : (
             <Typography variant="body2" color="text.secondary" paragraph>
