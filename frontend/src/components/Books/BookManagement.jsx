@@ -31,6 +31,7 @@ const BookManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState(null);
+  const [confirmDeleteName, setConfirmDeleteName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -98,24 +99,31 @@ const BookManagement = () => {
   };
 
   const handleDeleteClick = (book) => {
+    // Check if this is the active book 
+    if (activeBook && book.id === activeBook.id) {
+      setError("Cannot delete the active book. Please set another book as active first.");
+      return;
+    }
+    
     setBookToDelete(book);
+    setConfirmDeleteName('');
     setIsDeleteDialogOpen(true);
   };
 
   const handleDeleteBook = async () => {
+    // Check if the user entered the exact book name for confirmation
+    if (confirmDeleteName !== bookToDelete.name) {
+      setError("Book name doesn't match. Please enter the exact name to confirm deletion.");
+      return;
+    }
+    
     try {
       await axiosInstance.delete(`/api/v1/books/${bookToDelete.id}`);
       
       setSuccessMessage('Book deleted successfully!');
       setIsDeleteDialogOpen(false);
+      setConfirmDeleteName('');
       fetchBooks();
-      
-      // If we deleted the active book, reload the page to update UI
-      if (activeBook && bookToDelete && activeBook.id === bookToDelete.id) {
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
-      }
       
       setTimeout(() => {
         setSuccessMessage(null);
@@ -123,6 +131,7 @@ const BookManagement = () => {
     } catch (err) {
       console.error('Error deleting book:', err);
       setError(err.response?.data?.error || 'Failed to delete book');
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -153,6 +162,28 @@ const BookManagement = () => {
     } catch (err) {
       console.error('Error updating book:', err);
       setError(err.response?.data?.error || 'Failed to update book');
+    }
+  };
+
+  const handleSetActiveBook = async (bookId) => {
+    try {
+      await axiosInstance.post(`/api/v1/books/${bookId}/set-active`);
+      setSuccessMessage('Active book changed successfully!');
+      
+      // Refresh book list and active book
+      fetchBooks();
+      
+      // Reload the page to update the BookSelector in the header
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+    } catch (err) {
+      console.error('Error setting active book:', err);
+      setError(err.response?.data?.error || 'Failed to set active book');
     }
   };
 
@@ -220,6 +251,16 @@ const BookManagement = () => {
               key={book.id}
               secondaryAction={
                 <Box>
+                  {activeBook && activeBook.id !== book.id && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => handleSetActiveBook(book.id)}
+                      sx={{ mr: 1 }}
+                    >
+                      Set as Active
+                    </Button>
+                  )}
                   <IconButton
                     edge="end"
                     onClick={() => handleEditClick(book)}
@@ -231,6 +272,7 @@ const BookManagement = () => {
                     edge="end"
                     onClick={() => handleDeleteClick(book)}
                     color="error"
+                    disabled={activeBook && activeBook.id === book.id}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -274,16 +316,43 @@ const BookManagement = () => {
       <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
         <DialogTitle>Delete Book</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ mb: 2 }}>
             Are you sure you want to delete the book "{bookToDelete?.name}"?
             <br /><br />
-            <strong>Warning:</strong> This will permanently delete all accounts associated with this book.
+            <strong>Warning:</strong> This will permanently delete all accounts and transactions associated with this book.
             This action cannot be undone.
+            <br /><br />
+            <strong>Note:</strong> The currently active book cannot be deleted. You must set another book as active first.
           </DialogContentText>
+          <DialogContentText sx={{ mb: 2, color: 'error.main' }}>
+            To confirm deletion, please type the exact name of the book below:
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Type book name to confirm"
+            fullWidth
+            variant="outlined"
+            value={confirmDeleteName}
+            onChange={(e) => setConfirmDeleteName(e.target.value)}
+            error={confirmDeleteName.length > 0 && confirmDeleteName !== bookToDelete?.name}
+            helperText={
+              confirmDeleteName.length > 0 && confirmDeleteName !== bookToDelete?.name
+                ? "Name doesn't match"
+                : ""
+            }
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteBook} variant="contained" color="error">Delete</Button>
+          <Button 
+            onClick={handleDeleteBook} 
+            variant="contained" 
+            color="error"
+            disabled={confirmDeleteName !== bookToDelete?.name}
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </Paper>

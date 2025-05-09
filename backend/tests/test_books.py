@@ -438,28 +438,40 @@ def test_delete_book(app, client, user, books, accounts):
         assert db.session.get(Account, account2.id) is None
 
 
-def test_delete_active_book_and_reassign(app, client, user, books):
-    """Test deleting the active book and verifying active book reassignment."""
+def test_set_new_active_book_then_delete_previous(app, client, user, books):
+    """Test setting a new active book and then deleting the previously active book."""
     user_obj, token = user
     book1, book2 = books
 
-    # Ensure book1 is active
+    # First ensure book1 is active
     with app.app_context():
         user_to_update = db.session.get(User, user_obj.id)
         user_to_update.active_book_id = book1.id
         db.session.commit()
 
-    # Delete the active book
+    # Set book2 as active
+    response = client.post(
+        f"/api/v1/books/{book2.id}/set-active",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+
+    # Verify book2 is now active
+    with app.app_context():
+        user_from_db = db.session.get(User, user_obj.id)
+        assert user_from_db.active_book_id == book2.id
+
+    # Now delete the previously active book (book1)
     response = client.delete(
         f"/api/v1/books/{book1.id}",
         headers={"Authorization": f"Bearer {token}"},
     )
-
     assert response.status_code == 200
 
-    # Verify the active book was reassigned to book2
+    # Verify book1 is deleted and book2 is still active
     with app.app_context():
         user_from_db = db.session.get(User, user_obj.id)
+        assert db.session.get(Book, book1.id) is None
         assert user_from_db.active_book_id == book2.id
 
 
@@ -502,8 +514,8 @@ def test_delete_nonexistent_book(app, client, user):
 
 def test_delete_book_with_transactions(app, client, user, books, accounts):
     """Test deleting a book that has transactions and verifying cascade deletion."""
-    _, token = user
-    book1, _ = books
+    user_obj, token = user
+    book1, book2 = books
     checking_account, _, _ = accounts
 
     # Create a transaction in book1
@@ -523,6 +535,13 @@ def test_delete_book_with_transactions(app, client, user, books, accounts):
     # Verify transaction exists
     with app.app_context():
         assert db.session.get(Transaction, transaction_id) is not None
+
+    # Set book2 as active before deleting book1 to avoid 400 error
+    set_active_response = client.post(
+        f"/api/v1/books/{book2.id}/set-active",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert set_active_response.status_code == 200
 
     # Delete the book
     response = client.delete(
@@ -569,3 +588,34 @@ def test_delete_unauthorized_book(app, client, user, books):
     # Verify other user's book still exists
     with app.app_context():
         assert db.session.get(Book, other_book_id) is not None
+
+
+def test_delete_active_book_is_prevented(app, client, user, books):
+    """Test that the API prevents deletion of the active book."""
+    user_obj, token = user
+    book1, book2 = books
+
+    # Ensure book1 is active
+    with app.app_context():
+        user_to_update = db.session.get(User, user_obj.id)
+        user_to_update.active_book_id = book1.id
+        db.session.commit()
+
+    # Try to delete the active book
+    response = client.delete(
+        f"/api/v1/books/{book1.id}",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    # Verify the deletion is prevented with correct error message
+    assert response.status_code == 400
+    assert "Cannot delete the active book" in response.json["error"]
+
+    # Verify the book still exists
+    with app.app_context():
+        book = db.session.get(Book, book1.id)
+        assert book is not None
+
+        # Verify the active book is still set
+        user_from_db = db.session.get(User, user_obj.id)
+        assert user_from_db.active_book_id == book1.id

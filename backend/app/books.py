@@ -163,16 +163,19 @@ def delete_book(book_id):
     user = g.current_user
     is_active = user.active_book_id == book_id
 
+    # Prevent deletion of active book
+    if is_active:
+        return (
+            jsonify(
+                {
+                    "error": "Cannot delete the active book. Please set another book as active first."
+                }
+            ),
+            400,
+        )
+
     # Delete book (associated accounts and transactions will be deleted via cascade)
     db.session.delete(book)
-
-    # If this was the active book, set a new active book if one is available
-    if is_active:
-        new_active = Book.query.filter_by(user_id=g.current_user.id).first()
-        if new_active:
-            user.active_book_id = new_active.id
-        else:
-            user.active_book_id = None
 
     db.session.commit()
 
