@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Get the API URL from environment variable, fallback to relative path for development
-// Update to ensure the API path always includes the /api/v1 prefix in development
+// Ensure we don't have double prefixes with /api/v1/
 const apiBaseUrl = process.env.REACT_APP_API_URL || '/api/v1/';
 
 // Create an Axios instance
@@ -24,7 +24,29 @@ const fetchCsrfToken = async () => {
   
   try {
     // Use direct axios here (not axiosInstance) to avoid circular dependencies
-    const response = await axios.get(`${process.env.REACT_APP_API_URL || '/api/v1/'}csrf-token`, { 
+    // Always ensure we're using the proper API prefix
+    let csrfUrl;
+    
+    if (process.env.REACT_APP_API_URL) {
+      // For production with env variable
+      const baseUrl = process.env.REACT_APP_API_URL.endsWith('/') 
+        ? process.env.REACT_APP_API_URL 
+        : `${process.env.REACT_APP_API_URL}/`;
+      
+      // Make sure we have /api/v1/ in the URL
+      if (baseUrl.includes('/api/v1/')) {
+        csrfUrl = `${baseUrl}csrf-token`;
+      } else {
+        csrfUrl = `${baseUrl}api/v1/csrf-token`;
+      }
+    } else {
+      // For development with relative path
+      csrfUrl = '/api/v1/csrf-token';
+    }
+    
+    console.log('Fetching CSRF token from URL:', csrfUrl);
+    
+    const response = await axios.get(csrfUrl, { 
       withCredentials: true,
       headers: {
         // Add Authorization header if token exists - we need this even for CSRF token fetching
@@ -70,7 +92,29 @@ const refreshAuthToken = async () => {
   
   isRefreshing = true;
   try {
-    const response = await axios.post(`${process.env.REACT_APP_API_URL || '/api/v1/'}auth/refresh`, {}, {
+    // Use same URL construction logic as fetchCsrfToken
+    let refreshUrl;
+    
+    if (process.env.REACT_APP_API_URL) {
+      // For production with env variable
+      const baseUrl = process.env.REACT_APP_API_URL.endsWith('/') 
+        ? process.env.REACT_APP_API_URL 
+        : `${process.env.REACT_APP_API_URL}/`;
+      
+      // Make sure we have /api/v1/ in the URL
+      if (baseUrl.includes('/api/v1/')) {
+        refreshUrl = `${baseUrl}auth/refresh`;
+      } else {
+        refreshUrl = `${baseUrl}api/v1/auth/refresh`;
+      }
+    } else {
+      // For development with relative path
+      refreshUrl = '/api/v1/auth/refresh';
+    }
+    
+    console.log('Refreshing token from URL:', refreshUrl);
+    
+    const response = await axios.post(refreshUrl, {}, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
