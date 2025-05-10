@@ -2,7 +2,6 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import BookManagement from './BookManagement';
-import axiosInstance from '../../api/axiosInstance';
 
 // Create different mock components for testing
 const MockBookManagementLoading = () => {

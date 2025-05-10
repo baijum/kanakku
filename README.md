@@ -97,6 +97,8 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
     *   `POST /api/v1/auth/login` - Log in a user. (Body: `{ "email": "...", "password": "..." }`)
     *   `POST /api/v1/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
     *   `GET /api/v1/auth/me` (Auth Required) - Get the current logged-in user's details.
+    *   `POST /api/v1/auth/refresh` (Auth Required) - Refresh an expiring JWT token.
+    *   `GET /api/v1/auth/test-token-expiration` - Test endpoint that simulates token expiration.
     *   `GET /api/v1/auth/google` - Initiate Google OAuth login flow.
     *   `GET /api/v1/auth/google/callback` - Callback for Google OAuth.
     *   `POST /api/v1/auth/reset-password-request` - Request a password reset.
@@ -193,6 +195,16 @@ Kanakku supports two authentication methods:
    - Create API tokens for programmatic access
    - Use tokens for automation and integrations
    - Each token can have specific permissions and expiration
+
+### JWT Token Handling
+
+Kanakku uses JWT (JSON Web Tokens) for authentication with the following features:
+
+- Access tokens expire after 24 hours by default
+- Automatic token refresh mechanism when tokens expire
+- The frontend automatically detects expired tokens and refreshes them
+- Endpoint: `POST /api/v1/auth/refresh` to manually refresh tokens
+- For testing: `GET /api/v1/auth/test-token-expiration` simulates token expiration
 
 ### Setting up Google OAuth
 

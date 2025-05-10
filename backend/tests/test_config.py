@@ -11,7 +11,7 @@ def test_base_config():
     assert config.SECRET_KEY == "dev-secret-key-change-in-production"
     assert config.SQLALCHEMY_TRACK_MODIFICATIONS is False
     assert config.JWT_SECRET_KEY == "jwt-secret-key-change-in-production"
-    assert config.JWT_ACCESS_TOKEN_EXPIRES == timedelta(hours=1)
+    assert config.JWT_ACCESS_TOKEN_EXPIRES == timedelta(hours=24)
     assert config.JWT_REFRESH_TOKEN_EXPIRES == timedelta(days=30)
     assert config.MAIL_SERVER == "smtp.gmail.com"
     assert config.MAIL_PORT == 587

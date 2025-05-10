@@ -1059,3 +1059,30 @@ def get_all_users():
         user_list.append(user_data)
 
     return jsonify({"users": user_list}), 200
+
+
+@auth.route("/api/v1/auth/refresh", methods=["POST"])
+@api_token_required
+def refresh_token():
+    """Refresh JWT token for the current user"""
+    # Get the user from JWT or API token auth
+    user = g.current_user
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Generate a new token with a fresh expiration time
+    try:
+        token = create_access_token(identity=str(user.id))
+        return jsonify({"token": token}), 200
+    except Exception as e:
+        current_app.logger.error(
+            f"Error during token refresh for user {user.id}: {str(e)}",
+            exc_info=True,
+        )
+        return jsonify({"error": "An error occurred during token refresh"}), 500
+
+
+@auth.route("/api/v1/auth/test-token-expiration", methods=["GET"])
+def test_token_expiration():
+    """Test endpoint that simulates token expiration"""
+    return {"error": "Token has expired", "code": "token_expired"}, 401

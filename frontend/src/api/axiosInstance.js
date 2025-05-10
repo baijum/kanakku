@@ -12,6 +12,11 @@ const axiosInstance = axios.create({
 // Store the CSRF token
 let csrfToken = null;
 
+// Variable to track if a token refresh is in progress
+let isRefreshing = false;
+// Queue of requests to be retried after token refresh
+let refreshQueue = [];
+
 // Function to fetch a CSRF token
 const fetchCsrfToken = async () => {
   if (csrfToken) return csrfToken;
@@ -56,6 +61,43 @@ const fetchCsrfToken = async () => {
     console.error('Failed to fetch CSRF token:', error.response || error.message);
     return null;
   }
+};
+
+// Function to refresh the token
+const refreshAuthToken = async () => {
+  if (isRefreshing) return;
+  
+  isRefreshing = true;
+  try {
+    const response = await axios.post(`${apiBaseUrl}api/v1/auth/refresh`, {}, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      withCredentials: true
+    });
+    
+    if (response.data && response.data.token) {
+      // Store the new token
+      localStorage.setItem('token', response.data.token);
+      console.log('Token refreshed successfully');
+      return response.data.token;
+    }
+    return null;
+  } catch (error) {
+    console.error('Token refresh failed:', error.response || error.message);
+    return null;
+  } finally {
+    isRefreshing = false;
+  }
+};
+
+// Function to process the queue of requests after token refresh
+const processQueue = (token) => {
+  refreshQueue.forEach(({ config, resolve, reject }) => {
+    config.headers['Authorization'] = `Bearer ${token}`;
+    resolve(axios(config));
+  });
+  refreshQueue = [];
 };
 
 // Add a request interceptor to include the token and CSRF token
@@ -145,6 +187,55 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    // Handle expired JWT token
+    if (
+      error.response && 
+      error.response.status === 401 && 
+      error.response.data && 
+      error.response.data.code === 'token_expired' &&
+      error.config && 
+      !error.config.__isRetryRequest &&
+      localStorage.getItem('token')
+    ) {
+      console.log('Token expired, attempting to refresh...');
+      
+      // Create a new Promise to handle the retry after token refresh
+      return new Promise((resolve, reject) => {
+        if (!isRefreshing) {
+          refreshAuthToken().then(newToken => {
+            if (newToken) {
+              // Retry the original request with the new token
+              const retryConfig = { ...error.config };
+              retryConfig.headers['Authorization'] = `Bearer ${newToken}`;
+              retryConfig.__isRetryRequest = true;
+              
+              // Process any pending requests in the queue
+              processQueue(newToken);
+              
+              resolve(axios(retryConfig));
+            } else {
+              // If token refresh failed, reject all requests and log out
+              processQueue(null);
+              localStorage.removeItem('token');
+              window.dispatchEvent(new Event('storage')); 
+              
+              // Only redirect if not already on an auth page
+              const currentPath = window.location.pathname;
+              if (currentPath !== '/login' && !currentPath.includes('/google-auth-callback') && !currentPath.includes('/reset-password/')) {
+                window.location.href = '/login';
+              }
+              
+              reject(error);
+            }
+          });
+        } else {
+          // Add the request to the queue to be retried after token refresh
+          refreshQueue.push({ config: error.config, resolve, reject });
+        }
+      });
+    }
+
+    // Handle other 401 errors (not token expiration)
     if (error.response && error.response.status === 401) {
       console.log('Received 401 Unauthorized. Checking current route...');
       
@@ -173,5 +264,5 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export { fetchCsrfToken };
+export { fetchCsrfToken, refreshAuthToken };
 export default axiosInstance; 

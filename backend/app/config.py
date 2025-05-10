@@ -19,7 +19,7 @@ class Config:
         self.JWT_SECRET_KEY = (
             os.environ.get("JWT_SECRET_KEY") or "jwt-secret-key-change-in-production"
         )
-        self.JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+        self.JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
         self.JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
         # CSRF Settings

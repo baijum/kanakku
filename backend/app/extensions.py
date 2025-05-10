@@ -238,9 +238,16 @@ def invalid_token_callback(error):
 
 
 @jwt.expired_token_loader
-def expired_token_callback(_jwt_header, _jwt_data):
+def expired_token_callback(_jwt_header, jwt_data):
     """Handle expired JWT token"""
-    return {"error": "Token has expired"}, 401
+    # Log the token expiry event with user information
+    try:
+        user_id = jwt_data.get("sub") if jwt_data else "unknown"
+        current_app.logger.info(f"JWT token expired for user ID: {user_id}")
+    except Exception as e:
+        current_app.logger.error(f"Error logging token expiry: {str(e)}")
+
+    return {"error": "Token has expired", "code": "token_expired"}, 401
 
 
 @jwt.unauthorized_loader
