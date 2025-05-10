@@ -1,11 +1,12 @@
 import axios from 'axios';
 
 // Get the API URL from environment variable, fallback to relative path for development
-const apiBaseUrl = process.env.REACT_APP_API_URL || '/';
+// Update to ensure the API path always includes the /api/v1 prefix in development
+const apiBaseUrl = process.env.REACT_APP_API_URL || '/api/v1/';
 
 // Create an Axios instance
 const axiosInstance = axios.create({
-  baseURL: apiBaseUrl, // Will use REACT_APP_API_URL in production, relative path in development
+  baseURL: apiBaseUrl, // Will use REACT_APP_API_URL in production, API prefix in development
   withCredentials: true, // Send cookies for CSRF
 });
 
@@ -23,7 +24,7 @@ const fetchCsrfToken = async () => {
   
   try {
     // Use direct axios here (not axiosInstance) to avoid circular dependencies
-    const response = await axios.get(`${apiBaseUrl}api/v1/csrf-token`, { 
+    const response = await axios.get(`${process.env.REACT_APP_API_URL || '/api/v1/'}csrf-token`, { 
       withCredentials: true,
       headers: {
         // Add Authorization header if token exists - we need this even for CSRF token fetching
@@ -69,7 +70,7 @@ const refreshAuthToken = async () => {
   
   isRefreshing = true;
   try {
-    const response = await axios.post(`${apiBaseUrl}api/v1/auth/refresh`, {}, {
+    const response = await axios.post(`${process.env.REACT_APP_API_URL || '/api/v1/'}auth/refresh`, {}, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
@@ -103,6 +104,9 @@ const processQueue = (token) => {
 // Add a request interceptor to include the token and CSRF token
 axiosInstance.interceptors.request.use(
   async (config) => {
+    // Enhanced logging to debug request URLs
+    console.log(`API Request: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+    
     // Add JWT token if it exists
     const token = localStorage.getItem('token');
     if (token) {
@@ -136,6 +140,7 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     // Do something with request error
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -144,12 +149,20 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => {
     // Any status code that lie within the range of 2xx cause this function to trigger
-    // Do nothing, just return the response
+    console.log(`API Response: ${response.status} ${response.config.method.toUpperCase()} ${response.config.url}`);
     return response;
   },
   async (error) => {
     // Any status codes that falls outside the range of 2xx cause this function to trigger
-    console.error('API Error:', error.response || error.message); // Log the error
+    // Enhanced error logging with more details
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method?.toUpperCase(),
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      error: error.response?.data?.error || error.message,
+      fullError: error.response?.data || error.message
+    });
 
     // If we get a 400 with CSRF error, try to refresh the token and retry
     if (

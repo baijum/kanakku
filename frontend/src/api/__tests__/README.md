@@ -12,6 +12,20 @@ This module provides critical functionality for:
 - CSRF token handling
 - Error intercepting and processing
 - Redirect to login page when authentication fails
+- Enhanced API URL handling and logging
+
+### Recent Changes
+
+The following updates were recently made to the axiosInstance module:
+
+1. **API URL Configuration**
+   - Changed the fallback baseURL from `'/'` to `'/api/v1/'` in development mode
+   - This ensures all API requests include the correct API prefix even when `REACT_APP_API_URL` is not set
+   - Fixed 404 errors that were occurring due to requests going to the root path
+
+2. **Enhanced Logging**
+   - Added detailed request and response logging
+   - Improved error logging with context for troubleshooting
 
 ### What's being tested
 
@@ -24,6 +38,10 @@ The tests focus on the exported functions that provide the key functionality:
 2. **Behavior Verification**
    - Testing the expected behavior rather than implementation details
    - Focusing on input/output behavior rather than internal workings
+
+3. **API URL Configuration**
+   - Testing that the correct API base URL is used
+   - Verifying fallback to `/api/v1/` when environment variables are not set
 
 ### Running the tests
 
@@ -47,6 +65,7 @@ The testing approach uses:
 - **Clean mocks**: Resetting mocks between tests to avoid test pollution
 - **Proper mock implementations**: Implementing mocks that behave like the real thing
 - **Focus on behavior**: Testing what the functions do, not how they do it
+- **Environment variable testing**: Testing behavior with and without environment variables
 
 #### Mocking approach
 
