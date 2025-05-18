@@ -22,6 +22,7 @@ requests==2.31.0
 authlib==1.2.1
 flask-dance==7.0.0
 psycopg2-binary==2.9.9
+cryptography==41.0.7
 # Swagger related
 flask-swagger-ui==4.11.1
 PyYAML==6.0.1

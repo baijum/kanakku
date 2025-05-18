@@ -75,6 +75,9 @@ class Config:
         self.SESSION_COOKIE_SAMESITE = "Lax"
         # Allow session cookies from different domains (for OAuth flows)
         self.SESSION_COOKIE_DOMAIN = os.environ.get("SESSION_COOKIE_DOMAIN")
+        
+        # Encryption settings
+        self.ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
 
 
 class DevelopmentConfig(Config):

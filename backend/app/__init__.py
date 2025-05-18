@@ -21,6 +21,7 @@ from .preamble import preamble as preamble_bp
 from .mappings import mappings_bp
 from .errors import errors as errors_bp
 from .swagger import swagger as swagger_bp
+from .settings import settings as settings_bp
 
 
 def setup_logging(app):
@@ -203,6 +204,7 @@ def create_app(config_name="default"):
         app.register_blueprint(mappings_bp)
         app.register_blueprint(errors_bp)
         app.register_blueprint(swagger_bp)
+        app.register_blueprint(settings_bp)
 
     # Rate limiting error handler
     @app.errorhandler(429)

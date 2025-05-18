@@ -10,6 +10,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import UserManagement from './UserManagement';
+import GlobalSettings from './GlobalSettings';
 import axiosInstance from '../../api/axiosInstance';
 
 const AdminPanel = () => {
@@ -84,12 +85,17 @@ const AdminPanel = () => {
             scrollButtons="auto"
           >
             <Tab label="User Management" />
+            <Tab label="Global Settings" />
             {/* Add more admin tabs here as needed */}
           </Tabs>
         </Box>
         
         {tabValue === 0 && (
           <UserManagement />
+        )}
+        
+        {tabValue === 1 && (
+          <GlobalSettings />
         )}
         
         {/* Add more tab panels here as needed */}

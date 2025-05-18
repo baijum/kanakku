@@ -519,3 +519,38 @@ class ExpenseAccountMapping(db.Model):
 
     def __repr__(self):
         return f"<ExpenseAccountMapping {self.merchant_name} -> {self.ledger_account}>"
+
+
+class GlobalConfiguration(db.Model):
+    """
+    GlobalConfiguration model represents application-wide settings and configurations.
+    Used for storing sensitive information like API keys that are used across the application.
+    """
+    __tablename__ = 'global_configurations'
+
+    id = Column(Integer, primary_key=True)
+    key = Column(String(100), unique=True, nullable=False)
+    value = Column(Text, nullable=False)  # Will be encrypted for sensitive values
+    description = Column(String(255), nullable=True)
+    is_encrypted = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    def to_dict(self):
+        """Convert configuration to dictionary for API responses"""
+        return {
+            "id": self.id,
+            "key": self.key,
+            "value": self.value if not self.is_encrypted else "[ENCRYPTED]",
+            "description": self.description,
+            "is_encrypted": self.is_encrypted,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<GlobalConfiguration {self.key}>"

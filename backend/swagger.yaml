@@ -26,6 +26,8 @@ tags:
     description: Book management for organizing accounts and transactions
   - name: Mappings
     description: Account and merchant mappings for automated transaction processing
+  - name: Settings
+    description: Global configuration settings
 
 paths:
   /api/v1/health:
@@ -1551,6 +1553,225 @@ paths:
         500:
           description: Failed to export mappings
 
+  /api/v1/settings/global:
+    get:
+      tags:
+        - Settings
+      summary: Get all global configuration settings (Admin only)
+      description: Retrieves a list of all global configuration settings.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      responses:
+        200:
+          description: A list of all global configuration settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configurations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GlobalConfiguration'
+        403:
+          description: Admin privileges required
+    post:
+      tags:
+        - Settings
+      summary: Create a new global configuration setting (Admin only)
+      description: Creates a new global configuration setting.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - key
+                - value
+              properties:
+                key:
+                  type: string
+                  description: Unique identifier for the configuration
+                value:
+                  type: string
+                  description: The configuration value
+                description:
+                  type: string
+                  description: Optional description for the configuration
+                is_encrypted:
+                  type: boolean
+                  description: Whether the value should be encrypted
+                  default: true
+      responses:
+        201:
+          description: Configuration created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  configuration:
+                    $ref: '#/components/schemas/GlobalConfiguration'
+        400:
+          description: Missing required fields
+        403:
+          description: Admin privileges required
+        409:
+          description: Configuration key already exists
+
+  /api/v1/settings/global/{key}:
+    get:
+      tags:
+        - Settings
+      summary: Get a specific global configuration setting (Admin only)
+      description: Retrieves a specific global configuration setting by key.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The configuration key
+      responses:
+        200:
+          description: The configuration setting
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  configuration:
+                    $ref: '#/components/schemas/GlobalConfiguration'
+        403:
+          description: Admin privileges required
+        404:
+          description: Configuration not found
+    put:
+      tags:
+        - Settings
+      summary: Update a global configuration setting (Admin only)
+      description: Updates an existing global configuration setting.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The configuration key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - value
+              properties:
+                value:
+                  type: string
+                  description: The new configuration value
+                description:
+                  type: string
+                  description: Optional description for the configuration
+                is_encrypted:
+                  type: boolean
+                  description: Whether the value should be encrypted
+      responses:
+        200:
+          description: Configuration updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  configuration:
+                    $ref: '#/components/schemas/GlobalConfiguration'
+        400:
+          description: Missing required fields
+        403:
+          description: Admin privileges required
+        404:
+          description: Configuration not found
+    delete:
+      tags:
+        - Settings
+      summary: Delete a global configuration setting (Admin only)
+      description: Deletes a global configuration setting.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The configuration key
+      responses:
+        200:
+          description: Configuration deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        403:
+          description: Admin privileges required
+        404:
+          description: Configuration not found
+
+  /api/v1/settings/global/{key}/value:
+    get:
+      tags:
+        - Settings
+      summary: Get the decrypted value of a configuration setting (Admin only)
+      description: Retrieves the decrypted value of a configuration setting.
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The configuration key
+      responses:
+        200:
+          description: The decrypted value
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  value:
+                    type: string
+        403:
+          description: Admin privileges required
+        404:
+          description: Configuration not found
+        500:
+          description: Failed to decrypt value
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -1906,4 +2127,31 @@ components:
           description: Full ledger account path like "Expenses:Food:Restaurant"
         description:
           type: string
-          nullable: true 
+          nullable: true
+    
+    GlobalConfiguration:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the configuration
+        key:
+          type: string
+          description: Unique key for the configuration
+        value:
+          type: string
+          description: The configuration value (will show [ENCRYPTED] for encrypted values)
+        description:
+          type: string
+          description: Description of the configuration
+        is_encrypted:
+          type: boolean
+          description: Whether the value is encrypted
+        created_at:
+          type: string
+          format: date-time
+          description: When the configuration was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When the configuration was last updated 
