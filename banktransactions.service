@@ -1,0 +1,22 @@
+[Unit]
+Description=Bank Transaction Email Parser Service
+After=network.target
+
+[Service]
+User=banktransactions
+Group=banktransactions
+WorkingDirectory=/opt/kanakku/banktransactions
+Environment="PATH=/opt/kanakku/banktransactions/venv/bin"
+ExecStart=/opt/kanakku/banktransactions/venv/bin/python /opt/kanakku/banktransactions/main.py
+Restart=on-failure
+RestartSec=300s
+
+# Security enhancements
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateDevices=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target 

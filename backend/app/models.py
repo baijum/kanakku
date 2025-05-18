@@ -412,7 +412,7 @@ class EmailConfiguration(db.Model):
     user = relationship("User", backref="email_configuration", lazy=True)
 
     def to_dict(self):
-        """Convert email configuration to dictionary for API responses"""
+        """Convert configuration to dictionary for API responses"""
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -422,9 +422,100 @@ class EmailConfiguration(db.Model):
             "email_address": self.email_address,
             "polling_interval": self.polling_interval,
             "last_check_time": self.last_check_time.isoformat() if self.last_check_time else None,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            "last_processed_email_id": self.last_processed_email_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def __repr__(self):
         return f"<EmailConfiguration {self.email_address}>"
+
+
+class BankAccountMapping(db.Model):
+    """
+    BankAccountMapping model represents mappings between bank account identifiers
+    and ledger account names. Used for automated transaction processing from bank emails.
+    """
+    __tablename__ = 'bank_account_mappings'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
+    account_identifier = Column(String(100), nullable=False)  # Masked account number like XX1234
+    ledger_account = Column(String(255), nullable=False)  # Full ledger account path like "Assets:Bank:Axis"
+    description = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relationships
+    user = relationship("User", backref="bank_account_mappings", lazy=True)
+    book = relationship("Book", backref="bank_account_mappings", lazy=True)
+
+    __table_args__ = (
+        UniqueConstraint("book_id", "account_identifier", name="uq_bank_account_mapping_book_identifier"),
+    )
+
+    def to_dict(self):
+        """Convert mapping to dictionary for API responses"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "book_id": self.book_id,
+            "account_identifier": self.account_identifier,
+            "ledger_account": self.ledger_account,
+            "description": self.description,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<BankAccountMapping {self.account_identifier} -> {self.ledger_account}>"
+
+
+class ExpenseAccountMapping(db.Model):
+    """
+    ExpenseAccountMapping model represents mappings between merchant/payee names
+    and ledger expense accounts. Used for automated transaction categorization from bank emails.
+    """
+    __tablename__ = 'expense_account_mappings'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
+    merchant_name = Column(String(255), nullable=False)  # Merchant/payee name as it appears in bank emails
+    ledger_account = Column(String(255), nullable=False)  # Full ledger account path like "Expenses:Food:Restaurant"
+    description = Column(String(255), nullable=True)  # Additional description for the mapping
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relationships
+    user = relationship("User", backref="expense_account_mappings", lazy=True)
+    book = relationship("Book", backref="expense_account_mappings", lazy=True)
+
+    __table_args__ = (
+        UniqueConstraint("book_id", "merchant_name", name="uq_expense_account_mapping_book_merchant"),
+    )
+
+    def to_dict(self):
+        """Convert mapping to dictionary for API responses"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "book_id": self.book_id,
+            "merchant_name": self.merchant_name,
+            "ledger_account": self.ledger_account,
+            "description": self.description,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<ExpenseAccountMapping {self.merchant_name} -> {self.ledger_account}>"

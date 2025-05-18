@@ -8,8 +8,19 @@ import os
 from logging.handlers import RotatingFileHandler
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .extensions import db, login_manager, mail, jwt, limiter, setup_csrf
+from .extensions import db, login_manager, jwt, mail, limiter, setup_csrf, csrf
 from .config import config
+from .auth import auth as auth_bp
+from .transactions import transactions as transactions_bp
+from .accounts import accounts as accounts_bp
+from .books import books as books_bp
+from .reports import reports as reports_bp
+from .api import api as api_bp
+from .ledger import ledger as ledger_bp
+from .preamble import preamble as preamble_bp
+from .mappings import mappings_bp
+from .errors import errors as errors_bp
+from .swagger import swagger as swagger_bp
 
 
 def setup_logging(app):
@@ -181,46 +192,17 @@ def create_app(config_name="default"):
             app.logger.error(f"Error creating database: {str(e)}", exc_info=True)
 
         # Register blueprints
-        from .auth import auth as auth_blueprint
-
-        app.register_blueprint(auth_blueprint)
-
-        from .ledger import ledger as ledger_blueprint
-
-        app.register_blueprint(ledger_blueprint)
-
-        from .reports import reports as reports_blueprint
-
-        app.register_blueprint(reports_blueprint)
-
-        from .transactions import transactions as transactions_blueprint
-
-        app.register_blueprint(transactions_blueprint)
-
-        from .accounts import accounts as accounts_blueprint
-
-        app.register_blueprint(accounts_blueprint)
-
-        from .preamble import preamble as preamble_blueprint
-
-        app.register_blueprint(preamble_blueprint)
-
-        from .books import books as books_blueprint
-
-        app.register_blueprint(books_blueprint)
-
-        from .errors import errors as errors_blueprint
-
-        app.register_blueprint(errors_blueprint)
-
-        from .api import api as api_blueprint
-
-        app.register_blueprint(api_blueprint)
-
-        # Register Swagger UI blueprint
-        from .swagger import swagger as swagger_blueprint
-
-        app.register_blueprint(swagger_blueprint)
+        app.register_blueprint(auth_bp)
+        app.register_blueprint(transactions_bp)
+        app.register_blueprint(accounts_bp)
+        app.register_blueprint(books_bp)
+        app.register_blueprint(reports_bp)
+        app.register_blueprint(api_bp)
+        app.register_blueprint(ledger_bp)
+        app.register_blueprint(preamble_bp)
+        app.register_blueprint(mappings_bp)
+        app.register_blueprint(errors_bp)
+        app.register_blueprint(swagger_bp)
 
     # Rate limiting error handler
     @app.errorhandler(429)

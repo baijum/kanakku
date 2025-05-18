@@ -24,6 +24,8 @@ tags:
     description: Preamble management for ledger files
   - name: Books
     description: Book management for organizing accounts and transactions
+  - name: Mappings
+    description: Account and merchant mappings for automated transaction processing
 
 paths:
   /api/v1/health:
@@ -1235,6 +1237,319 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Book'
+  
+  # Mappings Endpoints
+  /api/v1/bank-account-mappings:
+    get:
+      tags:
+        - Mappings
+      summary: Get all bank account mappings
+      description: Returns all bank account mappings for the current user's active book
+      parameters:
+        - name: book_id
+          in: query
+          required: false
+          description: Specific book ID to fetch mappings for (defaults to active book)
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of bank account mappings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bank_account_mappings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BankAccountMapping'
+        400:
+          description: No active book selected
+        404:
+          description: User not found
+    post:
+      tags:
+        - Mappings
+      summary: Create a new bank account mapping
+      description: Create a mapping between a bank account identifier and a ledger account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankAccountMappingCreate'
+      responses:
+        201:
+          description: Bank account mapping created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccountMapping'
+        400:
+          description: Missing required fields or no active book
+        404:
+          description: User not found or book not found
+        500:
+          description: Failed to create mapping
+  
+  /api/v1/bank-account-mappings/{mappingId}:
+    put:
+      tags:
+        - Mappings
+      summary: Update a bank account mapping
+      description: Update an existing bank account mapping
+      parameters:
+        - name: mappingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankAccountMappingUpdate'
+      responses:
+        200:
+          description: Bank account mapping updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankAccountMapping'
+        400:
+          description: Missing required fields
+        404:
+          description: Mapping not found or unauthorized
+        500:
+          description: Failed to update mapping
+    delete:
+      tags:
+        - Mappings
+      summary: Delete a bank account mapping
+      description: Delete an existing bank account mapping
+      parameters:
+        - name: mappingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Bank account mapping deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Mapping deleted successfully
+        404:
+          description: Mapping not found or unauthorized
+        500:
+          description: Failed to delete mapping
+  
+  /api/v1/expense-account-mappings:
+    get:
+      tags:
+        - Mappings
+      summary: Get all expense account mappings
+      description: Returns all expense account mappings for the current user's active book
+      parameters:
+        - name: book_id
+          in: query
+          required: false
+          description: Specific book ID to fetch mappings for (defaults to active book)
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of expense account mappings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expense_account_mappings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExpenseAccountMapping'
+        400:
+          description: No active book selected
+        404:
+          description: User not found
+    post:
+      tags:
+        - Mappings
+      summary: Create a new expense account mapping
+      description: Create a mapping between a merchant name and a ledger expense account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseAccountMappingCreate'
+      responses:
+        201:
+          description: Expense account mapping created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseAccountMapping'
+        400:
+          description: Missing required fields or no active book
+        404:
+          description: User not found or book not found
+        500:
+          description: Failed to create mapping
+  
+  /api/v1/expense-account-mappings/{mappingId}:
+    put:
+      tags:
+        - Mappings
+      summary: Update an expense account mapping
+      description: Update an existing expense account mapping
+      parameters:
+        - name: mappingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseAccountMappingUpdate'
+      responses:
+        200:
+          description: Expense account mapping updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseAccountMapping'
+        400:
+          description: Missing required fields
+        404:
+          description: Mapping not found or unauthorized
+        500:
+          description: Failed to update mapping
+    delete:
+      tags:
+        - Mappings
+      summary: Delete an expense account mapping
+      description: Delete an existing expense account mapping
+      parameters:
+        - name: mappingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Expense account mapping deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Mapping deleted successfully
+        404:
+          description: Mapping not found or unauthorized
+        500:
+          description: Failed to delete mapping
+  
+  /api/v1/mappings/import:
+    post:
+      tags:
+        - Mappings
+      summary: Import mappings from TOML-like structure
+      description: Bulk import bank account and expense account mappings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: integer
+                  description: Book ID to import mappings for (defaults to active book)
+                bank-account-map:
+                  type: object
+                  description: Map of account identifiers to ledger accounts
+                  additionalProperties:
+                    type: string
+                expense-account-map:
+                  type: object
+                  description: Map of merchant names to ledger accounts and descriptions
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: string
+                    minItems: 1
+                    maxItems: 2
+      responses:
+        200:
+          description: Mappings imported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Mappings imported successfully
+        400:
+          description: Missing required fields or no active book
+        404:
+          description: User not found or book not found
+        500:
+          description: Failed to import mappings
+  
+  /api/v1/mappings/export:
+    get:
+      tags:
+        - Mappings
+      summary: Export mappings to TOML-like structure
+      description: Bulk export of bank account and expense account mappings
+      parameters:
+        - name: book_id
+          in: query
+          required: false
+          description: Specific book ID to export mappings for (defaults to active book)
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Mappings exported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bank-account-map:
+                    type: object
+                    description: Map of account identifiers to ledger accounts
+                    additionalProperties:
+                      type: string
+                  expense-account-map:
+                    type: object
+                    description: Map of merchant names to ledger accounts and descriptions
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+        400:
+          description: No active book selected
+        404:
+          description: User not found
+        500:
+          description: Failed to export mappings
 
 components:
   securitySchemes:
@@ -1477,4 +1792,118 @@ components:
           format: date-time
         expires_at:
           type: string
-          format: date-time 
+          format: date-time
+    
+    BankAccountMapping:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        book_id:
+          type: integer
+        account_identifier:
+          type: string
+          description: Masked account number like XX1234
+        ledger_account:
+          type: string
+          description: Full ledger account path like "Assets:Bank:Axis"
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    BankAccountMappingCreate:
+      type: object
+      required:
+        - account_identifier
+        - ledger_account
+      properties:
+        book_id:
+          type: integer
+          description: Book ID (defaults to active book)
+        account_identifier:
+          type: string
+          description: Masked account number like XX1234
+        ledger_account:
+          type: string
+          description: Full ledger account path like "Assets:Bank:Axis"
+        description:
+          type: string
+          nullable: true
+    
+    BankAccountMappingUpdate:
+      type: object
+      properties:
+        account_identifier:
+          type: string
+          description: Masked account number like XX1234
+        ledger_account:
+          type: string
+          description: Full ledger account path like "Assets:Bank:Axis"
+        description:
+          type: string
+          nullable: true
+    
+    ExpenseAccountMapping:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        book_id:
+          type: integer
+        merchant_name:
+          type: string
+          description: Merchant/payee name as it appears in bank emails
+        ledger_account:
+          type: string
+          description: Full ledger account path like "Expenses:Food:Restaurant"
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    ExpenseAccountMappingCreate:
+      type: object
+      required:
+        - merchant_name
+        - ledger_account
+      properties:
+        book_id:
+          type: integer
+          description: Book ID (defaults to active book)
+        merchant_name:
+          type: string
+          description: Merchant/payee name as it appears in bank emails
+        ledger_account:
+          type: string
+          description: Full ledger account path like "Expenses:Food:Restaurant"
+        description:
+          type: string
+          nullable: true
+    
+    ExpenseAccountMappingUpdate:
+      type: object
+      properties:
+        merchant_name:
+          type: string
+          description: Merchant/payee name as it appears in bank emails
+        ledger_account:
+          type: string
+          description: Full ledger account path like "Expenses:Food:Restaurant"
+        description:
+          type: string
+          nullable: true 
