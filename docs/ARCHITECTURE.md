@@ -482,3 +482,129 @@ flowchart TD
 5. **API Documentation**:
    - Enhanced Swagger documentation
    - Interactive API explorer 
+
+## Bank Transaction Processing System
+
+The bank transaction processing system is a separate module that automates the extraction and categorization of transactions from bank emails.
+
+### System Architecture
+
+```mermaid
+flowchart TD
+    EmailServer[Email Server] --> |IMAP| EmailFetcher[Email Fetcher]
+    EmailFetcher --> |Raw Emails| EmailParser[Email Parser]
+    EmailParser --> |Transaction Data| TransactionProcessor[Transaction Processor]
+    TransactionProcessor --> |API Calls| Backend[Backend API]
+    
+    subgraph "Email Processing"
+        EmailFetcher
+        EmailParser
+        TransactionProcessor
+    end
+    
+    subgraph "Configuration"
+        Config[config.toml]
+        EnvVars[Environment Variables]
+    end
+    
+    Config --> EmailParser
+    Config --> TransactionProcessor
+    EnvVars --> EmailFetcher
+    
+    classDef email fill:#61dafb,stroke:#333,stroke-width:2px;
+    classDef processor fill:#4a4a4a,stroke:#333,stroke-width:2px,color:white;
+    classDef config fill:#f5b042,stroke:#333,stroke-width:2px;
+    classDef backend fill:#9c9c9c,stroke:#333,stroke-width:2px;
+    
+    class EmailServer,EmailFetcher,EmailParser email;
+    class TransactionProcessor processor;
+    class Config,EnvVars config;
+    class Backend backend;
+```
+
+### Components
+
+1. **Email Fetcher** (`banktransactions/imap_client.py`):
+   - Connects to email servers via IMAP
+   - Fetches new transaction emails
+   - Handles email deduplication
+   - Manages email server connections
+
+2. **Email Parser** (`banktransactions/email_parser.py`):
+   - Extracts transaction details from email bodies
+   - Handles different bank email formats
+   - Parses transaction amounts, dates, and descriptions
+   - Extracts masked account numbers
+
+3. **Transaction Processor** (`banktransactions/main.py`):
+   - Processes extracted transaction data
+   - Maps transactions to expense categories
+   - Maps bank accounts to ledger accounts
+   - Submits transactions to the backend API
+
+4. **Configuration** (`banktransactions/config.toml`):
+   - Bank account mapping
+   - Expense category mapping
+   - Transaction descriptions
+   - Environment variables for credentials
+
+### Data Flow
+
+1. **Email Fetching**:
+   - System connects to email server using IMAP
+   - Fetches new transaction emails
+   - Checks for duplicates using processed IDs
+
+2. **Transaction Extraction**:
+   - Parses email body for transaction details
+   - Extracts amount, date, description
+   - Identifies bank account from masked number
+
+3. **Transaction Processing**:
+   - Maps bank account to ledger account
+   - Categorizes transaction based on merchant
+   - Generates transaction description
+   - Creates transaction data structure
+
+4. **API Integration**:
+   - Submits transaction to backend API
+   - Handles API errors and retries
+   - Updates processed email IDs
+
+### Configuration
+
+The system uses two types of configuration:
+
+1. **Environment Variables**:
+   ```
+   GMAIL_USERNAME=your-email@gmail.com
+   GMAIL_APP_PASSWORD=your-app-password
+   BANK_EMAILS=alerts@axisbank.com,alerts@icicibank.com
+   ```
+
+2. **TOML Configuration** (`config.toml`):
+   ```toml
+   [bank-account-map]
+   XX1648 = "Assets:Bank:Axis"
+   XX0907 = "Liabilities:CC:Axis"
+
+   [expense-account-map]
+   "MERCHANT_NAME" = ["Expenses:Category:Subcategory", "Description"]
+   ```
+
+### Error Handling
+
+The system includes robust error handling for:
+- Email server connection issues
+- Email parsing errors
+- Transaction mapping failures
+- API communication errors
+- Configuration problems
+
+### Integration with Main Application
+
+The bank transaction processing system integrates with the main application through:
+- REST API endpoints for transaction submission
+- Shared configuration for account mapping
+- Common transaction data model
+- Unified error handling 

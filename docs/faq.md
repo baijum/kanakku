@@ -106,4 +106,75 @@ You can export your transactions from the "View Transactions" page. We recommend
 Kanakku is designed to handle many years of transactions efficiently.
 
 ### Can I delete all my data and start over?
-There's no built-in "reset" feature. You would need to delete transactions and accounts individually or ask your administrator for assistance. 
+There's no built-in "reset" feature. You would need to delete transactions and accounts individually or ask your administrator for assistance.
+
+## Bank Transaction Processing
+
+### How does the bank transaction processing work?
+Kanakku automatically fetches transaction emails from your bank, extracts the transaction details, and imports them into your accounts. The system supports multiple Indian banks and handles different email formats.
+
+### Which banks are supported?
+Kanakku currently supports major Indian banks including:
+- ICICI Bank
+- HDFC Bank
+- State Bank of India (SBI)
+- Axis Bank
+- And more...
+
+### Do I need a special email account?
+Yes, you'll need a Gmail account with App Password enabled. This is used to securely fetch your bank transaction emails.
+
+### How do I set up email processing?
+1. Create a Gmail account for bank emails
+2. Enable App Password in your Google Account
+3. Configure the email settings in your `.env` file
+4. Set up account mappings in `config.toml`
+
+### How are transactions categorized?
+Transactions are automatically categorized based on merchant names using the mappings in your `config.toml` file. You can customize these mappings to match your preferred categories.
+
+### What if a transaction is categorized incorrectly?
+You can:
+1. Update the merchant mapping in `config.toml`
+2. Manually recategorize the transaction in the Transactions view
+3. Add new merchant mappings for future transactions
+
+### How do I map my bank accounts?
+Edit the `[bank-account-map]` section in `config.toml` to map your bank account numbers to ledger accounts. For example:
+```toml
+[bank-account-map]
+XX1648 = "Assets:Bank:Axis"
+XX0907 = "Liabilities:CC:Axis"
+```
+
+### Are my bank credentials secure?
+Yes. The system only uses Gmail App Password for email access and never stores your actual bank credentials. All sensitive information is stored securely in environment variables.
+
+### What happens if the email processing fails?
+The system includes error handling and logging. You can:
+1. Check the logs for error messages
+2. Verify your email configuration
+3. Ensure your bank emails are being received
+4. Restart the transaction processor
+
+### Can I process transactions from multiple banks?
+Yes, you can configure multiple bank email addresses in your `.env` file:
+```
+BANK_EMAILS=alerts@axisbank.com,alerts@icicibank.com
+```
+
+### How often should I run the transaction processor?
+We recommend running it daily to keep your accounts up to date. You can set up a scheduled task to run it automatically.
+
+### What if I miss some transactions?
+The system includes deduplication to prevent double entries, but you should:
+1. Check your email filters and spam folders
+2. Verify the email configuration
+3. Run the processor again to catch any missed transactions
+
+### Can I customize transaction descriptions?
+Yes, you can add custom descriptions in the `[expense-account-map]` section of `config.toml`:
+```toml
+[expense-account-map]
+"MERCHANT_NAME" = ["Expenses:Category:Subcategory", "Custom Description"]
+``` 

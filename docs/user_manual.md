@@ -14,6 +14,7 @@ Welcome to Kanakku, your personal expense tracking system. Kanakku provides a us
 6. [Books](#books)
 7. [Profile Settings](#profile-settings)
 8. [Tips and Best Practices](#tips-and-best-practices)
+9. [Bank Transaction Processing](#bank-transaction-processing)
 
 ## Getting Started
 
@@ -262,4 +263,100 @@ While Kanakku stores your data securely, you may want to export your data period
 
 ### Getting Help
 
-If you encounter any issues not covered in this manual, reach out to your administrator or support team for assistance. 
+If you encounter any issues not covered in this manual, reach out to your administrator or support team for assistance.
+
+## Bank Transaction Processing
+
+Kanakku includes an automated bank transaction processing system that can automatically import transactions from your bank emails.
+
+### Setting Up Bank Email Processing
+
+1. **Configure Email Access**:
+   - Set up a Gmail account for receiving bank transaction emails
+   - Enable App Password in your Google Account settings
+   - Add the following to your `.env` file:
+     ```
+     GMAIL_USERNAME=your-email@gmail.com
+     GMAIL_APP_PASSWORD=your-app-password
+     BANK_EMAILS=alerts@axisbank.com,alerts@icicibank.com
+     ```
+
+2. **Configure Account Mapping**:
+   - Edit `config.toml` to map your bank accounts to ledger accounts:
+     ```toml
+     [bank-account-map]
+     XX1648 = "Assets:Bank:Axis"
+     XX0907 = "Liabilities:CC:Axis"
+     ```
+
+3. **Configure Expense Categories**:
+   - Add merchant-to-category mappings in `config.toml`:
+     ```toml
+     [expense-account-map]
+     "GROCERY STORE" = ["Expenses:Food:Groceries", "Monthly groceries"]
+     "RESTAURANT" = ["Expenses:Food:Dining", "Dinner at restaurant"]
+     ```
+
+### Running the Transaction Processor
+
+1. **Start the Processor**:
+   ```bash
+   cd banktransactions
+   python main.py
+   ```
+
+2. **Monitor Processing**:
+   - Check the logs for successful imports
+   - Review imported transactions in the Transactions view
+   - Verify account balances match your bank statements
+
+### Transaction Processing Features
+
+1. **Automatic Categorization**:
+   - Transactions are automatically categorized based on merchant names
+   - Categories are mapped to your expense accounts
+   - Custom descriptions can be added for better tracking
+
+2. **Account Mapping**:
+   - Bank accounts are mapped to your ledger accounts
+   - Supports multiple account types (Assets, Liabilities)
+   - Handles masked account numbers for security
+
+3. **Email Processing**:
+   - Supports multiple bank email formats
+   - Handles different transaction types
+   - Deduplicates transactions to prevent double entries
+
+### Troubleshooting Bank Transactions
+
+1. **Missing Transactions**:
+   - Verify email server connection
+   - Check email filters and spam folders
+   - Ensure bank emails are being received
+
+2. **Incorrect Categorization**:
+   - Review and update merchant mappings in `config.toml`
+   - Add new merchants to the expense mapping
+   - Adjust category assignments as needed
+
+3. **Account Mapping Issues**:
+   - Verify bank account numbers in the mapping
+   - Check ledger account names for typos
+   - Update mappings for new accounts
+
+### Best Practices
+
+1. **Regular Monitoring**:
+   - Check imported transactions daily
+   - Verify categorization accuracy
+   - Review account balances regularly
+
+2. **Configuration Maintenance**:
+   - Keep merchant mappings up to date
+   - Add new merchants as needed
+   - Review and update account mappings
+
+3. **Data Verification**:
+   - Compare imported transactions with bank statements
+   - Verify transaction amounts and dates
+   - Check category assignments 

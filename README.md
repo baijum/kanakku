@@ -17,11 +17,18 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - Rate limiting for API security
 - API token authentication support
 - Swagger/OpenAPI documentation
+- Automated bank transaction processing
+- Email-based transaction extraction
+- Automatic expense categorization
+- Account mapping for bank transactions
 
 ## Prerequisites
 
 - Python 3.12+
 - Node.js 18+
+- PostgreSQL database
+- Redis (for job queue)
+- Gmail account with App Password (for bank transaction processing)
 
 ## Project Structure
 
@@ -55,6 +62,13 @@ kanakku/
 │   │   └── ...
 │   ├── package.json
 │   └── ...
+├── banktransactions/  # Bank transaction processing
+│   ├── email_parser.py # Transaction extraction logic
+│   ├── imap_client.py # Email fetching and processing
+│   ├── api_client.py  # API integration
+│   ├── config.toml    # Account and expense mapping
+│   ├── main.py        # Main processing pipeline
+│   └── tests/         # Test suite
 ├── fixes/             # Documentation for major bug fixes
 │   └── transaction_update_with_postings_fix.md
 ├── docs/              # Project documentation
@@ -316,3 +330,54 @@ Fixed issue with updating transactions with multiple postings. See `fixes/transa
 
 ### Rate Limiting Implementation
 Added rate limiting for API security with configurable limits for different endpoints. See `docs/rate-limit-configuration.md` for configuration details.
+
+## Bank Transaction Processing
+
+Kanakku includes an automated bank transaction processing system that can:
+
+1. **Fetch Bank Emails**
+   - Automatically fetch transaction emails from multiple bank accounts
+   - Support for various Indian banks (ICICI, HDFC, SBI, Axis, etc.)
+   - Deduplication of processed emails
+
+2. **Extract Transaction Details**
+   - Parse transaction amounts, dates, and descriptions
+   - Handle different email formats from various banks
+   - Extract masked account numbers and merchant details
+
+3. **Automatic Categorization**
+   - Map transactions to expense categories
+   - Configurable merchant-to-category mapping
+   - Support for multiple expense accounts per merchant
+
+4. **Account Mapping**
+   - Map bank accounts to ledger accounts
+   - Support for multiple account types (Assets, Liabilities)
+   - Configurable account hierarchy
+
+### Setting up Bank Transaction Processing
+
+1. Configure Gmail credentials in `.env`:
+   ```
+   GMAIL_USERNAME=your-email@gmail.com
+   GMAIL_APP_PASSWORD=your-app-password
+   BANK_EMAILS=alerts@axisbank.com,alerts@icicibank.com
+   ```
+
+2. Configure account and expense mapping in `config.toml`:
+   ```toml
+   [bank-account-map]
+   XX1648 = "Assets:Bank:Axis"
+   XX0907 = "Liabilities:CC:Axis"
+
+   [expense-account-map]
+   "MERCHANT_NAME" = ["Expenses:Category:Subcategory", "Description"]
+   ```
+
+3. Run the transaction processor:
+   ```bash
+   cd banktransactions
+   python main.py
+   ```
+
+For more details, see the [banktransactions README](banktransactions/README.md).

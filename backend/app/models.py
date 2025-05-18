@@ -9,6 +9,7 @@ from sqlalchemy import (
     Date,
     Boolean,
     UniqueConstraint,
+    Text,
 )
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
@@ -380,3 +381,50 @@ class ApiToken(db.Model):
 
     def __repr__(self):
         return f"<ApiToken {self.name}>"
+
+
+class EmailConfiguration(db.Model):
+    """
+    EmailConfiguration model represents email account configuration for transaction import.
+    Each user can configure email settings to automatically import transactions from bank emails.
+    """
+    __tablename__ = 'user_email_configurations'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    is_enabled = Column(Boolean, default=False)
+    imap_server = Column(String(255), default='imap.gmail.com')
+    imap_port = Column(Integer, default=993)
+    email_address = Column(String(255), nullable=False)
+    app_password = Column(String(255), nullable=False)  # Will be encrypted
+    polling_interval = Column(String(50), default='hourly')  # hourly, daily, etc.
+    last_check_time = Column(DateTime, nullable=True)
+    sample_emails = Column(Text, nullable=True)  # JSON string of sample emails
+    last_processed_email_id = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    # Relationships
+    user = relationship("User", backref="email_configuration", lazy=True)
+
+    def to_dict(self):
+        """Convert email configuration to dictionary for API responses"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "is_enabled": self.is_enabled,
+            "imap_server": self.imap_server,
+            "imap_port": self.imap_port,
+            "email_address": self.email_address,
+            "polling_interval": self.polling_interval,
+            "last_check_time": self.last_check_time.isoformat() if self.last_check_time else None,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+    def __repr__(self):
+        return f"<EmailConfiguration {self.email_address}>"

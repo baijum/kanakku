@@ -1,0 +1,23 @@
+From: ICICI Bank <alerts@icicibank.com>
+To: customer@example.com
+Subject: Transaction Alert: Debit Card Transaction
+Date: Fri, 15 Apr 2023 14:32:15 +0530
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Dear Customer,
+
+We wish to inform you that your A/c no. XX4567 has been debited with INR 2,850.00 on 15-04-2023 at 14:30:05.
+
+Transaction Info: UPI/P2M/098765/ONLINE_MERCHANT=20
+
+Your available balance is INR 45,000.00.
+
+If you have not authorized this transaction, please call our customer care at 1800-XXX-XXXX immediately.
+
+Regards,
+ICICI Bank Customer Service
+
+--
+This is an automated email. Please do not reply to this message. 
