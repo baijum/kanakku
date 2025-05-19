@@ -388,16 +388,17 @@ class EmailConfiguration(db.Model):
     EmailConfiguration model represents email account configuration for transaction import.
     Each user can configure email settings to automatically import transactions from bank emails.
     """
-    __tablename__ = 'user_email_configurations'
+
+    __tablename__ = "user_email_configurations"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     is_enabled = Column(Boolean, default=False)
-    imap_server = Column(String(255), default='imap.gmail.com')
+    imap_server = Column(String(255), default="imap.gmail.com")
     imap_port = Column(Integer, default=993)
     email_address = Column(String(255), nullable=False)
     app_password = Column(String(255), nullable=False)  # Will be encrypted
-    polling_interval = Column(String(50), default='hourly')  # hourly, daily, etc.
+    polling_interval = Column(String(50), default="hourly")  # hourly, daily, etc.
     last_check_time = Column(DateTime, nullable=True)
     sample_emails = Column(Text, nullable=True)  # JSON string of sample emails
     last_processed_email_id = Column(String(255), nullable=True)
@@ -421,7 +422,9 @@ class EmailConfiguration(db.Model):
             "imap_port": self.imap_port,
             "email_address": self.email_address,
             "polling_interval": self.polling_interval,
-            "last_check_time": self.last_check_time.isoformat() if self.last_check_time else None,
+            "last_check_time": (
+                self.last_check_time.isoformat() if self.last_check_time else None
+            ),
             "last_processed_email_id": self.last_processed_email_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
@@ -436,13 +439,18 @@ class BankAccountMapping(db.Model):
     BankAccountMapping model represents mappings between bank account identifiers
     and ledger account names. Used for automated transaction processing from bank emails.
     """
-    __tablename__ = 'bank_account_mappings'
+
+    __tablename__ = "bank_account_mappings"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
-    account_identifier = Column(String(100), nullable=False)  # Masked account number like XX1234
-    ledger_account = Column(String(255), nullable=False)  # Full ledger account path like "Assets:Bank:Axis"
+    account_identifier = Column(
+        String(100), nullable=False
+    )  # Masked account number like XX1234
+    ledger_account = Column(
+        String(255), nullable=False
+    )  # Full ledger account path like "Assets:Bank:Axis"
     description = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
@@ -456,7 +464,11 @@ class BankAccountMapping(db.Model):
     book = relationship("Book", backref="bank_account_mappings", lazy=True)
 
     __table_args__ = (
-        UniqueConstraint("book_id", "account_identifier", name="uq_bank_account_mapping_book_identifier"),
+        UniqueConstraint(
+            "book_id",
+            "account_identifier",
+            name="uq_bank_account_mapping_book_identifier",
+        ),
     )
 
     def to_dict(self):
@@ -473,7 +485,9 @@ class BankAccountMapping(db.Model):
         }
 
     def __repr__(self):
-        return f"<BankAccountMapping {self.account_identifier} -> {self.ledger_account}>"
+        return (
+            f"<BankAccountMapping {self.account_identifier} -> {self.ledger_account}>"
+        )
 
 
 class ExpenseAccountMapping(db.Model):
@@ -481,14 +495,21 @@ class ExpenseAccountMapping(db.Model):
     ExpenseAccountMapping model represents mappings between merchant/payee names
     and ledger expense accounts. Used for automated transaction categorization from bank emails.
     """
-    __tablename__ = 'expense_account_mappings'
+
+    __tablename__ = "expense_account_mappings"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     book_id = Column(Integer, ForeignKey("book.id"), nullable=False)
-    merchant_name = Column(String(255), nullable=False)  # Merchant/payee name as it appears in bank emails
-    ledger_account = Column(String(255), nullable=False)  # Full ledger account path like "Expenses:Food:Restaurant"
-    description = Column(String(255), nullable=True)  # Additional description for the mapping
+    merchant_name = Column(
+        String(255), nullable=False
+    )  # Merchant/payee name as it appears in bank emails
+    ledger_account = Column(
+        String(255), nullable=False
+    )  # Full ledger account path like "Expenses:Food:Restaurant"
+    description = Column(
+        String(255), nullable=True
+    )  # Additional description for the mapping
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime,
@@ -501,7 +522,9 @@ class ExpenseAccountMapping(db.Model):
     book = relationship("Book", backref="expense_account_mappings", lazy=True)
 
     __table_args__ = (
-        UniqueConstraint("book_id", "merchant_name", name="uq_expense_account_mapping_book_merchant"),
+        UniqueConstraint(
+            "book_id", "merchant_name", name="uq_expense_account_mapping_book_merchant"
+        ),
     )
 
     def to_dict(self):
@@ -526,7 +549,8 @@ class GlobalConfiguration(db.Model):
     GlobalConfiguration model represents application-wide settings and configurations.
     Used for storing sensitive information like API keys that are used across the application.
     """
-    __tablename__ = 'global_configurations'
+
+    __tablename__ = "global_configurations"
 
     id = Column(Integer, primary_key=True)
     key = Column(String(100), unique=True, nullable=False)

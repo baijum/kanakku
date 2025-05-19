@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from .models import User, Book, BankAccountMapping, ExpenseAccountMapping
+from flask_jwt_extended import jwt_required
+from .models import Book, BankAccountMapping, ExpenseAccountMapping
 from .extensions import db
 from .auth import get_current_user
 from sqlalchemy.exc import SQLAlchemyError
@@ -15,18 +15,19 @@ def get_bank_account_mappings():
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-    
+
     book_id = request.args.get("book_id", current_user.active_book_id)
     if not book_id:
         return jsonify({"error": "No active book selected"}), 400
-        
+
     mappings = BankAccountMapping.query.filter_by(
         user_id=current_user.id, book_id=book_id
     ).all()
-    
-    return jsonify({
-        "bank_account_mappings": [mapping.to_dict() for mapping in mappings]
-    }), 200
+
+    return (
+        jsonify({"bank_account_mappings": [mapping.to_dict() for mapping in mappings]}),
+        200,
+    )
 
 
 @mappings_bp.route("/api/v1/bank-account-mappings", methods=["POST"])
@@ -36,20 +37,23 @@ def create_bank_account_mapping():
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-        
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
-        
+
     book_id = data.get("book_id", current_user.active_book_id)
     if not book_id:
-        return jsonify({"error": "No book ID provided and no active book selected"}), 400
-        
+        return (
+            jsonify({"error": "No book ID provided and no active book selected"}),
+            400,
+        )
+
     # Check if book exists and belongs to user
     book = Book.query.filter_by(id=book_id, user_id=current_user.id).first()
     if not book:
         return jsonify({"error": "Book not found or unauthorized"}), 404
-        
+
     # Create new mapping
     try:
         new_mapping = BankAccountMapping(
@@ -57,9 +61,9 @@ def create_bank_account_mapping():
             book_id=book_id,
             account_identifier=data.get("account_identifier"),
             ledger_account=data.get("ledger_account"),
-            description=data.get("description")
+            description=data.get("description"),
         )
-        
+
         db.session.add(new_mapping)
         db.session.commit()
         return jsonify(new_mapping.to_dict()), 201
@@ -76,18 +80,18 @@ def update_bank_account_mapping(mapping_id):
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-        
+
     # Find mapping and check ownership
     mapping = BankAccountMapping.query.filter_by(
         id=mapping_id, user_id=current_user.id
     ).first()
     if not mapping:
         return jsonify({"error": "Mapping not found or unauthorized"}), 404
-        
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
-        
+
     try:
         # Update fields if provided
         if "account_identifier" in data:
@@ -96,7 +100,7 @@ def update_bank_account_mapping(mapping_id):
             mapping.ledger_account = data["ledger_account"]
         if "description" in data:
             mapping.description = data["description"]
-            
+
         db.session.commit()
         return jsonify(mapping.to_dict()), 200
     except SQLAlchemyError as e:
@@ -112,13 +116,13 @@ def delete_bank_account_mapping(mapping_id):
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-        
+
     mapping = BankAccountMapping.query.filter_by(
         id=mapping_id, user_id=current_user.id
     ).first()
     if not mapping:
         return jsonify({"error": "Mapping not found or unauthorized"}), 404
-        
+
     try:
         db.session.delete(mapping)
         db.session.commit()
@@ -136,18 +140,21 @@ def get_expense_account_mappings():
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-    
+
     book_id = request.args.get("book_id", current_user.active_book_id)
     if not book_id:
         return jsonify({"error": "No active book selected"}), 400
-        
+
     mappings = ExpenseAccountMapping.query.filter_by(
         user_id=current_user.id, book_id=book_id
     ).all()
-    
-    return jsonify({
-        "expense_account_mappings": [mapping.to_dict() for mapping in mappings]
-    }), 200
+
+    return (
+        jsonify(
+            {"expense_account_mappings": [mapping.to_dict() for mapping in mappings]}
+        ),
+        200,
+    )
 
 
 @mappings_bp.route("/api/v1/expense-account-mappings", methods=["POST"])
@@ -157,20 +164,23 @@ def create_expense_account_mapping():
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-        
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
-        
+
     book_id = data.get("book_id", current_user.active_book_id)
     if not book_id:
-        return jsonify({"error": "No book ID provided and no active book selected"}), 400
-        
+        return (
+            jsonify({"error": "No book ID provided and no active book selected"}),
+            400,
+        )
+
     # Check if book exists and belongs to user
     book = Book.query.filter_by(id=book_id, user_id=current_user.id).first()
     if not book:
         return jsonify({"error": "Book not found or unauthorized"}), 404
-        
+
     # Create new mapping
     try:
         new_mapping = ExpenseAccountMapping(
@@ -178,9 +188,9 @@ def create_expense_account_mapping():
             book_id=book_id,
             merchant_name=data.get("merchant_name"),
             ledger_account=data.get("ledger_account"),
-            description=data.get("description")
+            description=data.get("description"),
         )
-        
+
         db.session.add(new_mapping)
         db.session.commit()
         return jsonify(new_mapping.to_dict()), 201
@@ -197,18 +207,18 @@ def update_expense_account_mapping(mapping_id):
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-        
+
     # Find mapping and check ownership
     mapping = ExpenseAccountMapping.query.filter_by(
         id=mapping_id, user_id=current_user.id
     ).first()
     if not mapping:
         return jsonify({"error": "Mapping not found or unauthorized"}), 404
-        
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
-        
+
     try:
         # Update fields if provided
         if "merchant_name" in data:
@@ -217,7 +227,7 @@ def update_expense_account_mapping(mapping_id):
             mapping.ledger_account = data["ledger_account"]
         if "description" in data:
             mapping.description = data["description"]
-            
+
         db.session.commit()
         return jsonify(mapping.to_dict()), 200
     except SQLAlchemyError as e:
@@ -226,20 +236,22 @@ def update_expense_account_mapping(mapping_id):
         return jsonify({"error": "Failed to update mapping"}), 500
 
 
-@mappings_bp.route("/api/v1/expense-account-mappings/<int:mapping_id>", methods=["DELETE"])
+@mappings_bp.route(
+    "/api/v1/expense-account-mappings/<int:mapping_id>", methods=["DELETE"]
+)
 @jwt_required()
 def delete_expense_account_mapping(mapping_id):
     """Delete an expense account mapping"""
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-        
+
     mapping = ExpenseAccountMapping.query.filter_by(
         id=mapping_id, user_id=current_user.id
     ).first()
     if not mapping:
         return jsonify({"error": "Mapping not found or unauthorized"}), 404
-        
+
     try:
         db.session.delete(mapping)
         db.session.commit()
@@ -252,6 +264,7 @@ def delete_expense_account_mapping(mapping_id):
 
 # Additional endpoints for bulk operations
 
+
 @mappings_bp.route("/api/v1/mappings/import", methods=["POST"])
 @jwt_required()
 def import_mappings():
@@ -259,33 +272,34 @@ def import_mappings():
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-        
+
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400
-        
+
     book_id = data.get("book_id", current_user.active_book_id)
     if not book_id:
-        return jsonify({"error": "No book ID provided and no active book selected"}), 400
-        
+        return (
+            jsonify({"error": "No book ID provided and no active book selected"}),
+            400,
+        )
+
     # Check if book exists and belongs to user
     book = Book.query.filter_by(id=book_id, user_id=current_user.id).first()
     if not book:
         return jsonify({"error": "Book not found or unauthorized"}), 404
-        
+
     bank_account_map = data.get("bank-account-map", {})
     expense_account_map = data.get("expense-account-map", {})
-    
+
     try:
         # Import bank account mappings
         for account_id, ledger_account in bank_account_map.items():
             # Check if mapping already exists
             existing = BankAccountMapping.query.filter_by(
-                user_id=current_user.id,
-                book_id=book_id,
-                account_identifier=account_id
+                user_id=current_user.id, book_id=book_id, account_identifier=account_id
             ).first()
-            
+
             if existing:
                 existing.ledger_account = ledger_account
             else:
@@ -293,24 +307,22 @@ def import_mappings():
                     user_id=current_user.id,
                     book_id=book_id,
                     account_identifier=account_id,
-                    ledger_account=ledger_account
+                    ledger_account=ledger_account,
                 )
                 db.session.add(new_mapping)
-                
+
         # Import expense account mappings
         for merchant, values in expense_account_map.items():
             # In TOML format, values is a list with [ledger_account, description]
             if isinstance(values, list) and len(values) >= 1:
                 ledger_account = values[0]
                 description = values[1] if len(values) > 1 else None
-                
+
                 # Check if mapping already exists
                 existing = ExpenseAccountMapping.query.filter_by(
-                    user_id=current_user.id,
-                    book_id=book_id,
-                    merchant_name=merchant
+                    user_id=current_user.id, book_id=book_id, merchant_name=merchant
                 ).first()
-                
+
                 if existing:
                     existing.ledger_account = ledger_account
                     existing.description = description
@@ -320,10 +332,10 @@ def import_mappings():
                         book_id=book_id,
                         merchant_name=merchant,
                         ledger_account=ledger_account,
-                        description=description
+                        description=description,
                     )
                     db.session.add(new_mapping)
-        
+
         db.session.commit()
         return jsonify({"message": "Mappings imported successfully"}), 200
     except SQLAlchemyError as e:
@@ -339,38 +351,43 @@ def export_mappings():
     current_user = get_current_user()
     if not current_user:
         return jsonify({"error": "User not found"}), 404
-    
+
     book_id = request.args.get("book_id", current_user.active_book_id)
     if not book_id:
         return jsonify({"error": "No active book selected"}), 400
-        
+
     try:
         # Get all bank account mappings for this book
         bank_mappings = BankAccountMapping.query.filter_by(
             user_id=current_user.id, book_id=book_id
         ).all()
-        
+
         # Get all expense account mappings for this book
         expense_mappings = ExpenseAccountMapping.query.filter_by(
             user_id=current_user.id, book_id=book_id
         ).all()
-        
+
         # Construct the response in TOML-like format
         bank_account_map = {}
         for mapping in bank_mappings:
             bank_account_map[mapping.account_identifier] = mapping.ledger_account
-            
+
         expense_account_map = {}
         for mapping in expense_mappings:
             expense_account_map[mapping.merchant_name] = [
                 mapping.ledger_account,
-                mapping.description or ""
+                mapping.description or "",
             ]
-            
-        return jsonify({
-            "bank-account-map": bank_account_map,
-            "expense-account-map": expense_account_map
-        }), 200
+
+        return (
+            jsonify(
+                {
+                    "bank-account-map": bank_account_map,
+                    "expense-account-map": expense_account_map,
+                }
+            ),
+            200,
+        )
     except SQLAlchemyError as e:
         current_app.logger.error(f"Error exporting mappings: {str(e)}")
-        return jsonify({"error": "Failed to export mappings"}), 500 
+        return jsonify({"error": "Failed to export mappings"}), 500

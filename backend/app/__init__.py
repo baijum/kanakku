@@ -8,7 +8,7 @@ import os
 from logging.handlers import RotatingFileHandler
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .extensions import db, login_manager, jwt, mail, limiter, setup_csrf, csrf
+from .extensions import db, login_manager, jwt, mail, limiter, setup_csrf
 from .config import config
 from .auth import auth as auth_bp
 from .transactions import transactions as transactions_bp
