@@ -104,6 +104,12 @@ def register():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
+    # Honeypot check: if 'username' field is filled, likely a bot
+    if data.get("username"):
+        current_app.logger.warning(f"Honeypot triggered on registration: username={data.get('username')}")
+        # Optionally, you can return a generic error or silently drop
+        return jsonify({"error": "Registration failed. Please try again."}), 400
+
     # Check if user already exists
     if User.query.filter_by(email=data["email"]).first():
         return jsonify({"error": "Email already exists"}), 400

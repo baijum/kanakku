@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, TextField, Button, Typography, CircularProgress, Alert, Link, Divider } from '@mui/material';
 import axiosInstance from '../../api/axiosInstance';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
@@ -11,6 +11,7 @@ function Register({ setIsLoggedIn }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const usernameRef = useRef();
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
@@ -31,6 +32,9 @@ function Register({ setIsLoggedIn }) {
       return;
     }
 
+    // Get honeypot value
+    const honeypot = usernameRef.current ? usernameRef.current.value : '';
+
     try {
       const response = await axiosInstance({
         method: 'post',
@@ -38,6 +42,7 @@ function Register({ setIsLoggedIn }) {
         data: {
           email,
           password,
+          username: honeypot, // honeypot field
         },
         headers: {
           'Content-Type': 'application/json',
@@ -122,6 +127,23 @@ function Register({ setIsLoggedIn }) {
         Register
       </Typography>
       <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%', maxWidth: '400px' }}>
+        {/* Honeypot field: visually hidden from users */}
+        <input
+          type="text"
+          name="username"
+          tabIndex="-1"
+          autoComplete="off"
+          ref={usernameRef}
+          style={{
+            position: 'absolute',
+            left: '-9999px',
+            width: '1px',
+            height: '1px',
+            opacity: 0,
+            pointerEvents: 'none',
+          }}
+          aria-hidden="true"
+        />
         <TextField
           margin="normal"
           required
@@ -200,4 +222,4 @@ function Register({ setIsLoggedIn }) {
   );
 }
 
-export default Register; 
+export default Register;
