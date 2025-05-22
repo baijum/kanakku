@@ -29,6 +29,7 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - PostgreSQL database
 - Redis (for job queue)
 - Gmail account with App Password (for bank transaction processing)
+- Docker and Docker Compose (optional, for containerized development)
 
 ## Project Structure
 
@@ -49,11 +50,20 @@ kanakku/
 │   │   ├── books.py   # Book entries for advanced accounting
 │   │   ├── preamble.py # Core utilities and constants
 │   │   ├── swagger.py # Swagger/OpenAPI documentation handlers
-│   │   └── errors.py  # Error handlers
+│   │   ├── errors.py  # Error handlers
+│   │   ├── mappings.py # Data mapping configurations
+│   │   └── utils/     # Utility modules
+│   │       ├── email_utils.py  # Email handling utilities
+│   │       └── logging_utils.py  # Logging configuration
+│   ├── migrations/    # Database migrations (Alembic)
 │   ├── swagger.yaml   # OpenAPI specification
 │   ├── tests/         # Pytest test suite
 │   ├── requirements.txt
 │   └── ...
+├── tools/            # Command-line tools
+│   ├── accountimporter/  # Rust-based account importer
+│   └── ledgertransactions/  # Go-based ledger transaction processor
+...
 ├── frontend/          # React frontend
 │   ├── public/
 │   ├── src/           # Source code
@@ -80,6 +90,25 @@ kanakku/
 │   ├── faq.md # Frequently asked questions
 │   └── user_manual.md # User documentation
 ```
+
+## Development Tools
+
+### Docker Support
+Kanakku includes a `docker-compose.yml` file for containerized development and deployment. This allows for consistent environments across development, testing, and production.
+
+### CI/CD Pipelines
+The project uses GitHub Actions for continuous integration and deployment, with workflows for:
+- Linting (`lint-black.yml`)
+- Backend testing (`test-backend.yml`)
+- Release automation
+
+### Database Migrations
+Database schema changes are managed using Alembic migrations, located in `backend/migrations/`. This ensures version-controlled, reproducible database schema updates.
+
+### Helper Scripts
+Root-level scripts for common development tasks:
+- `lint.sh` - Run code linting
+- `test.sh` - Run test suite
 
 ## Architecture
 
@@ -289,6 +318,57 @@ To enable Google Sign-In, you need to:
 3.  Register a new user or log in if you already have an account.
 4.  Use the interface to add accounts and transactions.
 
+## Docker Development
+
+Kanakku provides a Docker-based development environment for easy setup and consistency across different machines.
+
+### Prerequisites
+- Docker
+- Docker Compose
+
+### Quick Start
+
+1. Clone the repository and navigate to the project root:
+   ```bash
+   git clone https://github.com/yourusername/kanakku.git
+   cd kanakku
+   ```
+
+2. Start all services:
+   ```bash
+   docker-compose up --build
+   ```
+
+3. Access the application:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - Swagger UI: http://localhost:8000/api/docs
+
+### Services
+- `web`: Frontend React application
+- `api`: Backend Flask API
+- `db`: PostgreSQL database
+- `redis`: Redis for job queue
+- `migrate`: Runs database migrations on startup
+
+### Environment Variables
+Create a `.env` file in the project root with the following variables:
+```
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=kanakku
+DATABASE_URL=postgresql://postgres:postgres@db:5432/kanakku
+REDIS_URL=redis://redis:6379/0
+SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=your-jwt-secret
+```
+
+### Useful Commands
+- Stop all services: `docker-compose down`
+- View logs: `docker-compose logs -f`
+- Run tests: `docker-compose run --rm api pytest`
+- Access database: `docker-compose exec db psql -U postgres -d kanakku`
+
 ## Testing
 
 To run the backend tests:
@@ -302,10 +382,23 @@ To run the backend tests:
     ```
 
 To run frontend tests:
+
+### Unit Tests
 ```bash
 cd frontend
 npm test
 ```
+
+### End-to-End (E2E) Tests
+Kanakku uses Playwright for E2E testing. The tests are located in `frontend/e2e/`.
+
+Run E2E tests with:
+```bash
+cd frontend
+npx playwright test
+```
+
+E2E test configuration is in `frontend/playwright.config.js`.
 
 ## Activating a User
 
