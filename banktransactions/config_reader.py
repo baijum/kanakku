@@ -1,6 +1,7 @@
 import os
 import tomllib
 
+
 def load_config(file_path: str) -> dict | None:
     """
     Reads a TOML configuration file and returns its contents as a Python dictionary.

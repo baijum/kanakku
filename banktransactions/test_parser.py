@@ -16,10 +16,7 @@ for key, value in details.items():
     print(f"{key}: {value}")
 
 # Verify the expected values
-expected = {
-    "account_number": "XX1648",
-    "recipient": "PERSON1"
-}
+expected = {"account_number": "XX1648", "recipient": "PERSON1"}
 
 for key, expected_value in expected.items():
     actual_value = details[key]
@@ -28,4 +25,4 @@ for key, expected_value in expected.items():
     if actual_value == expected_value:
         print("✓ MATCH")
     else:
-        print("✗ MISMATCH") 
+        print("✗ MISMATCH")

@@ -540,3 +540,81 @@ def test_get_all_users_as_non_admin(app, client):
     response = client.get("/api/v1/auth/users", headers=headers)
     assert response.status_code == 403
     assert "Admin privileges required" in response.get_json()["error"]
+
+
+def test_register_honeypot_blocks_bots(client):
+    """Test that registration with honeypot field filled is rejected."""
+    # Test with new website field
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "bot@example.com",
+            "password": "password123",
+            "website": "filled_by_bot",  # Honeypot field filled
+        },
+    )
+    assert response.status_code == 400
+    data = response.get_json()
+    assert "error" in data
+    assert "Registration failed. Please try again." in data["error"]
+
+    # Test with old username field for backward compatibility
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "bot2@example.com",
+            "password": "password123",
+            "username": "filled_by_bot",  # Old honeypot field filled
+        },
+    )
+    assert response.status_code == 400
+    data = response.get_json()
+    assert "error" in data
+    assert "Registration failed. Please try again." in data["error"]
+
+
+def test_register_honeypot_allows_legitimate_users(client):
+    """Test that registration with empty honeypot field succeeds."""
+    # Test with new website field empty
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "legitimate@example.com",
+            "password": "password123",
+            "website": "",  # Honeypot field empty
+        },
+    )
+    assert response.status_code == 201
+    data = response.get_json()
+    assert "message" in data
+    assert "user_id" in data
+
+    # Test with old username field empty
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "legitimate2@example.com",
+            "password": "password123",
+            "username": "",  # Old honeypot field empty
+        },
+    )
+    assert response.status_code == 201
+    data = response.get_json()
+    assert "message" in data
+    assert "user_id" in data
+
+
+def test_register_honeypot_missing_field_succeeds(client):
+    """Test that registration without honeypot field succeeds (backward compatibility)."""
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "nofield@example.com",
+            "password": "password123",
+            # No honeypot fields at all
+        },
+    )
+    assert response.status_code == 201
+    data = response.get_json()
+    assert "message" in data
+    assert "user_id" in data

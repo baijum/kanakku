@@ -474,3 +474,17 @@ Kanakku includes an automated bank transaction processing system that can:
    ```
 
 For more details, see the [banktransactions README](banktransactions/README.md).
+
+## Security Features
+
+### Spam Protection
+
+The application includes a honeypot trap to prevent automated bot registrations:
+
+- **Honeypot Field**: The registration form includes a hidden `website` field that is invisible to human users but may be filled by automated bots
+- **Bot Detection**: If the honeypot field contains any data during registration, the request is rejected with a generic error message
+- **Backward Compatibility**: The system also checks for the legacy `username` honeypot field to maintain compatibility
+- **Logging**: Honeypot triggers are logged for monitoring purposes, including which field was filled and the attempted value
+- **Non-intrusive**: Legitimate users are unaffected as the field is completely hidden from view using CSS positioning and accessibility attributes
+
+This helps maintain the quality of registered users and reduces spam registrations without requiring CAPTCHAs or other user-facing verification methods.

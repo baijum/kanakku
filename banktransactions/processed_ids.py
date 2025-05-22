@@ -6,6 +6,7 @@ import os
 # File to store processed Gmail Message IDs
 PROCESSED_GMAIL_MSGIDS_FILE = "processed_gmail_msgids.txt"
 
+
 def load_processed_gmail_msgids(filepath=PROCESSED_GMAIL_MSGIDS_FILE):
     """Load processed Gmail Message IDs from a file."""
     try:
@@ -26,15 +27,13 @@ def load_processed_gmail_msgids(filepath=PROCESSED_GMAIL_MSGIDS_FILE):
         return set()  # Start fresh on error
 
 
-def save_processed_gmail_msgids(
-    msgids, filepath=PROCESSED_GMAIL_MSGIDS_FILE
-):
+def save_processed_gmail_msgids(msgids, filepath=PROCESSED_GMAIL_MSGIDS_FILE):
     """Save processed Gmail Message IDs to a file."""
     try:
         # Store as strings
         with open(filepath, "w") as f:
             for msgid in sorted(list(msgids)):  # Sort for consistency
-                f.write(f"{msgid}\n") # Corrected: Use single backslash for newline
+                f.write(f"{msgid}\n")  # Corrected: Use single backslash for newline
         logging.info(f"Saved {len(msgids)} processed Gmail Message IDs to {filepath}")
     except Exception as e:
-        logging.error(f"Error saving processed Gmail Message IDs to {filepath}: {e}") 
+        logging.error(f"Error saving processed Gmail Message IDs to {filepath}: {e}")

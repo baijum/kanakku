@@ -11,6 +11,7 @@ from api_client import send_transaction_to_api
 
 from transaction_data import construct_transaction_data
 
+
 def get_bank_emails(
     username, password, bank_email_list=None, processed_gmail_msgids=None
 ):
@@ -35,19 +36,18 @@ def get_bank_emails(
     try:
         with IMAPClient("imap.gmail.com", ssl=True) as server:
             # Anonymize the email address in logs
-            masked_username = username.split('@')[0][:3] + "***@" + username.split('@')[1]
+            masked_username = (
+                username.split("@")[0][:3] + "***@" + username.split("@")[1]
+            )
             logging.info(f"Connecting to Gmail for {masked_username}...")
             server.login(username, password)
             server.select_folder("INBOX")
 
             for bank_email in bank_email_list:
-                logging.info(f"\nSearching for emails from {bank_email} since {since_date_str}...")
-                search_criteria = [
-                    "FROM",
-                    bank_email,
-                    "SINCE",
-                    since_date_str
-                ]
+                logging.info(
+                    f"\nSearching for emails from {bank_email} since {since_date_str}..."
+                )
+                search_criteria = ["FROM", bank_email, "SINCE", since_date_str]
 
                 try:
                     messages = server.search(search_criteria)
@@ -157,11 +157,17 @@ def get_bank_emails(
                                 try:
                                     raw_payload_sample = part.get_payload(decode=False)
                                     if isinstance(raw_payload_sample, list):
-                                        raw_payload_sample = "[Payload is a list of sub-parts]"
+                                        raw_payload_sample = (
+                                            "[Payload is a list of sub-parts]"
+                                        )
                                     else:
-                                        raw_payload_sample = str(raw_payload_sample)[:150]
+                                        raw_payload_sample = str(raw_payload_sample)[
+                                            :150
+                                        ]
                                 except Exception as e:
-                                    raw_payload_sample = f"Error getting raw payload: {e}"
+                                    raw_payload_sample = (
+                                        f"Error getting raw payload: {e}"
+                                    )
                                 logging.debug(
                                     f"  Part {i}: Content-Type={ctype}, Content-Disposition={cdisp}, Filename={fname}"
                                 )
@@ -205,9 +211,14 @@ def get_bank_emails(
                             try:
                                 payload = email_message.get_payload(decode=True)
                                 if payload:
-                                    charset = email_message.get_content_charset() or "utf-8"
+                                    charset = (
+                                        email_message.get_content_charset() or "utf-8"
+                                    )
                                     body = payload.decode(charset, errors="replace")
-                                    if "<html" in body.lower() or "<body" in body.lower():
+                                    if (
+                                        "<html" in body.lower()
+                                        or "<body" in body.lower()
+                                    ):
                                         html_body = body
                                         if "<plaintext>" not in body.lower():
                                             body = ""
@@ -264,4 +275,4 @@ def get_bank_emails(
         logging.critical(
             f"Error connecting to mail server or during processing: {e}", exc_info=True
         )
-        return processed_gmail_msgids, newly_processed_count 
+        return processed_gmail_msgids, newly_processed_count

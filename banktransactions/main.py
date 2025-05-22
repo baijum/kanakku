@@ -21,7 +21,9 @@ logging.basicConfig(
 try:
     import requests
 except ImportError:
-    logging.critical("The 'requests' library is not installed. Please install it using: pip install requests")
+    logging.critical(
+        "The 'requests' library is not installed. Please install it using: pip install requests"
+    )
     sys.exit(1)
 # ---
 
@@ -32,6 +34,7 @@ except ImportError:
 # decode_str -> email_parser.py
 # extract_transaction_details -> email_parser.py
 # get_bank_emails -> imap_client.py
+
 
 def main():
     """Main function to run the script"""

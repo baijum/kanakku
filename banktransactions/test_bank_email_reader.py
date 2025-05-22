@@ -190,18 +190,19 @@ def test_date_format_dd_mm_yyyy_slash():
 # The test `test_date_format_dd_mm_yyyy_slash` specifically checks a format
 # that might be missed by the current date patterns.
 
+
 # Specific test for the transaction time extraction
 def test_transaction_time_extraction():
     # Test case 1: Standard format with Date & Time field
     body1 = "Date & Time: 21-04-25, 10:48:08 IST"
     details1 = extract_transaction_details_pure_llm(body1)
     assert details1["transaction_time"] == "10:48:08"
-    
+
     # Test case 2: 'on' pattern
     body2 = "Transaction on 01-01-2023 13:45:30 IST"
     details2 = extract_transaction_details_pure_llm(body2)
     assert details2["transaction_time"] == "13:45:30"
-    
+
     # Test case 3: Missing time
     body3 = "Date: 15-01-2023"
     details3 = extract_transaction_details_pure_llm(body3)

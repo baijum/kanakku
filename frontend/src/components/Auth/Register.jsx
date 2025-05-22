@@ -8,6 +8,7 @@ function Register({ setIsLoggedIn }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [website, setWebsite] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -38,6 +39,7 @@ function Register({ setIsLoggedIn }) {
         data: {
           email,
           password,
+          website,
         },
         headers: {
           'Content-Type': 'application/json',
@@ -161,6 +163,23 @@ function Register({ setIsLoggedIn }) {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           disabled={loading}
+        />
+        <TextField
+          name="website"
+          type="text"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+          sx={{
+            position: 'absolute',
+            left: '-9999px',
+            width: '1px',
+            height: '1px',
+            opacity: 0,
+            overflow: 'hidden',
+          }}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
         />
         {error && (
           <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
