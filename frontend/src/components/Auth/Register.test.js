@@ -11,6 +11,34 @@ jest.mock('../../api/axiosInstance', () => ({
   default: jest.fn(),
 }));
 
+// Mock hCaptcha component
+jest.mock('@hcaptcha/react-hcaptcha', () => {
+  return function MockHCaptcha({ onVerify, onExpire, onError, sitekey }) {
+    return (
+      <div data-testid="hcaptcha-mock" data-sitekey={sitekey}>
+        <button 
+          onClick={() => onVerify('mock-token')}
+          data-testid="hcaptcha-verify-button"
+        >
+          Verify hCaptcha
+        </button>
+        <button 
+          onClick={() => onExpire()}
+          data-testid="hcaptcha-expire-button"
+        >
+          Expire hCaptcha
+        </button>
+        <button 
+          onClick={() => onError('mock-error')}
+          data-testid="hcaptcha-error-button"
+        >
+          Error hCaptcha
+        </button>
+      </div>
+    );
+  };
+});
+
 // Create a theme for testing
 const theme = createTheme();
 
@@ -45,6 +73,18 @@ describe('Register Component', () => {
     // eslint-disable-next-line testing-library/no-node-access
     expect(document.querySelector('input[name="confirmPassword"]')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /register/i })).toBeInTheDocument();
+  });
+
+  test('renders hCaptcha component', () => {
+    render(
+      <TestWrapper>
+        <Register setIsLoggedIn={mockSetIsLoggedIn} />
+      </TestWrapper>
+    );
+
+    // Check that the hCaptcha component is rendered
+    expect(screen.getByTestId('hcaptcha-mock')).toBeInTheDocument();
+    expect(screen.getByTestId('hcaptcha-verify-button')).toBeInTheDocument();
   });
 
   test('includes honeypot field that is hidden from users', () => {

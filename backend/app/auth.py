@@ -91,6 +91,64 @@ def verify_oauth_token(token):
         raise ValueError("Invalid OAuth token")
 
 
+def verify_hcaptcha(token, remote_ip):
+    """
+    Verify an hCaptcha token with the hCaptcha API.
+
+    Args:
+        token: The hCaptcha response token from the frontend
+        remote_ip: The IP address of the user
+
+    Returns:
+        bool: True if verification succeeds, False otherwise
+    """
+    # Skip verification in testing mode
+    if current_app.config.get("TESTING", False):
+        current_app.logger.info("Skipping hCaptcha verification in testing mode")
+        return True
+
+    # Get the secret key from environment
+    secret_key = current_app.config.get("HCAPTCHA_SECRET_KEY")
+    if not secret_key:
+        current_app.logger.error("HCAPTCHA_SECRET_KEY not configured")
+        return False
+
+    # Prepare the verification request
+    verification_url = "https://api.hcaptcha.com/siteverify"
+    data = {
+        "secret": secret_key,
+        "response": token,
+        "remoteip": remote_ip,
+    }
+
+    try:
+        # Make the verification request
+        response = requests.post(verification_url, data=data, timeout=10)
+        response.raise_for_status()
+
+        result = response.json()
+        success = result.get("success", False)
+
+        if success:
+            current_app.logger.info(
+                f"hCaptcha verification successful for IP: {remote_ip}"
+            )
+        else:
+            error_codes = result.get("error-codes", [])
+            current_app.logger.warning(
+                f"hCaptcha verification failed for IP: {remote_ip}, errors: {error_codes}"
+            )
+
+        return success
+
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f"Error verifying hCaptcha token: {e}")
+        return False
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error during hCaptcha verification: {e}")
+        return False
+
+
 @auth.route("/api/v1/auth/register", methods=["POST"])
 @auth_rate_limit
 @csrf_exempt
@@ -117,6 +175,21 @@ def register():
         )
         # Return a generic error without revealing the honeypot mechanism
         return jsonify({"error": "Registration failed. Please try again."}), 400
+
+    # hCaptcha verification
+    hcaptcha_token = data.get("hcaptcha_token")
+    if not hcaptcha_token:
+        current_app.logger.warning(
+            f"Registration attempt without hCaptcha token from email: {data.get('email', 'unknown')}"
+        )
+        return jsonify({"error": "Captcha verification is required."}), 400
+
+    # Verify hCaptcha token
+    if not verify_hcaptcha(hcaptcha_token, request.remote_addr):
+        current_app.logger.warning(
+            f"hCaptcha verification failed for registration attempt with email: {data.get('email', 'unknown')}"
+        )
+        return jsonify({"error": "Captcha verification failed. Please try again."}), 400
 
     # Check if user already exists
     if User.query.filter_by(email=data["email"]).first():

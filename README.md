@@ -361,7 +361,22 @@ DATABASE_URL=postgresql://postgres:postgres@db:5432/kanakku
 REDIS_URL=redis://redis:6379/0
 SECRET_KEY=your-secret-key
 JWT_SECRET_KEY=your-jwt-secret
+
+# hCaptcha Configuration (for spam protection)
+HCAPTCHA_SECRET_KEY=your-hcaptcha-secret-key
 ```
+
+For the frontend, create a `.env` file in the `frontend/` directory:
+```
+# hCaptcha Configuration
+REACT_APP_HCAPTCHA_SITE_KEY=your-hcaptcha-site-key
+```
+
+**Note**: To get hCaptcha keys:
+1. Sign up at [hCaptcha Dashboard](https://dashboard.hcaptcha.com/)
+2. Create a new site
+3. Copy the Site Key for the frontend environment variable
+4. Copy the Secret Key for the backend environment variable
 
 ### Useful Commands
 - Stop all services: `docker-compose down`
@@ -479,7 +494,17 @@ For more details, see the [banktransactions README](banktransactions/README.md).
 
 ### Spam Protection
 
-The application includes a honeypot trap to prevent automated bot registrations:
+The application includes multiple layers of protection against automated bot registrations:
+
+#### hCaptcha Integration
+
+- **Human Verification**: Users must complete an hCaptcha challenge during registration to verify they are human
+- **Server-side Verification**: The backend verifies the hCaptcha response token with hCaptcha's API before processing registration
+- **Privacy-focused**: hCaptcha provides a privacy-focused alternative to other CAPTCHA services
+- **Configurable**: Uses environment variables for easy configuration across different environments
+- **Fallback**: Gracefully handles verification failures and provides clear error messages to users
+
+#### Honeypot Trap
 
 - **Honeypot Field**: The registration form includes a hidden `website` field that is invisible to human users but may be filled by automated bots
 - **Bot Detection**: If the honeypot field contains any data during registration, the request is rejected with a generic error message
@@ -487,4 +512,4 @@ The application includes a honeypot trap to prevent automated bot registrations:
 - **Logging**: Honeypot triggers are logged for monitoring purposes, including which field was filled and the attempted value
 - **Non-intrusive**: Legitimate users are unaffected as the field is completely hidden from view using CSS positioning and accessibility attributes
 
-This helps maintain the quality of registered users and reduces spam registrations without requiring CAPTCHAs or other user-facing verification methods.
+This multi-layered approach helps maintain the quality of registered users and significantly reduces spam registrations while providing a good user experience for legitimate users.

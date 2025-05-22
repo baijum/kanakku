@@ -27,7 +27,11 @@ def user(app):
 def test_register(client):
     response = client.post(
         "/api/v1/auth/register",
-        json={"email": "new@example.com", "password": "password"},
+        json={
+            "email": "new@example.com",
+            "password": "password",
+            "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
+        },
     )
     assert response.status_code == 201
     data = response.get_json()
@@ -551,6 +555,7 @@ def test_register_honeypot_blocks_bots(client):
             "email": "bot@example.com",
             "password": "password123",
             "website": "filled_by_bot",  # Honeypot field filled
+            "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
     )
     assert response.status_code == 400
@@ -565,6 +570,7 @@ def test_register_honeypot_blocks_bots(client):
             "email": "bot2@example.com",
             "password": "password123",
             "username": "filled_by_bot",  # Old honeypot field filled
+            "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
     )
     assert response.status_code == 400
@@ -582,6 +588,7 @@ def test_register_honeypot_allows_legitimate_users(client):
             "email": "legitimate@example.com",
             "password": "password123",
             "website": "",  # Honeypot field empty
+            "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
     )
     assert response.status_code == 201
@@ -596,6 +603,7 @@ def test_register_honeypot_allows_legitimate_users(client):
             "email": "legitimate2@example.com",
             "password": "password123",
             "username": "",  # Old honeypot field empty
+            "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
     )
     assert response.status_code == 201
@@ -611,6 +619,7 @@ def test_register_honeypot_missing_field_succeeds(client):
         json={
             "email": "nofield@example.com",
             "password": "password123",
+            "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
             # No honeypot fields at all
         },
     )

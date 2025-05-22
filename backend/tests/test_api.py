@@ -5,7 +5,11 @@ def test_register(authenticated_client, mock_ledger_command):
     """Test user registration."""
     response = authenticated_client.post(
         "/api/v1/auth/register",
-        json={"email": "new@example.com", "password": "password123"},
+        json={
+            "email": "new@example.com",
+            "password": "password123",
+            "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
+        },
     )
     assert response.status_code == 201
     data = response.get_json()

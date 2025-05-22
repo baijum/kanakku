@@ -381,6 +381,7 @@ def test_default_book_creation(app, client):
             "email": "defaultbooktest@example.com",
             "password": "password123",
             "confirm_password": "password123",
+            "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
     )
     assert register_response.status_code == 201

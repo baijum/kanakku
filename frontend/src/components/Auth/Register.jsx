@@ -3,12 +3,14 @@ import { Box, TextField, Button, Typography, CircularProgress, Alert, Link, Divi
 import axiosInstance from '../../api/axiosInstance';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import GoogleIcon from '@mui/icons-material/Google';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 function Register({ setIsLoggedIn }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [website, setWebsite] = useState('');
+  const [hcaptchaToken, setHcaptchaToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -32,6 +34,12 @@ function Register({ setIsLoggedIn }) {
       return;
     }
 
+    if (!hcaptchaToken) {
+      setError('Please complete the captcha verification.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await axiosInstance({
         method: 'post',
@@ -40,6 +48,7 @@ function Register({ setIsLoggedIn }) {
           email,
           password,
           website,
+          hcaptcha_token: hcaptchaToken,
         },
         headers: {
           'Content-Type': 'application/json',
@@ -108,6 +117,20 @@ function Register({ setIsLoggedIn }) {
       setError(err.response?.data?.error || err.message || 'Failed to start Google authentication');
       setGoogleLoading(false);
     }
+  };
+
+  const handleHCaptchaVerify = (token) => {
+    setHcaptchaToken(token);
+  };
+
+  const handleHCaptchaExpire = () => {
+    setHcaptchaToken('');
+  };
+
+  const handleHCaptchaError = (err) => {
+    console.error('hCaptcha error:', err);
+    setHcaptchaToken('');
+    setError('Captcha verification failed. Please try again.');
   };
 
   return (
@@ -181,6 +204,17 @@ function Register({ setIsLoggedIn }) {
           autoComplete="off"
           aria-hidden="true"
         />
+        
+        {/* hCaptcha Component */}
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+          <HCaptcha
+            sitekey={process.env.REACT_APP_HCAPTCHA_SITE_KEY || "10000000-ffff-ffff-ffff-000000000001"}
+            onVerify={handleHCaptchaVerify}
+            onExpire={handleHCaptchaExpire}
+            onError={handleHCaptchaError}
+          />
+        </Box>
+
         {error && (
           <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
             {error}
