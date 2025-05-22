@@ -22,12 +22,23 @@ import {
   CircularProgress,
   Alert,
   Box,
-  Snackbar
+  Snackbar,
+  Card,
+  CardContent,
+  CardActions,
+  Chip,
+  Link,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import InfoIcon from '@mui/icons-material/Info';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import axiosInstance from '../../api/axiosInstance';
 
 const GlobalSettings = () => {
@@ -50,6 +61,18 @@ const GlobalSettings = () => {
     message: '',
     severity: 'success'
   });
+
+  // Common configuration templates
+  const configTemplates = [
+    {
+      key: 'GEMINI_API_TOKEN',
+      description: 'Google Gemini API Token for email processing',
+      placeholder: 'AIzaSy...',
+      helpText: 'Get your API key from Google AI Studio (https://aistudio.google.com/app/apikey)',
+      is_encrypted: true,
+      required: true
+    }
+  ];
 
   useEffect(() => {
     fetchConfigurations();
@@ -77,8 +100,29 @@ const GlobalSettings = () => {
     });
   };
 
+  const validateGeminiApiToken = (token) => {
+    // Basic validation for Gemini API token format
+    if (!token) return 'API token is required';
+    if (!token.startsWith('AIzaSy')) return 'Gemini API tokens should start with "AIzaSy"';
+    if (token.length < 30) return 'API token appears to be too short';
+    return null;
+  };
+
   const handleAddConfiguration = async () => {
     try {
+      // Validate Gemini API token if that's what we're adding
+      if (formData.key === 'GEMINI_API_TOKEN') {
+        const validationError = validateGeminiApiToken(formData.value);
+        if (validationError) {
+          setSnackbar({
+            open: true,
+            message: validationError,
+            severity: 'error'
+          });
+          return;
+        }
+      }
+
       await axiosInstance.post('/api/v1/settings/global', formData);
       setOpenAddDialog(false);
       setFormData({ key: '', value: '', description: '', is_encrypted: true });
@@ -99,6 +143,19 @@ const GlobalSettings = () => {
 
   const handleEditConfiguration = async () => {
     try {
+      // Validate Gemini API token if that's what we're editing
+      if (selectedConfig.key === 'GEMINI_API_TOKEN') {
+        const validationError = validateGeminiApiToken(formData.value);
+        if (validationError) {
+          setSnackbar({
+            open: true,
+            message: validationError,
+            severity: 'error'
+          });
+          return;
+        }
+      }
+
       await axiosInstance.put(`/api/v1/settings/global/${selectedConfig.key}`, {
         value: formData.value,
         description: formData.description,
@@ -183,6 +240,25 @@ const GlobalSettings = () => {
     });
   };
 
+  const handleQuickSetup = (template) => {
+    setFormData({
+      key: template.key,
+      value: '',
+      description: template.description,
+      is_encrypted: template.is_encrypted
+    });
+    setOpenAddDialog(true);
+  };
+
+  const isConfigurationExists = (key) => {
+    return configurations.some(config => config.key === key);
+  };
+
+  const getConfigurationStatus = (key) => {
+    const config = configurations.find(c => c.key === key);
+    return config ? 'configured' : 'missing';
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
@@ -213,6 +289,64 @@ const GlobalSettings = () => {
         </Button>
       </Box>
 
+      {/* Quick Setup Section */}
+      <Accordion sx={{ mb: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6">Quick Setup</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Configure essential settings for your application features.
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {configTemplates.map((template) => (
+              <Card key={template.key} variant="outlined">
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Typography variant="h6" component="div">
+                      {template.key.replace(/_/g, ' ')}
+                    </Typography>
+                    <Chip
+                      icon={getConfigurationStatus(template.key) === 'configured' ? <CheckCircleIcon /> : <InfoIcon />}
+                      label={getConfigurationStatus(template.key) === 'configured' ? 'Configured' : 'Not Configured'}
+                      color={getConfigurationStatus(template.key) === 'configured' ? 'success' : 'warning'}
+                      size="small"
+                    />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    {template.description}
+                  </Typography>
+                  {template.helpText && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                      {template.helpText.includes('http') ? (
+                        <>
+                          Get your API key from{' '}
+                          <Link href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">
+                            Google AI Studio
+                          </Link>
+                        </>
+                      ) : (
+                        template.helpText
+                      )}
+                    </Typography>
+                  )}
+                </CardContent>
+                <CardActions>
+                  <Button
+                    size="small"
+                    variant={getConfigurationStatus(template.key) === 'configured' ? 'outlined' : 'contained'}
+                    onClick={() => handleQuickSetup(template)}
+                    disabled={isConfigurationExists(template.key)}
+                  >
+                    {getConfigurationStatus(template.key) === 'configured' ? 'Reconfigure' : 'Configure'}
+                  </Button>
+                </CardActions>
+              </Card>
+            ))}
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }}>
           <TableHead>
@@ -229,13 +363,20 @@ const GlobalSettings = () => {
             {configurations.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  No configurations found. Create a new one to get started.
+                  No configurations found. Use the Quick Setup section above or create a new one to get started.
                 </TableCell>
               </TableRow>
             ) : (
               configurations.map((config) => (
                 <TableRow key={config.id}>
-                  <TableCell>{config.key}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {config.key}
+                      {config.key === 'GEMINI_API_TOKEN' && (
+                        <Chip label="Email Processing" size="small" color="primary" variant="outlined" />
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell>{config.description || 'No description'}</TableCell>
                   <TableCell>{config.is_encrypted ? 'Yes' : 'No'}</TableCell>
                   <TableCell>
@@ -283,7 +424,7 @@ const GlobalSettings = () => {
       </TableContainer>
 
       {/* Add Configuration Dialog */}
-      <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
+      <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add New Configuration</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -301,7 +442,7 @@ const GlobalSettings = () => {
             variant="outlined"
             value={formData.key}
             onChange={handleInputChange}
-            helperText="Unique identifier for this configuration"
+            helperText="Unique identifier for this configuration (e.g., GEMINI_API_TOKEN)"
             required
           />
           <TextField
@@ -309,12 +450,21 @@ const GlobalSettings = () => {
             id="value"
             name="value"
             label="Value"
-            type="text"
+            type={formData.key === 'GEMINI_API_TOKEN' ? 'password' : 'text'}
             fullWidth
             variant="outlined"
             value={formData.value}
             onChange={handleInputChange}
-            helperText="The configuration value"
+            helperText={
+              formData.key === 'GEMINI_API_TOKEN' 
+                ? 'Enter your Google Gemini API token (starts with AIzaSy...)'
+                : 'The configuration value'
+            }
+            placeholder={
+              formData.key === 'GEMINI_API_TOKEN' 
+                ? 'AIzaSy...'
+                : ''
+            }
             required
           />
           <TextField
@@ -337,8 +487,19 @@ const GlobalSettings = () => {
                 name="is_encrypted"
               />
             }
-            label="Encrypt Value (recommended for sensitive data)"
+            label="Encrypt Value (recommended for sensitive data like API tokens)"
           />
+          {formData.key === 'GEMINI_API_TOKEN' && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                The Gemini API token is required for automated email processing features. 
+                Get your API key from{' '}
+                <Link href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">
+                  Google AI Studio
+                </Link>.
+              </Typography>
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenAddDialog(false)}>Cancel</Button>
@@ -354,7 +515,7 @@ const GlobalSettings = () => {
       </Dialog>
 
       {/* Edit Configuration Dialog */}
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Configuration</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -374,12 +535,21 @@ const GlobalSettings = () => {
             id="value"
             name="value"
             label="New Value"
-            type="text"
+            type={selectedConfig?.key === 'GEMINI_API_TOKEN' ? 'password' : 'text'}
             fullWidth
             variant="outlined"
             value={formData.value}
             onChange={handleInputChange}
-            helperText="Enter the new value. For security, the current value is not displayed."
+            helperText={
+              selectedConfig?.key === 'GEMINI_API_TOKEN'
+                ? 'Enter your new Google Gemini API token. For security, the current value is not displayed.'
+                : 'Enter the new value. For security, the current value is not displayed.'
+            }
+            placeholder={
+              selectedConfig?.key === 'GEMINI_API_TOKEN' 
+                ? 'AIzaSy...'
+                : ''
+            }
             required
           />
           <TextField
@@ -424,6 +594,12 @@ const GlobalSettings = () => {
           <DialogContentText>
             Are you sure you want to delete the configuration with key{' '}
             <strong>{selectedConfig?.key}</strong>? This action cannot be undone.
+            {selectedConfig?.key === 'GEMINI_API_TOKEN' && (
+              <>
+                <br /><br />
+                <strong>Warning:</strong> Deleting this configuration will disable automated email processing features.
+              </>
+            )}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -439,7 +615,7 @@ const GlobalSettings = () => {
       </Dialog>
 
       {/* View Decrypted Value Dialog */}
-      <Dialog open={openViewDialog} onClose={() => setOpenViewDialog(false)}>
+      <Dialog open={openViewDialog} onClose={() => setOpenViewDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>View Configuration Value</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -456,6 +632,7 @@ const GlobalSettings = () => {
               InputProps={{
                 readOnly: true,
               }}
+              sx={{ mt: 2 }}
             />
           ) : (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
@@ -467,6 +644,13 @@ const GlobalSettings = () => {
                 Show Value
               </Button>
             </Box>
+          )}
+          {selectedConfig?.key === 'GEMINI_API_TOKEN' && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                Keep your API token secure and do not share it with others.
+              </Typography>
+            </Alert>
           )}
         </DialogContent>
         <DialogActions>
