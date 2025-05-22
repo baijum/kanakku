@@ -1,19 +1,26 @@
 import json
 import logging
-from datetime import datetime
+import os
+import sys
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from rq import get_current_job
 from sqlalchemy.orm import Session
 
-from email_automation.models.email_config import EmailConfiguration
-from imap_client import IMAPClient
-from email_parser import (
+# Add the backend app to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from app.models import EmailConfiguration
+from app.utils.encryption import decrypt_value
+from banktransactions.imap_client import IMAPClient
+from banktransactions.email_parser import (
     extract_transaction_details_pure_llm,
     detect_currency,
     convert_currency,
 )
-from api_client import APIClient
+from banktransactions.api_client import APIClient
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +52,20 @@ class EmailProcessor:
                     "reason": "configuration_not_found_or_disabled",
                 }
 
+            # Decrypt the app password
+            decrypted_password = decrypt_value(config.app_password)
+            if not decrypted_password:
+                return {
+                    "status": "error",
+                    "error": "Failed to decrypt app password",
+                }
+
             # Initialize clients
             self.imap_client = IMAPClient(
                 server=config.imap_server,
                 port=config.imap_port,
                 username=config.email_address,
-                password=config.app_password,
+                password=decrypted_password,
             )
             self.api_client = APIClient()
 
@@ -67,7 +82,7 @@ class EmailProcessor:
             for email in emails:
                 try:
                     # Extract transaction details using the improved LLM-based parser
-                    transaction_data = self._extract_transaction_data(email)
+                    transaction_data = self._extract_transaction_data(email, config)
 
                     if transaction_data and transaction_data.get("amount") != "Unknown":
                         # Create transaction via API
@@ -96,7 +111,7 @@ class EmailProcessor:
                     errors.append(f"Error processing email {email['id']}: {str(e)}")
 
             # Update last check time
-            config.last_check_time = datetime.utcnow()
+            config.last_check_time = datetime.now(timezone.utc)
             self.db.commit()
 
             return {
@@ -112,14 +127,25 @@ class EmailProcessor:
             if self.imap_client:
                 self.imap_client.disconnect()
 
-    def _extract_transaction_data(self, email: Dict) -> Optional[Dict]:
+    def _extract_transaction_data(self, email: Dict, config: EmailConfiguration) -> Optional[Dict]:
         """Extract transaction data from email using the improved LLM-based parser."""
         try:
             # Clean the email body
             body = email["body"]
 
-            # Use the improved LLM-based parser
-            transaction_data = extract_transaction_details_pure_llm(body)
+            # Get sample emails for few-shot prompting
+            sample_emails = []
+            if config.sample_emails:
+                try:
+                    sample_emails = json.loads(config.sample_emails)
+                except json.JSONDecodeError:
+                    logger.warning(f"Failed to parse sample emails for user {config.user_id}")
+
+            # Use the improved LLM-based parser with few-shot examples
+            transaction_data = extract_transaction_details_pure_llm(
+                body, 
+                sample_emails=sample_emails
+            )
 
             # Add additional metadata
             transaction_data.update(

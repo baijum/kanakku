@@ -35,6 +35,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import UpdatePassword from './UpdatePassword';
 import BookManagement from '../Books/BookManagement';
 import UserActivation from './UserActivation';
+import EmailAutomation from './EmailAutomation';
 import { add } from 'date-fns';
 import axiosInstance from '../../api/axiosInstance'; // Import the configured instance
 
@@ -292,6 +293,7 @@ const ProfileSettings = () => {
                 <Tab label="Update Password" />
                 <Tab label="Account Status" />
                 <Tab label="API Tokens" />
+                <Tab label="Email Automation" />
               </Tabs>
             </Box>
             
@@ -305,6 +307,10 @@ const ProfileSettings = () => {
             
             {tabValue === 2 && (
               <UserActivation user={user} onUserUpdate={handleUserUpdate} />
+            )}
+            
+            {tabValue === 4 && (
+              <EmailAutomation />
             )}
             
             {tabValue === 3 && (

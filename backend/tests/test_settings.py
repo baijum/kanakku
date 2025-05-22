@@ -1,5 +1,3 @@
-import pytest
-import json
 from app.models import GlobalConfiguration, User, db
 from app.utils.encryption import encrypt_value, decrypt_value
 from cryptography.fernet import Fernet
@@ -16,11 +14,11 @@ class TestGlobalSettings:
 
         # Create access token for non-admin user
         from flask_jwt_extended import create_access_token
+
         token = create_access_token(identity=str(user.id))  # Convert to string
 
         response = client.get(
-            "/api/v1/settings/global",
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/v1/settings/global", headers={"Authorization": f"Bearer {token}"}
         )
         assert response.status_code == 403
         assert "Admin privileges required" in response.get_json()["error"]
@@ -30,34 +28,33 @@ class TestGlobalSettings:
         # Create test configurations
         with app.app_context():
             # Set a proper test encryption key for consistent testing
-            app.config['ENCRYPTION_KEY'] = Fernet.generate_key().decode()
-            
+            app.config["ENCRYPTION_KEY"] = Fernet.generate_key().decode()
+
             config1 = GlobalConfiguration(
                 key="TEST_KEY_1",
                 value="test_value_1",
                 description="Test configuration 1",
-                is_encrypted=False
+                is_encrypted=False,
             )
             config2 = GlobalConfiguration(
                 key="GEMINI_API_TOKEN",
                 value=encrypt_value("test_api_token_123"),
                 description="Google Gemini API Token",
-                is_encrypted=True
+                is_encrypted=True,
             )
             db.session.add_all([config1, config2])
             db.session.commit()
 
         response = authenticated_client.get("/api/v1/settings/global")
         assert response.status_code == 200
-        
+
         data = response.get_json()
         assert "configurations" in data
         assert len(data["configurations"]) == 2
-        
+
         # Check that encrypted values are masked
         gemini_config = next(
-            (c for c in data["configurations"] if c["key"] == "GEMINI_API_TOKEN"), 
-            None
+            (c for c in data["configurations"] if c["key"] == "GEMINI_API_TOKEN"), None
         )
         assert gemini_config is not None
         assert gemini_config["value"] == "[ENCRYPTED]"
@@ -70,14 +67,14 @@ class TestGlobalSettings:
                 key="TEST_SPECIFIC",
                 value="specific_value",
                 description="Specific test config",
-                is_encrypted=False
+                is_encrypted=False,
             )
             db.session.add(config)
             db.session.commit()
 
         response = authenticated_client.get("/api/v1/settings/global/TEST_SPECIFIC")
         assert response.status_code == 200
-        
+
         data = response.get_json()
         assert "configuration" in data
         assert data["configuration"]["key"] == "TEST_SPECIFIC"
@@ -95,15 +92,14 @@ class TestGlobalSettings:
             "key": "NEW_CONFIG",
             "value": "new_value",
             "description": "A new configuration",
-            "is_encrypted": False
+            "is_encrypted": False,
         }
 
         response = authenticated_client.post(
-            "/api/v1/settings/global",
-            json=config_data
+            "/api/v1/settings/global", json=config_data
         )
         assert response.status_code == 201
-        
+
         data = response.get_json()
         assert "message" in data
         assert "configuration" in data
@@ -113,21 +109,20 @@ class TestGlobalSettings:
         """Test creation of Gemini API token configuration."""
         with app.app_context():
             # Set a proper test encryption key for consistent testing
-            app.config['ENCRYPTION_KEY'] = Fernet.generate_key().decode()
-            
+            app.config["ENCRYPTION_KEY"] = Fernet.generate_key().decode()
+
             config_data = {
                 "key": "GEMINI_API_TOKEN",
                 "value": "AIzaSyDummyTokenForTesting123456789",
                 "description": "Google Gemini API Token for email processing",
-                "is_encrypted": True
+                "is_encrypted": True,
             }
 
             response = authenticated_client.post(
-                "/api/v1/settings/global",
-                json=config_data
+                "/api/v1/settings/global", json=config_data
             )
             assert response.status_code == 201
-            
+
             data = response.get_json()
             assert data["configuration"]["key"] == "GEMINI_API_TOKEN"
             assert data["configuration"]["is_encrypted"] is True
@@ -137,16 +132,14 @@ class TestGlobalSettings:
         """Test creation with missing required fields."""
         # Missing value
         response = authenticated_client.post(
-            "/api/v1/settings/global",
-            json={"key": "INCOMPLETE"}
+            "/api/v1/settings/global", json={"key": "INCOMPLETE"}
         )
         assert response.status_code == 400
         assert "Key and value are required" in response.get_json()["error"]
 
         # Missing key
         response = authenticated_client.post(
-            "/api/v1/settings/global",
-            json={"value": "incomplete"}
+            "/api/v1/settings/global", json={"value": "incomplete"}
         )
         assert response.status_code == 400
         assert "Key and value are required" in response.get_json()["error"]
@@ -155,9 +148,7 @@ class TestGlobalSettings:
         """Test creation of configuration with duplicate key."""
         with app.app_context():
             existing_config = GlobalConfiguration(
-                key="DUPLICATE_KEY",
-                value="existing_value",
-                is_encrypted=False
+                key="DUPLICATE_KEY", value="existing_value", is_encrypted=False
             )
             db.session.add(existing_config)
             db.session.commit()
@@ -165,12 +156,11 @@ class TestGlobalSettings:
         config_data = {
             "key": "DUPLICATE_KEY",
             "value": "new_value",
-            "is_encrypted": False
+            "is_encrypted": False,
         }
 
         response = authenticated_client.post(
-            "/api/v1/settings/global",
-            json=config_data
+            "/api/v1/settings/global", json=config_data
         )
         assert response.status_code == 409
         assert "already exists" in response.get_json()["error"]
@@ -179,13 +169,13 @@ class TestGlobalSettings:
         """Test updating an existing global configuration."""
         with app.app_context():
             # Set a proper test encryption key for consistent testing
-            app.config['ENCRYPTION_KEY'] = Fernet.generate_key().decode()
-            
+            app.config["ENCRYPTION_KEY"] = Fernet.generate_key().decode()
+
             config = GlobalConfiguration(
                 key="UPDATE_TEST",
                 value="original_value",
                 description="Original description",
-                is_encrypted=False
+                is_encrypted=False,
             )
             db.session.add(config)
             db.session.commit()
@@ -193,15 +183,14 @@ class TestGlobalSettings:
         update_data = {
             "value": "updated_value",
             "description": "Updated description",
-            "is_encrypted": True
+            "is_encrypted": True,
         }
 
         response = authenticated_client.put(
-            "/api/v1/settings/global/UPDATE_TEST",
-            json=update_data
+            "/api/v1/settings/global/UPDATE_TEST", json=update_data
         )
         assert response.status_code == 200
-        
+
         data = response.get_json()
         assert "updated successfully" in data["message"]
 
@@ -210,13 +199,13 @@ class TestGlobalSettings:
         with app.app_context():
             # Set a proper test encryption key for consistent testing
             test_key = Fernet.generate_key().decode()
-            app.config['ENCRYPTION_KEY'] = test_key
-            
+            app.config["ENCRYPTION_KEY"] = test_key
+
             config = GlobalConfiguration(
                 key="GEMINI_API_TOKEN",
                 value=encrypt_value("old_token"),
                 description="Old Gemini token",
-                is_encrypted=True
+                is_encrypted=True,
             )
             db.session.add(config)
             db.session.commit()
@@ -224,23 +213,21 @@ class TestGlobalSettings:
         update_data = {
             "value": "AIzaSyNewGeminiToken987654321",
             "description": "Updated Gemini API Token",
-            "is_encrypted": True
+            "is_encrypted": True,
         }
 
         response = authenticated_client.put(
-            "/api/v1/settings/global/GEMINI_API_TOKEN",
-            json=update_data
+            "/api/v1/settings/global/GEMINI_API_TOKEN", json=update_data
         )
         assert response.status_code == 200
-        
+
         data = response.get_json()
         assert "updated successfully" in data["message"]
 
     def test_update_nonexistent_config(self, authenticated_client):
         """Test updating a non-existent configuration."""
         response = authenticated_client.put(
-            "/api/v1/settings/global/NONEXISTENT",
-            json={"value": "test"}
+            "/api/v1/settings/global/NONEXISTENT", json={"value": "test"}
         )
         assert response.status_code == 404
         assert "not found" in response.get_json()["error"]
@@ -249,9 +236,7 @@ class TestGlobalSettings:
         """Test deleting a global configuration."""
         with app.app_context():
             config = GlobalConfiguration(
-                key="DELETE_TEST",
-                value="delete_value",
-                is_encrypted=False
+                key="DELETE_TEST", value="delete_value", is_encrypted=False
             )
             db.session.add(config)
             db.session.commit()
@@ -270,21 +255,23 @@ class TestGlobalSettings:
         with app.app_context():
             # Set a proper test encryption key for consistent testing
             test_key = Fernet.generate_key().decode()
-            app.config['ENCRYPTION_KEY'] = test_key
-            
+            app.config["ENCRYPTION_KEY"] = test_key
+
             test_value = "secret_encrypted_value"
             config = GlobalConfiguration(
                 key="ENCRYPTED_TEST",
                 value=encrypt_value(test_value),
                 description="Encrypted test config",
-                is_encrypted=True
+                is_encrypted=True,
             )
             db.session.add(config)
             db.session.commit()
 
-        response = authenticated_client.get("/api/v1/settings/global/ENCRYPTED_TEST/value")
+        response = authenticated_client.get(
+            "/api/v1/settings/global/ENCRYPTED_TEST/value"
+        )
         assert response.status_code == 200
-        
+
         data = response.get_json()
         assert data["key"] == "ENCRYPTED_TEST"
         assert data["value"] == test_value
@@ -297,14 +284,16 @@ class TestGlobalSettings:
                 key="UNENCRYPTED_TEST",
                 value=test_value,
                 description="Unencrypted test config",
-                is_encrypted=False
+                is_encrypted=False,
             )
             db.session.add(config)
             db.session.commit()
 
-        response = authenticated_client.get("/api/v1/settings/global/UNENCRYPTED_TEST/value")
+        response = authenticated_client.get(
+            "/api/v1/settings/global/UNENCRYPTED_TEST/value"
+        )
         assert response.status_code == 200
-        
+
         data = response.get_json()
         assert data["key"] == "UNENCRYPTED_TEST"
         assert data["value"] == test_value
@@ -321,6 +310,7 @@ class TestGlobalSettings:
 
             # Create access token for non-admin user
             from flask_jwt_extended import create_access_token
+
             token = create_access_token(identity=str(user_id))  # Convert to string
             headers = {"Authorization": f"Bearer {token}"}
 
@@ -338,13 +328,19 @@ class TestGlobalSettings:
                 if method == "GET":
                     response = client.get(endpoint, headers=headers)
                 elif method == "POST":
-                    response = client.post(endpoint, headers=headers, json={"key": "test", "value": "test"})
+                    response = client.post(
+                        endpoint, headers=headers, json={"key": "test", "value": "test"}
+                    )
                 elif method == "PUT":
-                    response = client.put(endpoint, headers=headers, json={"value": "test"})
+                    response = client.put(
+                        endpoint, headers=headers, json={"value": "test"}
+                    )
                 elif method == "DELETE":
                     response = client.delete(endpoint, headers=headers)
-                
-                assert response.status_code == 403, f"Endpoint {method} {endpoint} should require admin privileges"
+
+                assert (
+                    response.status_code == 403
+                ), f"Endpoint {method} {endpoint} should require admin privileges"
 
 
 class TestConfigManager:
@@ -354,11 +350,9 @@ class TestConfigManager:
         """Test getting an existing unencrypted configuration."""
         with app.app_context():
             from app.utils.config_manager import get_configuration
-            
+
             config = GlobalConfiguration(
-                key="TEST_UNENCRYPTED",
-                value="test_value",
-                is_encrypted=False
+                key="TEST_UNENCRYPTED", value="test_value", is_encrypted=False
             )
             db.session.add(config)
             db.session.commit()
@@ -371,15 +365,13 @@ class TestConfigManager:
         with app.app_context():
             # Set a proper test encryption key for consistent testing
             test_key = Fernet.generate_key().decode()
-            app.config['ENCRYPTION_KEY'] = test_key
-            
+            app.config["ENCRYPTION_KEY"] = test_key
+
             from app.utils.config_manager import get_configuration
-            
+
             test_value = "encrypted_test_value"
             config = GlobalConfiguration(
-                key="TEST_ENCRYPTED",
-                value=encrypt_value(test_value),
-                is_encrypted=True
+                key="TEST_ENCRYPTED", value=encrypt_value(test_value), is_encrypted=True
             )
             db.session.add(config)
             db.session.commit()
@@ -391,7 +383,7 @@ class TestConfigManager:
         """Test getting a non-existent configuration with default value."""
         with app.app_context():
             from app.utils.config_manager import get_configuration
-            
+
             result = get_configuration("NONEXISTENT", "default_value")
             assert result == "default_value"
 
@@ -399,7 +391,7 @@ class TestConfigManager:
         """Test getting a non-existent configuration without default value."""
         with app.app_context():
             from app.utils.config_manager import get_configuration
-            
+
             result = get_configuration("NONEXISTENT")
             assert result is None
 
@@ -408,15 +400,15 @@ class TestConfigManager:
         with app.app_context():
             # Set a proper test encryption key for consistent testing
             test_key = Fernet.generate_key().decode()
-            app.config['ENCRYPTION_KEY'] = test_key
-            
+            app.config["ENCRYPTION_KEY"] = test_key
+
             from app.utils.config_manager import get_gemini_api_token
-            
+
             test_token = "AIzaSyTestGeminiToken123456789"
             config = GlobalConfiguration(
                 key="GEMINI_API_TOKEN",
                 value=encrypt_value(test_token),
-                is_encrypted=True
+                is_encrypted=True,
             )
             db.session.add(config)
             db.session.commit()
@@ -428,7 +420,7 @@ class TestConfigManager:
         """Test getting Gemini API token when it doesn't exist."""
         with app.app_context():
             from app.utils.config_manager import get_gemini_api_token
-            
+
             result = get_gemini_api_token()
             assert result is None
 
@@ -441,12 +433,12 @@ class TestEncryptionIntegration:
         with app.app_context():
             # Set a proper test encryption key for consistent testing
             test_key = Fernet.generate_key().decode()
-            app.config['ENCRYPTION_KEY'] = test_key
-            
+            app.config["ENCRYPTION_KEY"] = test_key
+
             original_value = "test_secret_value"
             encrypted_value = encrypt_value(original_value)
             decrypted_value = decrypt_value(encrypted_value)
-            
+
             assert encrypted_value != original_value
             assert decrypted_value == original_value
 
@@ -455,22 +447,22 @@ class TestEncryptionIntegration:
         with app.app_context():
             # Set a proper test encryption key for consistent testing
             test_key = Fernet.generate_key().decode()
-            app.config['ENCRYPTION_KEY'] = test_key
-            
+            app.config["ENCRYPTION_KEY"] = test_key
+
             from app.utils.config_manager import get_configuration
-            
+
             original_token = "AIzaSyTestTokenForEncryption987654321"
-            
+
             # Create encrypted configuration
             config = GlobalConfiguration(
                 key="TEST_ENCRYPTION_INTEGRATION",
                 value=encrypt_value(original_token),
                 description="Test encryption integration",
-                is_encrypted=True
+                is_encrypted=True,
             )
             db.session.add(config)
             db.session.commit()
 
             # Retrieve and verify decryption
             decrypted_value = get_configuration("TEST_ENCRYPTION_INTEGRATION")
-            assert decrypted_value == original_token 
+            assert decrypted_value == original_token

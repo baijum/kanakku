@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-Email Automation Scheduler Script
+Email Automation Worker Script
 
-This script runs the scheduler that manages periodic email processing jobs.
+This script runs RQ workers that process email automation jobs.
 It should be run as a separate process from the main web application.
 
 Usage:
-    python run_scheduler.py [--redis-url redis://localhost:6379/0] [--interval 300]
+    python run_worker.py [--queue-name email_processing] [--redis-url redis://localhost:6379/0]
 """
 
 import os
 import sys
 import logging
 import argparse
-import time
 import redis
+from rq import Worker, Queue, Connection
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Add the backend app to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
 
-from banktransactions.email_automation.workers.scheduler import EmailScheduler
+from banktransactions.email_automation.workers.email_processor import EmailProcessor
 
 # Configure logging
 logging.basicConfig(
@@ -29,14 +29,14 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(os.path.dirname(__file__), '..', 'logs', 'scheduler.log'))
+        logging.FileHandler(os.path.join(os.path.dirname(__file__), '..', 'logs', 'worker.log'))
     ]
 )
 logger = logging.getLogger(__name__)
 
 
 def create_db_session():
-    """Create a database session for the scheduler."""
+    """Create a database session for the worker."""
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
         raise ValueError("DATABASE_URL environment variable not set")
@@ -47,17 +47,21 @@ def create_db_session():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run email automation scheduler")
+    parser = argparse.ArgumentParser(description="Run email automation worker")
+    parser.add_argument(
+        "--queue-name",
+        default="email_processing",
+        help="Name of the Redis queue to process (default: email_processing)"
+    )
     parser.add_argument(
         "--redis-url",
         default=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
         help="Redis URL (default: redis://localhost:6379/0)"
     )
     parser.add_argument(
-        "--interval",
-        type=int,
-        default=300,  # 5 minutes
-        help="Scheduling interval in seconds (default: 300)"
+        "--worker-name",
+        default=None,
+        help="Worker name (default: auto-generated)"
     )
     
     args = parser.parse_args()
@@ -74,31 +78,26 @@ def main():
         db_session = create_db_session()
         logger.info("Connected to database")
         
-        # Create scheduler
-        scheduler = EmailScheduler(redis_conn, db_session)
+        # Create queue
+        queue = Queue(args.queue_name, connection=redis_conn)
         
-        logger.info(f"Starting scheduler with {args.interval}s interval")
-        logger.info("Scheduler is ready. Press Ctrl+C to stop.")
+        # Create worker
+        worker_name = args.worker_name or f"email_worker_{os.getpid()}"
+        worker = Worker([queue], connection=redis_conn, name=worker_name)
         
-        # Run scheduler loop
-        while True:
-            try:
-                scheduler.schedule_jobs()
-                logger.debug("Scheduled jobs check completed")
-                time.sleep(args.interval)
-            except KeyboardInterrupt:
-                logger.info("Scheduler stopped by user")
-                break
-            except Exception as e:
-                logger.error(f"Error in scheduler loop: {str(e)}", exc_info=True)
-                time.sleep(args.interval)
-                
+        logger.info(f"Starting worker '{worker_name}' for queue '{args.queue_name}'")
+        logger.info("Worker is ready to process jobs. Press Ctrl+C to stop.")
+        
+        # Start the worker
+        with Connection(redis_conn):
+            worker.work()
+            
     except KeyboardInterrupt:
-        logger.info("Scheduler stopped by user")
+        logger.info("Worker stopped by user")
     except Exception as e:
-        logger.error(f"Error starting scheduler: {str(e)}", exc_info=True)
+        logger.error(f"Error starting worker: {str(e)}", exc_info=True)
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    main() 

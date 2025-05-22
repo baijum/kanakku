@@ -17,10 +17,11 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - Rate limiting for API security
 - API token authentication support
 - Swagger/OpenAPI documentation
-- Automated bank transaction processing
-- Email-based transaction extraction
-- Automatic expense categorization
-- Account mapping for bank transactions
+- **Email Automation**: Automated bank transaction processing from Gmail
+- **AI-Powered Parsing**: Google Gemini LLM for transaction extraction
+- **Background Processing**: Redis Queue for asynchronous email processing
+- **Secure Configuration**: Encrypted storage of email credentials
+- **Few-Shot Learning**: Improves accuracy with user-provided sample emails
 
 ## Prerequisites
 
@@ -73,6 +74,11 @@ kanakku/
 │   ├── package.json
 │   └── ...
 ├── banktransactions/  # Bank transaction processing
+│   ├── email_automation/  # Email automation system
+│   │   ├── workers/   # Background workers for email processing
+│   │   ├── run_worker.py  # Worker process script
+│   │   ├── run_scheduler.py  # Scheduler process script
+│   │   └── README.md  # Email automation documentation
 │   ├── email_parser.py # Transaction extraction logic
 │   ├── imap_client.py # Email fetching and processing
 │   ├── api_client.py  # API integration
@@ -439,56 +445,81 @@ Fixed issue with updating transactions with multiple postings. See `fixes/transa
 ### Rate Limiting Implementation
 Added rate limiting for API security with configurable limits for different endpoints. See `docs/rate-limit-configuration.md` for configuration details.
 
-## Bank Transaction Processing
+## Email Automation System
 
-Kanakku includes an automated bank transaction processing system that can:
+Kanakku includes a comprehensive email automation system that automatically processes bank transaction emails and creates transactions in your ledger.
 
-1. **Fetch Bank Emails**
-   - Automatically fetch transaction emails from multiple bank accounts
-   - Support for various Indian banks (ICICI, HDFC, SBI, Axis, etc.)
-   - Deduplication of processed emails
+### Features
 
-2. **Extract Transaction Details**
-   - Parse transaction amounts, dates, and descriptions
-   - Handle different email formats from various banks
-   - Extract masked account numbers and merchant details
+- **Secure Gmail Integration**: Connect your Gmail account using app passwords
+- **AI-Powered Parsing**: Uses Google Gemini LLM for intelligent transaction extraction
+- **Background Processing**: Redis Queue (RQ) for asynchronous email processing
+- **Few-Shot Learning**: Improves accuracy with user-provided sample emails
+- **Real-time Monitoring**: Status tracking and error reporting
+- **Flexible Scheduling**: Configurable polling intervals (hourly, daily)
+- **Manual Triggers**: On-demand email processing
 
-3. **Automatic Categorization**
-   - Map transactions to expense categories
-   - Configurable merchant-to-category mapping
-   - Support for multiple expense accounts per merchant
+### Quick Setup
 
-4. **Account Mapping**
-   - Map bank accounts to ledger accounts
-   - Support for multiple account types (Assets, Liabilities)
-   - Configurable account hierarchy
-
-### Setting up Bank Transaction Processing
-
-1. Configure Gmail credentials in `.env`:
-   ```
-   GMAIL_USERNAME=your-email@gmail.com
-   GMAIL_APP_PASSWORD=your-app-password
-   BANK_EMAILS=alerts@axisbank.com,alerts@icicibank.com
-   ```
-
-2. Configure account and expense mapping in `config.toml`:
-   ```toml
-   [bank-account-map]
-   XX1648 = "Assets:Bank:Axis"
-   XX0907 = "Liabilities:CC:Axis"
-
-   [expense-account-map]
-   "MERCHANT_NAME" = ["Expenses:Category:Subcategory", "Description"]
-   ```
-
-3. Run the transaction processor:
+1. **Configure Environment Variables**:
    ```bash
-   cd banktransactions
-   python main.py
+   # Add to your .env file
+   REDIS_URL=redis://localhost:6379/0
+   GOOGLE_API_KEY=your_gemini_api_key
+   ENCRYPTION_KEY=your_32_byte_base64_key
    ```
 
-For more details, see the [banktransactions README](banktransactions/README.md).
+2. **Start Redis Server**:
+   ```bash
+   redis-server
+   ```
+
+3. **Start Email Workers**:
+   ```bash
+   cd banktransactions/email_automation
+   python run_worker.py
+   ```
+
+4. **Configure in Web Interface**:
+   - Go to Profile Settings → Email Automation
+   - Enter Gmail credentials (email + app password)
+   - Test connection and enable automation
+   - Add sample emails for better AI accuracy
+
+### Gmail Setup
+
+1. Enable 2-factor authentication on your Gmail account
+2. Generate an app password:
+   - Google Account → Security → App passwords
+   - Generate password for "Mail"
+3. Use this app password in Kanakku (not your regular Gmail password)
+
+### Architecture
+
+The email automation system consists of:
+
+- **Backend API** (`backend/app/email_automation.py`) - Configuration management
+- **Worker System** (`banktransactions/email_automation/workers/`) - Background processing
+- **Scheduler** (`banktransactions/email_automation/run_scheduler.py`) - Periodic job scheduling
+- **Frontend UI** - User-friendly configuration interface
+
+### Production Deployment
+
+For production, run workers as systemd services:
+
+```bash
+# Start email worker
+sudo systemctl start kanakku-email-worker
+
+# Start scheduler (optional)
+sudo systemctl start kanakku-email-scheduler
+```
+
+For detailed setup instructions, see [Email Automation README](banktransactions/email_automation/README.md).
+
+## Legacy Bank Transaction Processing
+
+Kanakku also includes a legacy command-line bank transaction processing system. For details, see the [banktransactions README](banktransactions/README.md).
 
 ## Security Features
 

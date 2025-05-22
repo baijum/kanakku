@@ -1,12 +1,17 @@
 import logging
+import os
+import sys
 from datetime import datetime, timedelta
 from typing import List
 
 from rq_scheduler import Scheduler
 from sqlalchemy.orm import Session
 
-from email_automation.models.email_config import EmailConfiguration
-from email_automation.workers.email_processor import EmailProcessor
+# Add the backend app to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
+
+from app.models import EmailConfiguration
+from banktransactions.email_automation.workers.email_processor import EmailProcessor
 
 logger = logging.getLogger(__name__)
 
