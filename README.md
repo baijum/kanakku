@@ -65,7 +65,10 @@ kanakku/
 ├── tools/            # Command-line tools
 │   ├── accountimporter/  # Rust-based account importer
 │   └── ledgertransactions/  # Go-based ledger transaction processor
-...
+├── hack/             # Debugging and development scripts
+│   ├── debug_redis_queue.py  # Redis queue debugging script
+│   ├── inspect_queues.py     # Queue inspection tool
+│   └── health_check.sh       # System health check script
 ├── frontend/          # React frontend
 │   ├── public/
 │   ├── src/           # Source code
@@ -536,6 +539,14 @@ Kanakku includes a comprehensive email automation system that automatically proc
    - Google Account → Security → App passwords
    - Generate password for "Mail"
 3. Use this app password in Kanakku (not your regular Gmail password)
+
+### Debugging & Troubleshooting
+
+For debugging Redis Queue issues and email automation problems:
+
+- **[Redis Queue Debugging Guide](docs/redis-queue-debugging.md)**: Comprehensive debugging tools and techniques
+- **[Quick Reference](docs/redis-queue-quick-reference.md)**: Common commands and quick fixes
+- **Debugging Scripts**: Use `hack/debug_redis_queue.py` and `hack/health_check.sh` for system diagnostics
 
 ### Architecture
 
