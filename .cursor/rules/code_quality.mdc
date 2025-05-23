@@ -3,41 +3,68 @@ description: Code quality, organization, and refactoring guidelines for maintain
 globs: "**/*.{js,jsx,ts,tsx,py}"
 alwaysApply: true
 ---
-
 # Code Quality & Organization Standards
 
 ## Code Quality & Organization
 
 - Keep files under 300 lines of code; refactor when approaching this limit
-- Maintain a clean, organized codebase
+- Maintain a codebase organized according to the established project structure:
+    - **Backend:** Flask Blueprints for features (e.g., `app/feature_name/`), with internal separation into `routes.py`, `services.py`, `models.py` (if feature-specific, or global `app/models/`), `schemas.py`. (See `backend.mdc`)
+    - **Frontend:** Feature-based directories within `src/features/` (e.g., `src/features/featureName/components/`, `hooks/`, `pages/`, `services/`). (See `frontend.mdc`)
 - Avoid code duplication by checking for similar existing functionality
-- Exhaust all options using existing implementations before introducing new patterns
+- Exhaust all options using existing implementations before introducing new patterns. Do not introduce new third-party libraries, major design patterns (e.g., a different state management paradigm on the frontend, a new ORM on the backend), or significantly different architectural styles without explicit prior discussion and approval. If you believe a new approach is strongly warranted, provide a clear justification comparing it to existing `kanakku` patterns and await confirmation before proceeding.
 - If introducing a new pattern to replace an old one, remove the old implementation
 - Never name files "improved-something" or "refactored-something"
+- **Modularity and Reusability**: When implementing new functionality, actively look for opportunities to create reusable functions, classes (backend), custom React hooks, or components (frontend). Encapsulate logic that is likely to be used in multiple places to avoid duplication and promote DRY principles.
+- **Keep It Simple (KISS)**: Strive for the simplest possible solution that correctly and robustly meets requirements. Avoid unnecessary complexity, premature optimization, or over-engineering. If a simpler approach exists that aligns with project patterns, prefer it.
 
 ## Refactoring Guidelines
 
 - When being asked to refactor, look for duplicate code, duplicate files, and similar existing functionality
 - Do not copy files and rename them so that we have two files, instead just edit the file that already exists
-- Focus on improving existing code rather than rewriting from scratch
+- Focus on improving existing code rather than rewriting from scratch. Refactoring tasks should target specific, measurable improvements (e.g., reducing algorithmic complexity, improving query performance by X%, increasing clarity of a specific module, extracting reusable logic) within the *existing* architectural framework of `kanakku`. Do not interpret a refactoring task as an opportunity to introduce fundamentally different structures or logic flow unless explicitly directed by the task requirements. Public APIs (function signatures, component props, API endpoint contracts) must remain unchanged unless the change is a stated and approved goal of the refactoring effort.
 - Maintain backward compatibility when possible
 - Test thoroughly after refactoring to ensure functionality is preserved
 
 ## Code Organization Principles
 
-- Group related functionality together
-- Use consistent naming conventions across the project
+- Group related functionality within the established module/directory structures. For example:
+    - Backend: Database models in `app/models/` (or blueprint-specific `models.py`), service logic in `services.py`, API routes in `routes.py`, Marshmallow schemas in `schemas.py`. Utility functions shared across the backend can reside in `app/utils/`.
+    - Frontend: React components related to a feature in `src/features/featureName/components/`, custom hooks in `hooks/`, API service calls in `services/`, page-level components in `pages/`. Shared frontend utilities can be in `src/utils/`, shared hooks in `src/hooks/`, shared components in `src/components/`.
+- Strictly adhere to the following naming conventions:
+    - **Python (Backend - PEP 8):**
+        - `snake_case` for functions, methods, variables, and filenames (e.g., `def get_user_account():`, `user_profile.py`).
+        - `PascalCase` (CapWords) for classes (e.g., `class UserAccount:`).
+        - `UPPER_SNAKE_CASE` for constants.
+    - **JavaScript/React (Frontend):**
+        - `camelCase` for functions, methods, and variables (e.g., `function getUserProfile()`, `const userData = ...`).
+        - `PascalCase` for React components and their filenames (e.g., `UserProfile.jsx`, `function UserProfile() {}`).
+        - `PascalCase` for enums or type-like objects.
+        - Custom hooks: `useCamelCaseName` (e.g., `useAuth.js`, `function useAuth() {}`).
 - Keep functions and classes focused on single responsibilities
-- Organize imports and dependencies logically
+- Organize imports as follows:
+    - **Python (Backend):** Use `isort` (configured in `pyproject.toml` or `setup.cfg`) to automatically sort imports. The general order is: standard library, third-party libraries, then `kanakku` application imports (e.g., from `app.`). Each group should be alphabetized.
+    - **JavaScript/React (Frontend):** Group imports in this order:
+        1.  React (`import React from 'react';`)
+        2.  External library imports (e.g., `axios`, `date-fns`)
+        3.  MUI component imports (`@mui/material`, `@mui/icons-material`)
+        4.  Project absolute imports: `@/components/`, `@/hooks/`, `@/features/`, `@/utils/`, `@/api/`
+        5.  Relative imports for local modules (`./`, `../`)
+        6.  Style imports (e.g., `import styles from './UserProfile.module.css';`)
 - Remove unused code and dependencies regularly
 
 ## Best Practices
 
 - Write self-documenting code with clear variable and function names
 - Add comments for complex business logic
-- Follow established patterns within the codebase
+- Follow established patterns within the codebase. Before writing new code or significantly modifying existing code, always examine existing, similar features or modules within the `kanakku` project to understand and replicate established patterns. For instance:
+    - Backend: If adding a new data entity, review how `Account` or `Transaction` entities are handled (models in `app/models/`, services in `app/accounts/services.py`, routes in `app/accounts/routes.py`, schemas in `app/accounts/schemas.py`).
+    - Frontend: If adding a new feature page with data fetching and display, review existing pages in `src/features/*/pages/` and their associated components, hooks, and services.
 - Consider performance implications of code changes
 - Prioritize readability and maintainability over cleverness
+- **Docstrings and Type Hints (Python)**: All public functions, classes, and methods in Python backend code must have clear docstrings explaining their purpose, arguments, and return values (use Google style or Sphinx style). Use type hints for all function parameters and return types, and ensure `mypy` static analysis passes.
+- **JSDoc and PropTypes/TypeScript (Frontend)**: For JavaScript frontend code, add JSDoc comments for non-trivial functions and components. If using PropTypes, ensure they are comprehensive. (If TypeScript is adopted, this would be replaced by TypeScript types).
+- When asked to implement a feature, first thoroughly search the existing `kanakku` codebase for similar functionalities, components, or utility functions. Prioritize adapting or extending existing, well-tested code over creating entirely new implementations from scratch. If existing code can be reused with minor, non-breaking modifications, that is the preferred approach.
 
 *For frontend-specific standards, see [frontend.mdc](mdc:.cursor/rules/frontend.mdc)*
 *For backend-specific standards, see [backend.mdc](mdc:.cursor/rules/backend.mdc)*

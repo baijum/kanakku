@@ -3,7 +3,6 @@ description: Markdown formatting standards for documentation and rule files
 globs: "**/*.md", "**/*.mdc"
 alwaysApply: true
 ---
-
 # Markdown Formatting Standards
 
 ## Heading Best Practices
@@ -187,7 +186,7 @@ Read more at https://www.example.com/article (raw URL in text).
 ```markdown
 ✅ DO: Well-formatted tables
 | Feature     | Status      | Priority |
-|-------------|-------------|----------|
+|----|----|----|
 | User Auth   | Complete    | High     |
 | Dashboard   | In Progress | Medium   |
 | Reports     | Planned     | Low      |
@@ -243,9 +242,26 @@ Regular text continues here.
 
 - Start with a clear H1 title
 - Use consistent heading hierarchy
-- Include a table of contents for long documents
+- Include a table of contents for long documents. For lengthy Markdown documents (e.g., comprehensive guides, multi-section READMEs), include a Table of Contents near the beginning, after the main H1 title. This can be manually created using ordered or unordered lists with links to headings (e.g., `[Section Title](#section-heading)`). Ensure heading IDs used in links are correct (GitHub automatically generates IDs from heading text).
 - End with proper conclusion or next steps
 - Keep line length reasonable (80-120 characters)
+- **`kanakku` README Structure**: When creating or updating `README.md` files for specific modules, features, or the project root:
+    - The root `README.md` should provide an overview of `kanakku`, setup instructions for development, how to run the application, how to run tests, and a list of core technologies/patterns used (linking to relevant rules or external docs).
+    - Feature/module-specific READMEs should describe the purpose of that module, any specific setup it requires, and examples of its usage or key components.
+- **`fixes/` Folder Markdown**: Markdown files in the `fixes/` directory (as per `project_management.mdc`) should clearly describe:
+    1.  The problem/issue encountered.
+    2.  The diagnostic steps taken.
+    3.  The root cause identified.
+    4.  The solution/fix implemented (with relevant code snippets if applicable).
+    5.  Any lessons learned or preventative measures.
+- **When Not to Use Markdown**: While Markdown is versatile, avoid using it for:
+    - Highly structured data that is better represented in JSON, YAML, or CSV.
+    - Complex diagrams or flowcharts requiring specialized tooling (embed images of these instead).
+    - Content requiring precise layout control beyond what Markdown and basic HTML offer.
+- When generating or updating any Markdown documentation for `kanakku` (READMEs, API documentation notes, `fixes/` entries, etc.), ensure all factual statements, code examples, file path references, and links (`mdc:` or external) are accurate and reflect the *current state* of the `kanakku` project. If unsure about a specific detail, state the uncertainty or ask for clarification rather than inventing information.
+- Documentation should be concise and directly relevant to its intended purpose and audience. Avoid including overly verbose descriptions, tangential information, or generic content not specific to `kanakku`.
+- All code examples embedded in Markdown documents (e.g., how to use an API, a utility function, or set up a component) must be functional, syntactically correct for their specified language, and accurately represent the behavior or usage being described. If documenting `kanakku` API endpoints, ensure example requests and responses precisely match the actual API contract (see `api_design.mdc`).
+- When using `mdc:` links to reference other files or rules within the `kanakku` project, double-check that the path is correct and the referenced file exists. For external links, ensure they point to stable, authoritative sources.
 
 ## Accessibility Considerations
 

@@ -3,7 +3,6 @@ description: React and frontend development standards including component design
 globs: src/**/*.{js,jsx,ts,tsx}
 alwaysApply: true
 ---
-
 # Frontend Development Standards
 
 ## React Component Standards
@@ -13,22 +12,37 @@ alwaysApply: true
 - Use meaningful component and prop names that clearly describe their purpose
 - Place related components in the same directory with clear naming conventions
 - Use `.jsx` extension for React components and `.js` for utility files
+- **File Naming**:
+    - React Component files: `PascalCase.jsx` (e.g., `UserProfileForm.jsx`).
+    - Custom Hook files: `useCamelCaseName.js` (e.g., `useAuthStatus.js`).
+    - Utility files: `camelCaseUtils.js` or `descriptiveName.js` (e.g., `dateFormatter.js`).
+    - Service files (for API calls): `camelCaseService.js` (e.g., `accountService.js`).
+    - CSS Modules: `ComponentName.module.css` (e.g., `UserProfileForm.module.css`).
+    - Context files: `PascalCaseContext.js` (e.g., `ThemeContext.js`).
+- When creating new React components for `kanakku`, prioritize using MUI components for UI elements. Follow the structure, prop patterns, and styling approaches (MUI theme, `sx` prop, `styled` API, CSS Modules) of existing, similar components within the project. Do not introduce custom, non-MUI-like styling solutions without approval.
 
 ## State Management
 
 - Use React hooks (`useState`, `useEffect`) for local component state
 - Create custom hooks for reusable stateful logic
 - Use React Context for state that needs to be shared across multiple components
-- Avoid prop drilling by extracting shared logic into custom hooks
+- Avoid excessive prop drilling (passing props through many intermediate components). For state shared by many components or distant relatives in the component tree, use React Context. For reusable stateful logic tied to a component or feature, create custom hooks (e.g., `useAuth`, `useFormValidation`).
 - Use reducers (`useReducer`) for complex state transitions
+- **State Management Strategy**:
+    1.  **Local State (`useState`, `useReducer`):** Default to local component state for data that is not shared. Use `useReducer` for complex state logic within a single component.
+    2.  **Custom Hooks:** Extract reusable stateful logic into custom hooks.
+    3.  **React Context (`useContext`):** Use for state that needs to be accessible by many components at different levels of the tree, especially for global concerns like theme, authentication status, or user preferences. Define contexts in dedicated files (e.g., `src/context/AuthContext.js`).
+    4.  **[If Zustand/Redux Toolkit is used]:** For more complex global state, asynchronous state management with caching, or scenarios requiring advanced middleware, `kanakku` uses [Zustand/Redux Toolkit]. Stores/slices are typically defined in `src/store/`.
+- Before introducing a new React Context or a global state store (if using Zustand/Redux), critically evaluate if the state can be managed effectively using local component state (`useState`/`useReducer`), prop passing, or existing custom hooks/contexts. Default to simpler state management mechanisms and escalate complexity only when clearly justified by the scope of state sharing or intricate logic.
 
 ## API Integration
 
-- **CRITICAL**: Always use `axiosInstance` from `src/api/axiosInstance.js` for all API requests
+- **CRITICAL**: Always use `axiosInstance` from `src/api/axiosInstance.js` for all API requests. Under no circumstances should `fetch` or any other HTTP client library be used for API calls. All backend communication *must* go through the pre-configured `axiosInstance`. This is critical for authentication, base URL configuration, interceptors, and consistent error handling.
 - Never import axios directly - this bypasses authentication, CSRF protection, and error handling
-- Handle API errors with try/catch blocks and show meaningful error messages to users
+- Handle API errors from `axiosInstance` within `try/catch` blocks. Display user-friendly messages in the UI (e.g., using MUI `Snackbar` or `Alert` components) that are concise, explain the issue from the user's perspective, and if possible, suggest corrective actions (e.g., 'Failed to save data. Please check your internet connection and try again.'). Avoid showing raw technical error details like HTTP status codes directly to the user unless mapped to a user-understandable message.
 - Show loading indicators during API calls to improve user experience
 - Validate API responses before updating component state
+- When making API calls, always refer to the corresponding backend API documentation (`/api/docs`) or service definition to understand the expected request payload structure and response format (including error responses). Do not hardcode API endpoint paths directly in components; define them in dedicated service functions (e.g., `src/features/featureName/services/dataService.js`).
 
 *For comprehensive API design standards, see [api_design.mdc](mdc:.cursor/rules/api_design.mdc)*
 
@@ -39,11 +53,16 @@ alwaysApply: true
 - Use the `sx` prop for component-specific styling when needed
 - Implement responsive design using MUI's breakpoint system
 - Use MUI icons from `@mui/icons-material` for consistency
+- **Styling Solution**: `kanakku` primarily uses Material-UI (MUI) for components and styling.
+    - Leverage MUI components (`@mui/material`) and icons (`@mui/icons-material`) extensively.
+    - Use the MUI theme (`theme.js`) for consistent colors, typography, and spacing. Access theme values via `useTheme` hook or `styled` utility.
+    - For component-specific overrides or minor custom styles, use the `sx` prop.
+    - For more complex, reusable custom component styles, or when `sx` becomes unwieldy, use MUI's `styled` API or CSS Modules (`*.module.css`) co-located with the component. Avoid global CSS stylesheets except for very base-level resets or third-party library overrides.
 
 ## Form Handling
 
 - Use controlled components for all form inputs
-- Implement proper form validation with clear error messages
+- Implement client-side form validation for immediate user feedback. Use a library like `Formik` with `Yup` for schema-based validation, or MUI's built-in form validation capabilities. Display clear, field-specific error messages next to the respective input fields. Always remember that client-side validation is for UX; authoritative validation *must* occur on the backend.
 - Disable submit buttons during form submission to prevent double submissions
 - Clear form data appropriately after successful submissions
 - Use proper input types (email, password, number) for better UX and validation
@@ -51,15 +70,15 @@ alwaysApply: true
 ## Error Handling & User Feedback
 
 - Implement error boundaries to catch and handle React errors gracefully
-- Show user-friendly error messages instead of technical details
+- Show user-friendly error messages instead of technical details (see API Integration section)
 - Use toast notifications or snackbars for temporary feedback
 - Provide clear loading states for better perceived performance
-- Handle network errors and offline scenarios appropriately
+- For network errors (e.g., `axiosInstance` throws a network error) or timeouts during API calls, display a persistent, non-intrusive message (e.g., a banner or global `Snackbar`) indicating the connectivity issue. Offer a 'Retry' option for critical actions where appropriate. For offline scenarios, `kanakku` currently [does/does not] support specific offline functionality. [If it does, describe it. If not, state that a 'no connection' message is sufficient].
 
 ## Performance Optimization
 
 - Use React.memo for components that receive stable props
-- Implement proper dependency arrays in useEffect hooks
+- Critically review and correctly specify dependency arrays for `useEffect`, `useCallback`, and `useMemo` hooks. Include all values referenced inside the hook that are defined in the component scope and can change over time. Use the `eslint-plugin-react-hooks` (specifically `exhaustive-deps` rule) to help identify missing dependencies. If a function from props or component scope needs to be stable, wrap its definition in `useCallback` in the parent component.
 - Avoid creating objects and functions in render methods
 - Use lazy loading for routes and heavy components
 - Optimize images and assets for web delivery
@@ -73,8 +92,22 @@ alwaysApply: true
 - Group related files in feature-based directories
 - Use consistent import order: React, MUI, external libraries, internal components
 - Create reusable utility functions in separate files
-- Use absolute imports for better maintainability
+- Use absolute imports with the `@/` path alias configured in `jsconfig.json` (or `tsconfig.json` if using TypeScript). For example: `import MyComponent from '@/components/MyComponent';` or `import { fetchData } from '@/features/someFeature/services/apiService';`. Avoid long relative paths like `../../../../components/MyComponent`.
 - Keep component files under 300 lines - refactor larger components
+- **Feature Directory Structure**: Organize frontend code by features within the `src/features/` directory. A typical feature folder (e.g., `src/features/accounts/`) should contain its own subdirectories as needed:
+    - `components/`: Reusable React components specific to this feature.
+    - `hooks/`: Custom React hooks specific to this feature.
+    - `pages/`: Top-level components representing feature pages/views.
+    - `services/`: Functions for making API calls related to this feature (using `axiosInstance`).
+    - `utils/`: Utility functions specific to this feature.
+    - `index.js`: Exports key modules from the feature.
+  Shared components are in `src/components/`, shared hooks in `src/hooks/`, etc.
+- **Routing**: Client-side navigation is handled by `react-router-dom`.
+    - Define routes centrally (e.g., in `src/App.jsx` or a dedicated `src/routes.jsx` file).
+    - Use the `<Link>` component for declarative navigation and the `useNavigate()` hook for programmatic navigation.
+    - Implement protected routes for authenticated areas using a wrapper component that checks authentication status (from AuthContext or auth hook).
+- **Internationalization (i18n)**: If `kanakku` supports multiple languages, it uses [e.g., `react-i18next`]. Translation strings are stored in JSON files (e.g., `public/locales/en/translation.json`). Use the `t` function or `Trans` component for translating text in components.
+- Do not add new frontend dependencies (npm packages) to `package.json` without prior discussion and approval. If a new library is deemed necessary, provide a clear justification for its use, confirm it's well-maintained and secure, and ensure it doesn't conflict with existing `kanakku` libraries or established patterns.
 
 ## Accessibility (a11y)
 

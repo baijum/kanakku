@@ -3,7 +3,6 @@ description: Git best practices and file management standards for version contro
 globs: "**/*"
 alwaysApply: true
 ---
-
 # Version Control & File Management Standards
 
 ## Git Best Practices
@@ -12,6 +11,21 @@ alwaysApply: true
 - Don't create new branches unless explicitly requested
 - Commit changes in logical, focused units
 - Write clear, descriptive commit messages
+- **Commit Message Format**: Use the conventional commit format for `kanakku`:
+    - `feat: add user authentication endpoint` (for new features)
+    - `fix: resolve JWT token expiration issue` (for bug fixes)
+    - `refactor: extract common validation logic` (for code refactoring)
+    - `docs: update API documentation for accounts` (for documentation changes)
+    - `test: add unit tests for transaction service` (for test additions/changes)
+    - `chore: update dependencies` (for maintenance tasks)
+  Include a brief description of the change in the commit body if the change is complex or affects multiple areas.
+- **Staging and Committing**: Before committing, use `git status` to review all changes. Stage only the files relevant to the specific logical change you're committing. If you've made changes to multiple unrelated areas, create separate commits for each logical change.
+- **Pre-commit Checks**: Before committing to `kanakku`, ensure:
+    1.  All tests pass (`pytest` for backend, `npm test` for frontend).
+    2.  Code formatting is applied (`black` for Python, `prettier` for JavaScript/React).
+    3.  Linting passes (`flake8` or `pylint` for Python, `eslint` for JavaScript/React).
+    4.  No sensitive information (API keys, passwords, personal data) is included in the commit.
+- **Branching Strategy**: `kanakku` follows [specify: Git Flow, GitHub Flow, or a custom strategy]. The main development branch is `[main/develop]`. Feature branches should be named descriptively (e.g., `feature/user-authentication`, `bugfix/jwt-expiration-issue`). Always create pull requests for code review before merging into the main branch.
 
 ## Environment & Security
 
@@ -19,6 +33,20 @@ alwaysApply: true
 - Never overwrite `.env` files without first asking and confirming
 - Use `.gitignore` to exclude sensitive files and build artifacts
 - Store secrets and configuration in environment variables
+- **`.gitignore` Maintenance**: Ensure the `.gitignore` file for `kanakku` includes:
+    - Environment files: `.env`, `.env.local`, `.env.production`, etc.
+    - Build artifacts: `dist/`, `build/`, `__pycache__/`, `*.pyc`, `node_modules/`
+    - IDE/editor files: `.vscode/`, `.idea/`, `*.swp`, `*.swo`
+    - OS-specific files: `.DS_Store`, `Thumbs.db`
+    - Log files: `*.log`
+    - Database files (if using SQLite for development): `*.db`, `*.sqlite`
+  Regularly review and update `.gitignore` as new tools or file types are introduced to the project.
+- **Sensitive Data Detection**: Before committing, scan your changes for accidentally included sensitive information:
+    - API keys, tokens, passwords, or other secrets
+    - Personal or customer data
+    - Internal URLs, server names, or infrastructure details not meant to be public
+    - Hardcoded configuration values that should be environment variables
+  If sensitive data is accidentally committed, immediately remove it from the repository history using tools like `git filter-branch` or `BFG Repo-Cleaner`, and rotate any exposed secrets.
 
 ## File Management
 
@@ -26,6 +54,19 @@ alwaysApply: true
 - Use descriptive file and directory names
 - Keep project structure organized and consistent
 - Remove unused files and dependencies regularly
+- **File Naming Conventions**: Adhere to the established naming conventions for `kanakku`:
+    - **Backend (Python):** `snake_case` for all files (e.g., `user_service.py`, `account_routes.py`)
+    - **Frontend (JavaScript/React):** `PascalCase` for React components (e.g., `UserProfile.jsx`), `camelCase` for utilities and services (e.g., `apiService.js`, `dateUtils.js`)
+    - **Configuration files:** Use the conventional names (e.g., `requirements.txt`, `package.json`, `Dockerfile`, `docker-compose.yml`)
+    - **Documentation:** Use `kebab-case` for markdown files (e.g., `user-guide.md`, `api-reference.md`)
+- **Dependency Management**: 
+    - **Backend:** Keep `requirements.txt` up to date. When adding new Python packages, pin to specific versions (e.g., `flask==2.3.2`) for reproducibility. Use `pip freeze > requirements.txt` cautiously; prefer manually adding only the direct dependencies you need.
+    - **Frontend:** Use `package-lock.json` (npm) or `yarn.lock` (Yarn) to lock dependency versions. Commit these lock files to ensure consistent installs across environments.
+    - Regularly audit and update dependencies for security vulnerabilities using `pip-audit` (Python) and `npm audit` (JavaScript).
+- **Temporary Files and Cleanup**: 
+    - Do not commit temporary files, debug outputs, or experimental code snippets to the repository.
+    - If you create temporary files during development (e.g., test data files, debug logs), ensure they are either in `.gitignore` or manually cleaned up before committing.
+    - Remove commented-out code blocks, unused imports, and dead code before committing.
 
 ## Code Organization
 
@@ -33,5 +74,18 @@ alwaysApply: true
 - When refactoring, edit existing files instead of creating duplicates
 - Maintain consistent naming conventions across the project
 - Group related files in logical directory structures
+- **Refactoring and File Changes**: When refactoring code in `kanakku`:
+    1.  If moving functionality between files, ensure all imports and references are updated.
+    2.  If renaming files, use `git mv` to preserve file history.
+    3.  If splitting a large file into multiple smaller files, ensure the new structure follows the established patterns (e.g., Flask Blueprints structure for backend, feature-based directories for frontend).
+    4.  Update any documentation, comments, or configuration files that reference the old file names or structure.
+- **Import Organization**: Maintain clean, organized imports in all files:
+    - **Backend (Python):** Use `isort` to automatically organize imports. Group imports as: standard library, third-party packages, local application imports.
+    - **Frontend (JavaScript/React):** Group imports as: React, external libraries, MUI components, internal components (using absolute imports with `@/` prefix), relative imports, style imports.
+- **Code Comments and Documentation**: 
+    - Add comments for complex business logic, non-obvious code, or important architectural decisions.
+    - Remove outdated comments when refactoring code.
+    - Ensure docstrings (Python) and JSDoc comments (JavaScript) are accurate and up to date.
+    - Update README files and other documentation when making significant changes to project structure or functionality.
 
 *For comprehensive security standards, see [security.mdc](mdc:.cursor/rules/security.mdc)*

@@ -3,15 +3,32 @@ description: Project planning, documentation, and development approach standards
 globs: "README.md", "**/*.md"
 alwaysApply: true
 ---
-
 # Project Management & Documentation Standards
 
 ## Project Planning & Documentation
 
 - Always check for a PRD (Product Requirements Document) before starting a new task and follow it closely
 - Look for comprehensive project documentation to understand requirements before making changes
-- Keep a running list of patterns and technology used in the README.md file
-- Reference the README.md file for patterns and technology used in the project
+- The **root `README.md`** of the `kanakku` project serves as a central point for high-level project information. It must include a section detailing:
+    - Core technologies used (e.g., Python/Flask, JavaScript/React, PostgreSQL, Redis, Docker, MUI).
+    - Key architectural patterns (e.g., Flask Blueprints, Service Layer pattern in backend; React Context/Custom Hooks for state, Feature-based directory structure in frontend).
+    - Links to more detailed rule files in `.cursor/rules/` for specific standards.
+    - Pointers to API documentation (`/api/docs`).
+  This section should be kept up-to-date as the project evolves.
+- Reference the root `README.md` file for patterns and technology used in the project.
+- `kanakku` project documentation includes, but is not limited to:
+    - The root `README.md`.
+    - Module-specific READMEs within backend Blueprints or frontend feature directories.
+    - API documentation (OpenAPI/Swagger specification, accessible via `/api/docs` and source in [e.g., `docs/api.yaml` or generated from code]).
+    - All `.mdc` rule files in `.cursor/rules/`.
+    - Architectural Decision Records (ADRs) in `docs/adr/`.
+    - Problem/solution write-ups in the `fixes/` folder.
+  Ensure these are updated whenever relevant changes are made to the codebase, architecture, or development processes.
+- Significant architectural decisions for `kanakku` (e.g., choosing a new library for a core function, changing a fundamental data flow, adopting a new major pattern) must be documented using a lightweight Architecture Decision Record (ADR) format. Store ADRs in markdown files within a `docs/adr/` directory (e.g., `docs/adr/001-use-redis-for-caching.md`). Each ADR should outline:
+    1.  **Title & Status** (e.g., Proposed, Accepted, Deprecated).
+    2.  **Context** (The problem or situation being addressed).
+    3.  **Decision** (The chosen solution/approach).
+    4.  **Consequences** (Pros, cons, tradeoffs, impact of the decision).
 
 ## Development Approach
 
@@ -21,10 +38,19 @@ alwaysApply: true
 - Make only requested changes or changes you're confident are well understood
 - Consider what other code areas might be affected by your changes
 - Don't drastically change existing patterns without explicit instruction
+- **Task Understanding and Clarification**: Before starting implementation of any task (from a PRD, issue tracker, or direct request):
+    1.  Ensure you fully understand the requirements, scope, and acceptance criteria.
+    2.  If any aspect is unclear, ambiguous, or seems to contradict existing patterns/rules, *ask for clarification immediately*.
+    3.  Restate your understanding of the task and expected outcomes to confirm alignment before writing code.
+  *(Rationale: Prevents wasted effort due to misunderstandings and ensures the AI works on the correct problem.)*
+- **Communication of Progress and Blockers**: Provide concise updates on task progress, especially for longer tasks. If you encounter significant blockers, unexpected complexity that will affect estimates, or identify issues outside the immediate task scope, report them promptly.
+- **Adherence to Task Scope**: Focus exclusively on implementing the requirements of the assigned task. If you identify potential improvements, refactoring opportunities, or related bugs that are outside the current task's explicit scope, document them as suggestions for separate, future tasks rather than expanding the current work effort without approval.
+- When a PRD, user story, or issue description is provided, interpret its requirements literally and within the established context of the `kanakku` application and its existing features/patterns. Do not infer unstated requirements or make assumptions about desired behavior, user workflows, or business logic that are not explicitly documented in the task or supporting materials (e.g., UI mockups).
+- When asked to update the root `README.md` (or any other project documentation) with information about patterns, technologies, or setup instructions, verify that this information is accurate, current, and reflects actual practices within the `kanakku` project. Avoid listing aspirational goals as current realities, or documenting deprecated/unused items.
 
 ## Issue Documentation & Learning
 
-- If you run into issues that take multiple iterations to fix. After you fix it, write up a description of the problem and how we fixed it and store it in a folder called "fixes", in an individual .md file with the name of the issue. Only do this for major issues and solutions
+- If you run into issues that take multiple iterations to fix. After you fix it, write up a description of the problem and how we fixed it and store it in a folder called "fixes", in an individual .md file with the name of the issue. Only do this for major issues and solutions. When creating a new entry in the `fixes/` folder, ensure the description of the problem, diagnosis, and solution is detailed enough for another developer (or AI) to understand the issue and learn from the resolution. Include relevant code snippets or error messages if they aid clarity.
 - For issues that are taking multiple iterations to fix, check the fixes folder for previous fixes and see if the same issue has been fixed before
 
 ## Documentation Best Practices

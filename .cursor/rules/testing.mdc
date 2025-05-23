@@ -3,7 +3,6 @@ description: Comprehensive testing standards for backend, frontend, and end-to-e
 globs: "**/*.test.{js,jsx,ts,tsx,py}", "test_*.py", "**/tests/**/*"
 alwaysApply: true
 ---
-
 # Testing Standards
 
 ## Test Philosophy
@@ -15,7 +14,9 @@ alwaysApply: true
 
 ## Testing & Quality Assurance
 
-- Write thorough tests for all major functionality
+- Write thorough tests for all critical functionality. For `kanakku`, this includes:
+    - **Backend:** All API endpoints (success paths, error paths for different status codes, validation errors, authentication/authorization). Core business logic within service functions (especially calculations, state transitions, complex data manipulations). Database interactions and model integrity.
+    - **Frontend:** Critical user workflows (e.g., authentication, data entry forms, key data displays and interactions, navigation). Core React components, custom hooks involved in business logic or complex UI behavior. API service integrations (`axiosInstance` calls, ensuring correct request formation and response handling).
 - All tests should always pass before deploying to production. If they don't, make sure you notify me
 - Consider different environments (dev, test, prod) when writing code
 - Don't mock data except for tests (never for dev or prod environments)
@@ -28,23 +29,30 @@ alwaysApply: true
 - Mock external dependencies (email services, third-party APIs) in tests
 - Use parameterized tests for testing multiple input scenarios
 - Implement integration tests for critical user workflows
+- Utilize existing custom pytest fixtures defined in `kanakku`'s `tests/conftest.py` (e.g., `client` for unauthenticated API calls, `auth_client_user_role` for authenticated API calls with a specific user role, database fixtures). Review `conftest.py` before writing new API or integration tests to leverage these utilities.
 
 ## Frontend Testing Standards
 
 - Use React Testing Library for component testing
-- Test user behavior and interactions rather than implementation details
-- Mock API calls using Jest mock functions or MSW (Mock Service Worker)
+- Test user behavior and interactions rather than implementation details. When writing frontend tests with React Testing Library for `kanakku` components, strictly query elements as a user would: by ARIA role, label text, placeholder text, display text, etc. (e.g., `screen.getByRole('button', {name: /Submit/i})`). Assert based on user-perceivable output or interactions (e.g., an element is visible, text changes, a mock function is called). *Avoid* querying by component internal state, CSS class names, or `data-testid` attributes unless absolutely necessary for stable selection of dynamic content not otherwise identifiable by user-facing attributes.
+- For frontend tests, mock API calls made by `axiosInstance`.
+    - **Prefer MSW (Mock Service Worker):** Use MSW to define API mocks at the network level. This allows testing components' interaction with `axiosInstance` more realistically, including loading states and error handling based on mock HTTP responses. Define MSW handlers in `src/mocks/handlers.js` and server setup in `src/mocks/server.js`.
+    - **Jest Mock Functions (`jest.mock`, `jest.fn`):** Can be used for simpler unit tests of functions or hooks that directly invoke `axiosInstance` methods, or when MSW setup is overly complex for a very isolated unit.
 - Write tests for critical user flows (authentication, transaction creation, reporting)
 - Use meaningful test descriptions that explain the expected behavior
 - Test accessibility features and keyboard navigation
+- For frontend tests requiring global context (e.g., AuthContext, ThemeProvider), ensure your test setup (e.g., a custom `render` function wrapper) provides these contexts to the component under test, similar to how they are provided in `src/App.jsx`.
+- **Visual Regression Testing (Frontend - Optional)**: For key UI components or pages in `kanakku` where visual consistency is critical, consider implementing visual regression testing to catch unintended UI changes. Tools like Playwright with visual comparison features, or services like Percy/Applitools can be used. [Specify if this is currently implemented or desired for `kanakku`].
+- **Snapshot Testing (React - Use Sparingly)**: Use React Testing Library's snapshot testing (`toMatchSnapshot()`) very sparingly, primarily for components whose rendered output is complex but highly stable and has minimal logic (e.g., purely presentational components with many static elements). Prefer testing user-perceivable behavior and interactions over snapshot matching to avoid brittle tests that break on minor, inconsequential implementation changes. If used, commit snapshots to version control.
 
 ## Test Organization
 
 - Group related tests in describe/context blocks with clear descriptions
 - Use descriptive test names that explain what is being tested
 - Follow the Arrange-Act-Assert (AAA) pattern in test structure
-- Keep test files close to the code they test
-- Use consistent naming conventions for test files (`test_*.py`, `*.test.js`)
+- **Backend (pytest):** Store test files in a top-level `tests/` directory that mirrors the `app/` structure. For example, tests for `app/accounts/services.py` would be in `tests/accounts/test_services.py`. Test filenames must be `test_*.py` or `*_test.py`.
+- **Frontend (Jest/RTL):** Co-locate test files with the source files they are testing. For a component `src/features/accounts/components/AccountForm.jsx`, the test file should be `src/features/accounts/components/AccountForm.test.jsx`. Test filenames must end with `*.test.js` or `*.test.jsx`.
+- Use consistent naming conventions for test files (`test_*.py`, `*.test.js` - see above)
 
 ## Test Coverage & Quality
 
@@ -56,11 +64,15 @@ alwaysApply: true
 
 ## Test Data Management
 
-- Use factories or fixtures for creating test data
-- Clean up test data after each test to ensure isolation
+- **Backend (pytest):** Use `factory_boy` to define factories for SQLAlchemy models. Store these factories in files like `tests/factories/account_factories.py`. Use these factories within pytest fixtures or directly in tests to create necessary test data.
+- **Frontend (Jest/RTL):** Create helper functions or plain JavaScript objects to generate mock data structures needed for component props or mock API responses. These can be co-located with tests or placed in a shared `src/mocks/data/` directory if widely used.
+- Clean up test data after each test to ensure isolation. For backend integration tests that require a specific database state:
+    1.  Use pytest fixtures (e.g., in `tests/conftest.py` or local `conftest.py` files) to set up necessary database records using factories before a test or test module runs.
+    2.  Ensure proper cleanup: either by running each test within a database transaction that is rolled back (preferred for speed if feasible with `pytest-flask-sqlalchemy` or similar), or by explicitly deleting created test data in a teardown fixture. This ensures test isolation.
 - Use realistic but anonymized test data
 - Avoid hardcoded test data that might become outdated
 - Use database transactions for test isolation when possible
+- When generating test data for `kanakku` (e.g., via factories, helper functions, or inline objects), create data that is minimal yet sufficient for the specific scenario being tested. Avoid using overly large, generic, or complex data objects that might obscure the actual conditions being verified or make the test harder to understand.
 
 ## API Testing
 
@@ -109,3 +121,9 @@ alwaysApply: true
 - Refactor tests to reduce duplication and improve maintainability
 - Keep test dependencies up to date
 - Document complex test scenarios and their purposes
+- When mocking dependencies for `kanakku` tests (backend services, external APIs, frontend modules/`axiosInstance` calls):
+    1.  Mock only what is essential for the specific test case to isolate the unit under test.
+    2.  Ensure mocks accurately reflect the *interface and behavior* of the real module (e.g., function signatures, expected return value structures for success/error, how errors are thrown). Do not create overly simplistic mocks that hide real integration issues.
+    3.  For `axiosInstance` calls in frontend, use MSW handlers that mimic the actual API response structure, including error objects from `api_design.mdc`.
+- Write specific and meaningful assertions in `kanakku` tests. Avoid overly broad assertions (e.g., `expect(element).toBeInTheDocument()` is okay, but if you can assert its content `expect(element).toHaveTextContent('Expected Text')`, that's better). Each test case (`it(...)` or `test(...)`) should ideally verify a single, well-defined piece of behavior or outcome.
+- Before writing new tests for `kanakku`, carefully review existing test files for similar components, services, or API endpoints (e.g., in `tests/accounts/`, `src/features/authentication/components/`). Understand and replicate established testing patterns, fixture usage, MSW handler structures, mocking strategies, and custom test utility functions found within the project.

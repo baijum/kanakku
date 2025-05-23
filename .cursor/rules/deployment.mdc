@@ -3,7 +3,6 @@ description: Production deployment standards for server management, security, an
 globs: "docker-compose.yml", "Dockerfile", "**/*.{sh,yml,yaml}"
 alwaysApply: true
 ---
-
 # Deployment Standards
 
 ## Server Management
@@ -17,7 +16,24 @@ alwaysApply: true
 - Never commit production secrets to version control - use environment variables
 - Generate strong, unique secret keys for each environment using `openssl rand -hex 32`
 - Use different database credentials and URLs for each environment
-- Implement proper SSL/TLS configuration for production deployments
+- Production deployments must use HTTPS. Configure SSL/TLS using certificates from a trusted Certificate Authority (CA) (e.g., Let's Encrypt via Certbot). Ensure Nginx (or other reverse proxy/load balancer) is configured to:
+    - Disable outdated protocols (SSLv2, SSLv3, TLS 1.0, TLS 1.1).
+    - Use strong, modern cipher suites (refer to Mozilla SSL Configuration Generator for recommendations).
+    - Aim for an 'A' or 'A+' rating on SSL Labs tests.
+    - Implement HTTP Strict Transport Security (HSTS) headers.
+- **Environment Variable Naming Convention**: Use a consistent, prefixed naming convention for `kanakku`-specific environment variables, e.g., `KANAKKU_DATABASE_URL`, `KANAKKU_REDIS_URL`, `KANAKKU_SECRET_KEY`. Document all required environment variables in the root `README.md` or a dedicated deployment guide.
+- **Containerization Strategy**: `kanakku` utilizes Docker for containerization.
+    - A `Dockerfile` is present for building the backend Flask application image.
+    - A `Dockerfile` is present for building the frontend React application (typically a multi-stage build producing static assets served by Nginx).
+    - A `docker-compose.yml` file is used for local development and testing environments to orchestrate the application, database (PostgreSQL), and other services (Redis).
+    - Production deployments are managed via [e.g., Kubernetes manifests, Terraform scripts, specific cloud provider service like ECS/AppRunner - *specify if known*].
+- **CI/CD Tooling**: The CI/CD pipeline for `kanakku` is implemented using [e.g., GitHub Actions, GitLab CI, Jenkins - *specify if known*]. Workflows are defined in [e.g., `.github/workflows/`, `.gitlab-ci.yml`].
+- When generating or modifying configuration files for `kanakku` (e.g., `Dockerfile`, `docker-compose.yml`, Nginx config snippets, Gunicorn startup scripts, CI/CD workflow files):
+    1.  Base them heavily on existing, working configurations within the `kanakku` project.
+    2.  If creating anew, use widely accepted best practices and official documentation for the specific technologies (Flask, React, Nginx, Docker, PostgreSQL, Redis).
+    3.  Do not invent novel or overly complex configuration approaches without strong justification.
+- Ensure all file paths in `Dockerfiles` and `docker-compose.yml` are correct relative to the build context and application's working directory. Port mappings (`EXPOSE` in Dockerfile, `ports` in `docker-compose.yml`) must match the ports used by the `kanakku` application services (e.g., Gunicorn, Nginx serving frontend).
+- When referencing environment variables in deployment scripts or container configurations, use the exact names as defined and expected by the `kanakku` application (see `config.py` and `KANAKKU_*` naming convention).
 
 ## Docker Best Practices
 
@@ -31,31 +47,37 @@ alwaysApply: true
 
 - Use PostgreSQL for production instead of SQLite
 - Implement automated database migrations using Alembic
-- Set up regular automated backups with encryption
+- Set up regular automated backups with encryption. Automated daily backups of the PostgreSQL database are configured [e.g., via pg_dump scheduled cron job, cloud provider's managed database backup service]. Backups must be encrypted and stored securely, preferably in a separate geographical location. Test backup restoration procedures at least quarterly.
 - Use connection pooling for better performance
 - Monitor database performance and slow queries
 
 ## Web Server Configuration
 
 - Use Nginx as reverse proxy for production deployments
-- Implement proper SSL/TLS termination with strong cipher suites
+- Implement proper SSL/TLS termination with strong cipher suites (see "Environment Configuration" for details)
 - Configure security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
-- Set up proper caching for static assets
+- Configure Nginx (or CDN) to serve static assets (JS, CSS, images, fonts) for the `kanakku` frontend with appropriate caching headers:
+    - Use long `Cache-Control: public, max-age=<large_value>, immutable` headers for versioned/fingerprinted assets.
+    - Use `ETag` headers for cache validation for other static assets.
 - Implement rate limiting to prevent abuse
 
 ## Application Server
 
 - Use Gunicorn with multiple workers for Flask applications
-- Configure proper worker count based on CPU cores
+- For Gunicorn, configure the number of synchronous worker processes. A common starting point is `(2 * number_of_cpu_cores) + 1`. Adjust based on application characteristics (CPU-bound vs. I/O-bound) and performance monitoring under load. For async workers (like `gevent` or `uvicorn` workers with FastAPI/Starlette if used), the calculation differs.
 - Implement graceful shutdowns and restarts
-- Set up proper logging and log rotation
+- Configure Gunicorn and Flask application logs to output to `stdout`/`stderr`. This allows log collection by container orchestration systems (e.g., Docker, Kubernetes) or log shipper agents. If logging to files directly (less common in containerized environments), implement log rotation using tools like `logrotate` to prevent disk space exhaustion.
 - Monitor application performance and memory usage
 
 ## Monitoring & Logging
 
 - Implement centralized logging for all services
 - Set up application performance monitoring (APM)
-- Configure health check endpoints for all services
+- Implement health check endpoints (e.g., `/api/v1/health` for the backend API, specific health endpoints for other services like Redis if applicable). A backend health check should:
+    - Verify critical dependencies like database connectivity (e.g., perform a simple query like `SELECT 1`).
+    - Return a `200 OK` status and a simple JSON body (e.g., `{\"status\": \"healthy\"}`) if all checks pass.
+    - Return a `503 Service Unavailable` if any critical dependency check fails.
+  These endpoints are used by orchestration tools (e.g., Kubernetes, Docker Swarm) for liveness and readiness probes.
 - Implement alerting for critical failures and performance issues
 - Monitor resource usage (CPU, memory, disk, network)
 
@@ -69,7 +91,7 @@ alwaysApply: true
 
 ## Backup & Recovery
 
-- Automated daily backups of database and application data
+- Automated daily backups of database and application data (see "Database Deployment")
 - Test backup restoration procedures regularly
 - Store backups in multiple locations (local and cloud)
 - Implement point-in-time recovery capabilities
@@ -81,7 +103,7 @@ alwaysApply: true
 - Use linting and code quality checks
 - Implement security scanning for dependencies
 - Use blue-green or rolling deployments for zero downtime
-- Implement proper rollback procedures
+- The CI/CD pipeline should support quick and reliable rollback to a previously known stable deployment version in case of failures. Document manual rollback steps for emergencies if automated rollback is not fully comprehensive.
 
 ## Performance Optimization
 

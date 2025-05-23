@@ -3,14 +3,19 @@ description: Error handling, debugging processes, and logging best practices
 globs: "**/*.{js,jsx,ts,tsx,py}"
 alwaysApply: true
 ---
-
 # Debugging & Error Handling Standards
 
 ## Error Handling Philosophy
 
-- Unless explicitly instructed, instead of trying to gracefully handle an error or failure, make sure to fix the underlying issue
+- When encountering an error or unexpected behavior, the primary goal is to identify and fix the root cause in the `kanakku` codebase. If a root cause fix is not immediately obvious, is complex, or requires external changes:
+    1.  Clearly document the error, your diagnostic steps, and findings.
+    2.  If the error impacts users, propose or implement a temporary, safe, graceful handling mechanism (e.g., a user-friendly message, disabling a problematic feature temporarily) *if feasible and non-trivial*.
+    3.  Always report the issue and your findings for a decision on prioritizing the full root cause fix versus temporary mitigation.
+  *(Rationale: Balances the need for robust fixes with practical considerations for user experience and development velocity.)*
 - Focus on root cause analysis rather than symptom treatment
-- Implement proper error handling that provides meaningful feedback
+- Implement robust error handling:
+    - **Backend:** Catch specific exceptions first, then more generic ones. Log detailed error information (stack trace, request context) server-side. Return structured JSON error responses to the client as per `api_design.mdc`.
+    - **Frontend:** Use `try/catch` for API calls. Display user-friendly error messages (via toasts, snackbars, or inline messages) that explain the problem from the user's perspective and suggest corrective actions if possible. Avoid exposing technical details like API error codes (unless mapped to user messages) or stack traces directly in the UI. Use React Error Boundaries for component-level errors.
 - Log errors appropriately for debugging and monitoring
 
 ## Debugging Process
@@ -19,6 +24,23 @@ alwaysApply: true
 - Use systematic debugging approaches: reproduce, isolate, identify, fix, verify
 - Add temporary logging to understand code flow and variable states
 - Use debugging tools appropriate for the technology stack
+- For backend debugging, utilize Flask's built-in debugger (enable `DEBUG=True` in development `config.py`) or your IDE's debugger (PyCharm/VSCode) with appropriate configurations for the `kanakku` project structure.
+- If `kanakku` is configured to use an external error tracking service (e.g., Sentry), be aware that errors are also reported there. Frontend errors are tracked using [e.g., Sentry, if applicable].
+- **Debugging Frontend State (React)**: When debugging frontend UI issues or unexpected behavior in `kanakku`'s React application:
+    1.  Use React DevTools to inspect component hierarchy, props, state, and context values.
+    2.  Strategically use `console.log()` within components or custom hooks to trace state changes, prop values, and function execution flow. Group related logs with `console.group()` and `console.table()` for complex objects.
+    3.  Leverage breakpoints in browser developer tools to step through JavaScript execution.
+- **Debugging API Call Issues (Frontend)**: When debugging frontend-backend communication issues:
+    1.  Use the browser's Network tab (DevTools) to inspect API request URLs, methods, headers (including auth tokens), payloads, and full responses (including status codes and body).
+    2.  Verify that requests are being sent via the configured `axiosInstance` from `src/api/axiosInstance.js`.
+    3.  Cross-reference with backend logs using the request ID if available.
+- **Reproducibility of Bugs**: When reporting a bug that you (the AI) cannot fix or fully diagnose, always provide clear, numbered, step-by-step instructions to reliably reproduce the issue. Include expected behavior vs. actual observed behavior, and any relevant error messages or screenshots if applicable.
+- When an error occurs, do not make assumptions about its cause based on superficial symptoms. Systematically analyze the full error message, stack trace (both frontend and backend if applicable), and the surrounding code logic. If the error originates from a third-party library, consult its official documentation for that specific error code or message.
+- When proposing a fix for a bug, clearly explain:
+    1.  The identified root cause of the error.
+    2.  How your proposed code change directly addresses this root cause.
+    3.  Any potential side effects or impacts on other parts of the `kanakku` application.
+    If the fix involves changes to data structures, API contracts, or core business logic, highlight this and consider if it requires broader review or documentation updates.
 
 ## Research & Problem Solving
 
@@ -30,9 +52,13 @@ alwaysApply: true
 ## Logging Best Practices
 
 - Use appropriate log levels (DEBUG, INFO, WARNING, ERROR)
-- Include relevant context in log messages
+- Structure logs for effective debugging and analysis (preferably JSON format for backend):
+    - **All Logs:** Timestamp, severity level (DEBUG, INFO, WARNING, ERROR, CRITICAL), logger name (e.g., module path).
+    - **Error Logs:** Full error message, stack trace.
+    - **Contextual Data (Backend):** Request ID (for tracing), authenticated User ID, relevant entity IDs (e.g., `account_id`, `transaction_id`), key parameters involved in the operation.
+    - **Contextual Data (Frontend):** Component name, relevant props/state involved if they contribute to the error, user flow context.
 - Avoid logging sensitive information
-- Structure logs for easy parsing and analysis
+- Backend logs must be structured, preferably in JSON format (e.g., using `python-json-logger` or configured in Flask's logging setup), to facilitate automated parsing, searching, and analysis in log management systems (e.g., Papertrail, Datadog, ELK stack).
 - Remove temporary debug logs before committing
 
 ## Error Prevention
