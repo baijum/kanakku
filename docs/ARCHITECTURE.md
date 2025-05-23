@@ -416,6 +416,7 @@ flowchart TD
 ## Key Technologies
 
 ### Backend
+
 - Flask: Web framework
 - SQLAlchemy: ORM for database operations
 - Flask-JWT-Extended: JWT authentication
@@ -423,12 +424,14 @@ flowchart TD
 - Swagger: API documentation
 
 ### Frontend
+
 - React: UI library
 - Material-UI: Component library
 - Axios: HTTP client with interceptors for authentication
 - React Router: Client-side routing
 
 ### Development & Deployment
+
 - Docker: Containerization
 - Nginx: Reverse proxy for production
 - Systemd: Service management for production deployment
@@ -477,11 +480,11 @@ flowchart TD
 
 4. **Scalability**:
    - Move from SQLite to PostgreSQL for production
-   - Implement horizontal scaling with load balancing 
+   - Implement horizontal scaling with load balancing
 
 5. **API Documentation**:
    - Enhanced Swagger documentation
-   - Interactive API explorer 
+   - Interactive API explorer
 
 ## Bank Transaction Processing System
 
@@ -576,13 +579,15 @@ flowchart TD
 The system uses two types of configuration:
 
 1. **Environment Variables**:
-   ```
+
+   ```bash
    GMAIL_USERNAME=your-email@gmail.com
    GMAIL_APP_PASSWORD=your-app-password
    BANK_EMAILS=alerts@axisbank.com,alerts@icicibank.com
    ```
 
 2. **TOML Configuration** (`config.toml`):
+
    ```toml
    [bank-account-map]
    XX1648 = "Assets:Bank:Axis"
@@ -595,6 +600,7 @@ The system uses two types of configuration:
 ### Error Handling
 
 The system includes robust error handling for:
+
 - Email server connection issues
 - Email parsing errors
 - Transaction mapping failures
@@ -604,6 +610,7 @@ The system includes robust error handling for:
 ### Integration with Main Application
 
 The bank transaction processing system integrates with the main application through:
+
 - REST API endpoints for transaction submission
 - Shared configuration for account mapping
 - Common transaction data model

@@ -1,4 +1,5 @@
 # Kanakku
+
 > **Personal Expense Tracker**
 
 Kanakku provides a user-friendly way to track your personal expenses.
@@ -100,19 +101,25 @@ kanakku/
 ## Development Tools
 
 ### Docker Support
+
 Kanakku includes a `docker-compose.yml` file for containerized development and deployment. This allows for consistent environments across development, testing, and production.
 
 ### CI/CD Pipelines
+
 The project uses GitHub Actions for continuous integration and deployment, with workflows for:
+
 - Linting (`lint-black.yml`)
 - Backend testing (`test-backend.yml`)
 - Release automation
 
 ### Database Migrations
+
 Database schema changes are managed using Alembic migrations, located in `backend/migrations/`. This ensures version-controlled, reproducible database schema updates.
 
 ### Helper Scripts
+
 Root-level scripts for common development tasks:
+
 - `lint.sh` - Run code linting
 - `test.sh` - Run test suite
 
@@ -120,16 +127,16 @@ Root-level scripts for common development tasks:
 
 Kanakku follows a modern, layered architecture with a clear separation between frontend and backend.
 
-*   **Frontend:** React application (`frontend/`) providing the user interface. It communicates with the backend via API calls.
-    * Uses Material-UI (MUI) for component styling
-    * React Router for navigation
-    * Axios for API requests
-*   **Backend:** Flask application (`backend/`) serving a RESTful API. It handles:
-    *   **Business Logic:** Managing users, accounts, transactions, and book entries.
-    *   **Database Interaction:** Using SQLAlchemy (`backend/app/models.py`) with a PostgreSQL database for application data.
-    *   **Authentication:** Utilizing Flask-JWT-Extended for token-based authentication and Google OAuth integration.
-    *   **Ledger Interaction:** Exporting data in Ledger format and generating reports.
-*   **API:** Defined using Flask Blueprints, organized by functionality with Swagger/OpenAPI documentation. All endpoints are prefixed with `/api/`.
+- **Frontend:** React application (`frontend/`) providing the user interface. It communicates with the backend via API calls.
+  - Uses Material-UI (MUI) for component styling
+  - React Router for navigation
+  - Axios for API requests
+- **Backend:** Flask application (`backend/`) serving a RESTful API. It handles:
+  - **Business Logic:** Managing users, accounts, transactions, and book entries.
+  - **Database Interaction:** Using SQLAlchemy (`backend/app/models.py`) with a PostgreSQL database for application data.
+  - **Authentication:** Utilizing Flask-JWT-Extended for token-based authentication and Google OAuth integration.
+  - **Ledger Interaction:** Exporting data in Ledger format and generating reports.
+- **API:** Defined using Flask Blueprints, organized by functionality with Swagger/OpenAPI documentation. All endpoints are prefixed with `/api/`.
 
 For a detailed architectural overview, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -139,50 +146,50 @@ For visual architecture diagrams using Mermaid, see [architecture_diagrams.md](d
 
 The main API endpoints are served under the `/api/` prefix by the Flask backend. Authentication via JWT (Bearer token in Authorization header) is required for most endpoints.
 
-*   **Health Check (`api.py`)**
-    *   `GET /api/v1/health` (No Auth Required) - Basic health check.
-*   **Authentication (`auth.py`)**
-    *   `POST /api/v1/auth/register` - Register a new user. (Body: `{ "email": "...", "password": "..." }`)
-    *   `POST /api/v1/auth/login` - Log in a user. (Body: `{ "email": "...", "password": "..." }`)
-    *   `POST /api/v1/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
-    *   `GET /api/v1/auth/me` (Auth Required) - Get the current logged-in user's details.
-    *   `POST /api/v1/auth/refresh` (Auth Required) - Refresh an expiring JWT token.
-    *   `GET /api/v1/auth/test-token-expiration` - Test endpoint that simulates token expiration.
-    *   `GET /api/v1/auth/google` - Initiate Google OAuth login flow.
-    *   `GET /api/v1/auth/google/callback` - Callback for Google OAuth.
-    *   `POST /api/v1/auth/reset-password-request` - Request a password reset.
-    *   `POST /api/v1/auth/reset-password` - Reset password with token.
-    *   `GET /api/v1/auth/tokens` - Get all API tokens for the user.
-    *   `POST /api/v1/auth/tokens` - Create a new API token.
-    *   `PUT /api/v1/auth/tokens/<token_id>` - Update an API token.
-    *   `DELETE /api/v1/auth/tokens/<token_id>` - Delete an API token.
-*   **Accounts (`accounts.py`)** (Auth Required)
-    *   `GET /api/v1/accounts` - Get all accounts for the current user.
-    *   `POST /api/v1/accounts` - Add a new account. (Body: `{ "name": "...", "description": "..." (optional), "currency": "..." (optional), "balance": ... (optional) }`)
-    *   `GET /api/v1/accounts/<int:account_id>` - Get details for a specific account.
-    *   `PUT /api/v1/accounts/<int:account_id>` - Update a specific account.
-    *   `DELETE /api/v1/accounts/<int:account_id>` - Delete a specific account.
-*   **Transactions (`transactions.py`)** (Auth Required)
-    *   `POST /api/v1/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "payee": "...", "postings": [...] }`)
-    *   `GET /api/v1/transactions` - Get all transactions for the current user (supports filtering parameters).
-    *   `GET /api/v1/transactions/<int:transaction_id>` - Get a specific transaction.
-    *   `PUT /api/v1/transactions/<int:transaction_id>` - Update a transaction.
-    *   `DELETE /api/v1/transactions/<int:transaction_id>` - Delete a transaction.
-*   **Ledger (`ledger.py`)** (Auth Required)
-    *   `GET /api/v1/ledgertransactions` - Get all transactions for the current user in Ledger text format.
-*   **Reports (`reports.py`)** (Auth Required)
-    *   `GET /api/v1/reports/balance` - Get account balances.
-    *   `GET /api/v1/reports/register` - Get transaction register.
-    *   `GET /api/v1/reports/balance_report` - Get detailed balance report by account type.
-    *   `GET /api/v1/reports/income_statement` - Get income statement (income vs expenses).
-*   **Books (`books.py`)** (Auth Required)
-    *   `GET /api/v1/books` - Get all books for the current user.
-    *   `POST /api/v1/books` - Create a new book.
-    *   `GET /api/v1/books/<int:book_id>` - Get a specific book.
-    *   `PUT /api/v1/books/<int:book_id>` - Update a book.
-    *   `DELETE /api/v1/books/<int:book_id>` - Delete a book.
-    *   `GET /api/v1/books/active` - Get the active book.
-    *   `PUT /api/v1/books/<int:book_id>/activate` - Set a book as active.
+- **Health Check (`api.py`)**
+  - `GET /api/v1/health` (No Auth Required) - Basic health check.
+- **Authentication (`auth.py`)**
+  - `POST /api/v1/auth/register` - Register a new user. (Body: `{ "email": "...", "password": "..." }`)
+  - `POST /api/v1/auth/login` - Log in a user. (Body: `{ "email": "...", "password": "..." }`)
+  - `POST /api/v1/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
+  - `GET /api/v1/auth/me` (Auth Required) - Get the current logged-in user's details.
+  - `POST /api/v1/auth/refresh` (Auth Required) - Refresh an expiring JWT token.
+  - `GET /api/v1/auth/test-token-expiration` - Test endpoint that simulates token expiration.
+  - `GET /api/v1/auth/google` - Initiate Google OAuth login flow.
+  - `GET /api/v1/auth/google/callback` - Callback for Google OAuth.
+  - `POST /api/v1/auth/reset-password-request` - Request a password reset.
+  - `POST /api/v1/auth/reset-password` - Reset password with token.
+  - `GET /api/v1/auth/tokens` - Get all API tokens for the user.
+  - `POST /api/v1/auth/tokens` - Create a new API token.
+  - `PUT /api/v1/auth/tokens/<token_id>` - Update an API token.
+  - `DELETE /api/v1/auth/tokens/<token_id>` - Delete an API token.
+- **Accounts (`accounts.py`)** (Auth Required)
+  - `GET /api/v1/accounts` - Get all accounts for the current user.
+  - `POST /api/v1/accounts` - Add a new account. (Body: `{ "name": "...", "description": "..." (optional), "currency": "..." (optional), "balance": ... (optional) }`)
+  - `GET /api/v1/accounts/<int:account_id>` - Get details for a specific account.
+  - `PUT /api/v1/accounts/<int:account_id>` - Update a specific account.
+  - `DELETE /api/v1/accounts/<int:account_id>` - Delete a specific account.
+- **Transactions (`transactions.py`)** (Auth Required)
+  - `POST /api/v1/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "payee": "...", "postings": [...] }`)
+  - `GET /api/v1/transactions` - Get all transactions for the current user (supports filtering parameters).
+  - `GET /api/v1/transactions/<int:transaction_id>` - Get a specific transaction.
+  - `PUT /api/v1/transactions/<int:transaction_id>` - Update a transaction.
+  - `DELETE /api/v1/transactions/<int:transaction_id>` - Delete a transaction.
+- **Ledger (`ledger.py`)** (Auth Required)
+  - `GET /api/v1/ledgertransactions` - Get all transactions for the current user in Ledger text format.
+- **Reports (`reports.py`)** (Auth Required)
+  - `GET /api/v1/reports/balance` - Get account balances.
+  - `GET /api/v1/reports/register` - Get transaction register.
+  - `GET /api/v1/reports/balance_report` - Get detailed balance report by account type.
+  - `GET /api/v1/reports/income_statement` - Get income statement (income vs expenses).
+- **Books (`books.py`)** (Auth Required)
+  - `GET /api/v1/books` - Get all books for the current user.
+  - `POST /api/v1/books` - Create a new book.
+  - `GET /api/v1/books/<int:book_id>` - Get a specific book.
+  - `PUT /api/v1/books/<int:book_id>` - Update a book.
+  - `DELETE /api/v1/books/<int:book_id>` - Delete a book.
+  - `GET /api/v1/books/active` - Get the active book.
+  - `PUT /api/v1/books/<int:book_id>/activate` - Set a book as active.
 
 ## API Documentation
 
@@ -191,11 +198,13 @@ Kanakku provides Swagger/OpenAPI documentation for its REST API endpoints.
 ### Accessing the API Documentation
 
 After starting the backend server, you can access the Swagger UI at:
+
 ```
 http://localhost:8000/api/docs
 ```
 
 This interactive documentation allows you to:
+
 - Browse all available API endpoints
 - View request and response schemas
 - Make API requests directly from the browser (with authentication)
@@ -268,7 +277,8 @@ To enable Google Sign-In, you need to:
 5. Add authorized redirect URIs:
    - `http://localhost:8000/api/v1/auth/google/callback`
 6. Copy the Client ID and Client Secret to your backend `.env` file:
-   ```
+
+   ```bash
    GOOGLE_CLIENT_ID=your-client-id
    GOOGLE_CLIENT_SECRET=your-client-secret
    ```
@@ -277,70 +287,88 @@ To enable Google Sign-In, you need to:
 
 ### Backend Setup
 
-1.  Navigate to the backend directory:
-    ```bash
-    cd backend
-    ```
-2.  Create and activate a virtual environment:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
-    ```
-3.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  Configure environment variables (optional - defaults are provided in `config.py`):
-    *   `SECRET_KEY`: A secret key for Flask sessions and security.
-    *   `JWT_SECRET_KEY`: A secret key for JWT generation.
-    *   `DATABASE_URL`: PostgreSQL database connection string (e.g., `postgresql://user:password@host:port/database`).
-    *   `LEDGER_PATH`: Path to the `ledger` executable (if not in system PATH).
-5.  Run the backend server:
-    ```bash
-    ./run-backend.sh
-    ```
-    The backend will be available at `http://localhost:8000`.
+1. Navigate to the backend directory:
+
+   ```bash
+   cd backend
+   ```
+
+2. Create and activate a virtual environment:
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Configure environment variables (optional - defaults are provided in `config.py`):
+   - `SECRET_KEY`: A secret key for Flask sessions and security.
+   - `JWT_SECRET_KEY`: A secret key for JWT generation.
+   - `DATABASE_URL`: PostgreSQL database connection string (e.g., `postgresql://user:password@host:port/database`).
+   - `LEDGER_PATH`: Path to the `ledger` executable (if not in system PATH).
+
+5. Run the backend server:
+
+   ```bash
+   ./run-backend.sh
+   ```
+
+   The backend will be available at `http://localhost:8000`.
 
 ### Frontend Setup
 
-1.  Navigate to the frontend directory:
-    ```bash
-    cd frontend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Run the frontend development server:
-    ```bash
-    npm start
-    ```
-    The frontend will be available at `http://localhost:3000` and will proxy API requests to the backend.
+1. Navigate to the frontend directory:
+
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Run the frontend development server:
+
+   ```bash
+   npm start
+   ```
+
+   The frontend will be available at `http://localhost:3000` and will proxy API requests to the backend.
 
 ## Usage
 
-1.  Start both the backend and frontend servers.
-2.  Access the web interface in your browser (usually `http://localhost:3000`).
-3.  Register a new user or log in if you already have an account.
-4.  Use the interface to add accounts and transactions.
+1. Start both the backend and frontend servers.
+2. Access the web interface in your browser (usually `http://localhost:3000`).
+3. Register a new user or log in if you already have an account.
+4. Use the interface to add accounts and transactions.
 
 ## Docker Development
 
 Kanakku provides a Docker-based development environment for easy setup and consistency across different machines.
 
 ### Prerequisites
+
 - Docker
 - Docker Compose
 
 ### Quick Start
 
 1. Clone the repository and navigate to the project root:
+
    ```bash
    git clone https://github.com/yourusername/kanakku.git
    cd kanakku
    ```
 
 2. Start all services:
+
    ```bash
    docker-compose up --build
    ```
@@ -351,6 +379,7 @@ Kanakku provides a Docker-based development environment for easy setup and consi
    - Swagger UI: http://localhost:8000/api/docs
 
 ### Services
+
 - `web`: Frontend React application
 - `api`: Backend Flask API
 - `db`: PostgreSQL database
@@ -358,8 +387,10 @@ Kanakku provides a Docker-based development environment for easy setup and consi
 - `migrate`: Runs database migrations on startup
 
 ### Environment Variables
+
 Create a `.env` file in the project root with the following variables:
-```
+
+```bash
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=kanakku
@@ -373,18 +404,21 @@ HCAPTCHA_SECRET_KEY=your-hcaptcha-secret-key
 ```
 
 For the frontend, create a `.env` file in the `frontend/` directory:
-```
+
+```bash
 # hCaptcha Configuration
 REACT_APP_HCAPTCHA_SITE_KEY=your-hcaptcha-site-key
 ```
 
 **Note**: To get hCaptcha keys:
+
 1. Sign up at [hCaptcha Dashboard](https://dashboard.hcaptcha.com/)
 2. Create a new site
 3. Copy the Site Key for the frontend environment variable
 4. Copy the Secret Key for the backend environment variable
 
 ### Useful Commands
+
 - Stop all services: `docker-compose down`
 - View logs: `docker-compose logs -f`
 - Run tests: `docker-compose run --rm api pytest`
@@ -394,26 +428,30 @@ REACT_APP_HCAPTCHA_SITE_KEY=your-hcaptcha-site-key
 
 To run the backend tests:
 
-1.  Ensure the backend virtual environment is active and development dependencies are installed (`pytest`, `pytest-cov`, `pytest-mock`).
-2.  Navigate to the `kanakku` root directory.
-3.  Run pytest:
-    ```bash
-    cd backend
-    python -m pytest -v tests/
-    ```
+1. Ensure the backend virtual environment is active and development dependencies are installed (`pytest`, `pytest-cov`, `pytest-mock`).
+2. Navigate to the `kanakku` root directory.
+3. Run pytest:
+
+   ```bash
+   cd backend
+   python -m pytest -v tests/
+   ```
 
 To run frontend tests:
 
 ### Unit Tests
+
 ```bash
 cd frontend
 npm test
 ```
 
 ### End-to-End (E2E) Tests
+
 Kanakku uses Playwright for E2E testing. The tests are located in `frontend/e2e/`.
 
 Run E2E tests with:
+
 ```bash
 cd frontend
 npx playwright test
@@ -423,7 +461,7 @@ E2E test configuration is in `frontend/playwright.config.js`.
 
 ## Activating a User
 
-```
+```bash
 $ cd backend
 $ flask shell
 >>> from app.models import User
@@ -440,9 +478,11 @@ For a pre-deployment checklist, see [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CH
 ## Recent Updates and Fixes
 
 ### Transaction Updates with Postings
+
 Fixed issue with updating transactions with multiple postings. See `fixes/transaction_update_with_postings_fix.md` for details.
 
 ### Rate Limiting Implementation
+
 Added rate limiting for API security with configurable limits for different endpoints. See `docs/rate-limit-configuration.md` for configuration details.
 
 ## Email Automation System
@@ -462,6 +502,7 @@ Kanakku includes a comprehensive email automation system that automatically proc
 ### Quick Setup
 
 1. **Configure Environment Variables**:
+
    ```bash
    # Add to your .env file
    REDIS_URL=redis://localhost:6379/0
@@ -470,11 +511,13 @@ Kanakku includes a comprehensive email automation system that automatically proc
    ```
 
 2. **Start Redis Server**:
+
    ```bash
    redis-server
    ```
 
 3. **Start Email Workers**:
+
    ```bash
    cd banktransactions/email_automation
    python run_worker.py
@@ -552,6 +595,7 @@ Kanakku follows comprehensive development standards to ensure code quality, secu
 ### Technology Stack & Patterns
 
 **Frontend:**
+
 - React 18 with functional components and hooks
 - Material-UI (MUI) for consistent UI components
 - Axios via configured `axiosInstance` for API requests
@@ -560,6 +604,7 @@ Kanakku follows comprehensive development standards to ensure code quality, secu
 - Playwright for end-to-end testing
 
 **Backend:**
+
 - Flask with Blueprint organization
 - SQLAlchemy ORM with Alembic migrations
 - Flask-JWT-Extended for authentication
@@ -568,6 +613,7 @@ Kanakku follows comprehensive development standards to ensure code quality, secu
 - Pytest for comprehensive testing
 
 **Infrastructure:**
+
 - Docker and Docker Compose for containerization
 - Nginx for reverse proxy and static file serving
 - Gunicorn for production WSGI serving
@@ -578,13 +624,19 @@ Kanakku follows comprehensive development standards to ensure code quality, secu
 
 The project includes the following rule sets:
 
-- **[Generic Rules](file://.cursor/rules/generic.mdc)**: General development guidelines and best practices
-- **[Security Rules](file://.cursor/rules/security.mdc)**: Security standards for authentication, data protection, and secure coding
-- **[API Design Rules](file://.cursor/rules/api_design.mdc)**: REST API design principles and standards
-- **[Frontend Rules](file://.cursor/rules/frontend.mdc)**: React component standards and UI development guidelines
-- **[Backend Rules](file://.cursor/rules/backend.mdc)**: Flask application structure and Python coding standards
-- **[Testing Rules](file://.cursor/rules/testing.mdc)**: Comprehensive testing standards for quality assurance
-- **[Deployment Rules](file://.cursor/rules/deployment.mdc)**: Infrastructure and production deployment standards
+- **[API Design Rules](.cursor/rules/api_design.mdc)**: REST API design principles and standards
+- **[Backend Rules](.cursor/rules/backend.mdc)**: Flask application structure and Python coding standards
+- **[Code Quality Rules](.cursor/rules/code_quality.mdc)**: General development guidelines and best practices
+- **[Cursor Rules](.cursor/rules/cursor_rules.mdc)**: Guidelines for cursor AI rule structure and formatting
+- **[Debugging Rules](.cursor/rules/debugging.mdc)**: Error handling and debugging standards
+- **[Deployment Rules](.cursor/rules/deployment.mdc)**: Infrastructure and production deployment standards
+- **[Frontend Rules](.cursor/rules/frontend.mdc)**: React component standards and UI development guidelines
+- **[Markdown Rules](.cursor/rules/markdown.mdc)**: Markdown formatting and documentation standards
+- **[Project Management Rules](.cursor/rules/project_management.mdc)**: Project planning and documentation standards
+- **[Security Rules](.cursor/rules/security.mdc)**: Security standards for authentication, data protection, and secure coding
+- **[Self Improvement Rules](.cursor/rules/self_improve.mdc)**: Guidelines for maintaining and improving the rule system
+- **[Testing Rules](.cursor/rules/testing.mdc)**: Comprehensive testing standards for quality assurance
+- **[Version Control Rules](.cursor/rules/version_control.mdc)**: Git workflow and file management standards
 
 ### Key Development Principles
 

@@ -5,6 +5,7 @@ Thank you for your interest in contributing to Kanakku! This document provides g
 ## Code Style and Standards
 
 ### Python (Backend)
+
 - Follow [PEP 8](https://www.python.org/dev/peps/pep-0008/) style guide
 - Use type hints for function parameters and return values
 - Keep functions small and focused (ideally under 20 lines)
@@ -15,6 +16,7 @@ Thank you for your interest in contributing to Kanakku! This document provides g
 - Default currency should be INR with proper symbol formatting
 
 Example:
+
 ```python
 def process_transaction(transaction_data: dict) -> dict:
     """
@@ -30,6 +32,7 @@ def process_transaction(transaction_data: dict) -> dict:
 ```
 
 ### JavaScript/React (Frontend)
+
 - Follow [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)
 - Use functional components with hooks
 - Keep components small and focused
@@ -41,6 +44,7 @@ def process_transaction(transaction_data: dict) -> dict:
 - Default currency should be displayed as ₹ (INR)
 
 Example:
+
 ```jsx
 const TransactionForm = ({ onSubmit }) => {
   const [formData, setFormData] = useState({});
@@ -71,16 +75,19 @@ When adding or modifying API endpoints:
 ## Git Workflow
 
 1. Create a new branch for each feature/fix:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 2. Make your changes and commit them:
+
    ```bash
    git commit -m "feat: add new transaction form"
    ```
 
 3. Push your branch:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -88,6 +95,7 @@ When adding or modifying API endpoints:
 4. Create a Pull Request
 
 ### Commit Message Format
+
 - Use [Conventional Commits](https://www.conventionalcommits.org/) format
 - Types: feat, fix, docs, style, refactor, test, chore
 - Example: `feat: add transaction form validation`
@@ -95,22 +103,26 @@ When adding or modifying API endpoints:
 ## Testing
 
 ### Backend
+
 - Write unit tests for all new functions
 - Use pytest for testing
 - Aim for at least 80% test coverage
 - Include tests for error cases
 - Run tests with:
+
   ```bash
   cd backend
   python -m pytest -v tests/
   ```
 
 ### Frontend
+
 - Write tests for all new components
 - Use React Testing Library
 - Test component behavior, not implementation
 - Include tests for user interactions
 - Run tests with:
+
   ```bash
   cd frontend
   npm test
@@ -161,6 +173,7 @@ When adding or modifying API endpoints:
 1. Fork the repository
 2. Clone your fork
 3. Set up the development environment:
+
    ```bash
    # Backend
    cd backend
@@ -175,6 +188,7 @@ When adding or modifying API endpoints:
 
 4. Make your changes
 5. Run tests:
+
    ```bash
    # Backend
    cd backend
@@ -190,12 +204,14 @@ When adding or modifying API endpoints:
 ## Running the Application
 
 ### Backend
+
 ```bash
 cd backend
 ./run-backend.sh
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm start
