@@ -34,21 +34,44 @@ The email automation system consists of several components:
 
 ### 2. Environment Variables
 
-Add these to your `.env` file:
+The worker script automatically loads environment variables from `.env` files in the following order:
+1. Current directory (`.env`)
+2. Parent directory (`../env`)
+3. Project root (`../../.env`)
+
+Create a `.env` file with these variables:
 
 ```bash
 # Redis Configuration
 REDIS_URL=redis://localhost:6379/0
 
-# Database
+# Database Configuration
 DATABASE_URL=postgresql://user:password@localhost/kanakku
 
 # Google Gemini API (for LLM processing)
 GOOGLE_API_KEY=your_gemini_api_key_here
 
-# Encryption key for sensitive data
+# Encryption key for sensitive data (32-byte base64 encoded key)
+# Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ENCRYPTION_KEY=your_32_byte_base64_encoded_key
+
+# Optional: Exchange Rate API
+EXCHANGE_RATE_API_KEY=your_exchange_rate_api_key
+
+# Optional: API Configuration (for transaction submission)
+API_ENDPOINT=http://localhost:5000
+API_KEY=your_api_key_here
+
+# Optional: Logging Configuration
+LOG_LEVEL=INFO
+
+# Optional: Gmail Configuration (for email processing)
+GMAIL_USERNAME=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-gmail-app-password
+BANK_EMAILS=alerts@axisbank.com,alerts@icicibank.com
 ```
+
+**Note**: You can also set these as system environment variables instead of using a `.env` file.
 
 ### 3. Gmail Setup
 

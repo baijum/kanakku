@@ -14,6 +14,16 @@ import sys
 import json
 import redis
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+# This will look for .env files in the following order:
+# 1. Current directory
+# 2. Parent directory (banktransactions/)
+# 3. Project root directory
+load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
 # Add the backend app to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
