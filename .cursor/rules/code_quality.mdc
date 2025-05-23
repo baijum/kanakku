@@ -1,0 +1,43 @@
+---
+description: Code quality, organization, and refactoring guidelines for maintainable codebases
+globs: "**/*.{js,jsx,ts,tsx,py}"
+alwaysApply: true
+---
+
+# Code Quality & Organization Standards
+
+## Code Quality & Organization
+
+- Keep files under 300 lines of code; refactor when approaching this limit
+- Maintain a clean, organized codebase
+- Avoid code duplication by checking for similar existing functionality
+- Exhaust all options using existing implementations before introducing new patterns
+- If introducing a new pattern to replace an old one, remove the old implementation
+- Never name files "improved-something" or "refactored-something"
+
+## Refactoring Guidelines
+
+- When being asked to refactor, look for duplicate code, duplicate files, and similar existing functionality
+- Do not copy files and rename them so that we have two files, instead just edit the file that already exists
+- Focus on improving existing code rather than rewriting from scratch
+- Maintain backward compatibility when possible
+- Test thoroughly after refactoring to ensure functionality is preserved
+
+## Code Organization Principles
+
+- Group related functionality together
+- Use consistent naming conventions across the project
+- Keep functions and classes focused on single responsibilities
+- Organize imports and dependencies logically
+- Remove unused code and dependencies regularly
+
+## Best Practices
+
+- Write self-documenting code with clear variable and function names
+- Add comments for complex business logic
+- Follow established patterns within the codebase
+- Consider performance implications of code changes
+- Prioritize readability and maintainability over cleverness
+
+*For frontend-specific standards, see [frontend.mdc](mdc:.cursor/rules/frontend.mdc)*
+*For backend-specific standards, see [backend.mdc](mdc:.cursor/rules/backend.mdc)*

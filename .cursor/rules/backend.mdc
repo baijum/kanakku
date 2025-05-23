@@ -1,0 +1,96 @@
+---
+description: Flask backend development standards including database, authentication, and API design
+globs: "**/*.py"
+alwaysApply: true
+---
+
+# Backend Development Standards
+
+## Flask Application Structure
+
+- Use Flask Blueprints to organize routes by functionality (auth, accounts, transactions, etc.)
+- Follow the application factory pattern with `create_app()` function
+- Keep route handlers focused and delegate business logic to service functions
+- Use consistent URL patterns with `/api/v1/` prefix for all API endpoints
+- Implement proper error handlers for different HTTP status codes
+
+## Database & ORM Standards
+
+- Use SQLAlchemy models with proper relationships and constraints
+- Implement database migrations using Alembic for schema changes
+- Use connection pooling for production deployments
+- Follow naming conventions: snake_case for table and column names
+- Add proper indexes for frequently queried fields
+
+## Authentication & Security
+
+- Use Flask-JWT-Extended for JWT token management
+- Implement both JWT and API key authentication methods
+- Use proper password hashing with werkzeug.security
+
+*For comprehensive security standards, see [security.mdc](mdc:.cursor/rules/security.mdc)*
+
+## Configuration Management
+
+- Use environment-specific configuration classes (Development, Testing, Production)
+- Use strong, randomly generated secret keys for production
+- Implement proper logging configuration with different levels
+- Use different database URLs for different environments
+
+*For environment variables and secrets management, see [security.mdc](mdc:.cursor/rules/security.mdc)*
+
+## Error Handling & Logging
+
+- Implement comprehensive error handlers that don't expose sensitive information
+- Use structured logging with appropriate log levels (DEBUG, INFO, WARNING, ERROR)
+- Log security events and authentication failures
+- Create custom exception classes for business logic errors
+- Return consistent error response formats with meaningful messages
+
+## API Design & Validation
+
+- Use Flask-RESTful or similar patterns for consistent API design
+- Implement proper request validation using marshmallow or similar
+- Return appropriate HTTP status codes (200, 201, 400, 401, 403, 404, 500)
+- Use JSON for all request and response bodies
+- Implement pagination for endpoints that return large datasets
+
+*For comprehensive API design standards, see [api_design.mdc](mdc:.cursor/rules/api_design.mdc)*
+
+## Testing Standards
+
+*For comprehensive testing standards, see [testing.mdc](mdc:.cursor/rules/testing.mdc)*
+
+## Code Quality & Style
+
+- Follow PEP 8 style guidelines and use Black for code formatting
+- Use type hints for function parameters and return values
+- Keep functions small and focused on single responsibilities
+- Use descriptive variable and function names
+- Add docstrings for all public functions and classes
+
+## Performance & Optimization
+
+- Use database connection pooling for production deployments
+- Implement proper caching strategies for frequently accessed data
+- Use background tasks (Redis Queue) for long-running operations
+- Monitor and log slow database queries for optimization
+- Implement proper database indexing for performance
+
+## Email & Background Processing
+
+- Use Redis Queue (RQ) for background job processing
+- Implement proper error handling and retry logic for background jobs
+- Use encryption for storing sensitive email credentials
+- Implement proper email validation and sanitization
+- Log background job execution for monitoring and debugging
+
+## Production Deployment
+
+- Use Gunicorn or similar WSGI server for production deployments
+- Implement proper health check endpoints for monitoring
+- Use environment variables for all configuration
+- Set up proper log rotation and monitoring
+- Implement database backup and recovery procedures
+
+*For deployment standards, see [deployment.mdc](mdc:.cursor/rules/deployment.mdc)*

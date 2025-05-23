@@ -1,0 +1,38 @@
+---
+description: Project planning, documentation, and development approach standards
+globs: "README.md", "**/*.md"
+alwaysApply: true
+---
+
+# Project Management & Documentation Standards
+
+## Project Planning & Documentation
+
+- Always check for a PRD (Product Requirements Document) before starting a new task and follow it closely
+- Look for comprehensive project documentation to understand requirements before making changes
+- Keep a running list of patterns and technology used in the README.md file
+- Reference the README.md file for patterns and technology used in the project
+
+## Development Approach
+
+- Focus only on code areas relevant to the assigned task
+- Prefer iterating on existing code rather than creating new solutions
+- Keep solutions simple and avoid introducing unnecessary complexity
+- Make only requested changes or changes you're confident are well understood
+- Consider what other code areas might be affected by your changes
+- Don't drastically change existing patterns without explicit instruction
+
+## Issue Documentation & Learning
+
+- If you run into issues that take multiple iterations to fix. After you fix it, write up a description of the problem and how we fixed it and store it in a folder called "fixes", in an individual .md file with the name of the issue. Only do this for major issues and solutions
+- For issues that are taking multiple iterations to fix, check the fixes folder for previous fixes and see if the same issue has been fixed before
+
+## Documentation Best Practices
+
+- Maintain up-to-date project documentation
+- Document architectural decisions and their rationale
+- Keep README files current with setup and usage instructions
+- Document breaking changes and migration paths
+- Use clear, descriptive language in all documentation
+
+*For comprehensive markdown formatting standards, see [markdown.mdc](mdc:.cursor/rules/markdown.mdc)*

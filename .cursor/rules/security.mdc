@@ -1,0 +1,71 @@
+---
+description: Security standards for authentication, authorization, input validation, and production deployment
+globs: "**/*.{js,jsx,ts,tsx,py}"
+alwaysApply: true
+---
+
+# Security Standards
+
+## Authentication & Authorization
+
+- Always use the configured `axiosInstance` from `src/api/axiosInstance.js` for API requests - never import axios directly
+- Implement proper JWT token handling with automatic refresh mechanisms
+- Use API tokens for programmatic access with appropriate expiration times
+- Validate user permissions on both frontend and backend for all protected operations
+- Implement rate limiting on authentication endpoints to prevent brute force attacks
+
+## Environment Variables & Secrets
+
+- Never commit `.env` files or any files containing secrets to version control
+- Use strong, randomly generated keys for `SECRET_KEY` and `JWT_SECRET_KEY` in production
+- Store sensitive configuration in environment variables, not in code
+- Use different secrets for different environments (dev, staging, production)
+- Encrypt sensitive data like email credentials using the `ENCRYPTION_KEY`
+
+## Input Validation & Sanitization
+
+- Validate all user inputs on both frontend and backend
+- Use parameterized queries to prevent SQL injection attacks
+- Sanitize data before displaying in the UI to prevent XSS attacks
+- Implement proper CSRF protection using the configured CSRF tokens
+- Validate file uploads and restrict file types and sizes
+
+## API Security
+
+- Use HTTPS in production for all API communications
+- Implement proper CORS configuration to restrict cross-origin requests
+- Add security headers (CSP, HSTS, X-Content-Type-Options, X-Frame-Options)
+- Log security events and failed authentication attempts
+- Implement API versioning to maintain backward compatibility securely
+
+## Database Security
+
+- Use connection pooling and prepared statements
+- Implement proper database user permissions (principle of least privilege)
+- Encrypt sensitive data at rest in the database
+- Regular database backups with encryption
+- Monitor for unusual database access patterns
+
+## Frontend Security
+
+- Never store sensitive data in localStorage or sessionStorage
+- Implement proper session management with secure cookies
+- Use Content Security Policy (CSP) headers to prevent XSS
+- Validate and sanitize all user inputs before processing
+- Implement proper error handling that doesn't expose sensitive information
+
+## Production Security
+
+- Use SSL/TLS certificates for all production deployments
+- Configure secure cookie settings (`Secure`, `HttpOnly`, `SameSite`)
+- Implement proper logging without exposing sensitive data
+- Regular security updates for all dependencies
+- Use security scanning tools in CI/CD pipeline
+
+## Error Handling
+
+- Never expose stack traces or internal errors to end users
+- Log security-relevant errors for monitoring and analysis
+- Implement proper error boundaries in React components
+- Use generic error messages for authentication failures
+- Monitor and alert on unusual error patterns

@@ -1,0 +1,89 @@
+---
+description: React and frontend development standards including component design, state management, and API integration
+globs: src/**/*.{js,jsx,ts,tsx}
+alwaysApply: true
+---
+
+# Frontend Development Standards
+
+## React Component Standards
+
+- Use functional components with hooks instead of class components
+- Keep components small and focused on a single responsibility
+- Use meaningful component and prop names that clearly describe their purpose
+- Place related components in the same directory with clear naming conventions
+- Use `.jsx` extension for React components and `.js` for utility files
+
+## State Management
+
+- Use React hooks (`useState`, `useEffect`) for local component state
+- Create custom hooks for reusable stateful logic
+- Use React Context for state that needs to be shared across multiple components
+- Avoid prop drilling by extracting shared logic into custom hooks
+- Use reducers (`useReducer`) for complex state transitions
+
+## API Integration
+
+- **CRITICAL**: Always use `axiosInstance` from `src/api/axiosInstance.js` for all API requests
+- Never import axios directly - this bypasses authentication, CSRF protection, and error handling
+- Handle API errors with try/catch blocks and show meaningful error messages to users
+- Show loading indicators during API calls to improve user experience
+- Validate API responses before updating component state
+
+*For comprehensive API design standards, see [api_design.mdc](mdc:.cursor/rules/api_design.mdc)*
+
+## Material-UI (MUI) Guidelines
+
+- Use MUI components for consistent styling and behavior
+- Follow MUI theme variables for colors, spacing, and typography
+- Use the `sx` prop for component-specific styling when needed
+- Implement responsive design using MUI's breakpoint system
+- Use MUI icons from `@mui/icons-material` for consistency
+
+## Form Handling
+
+- Use controlled components for all form inputs
+- Implement proper form validation with clear error messages
+- Disable submit buttons during form submission to prevent double submissions
+- Clear form data appropriately after successful submissions
+- Use proper input types (email, password, number) for better UX and validation
+
+## Error Handling & User Feedback
+
+- Implement error boundaries to catch and handle React errors gracefully
+- Show user-friendly error messages instead of technical details
+- Use toast notifications or snackbars for temporary feedback
+- Provide clear loading states for better perceived performance
+- Handle network errors and offline scenarios appropriately
+
+## Performance Optimization
+
+- Use React.memo for components that receive stable props
+- Implement proper dependency arrays in useEffect hooks
+- Avoid creating objects and functions in render methods
+- Use lazy loading for routes and heavy components
+- Optimize images and assets for web delivery
+
+## Testing Standards
+
+*For comprehensive testing standards, see [testing.mdc](mdc:.cursor/rules/testing.mdc)*
+
+## Code Organization
+
+- Group related files in feature-based directories
+- Use consistent import order: React, MUI, external libraries, internal components
+- Create reusable utility functions in separate files
+- Use absolute imports for better maintainability
+- Keep component files under 300 lines - refactor larger components
+
+## Accessibility (a11y)
+
+- Use semantic HTML elements and proper ARIA labels
+- Ensure proper keyboard navigation for all interactive elements
+- Provide alt text for images and meaningful labels for form inputs
+- Use sufficient color contrast ratios for text and backgrounds
+- Test with screen readers and keyboard-only navigation
+
+## Security Considerations
+
+*For comprehensive security standards, see [security.mdc](mdc:.cursor/rules/security.mdc)*

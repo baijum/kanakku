@@ -1,0 +1,108 @@
+---
+description: Production deployment standards for server management, security, and monitoring
+globs: "docker-compose.yml", "Dockerfile", "**/*.{sh,yml,yaml}"
+alwaysApply: true
+---
+
+# Deployment Standards
+
+## Server Management
+
+- Kill all related running servers before starting a new one
+- Always start a new server after making changes to allow for testing
+
+## Environment Configuration
+
+- Use separate environment files for different stages (development, staging, production)
+- Never commit production secrets to version control - use environment variables
+- Generate strong, unique secret keys for each environment using `openssl rand -hex 32`
+- Use different database credentials and URLs for each environment
+- Implement proper SSL/TLS configuration for production deployments
+
+## Docker Best Practices
+
+- Use multi-stage builds to minimize image size and improve security
+- Run containers as non-root users for security
+- Use specific version tags instead of `latest` for base images
+- Implement proper health checks for all services
+- Use Docker volumes for persistent data storage
+
+## Database Deployment
+
+- Use PostgreSQL for production instead of SQLite
+- Implement automated database migrations using Alembic
+- Set up regular automated backups with encryption
+- Use connection pooling for better performance
+- Monitor database performance and slow queries
+
+## Web Server Configuration
+
+- Use Nginx as reverse proxy for production deployments
+- Implement proper SSL/TLS termination with strong cipher suites
+- Configure security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
+- Set up proper caching for static assets
+- Implement rate limiting to prevent abuse
+
+## Application Server
+
+- Use Gunicorn with multiple workers for Flask applications
+- Configure proper worker count based on CPU cores
+- Implement graceful shutdowns and restarts
+- Set up proper logging and log rotation
+- Monitor application performance and memory usage
+
+## Monitoring & Logging
+
+- Implement centralized logging for all services
+- Set up application performance monitoring (APM)
+- Configure health check endpoints for all services
+- Implement alerting for critical failures and performance issues
+- Monitor resource usage (CPU, memory, disk, network)
+
+## Security Hardening
+
+- Use firewalls to restrict network access
+- Implement proper user permissions and access controls
+- Regular security updates for all system packages
+- Use secrets management for sensitive configuration
+- Implement intrusion detection and monitoring
+
+## Backup & Recovery
+
+- Automated daily backups of database and application data
+- Test backup restoration procedures regularly
+- Store backups in multiple locations (local and cloud)
+- Implement point-in-time recovery capabilities
+- Document disaster recovery procedures
+
+## CI/CD Pipeline
+
+- Implement automated testing in CI pipeline
+- Use linting and code quality checks
+- Implement security scanning for dependencies
+- Use blue-green or rolling deployments for zero downtime
+- Implement proper rollback procedures
+
+## Performance Optimization
+
+- Use CDN for static asset delivery
+- Implement proper caching strategies (Redis, application-level)
+- Optimize database queries and add appropriate indexes
+- Use compression for HTTP responses
+- Monitor and optimize application startup times
+
+## Scalability Considerations
+
+- Design for horizontal scaling from the beginning
+- Use load balancers for distributing traffic
+- Implement session storage that works across multiple instances
+- Use message queues for background processing
+- Plan for database scaling (read replicas, sharding)
+
+## Documentation Requirements
+
+- Maintain up-to-date deployment documentation
+- Document all environment variables and their purposes
+- Create runbooks for common operational tasks
+- Document troubleshooting procedures
+- Keep architecture diagrams current

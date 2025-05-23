@@ -544,3 +544,62 @@ The application includes multiple layers of protection against automated bot reg
 - **Non-intrusive**: Legitimate users are unaffected as the field is completely hidden from view using CSS positioning and accessibility attributes
 
 This multi-layered approach helps maintain the quality of registered users and significantly reduces spam registrations while providing a good user experience for legitimate users.
+
+## Development Standards & Patterns
+
+Kanakku follows comprehensive development standards to ensure code quality, security, and maintainability. These standards are documented in the `.cursor/rules/` directory and are automatically applied during development.
+
+### Technology Stack & Patterns
+
+**Frontend:**
+- React 18 with functional components and hooks
+- Material-UI (MUI) for consistent UI components
+- Axios via configured `axiosInstance` for API requests
+- React Router 6 for client-side routing
+- Jest and React Testing Library for testing
+- Playwright for end-to-end testing
+
+**Backend:**
+- Flask with Blueprint organization
+- SQLAlchemy ORM with Alembic migrations
+- Flask-JWT-Extended for authentication
+- PostgreSQL for production database
+- Redis Queue (RQ) for background processing
+- Pytest for comprehensive testing
+
+**Infrastructure:**
+- Docker and Docker Compose for containerization
+- Nginx for reverse proxy and static file serving
+- Gunicorn for production WSGI serving
+- GitHub Actions for CI/CD
+- SSL/TLS with security headers
+
+### Development Rules
+
+The project includes the following rule sets:
+
+- **[Generic Rules](file://.cursor/rules/generic.mdc)**: General development guidelines and best practices
+- **[Security Rules](file://.cursor/rules/security.mdc)**: Security standards for authentication, data protection, and secure coding
+- **[API Design Rules](file://.cursor/rules/api_design.mdc)**: REST API design principles and standards
+- **[Frontend Rules](file://.cursor/rules/frontend.mdc)**: React component standards and UI development guidelines
+- **[Backend Rules](file://.cursor/rules/backend.mdc)**: Flask application structure and Python coding standards
+- **[Testing Rules](file://.cursor/rules/testing.mdc)**: Comprehensive testing standards for quality assurance
+- **[Deployment Rules](file://.cursor/rules/deployment.mdc)**: Infrastructure and production deployment standards
+
+### Key Development Principles
+
+1. **Security First**: All code follows security best practices with proper authentication, input validation, and data protection
+2. **API Consistency**: RESTful API design with consistent patterns and comprehensive documentation
+3. **Test Coverage**: High test coverage with both unit and integration tests
+4. **Code Quality**: Automated linting, formatting, and code quality checks
+5. **Documentation**: Comprehensive documentation for all features and deployment procedures
+
+### Getting Started with Development
+
+1. Review the development rules in `.cursor/rules/` before contributing
+2. Use the configured development tools (ESLint, Black, pytest)
+3. Follow the established patterns for API design and component structure
+4. Write tests for all new features and bug fixes
+5. Ensure all CI checks pass before submitting pull requests
+
+For detailed information about specific development standards, refer to the individual rule files in the `.cursor/rules/` directory.

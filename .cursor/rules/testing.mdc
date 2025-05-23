@@ -1,11 +1,111 @@
 ---
-description: 
-globs: 
+description: Comprehensive testing standards for backend, frontend, and end-to-end testing practices
+globs: "**/*.test.{js,jsx,ts,tsx,py}", "test_*.py", "**/tests/**/*"
 alwaysApply: true
 ---
-* When encountering test failures, prioritize updating the test to match the
-  intended implementation, rather than changing the implementation to match the test, unless:
 
-    1. The implementation is clearly wrong or inconsistent with requirements
-    2. The implementation introduces a security risk or bug
-    3. The test correctly reflects the desired behavior documented in requirements
+# Testing Standards
+
+## Test Philosophy
+
+- When encountering test failures, prioritize updating the test to match the intended implementation, rather than changing the implementation to match the test, unless:
+  1. The implementation is clearly wrong or inconsistent with requirements
+  2. The implementation introduces a security risk or bug
+  3. The test correctly reflects the desired behavior documented in requirements
+
+## Testing & Quality Assurance
+
+- Write thorough tests for all major functionality
+- All tests should always pass before deploying to production. If they don't, make sure you notify me
+- Consider different environments (dev, test, prod) when writing code
+- Don't mock data except for tests (never for dev or prod environments)
+
+## Backend Testing Standards
+
+- Use pytest for all Python testing with appropriate fixtures
+- Maintain separate test database configuration to avoid affecting development data
+- Write tests for all API endpoints covering both success and error scenarios
+- Mock external dependencies (email services, third-party APIs) in tests
+- Use parameterized tests for testing multiple input scenarios
+- Implement integration tests for critical user workflows
+
+## Frontend Testing Standards
+
+- Use React Testing Library for component testing
+- Test user behavior and interactions rather than implementation details
+- Mock API calls using Jest mock functions or MSW (Mock Service Worker)
+- Write tests for critical user flows (authentication, transaction creation, reporting)
+- Use meaningful test descriptions that explain the expected behavior
+- Test accessibility features and keyboard navigation
+
+## Test Organization
+
+- Group related tests in describe/context blocks with clear descriptions
+- Use descriptive test names that explain what is being tested
+- Follow the Arrange-Act-Assert (AAA) pattern in test structure
+- Keep test files close to the code they test
+- Use consistent naming conventions for test files (`test_*.py`, `*.test.js`)
+
+## Test Coverage & Quality
+
+- Maintain high test coverage for critical business logic (aim for 80%+ on core features)
+- Focus on testing edge cases and error conditions
+- Test both positive and negative scenarios
+- Include performance tests for critical operations
+- Test security features like authentication and authorization
+
+## Test Data Management
+
+- Use factories or fixtures for creating test data
+- Clean up test data after each test to ensure isolation
+- Use realistic but anonymized test data
+- Avoid hardcoded test data that might become outdated
+- Use database transactions for test isolation when possible
+
+## API Testing
+
+- Test all HTTP methods (GET, POST, PUT, DELETE) for each endpoint
+- Verify correct HTTP status codes are returned
+- Test request validation and error responses
+- Test authentication and authorization for protected endpoints
+- Validate response schemas and data formats
+
+## End-to-End Testing
+
+- Use Playwright for browser automation testing
+- Test critical user journeys from start to finish
+- Test across different browsers and devices
+- Include tests for responsive design and mobile compatibility
+- Test with different user roles and permissions
+
+## Performance Testing
+
+- Include load testing for critical API endpoints
+- Test database query performance with realistic data volumes
+- Monitor memory usage and potential leaks in long-running tests
+- Test application startup and shutdown procedures
+- Benchmark critical operations and set performance thresholds
+
+## Security Testing
+
+- Test authentication and authorization mechanisms
+- Verify input validation and sanitization
+- Test for common vulnerabilities (XSS, CSRF, SQL injection)
+- Test rate limiting and abuse prevention
+- Verify sensitive data is not exposed in responses
+
+## Continuous Integration
+
+- All tests must pass before code can be merged
+- Run tests automatically on every pull request
+- Include linting and code quality checks in CI pipeline
+- Run security scans and dependency checks
+- Generate and publish test coverage reports
+
+## Test Maintenance
+
+- Regularly review and update tests as code evolves
+- Remove or update obsolete tests
+- Refactor tests to reduce duplication and improve maintainability
+- Keep test dependencies up to date
+- Document complex test scenarios and their purposes

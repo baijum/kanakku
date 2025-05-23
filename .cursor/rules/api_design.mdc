@@ -1,0 +1,82 @@
+---
+description: REST API design principles, request/response standards, and frontend API integration guidelines
+globs: "**/*.{js,jsx,ts,tsx,py}"
+alwaysApply: true
+---
+
+# API Design Standards
+
+## REST API Design Principles
+
+- Use consistent URL patterns: `/api/v1/resource` for collections, `/api/v1/resource/{id}` for specific items
+- Follow HTTP method conventions: GET (read), POST (create), PUT (update), DELETE (remove)
+- Use plural nouns for resource endpoints (e.g., `/accounts`, `/transactions`, `/books`)
+- Implement proper HTTP status codes (200, 201, 400, 401, 403, 404, 500)
+- Include meaningful error messages in response bodies
+
+## Request/Response Standards
+
+- Use JSON for all request and response bodies
+- Include proper Content-Type headers (`application/json`)
+- Implement consistent error response format with `error` and `message` fields
+- Use camelCase for JSON field names in responses
+- Include pagination metadata for list endpoints when applicable
+
+## Authentication & Authorization
+
+- Require authentication for all endpoints except health checks and public registration/login
+- Support both JWT Bearer tokens and API key authentication (`X-API-Key` header)
+- Return 401 for authentication failures, 403 for authorization failures
+
+*For comprehensive security standards, see [security.mdc](mdc:.cursor/rules/security.mdc)*
+
+## API Versioning
+
+- Use URL path versioning: `/api/v1/`, `/api/v2/`
+- Maintain backward compatibility within major versions
+- Document breaking changes and migration paths
+- Deprecate old versions gracefully with proper notice
+
+## Frontend API Integration
+
+- Always use the configured `axiosInstance` from `src/api/axiosInstance.js`
+- Never import axios directly - use the configured instance for authentication and error handling
+- Implement proper error handling with try/catch blocks
+- Show loading states during API calls
+- Handle network errors and timeouts gracefully
+
+## Data Validation
+
+- Validate all input data on the backend before processing
+- Use appropriate data types and constraints in database models
+- Return detailed validation errors with field-specific messages
+- Implement input sanitization to prevent injection attacks
+- Use consistent validation error response format
+
+## Performance & Caching
+
+- Implement appropriate database indexing for frequently queried fields
+- Use pagination for large result sets
+- Include ETag headers for cacheable resources
+- Implement proper database connection pooling
+- Monitor and log slow queries for optimization
+
+## Documentation
+
+- Maintain up-to-date Swagger/OpenAPI documentation at `/api/docs`
+- Include example requests and responses for all endpoints
+- Document all required and optional parameters
+- Provide clear error code documentation
+- Keep API documentation synchronized with implementation
+
+## Testing
+
+*For comprehensive testing standards, see [testing.mdc](mdc:.cursor/rules/testing.mdc)*
+
+## Monitoring & Logging
+
+- Log all API requests with appropriate detail level
+- Include correlation IDs for request tracing
+- Monitor API response times and error rates
+- Implement health check endpoints for monitoring
+- Set up alerts for critical API failures

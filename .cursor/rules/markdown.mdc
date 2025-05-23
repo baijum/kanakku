@@ -1,0 +1,266 @@
+---
+description: Markdown formatting standards for documentation and rule files
+globs: "**/*.md", "**/*.mdc"
+alwaysApply: true
+---
+
+# Markdown Formatting Standards
+
+## Heading Best Practices
+
+- Always put a space between the number signs (`#`) and the heading name
+- Put blank lines before and after headings for compatibility
+- Use only one H1 (`#`) per document for the main title
+- Create a logical heading hierarchy (H1 → H2 → H3, don't skip levels)
+- Use descriptive headings that clearly indicate the content
+- Never use asterisks or other formatting within headings - headings are already formatted distinctly
+
+```markdown
+✅ DO: Clean, simple headings
+# Main Title
+
+## Section Heading
+
+### Subsection Heading
+
+❌ DON'T: Asterisks or formatting in headings
+## **Section Heading**
+### ***Subsection Heading***
+#### _Formatted Heading_
+```
+
+## Paragraph Formatting
+
+- Use blank lines to separate paragraphs
+- Don't indent paragraphs with spaces or tabs (keep left-aligned)
+- Keep paragraphs focused on a single topic
+- Use line breaks sparingly - prefer separate paragraphs
+
+```markdown
+✅ DO: Proper paragraph separation
+This is the first paragraph with important information.
+
+This is the second paragraph covering a different topic.
+
+❌ DON'T: No separation or indentation
+This is the first paragraph.
+This is the second paragraph without separation.
+    This paragraph is indented incorrectly.
+```
+
+## Line Break Standards
+
+- Use two spaces at the end of a line for line breaks within paragraphs
+- Alternatively, use the `<br>` HTML tag for explicit line breaks
+- Avoid using backslash (`\`) for line breaks (poor compatibility)
+- Prefer separate paragraphs over line breaks when possible
+
+```markdown
+✅ DO: Proper line breaks
+First line with two spaces after.  
+Second line in same paragraph.
+
+First line with HTML tag.<br>
+Second line in same paragraph.
+
+❌ DON'T: Inconsistent line breaks
+First line with backslash.\
+Second line (poor compatibility).
+```
+
+## Emphasis and Formatting
+
+- Use `**bold**` (asterisks) for bold text instead of underscores
+- Use `*italic*` (single asterisk) for italic text instead of underscores
+- Use `***bold and italic***` for combined emphasis
+- For emphasis within words, always use asterisks, never underscores
+
+```markdown
+✅ DO: Consistent emphasis
+This is **bold text** and this is *italic text*.
+This is ***bold and italic*** text.
+Love**is**bold (emphasis within word).
+
+❌ DON'T: Mixed emphasis styles
+This is __bold text__ and this is _italic text_.
+Love__is__bold (underscores within word).
+```
+
+## List Formatting
+
+- Use consistent markers for unordered lists (prefer `-` or `*`)
+- Use proper indentation (2 or 4 spaces) for nested lists
+- Add blank lines between list items that contain multiple paragraphs
+- Use `1.` for ordered lists and let numbering auto-increment
+
+```markdown
+✅ DO: Consistent list formatting
+- First item
+- Second item
+  - Nested item
+  - Another nested item
+- Third item
+
+1. First ordered item
+2. Second ordered item
+3. Third ordered item
+
+❌ DON'T: Inconsistent markers
+* First item
+- Second item
++ Third item (mixed markers)
+```
+
+## Code Formatting
+
+- Use single backticks for `inline code`
+- Use triple backticks with language specification for code blocks
+- Indent code blocks consistently (4 spaces or triple backticks)
+- Escape backticks in code using backslashes when needed
+
+```markdown
+✅ DO: Proper code formatting
+Use the `console.log()` function for debugging.
+
+```javascript
+function example() {
+  console.log("Hello, world!");
+}
+```
+
+❌ DON'T: Inconsistent code formatting
+Use the console.log() function without backticks.
+
+```
+// Code block without language specification
+function example() {
+  console.log("Hello, world!");
+}
+```
+
+## Link Best Practices
+
+- Use descriptive link text that makes sense out of context
+- URL encode spaces with `%20` in URLs
+- Use reference-style links for repeated or long URLs
+- Escape parentheses in URLs with `%28` and `%29`
+
+```markdown
+✅ DO: Descriptive and properly formatted links
+Read the [Markdown Guide](mdc:https:/www.markdownguide.org/basic-syntax) for more information.
+
+Check out this [detailed article][1] about best practices.
+
+[1]: https://www.example.com/very-long-url-that-would-clutter-text
+
+❌ DON'T: Poor link formatting
+Click [here](mdc:https:/www.example.com/my great page) for more info.
+Read more at https://www.example.com/article (raw URL in text).
+```
+
+## Image Standards
+
+- Always include meaningful alt text for accessibility
+- Use descriptive filenames for images
+- Optimize image sizes for web when possible
+- Consider using reference-style links for images with long URLs
+
+```markdown
+✅ DO: Accessible and well-formatted images
+![Screenshot of the application dashboard showing user statistics](mdc:images/dashboard-screenshot.png)
+
+![Company logo][logo]
+[logo]: ./images/company-logo.png "Company Logo"
+
+❌ DON'T: Poor image formatting
+![](image.png)
+![image](mdc:very-long-path/to/image/file/screenshot.png)
+```
+
+## Table Formatting
+
+- Align table columns for better readability in source
+- Include header row with proper separator
+- Use consistent spacing around pipe characters
+- Keep table content concise and scannable
+
+```markdown
+✅ DO: Well-formatted tables
+| Feature     | Status      | Priority |
+|-------------|-------------|----------|
+| User Auth   | Complete    | High     |
+| Dashboard   | In Progress | Medium   |
+| Reports     | Planned     | Low      |
+
+❌ DON'T: Poorly formatted tables
+|Feature|Status|Priority|
+|---|---|---|
+|User Auth|Complete|High|
+|Dashboard|In Progress|Medium|
+```
+
+## Character Escaping
+
+- Use backslash (`\`) to escape special Markdown characters
+- Escape characters when you want to display them literally
+- Common characters to escape: `*`, `_`, `#`, `+`, `-`, `.`, `!`, `|`
+
+```markdown
+✅ DO: Proper character escaping
+\* This is not a bullet point
+\# This is not a heading
+Use \`backticks\` to show literal backticks
+
+❌ DON'T: Unescaped special characters
+* This becomes a bullet point when you don't want it
+# This becomes a heading when you don't want it
+```
+
+## HTML Integration
+
+- Use HTML sparingly and only when Markdown is insufficient
+- Separate block-level HTML elements with blank lines
+- Don't mix Markdown syntax inside HTML block elements
+- Prefer Markdown syntax over HTML when possible
+
+```markdown
+✅ DO: Proper HTML usage when needed
+This is a paragraph with **Markdown formatting**.
+
+<div class="warning">
+This is an HTML block element.
+</div>
+
+This is another paragraph.
+
+❌ DON'T: Unnecessary or poorly formatted HTML
+<p>This **won't work** inside HTML block elements.</p>
+<div>No blank lines around HTML</div>
+Regular text continues here.
+```
+
+## Document Structure
+
+- Start with a clear H1 title
+- Use consistent heading hierarchy
+- Include a table of contents for long documents
+- End with proper conclusion or next steps
+- Keep line length reasonable (80-120 characters)
+
+## Accessibility Considerations
+
+- Write descriptive alt text for all images
+- Use proper heading hierarchy for screen readers
+- Make link text descriptive and meaningful
+- Ensure sufficient contrast in any custom styling
+- Test with screen readers when possible
+
+## File Organization
+
+- Use `.md` extension for Markdown files
+- Use kebab-case for filenames (`user-guide.md`)
+- Organize related files in logical directory structures
+- Include README.md files in directories for navigation
+- Keep file and directory names descriptive but concise
+
+Reference: [Markdown Guide - Basic Syntax](mdc:https:/www.markdownguide.org/basic-syntax)

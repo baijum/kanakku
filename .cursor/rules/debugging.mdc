@@ -1,0 +1,47 @@
+---
+description: Error handling, debugging processes, and logging best practices
+globs: "**/*.{js,jsx,ts,tsx,py}"
+alwaysApply: true
+---
+
+# Debugging & Error Handling Standards
+
+## Error Handling Philosophy
+
+- Unless explicitly instructed, instead of trying to gracefully handle an error or failure, make sure to fix the underlying issue
+- Focus on root cause analysis rather than symptom treatment
+- Implement proper error handling that provides meaningful feedback
+- Log errors appropriately for debugging and monitoring
+
+## Debugging Process
+
+- If you run into the same persistent error, write logs and console messages to help track down the issue, and remember to check the logs after you make changes to see if the issue is resolved
+- Use systematic debugging approaches: reproduce, isolate, identify, fix, verify
+- Add temporary logging to understand code flow and variable states
+- Use debugging tools appropriate for the technology stack
+
+## Research & Problem Solving
+
+- If you are struggling with some piece of code, or aren't 100% sure on how to implement something, you can always use the firecrawl tool to research solutions
+- Check existing documentation and codebase for similar patterns
+- Search for established solutions before implementing custom approaches
+- Consult official documentation and reliable sources
+
+## Logging Best Practices
+
+- Use appropriate log levels (DEBUG, INFO, WARNING, ERROR)
+- Include relevant context in log messages
+- Avoid logging sensitive information
+- Structure logs for easy parsing and analysis
+- Remove temporary debug logs before committing
+
+## Error Prevention
+
+- Implement proper input validation
+- Use type checking and linting tools
+- Write comprehensive tests for error scenarios
+- Handle edge cases and boundary conditions
+- Document known limitations and potential issues
+
+*For comprehensive security standards, see [security.mdc](mdc:.cursor/rules/security.mdc)*
+*For testing error scenarios, see [testing.mdc](mdc:.cursor/rules/testing.mdc)*
