@@ -7,10 +7,12 @@ from typing import Dict, List, Optional
 
 from rq import get_current_job
 from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 # Add the backend app to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "backend"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from app.models import EmailConfiguration
 from app.utils.encryption import decrypt_value
@@ -23,6 +25,38 @@ from banktransactions.email_parser import (
 from banktransactions.api_client import APIClient
 
 logger = logging.getLogger(__name__)
+
+
+def process_user_emails_standalone(user_id: int) -> Dict:
+    """
+    Standalone function to process emails for a user.
+    This creates its own database session and can be safely pickled by RQ.
+    """
+    db_session = None
+    try:
+        # Create database session
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            raise ValueError("DATABASE_URL environment variable not set")
+
+        engine = create_engine(db_url)
+        Session = sessionmaker(bind=engine)
+        db_session = Session()
+
+        # Create EmailProcessor instance with the new session
+        processor = EmailProcessor(db_session)
+
+        # Process emails
+        result = processor.process_user_emails(user_id)
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error in process_user_emails_standalone: {str(e)}")
+        return {"status": "error", "error": str(e)}
+    finally:
+        if db_session:
+            db_session.close()
 
 
 class EmailProcessor:
@@ -127,7 +161,9 @@ class EmailProcessor:
             if self.imap_client:
                 self.imap_client.disconnect()
 
-    def _extract_transaction_data(self, email: Dict, config: EmailConfiguration) -> Optional[Dict]:
+    def _extract_transaction_data(
+        self, email: Dict, config: EmailConfiguration
+    ) -> Optional[Dict]:
         """Extract transaction data from email using the improved LLM-based parser."""
         try:
             # Clean the email body
@@ -139,12 +175,13 @@ class EmailProcessor:
                 try:
                     sample_emails = json.loads(config.sample_emails)
                 except json.JSONDecodeError:
-                    logger.warning(f"Failed to parse sample emails for user {config.user_id}")
+                    logger.warning(
+                        f"Failed to parse sample emails for user {config.user_id}"
+                    )
 
             # Use the improved LLM-based parser with few-shot examples
             transaction_data = extract_transaction_details_pure_llm(
-                body, 
-                sample_emails=sample_emails
+                body, sample_emails=sample_emails
             )
 
             # Add additional metadata

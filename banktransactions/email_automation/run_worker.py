@@ -19,9 +19,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Add the backend app to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
-
-from banktransactions.email_automation.workers.email_processor import EmailProcessor
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
 # Configure logging
 logging.basicConfig(
@@ -29,8 +27,10 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(os.path.dirname(__file__), '..', 'logs', 'worker.log'))
-    ]
+        logging.FileHandler(
+            os.path.join(os.path.dirname(__file__), "..", "logs", "worker.log")
+        ),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def create_db_session():
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
         raise ValueError("DATABASE_URL environment variable not set")
-    
+
     engine = create_engine(db_url)
     Session = sessionmaker(bind=engine)
     return Session()
@@ -51,47 +51,45 @@ def main():
     parser.add_argument(
         "--queue-name",
         default="email_processing",
-        help="Name of the Redis queue to process (default: email_processing)"
+        help="Name of the Redis queue to process (default: email_processing)",
     )
     parser.add_argument(
         "--redis-url",
         default=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
-        help="Redis URL (default: redis://localhost:6379/0)"
+        help="Redis URL (default: redis://localhost:6379/0)",
     )
     parser.add_argument(
-        "--worker-name",
-        default=None,
-        help="Worker name (default: auto-generated)"
+        "--worker-name", default=None, help="Worker name (default: auto-generated)"
     )
-    
+
     args = parser.parse_args()
-    
+
     try:
         # Connect to Redis
         redis_conn = redis.from_url(args.redis_url)
-        
+
         # Test Redis connection
         redis_conn.ping()
         logger.info(f"Connected to Redis at {args.redis_url}")
-        
+
         # Create database session
         db_session = create_db_session()
         logger.info("Connected to database")
-        
+
         # Create queue
         queue = Queue(args.queue_name, connection=redis_conn)
-        
+
         # Create worker
         worker_name = args.worker_name or f"email_worker_{os.getpid()}"
         worker = Worker([queue], connection=redis_conn, name=worker_name)
-        
+
         logger.info(f"Starting worker '{worker_name}' for queue '{args.queue_name}'")
         logger.info("Worker is ready to process jobs. Press Ctrl+C to stop.")
-        
+
         # Start the worker
         with Connection(redis_conn):
             worker.work()
-            
+
     except KeyboardInterrupt:
         logger.info("Worker stopped by user")
     except Exception as e:
@@ -100,4 +98,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

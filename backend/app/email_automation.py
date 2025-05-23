@@ -171,6 +171,16 @@ def test_email_connection():
             return jsonify({"error": f"{field} is required"}), 400
 
     try:
+        # Add banktransactions module to Python path
+        import sys
+        import os
+
+        banktransactions_path = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        if banktransactions_path not in sys.path:
+            sys.path.append(banktransactions_path)
+
         # Import here to avoid circular imports
         from banktransactions.imap_client import IMAPClient
 
@@ -241,10 +251,19 @@ def trigger_email_processing():
         return jsonify({"error": "Email automation is not configured or disabled"}), 400
 
     try:
+        # Add banktransactions module to Python path
+        import sys
+        import os
+
+        banktransactions_path = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        if banktransactions_path not in sys.path:
+            sys.path.append(banktransactions_path)
+
         # Import here to avoid circular imports
         import redis
         from rq import Queue
-        import os
 
         # Connect to Redis
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -253,22 +272,13 @@ def trigger_email_processing():
         # Create queue
         queue = Queue(connection=redis_conn)
 
-        # Enqueue email processing job
+        # Import the standalone function that can be safely pickled
         from banktransactions.email_automation.workers.email_processor import (
-            EmailProcessor,
+            process_user_emails_standalone,
         )
-        from sqlalchemy.orm import sessionmaker
-        from sqlalchemy import create_engine
 
-        # Create database session for the worker
-        db_url = os.getenv("DATABASE_URL")
-        engine = create_engine(db_url)
-        Session = sessionmaker(bind=engine)
-        db_session = Session()
-
-        job = queue.enqueue(
-            EmailProcessor(db_session).process_user_emails, user_id, job_timeout="10m"
-        )
+        # Enqueue email processing job using the standalone function
+        job = queue.enqueue(process_user_emails_standalone, user_id, job_timeout="10m")
 
         return (
             jsonify(

@@ -8,10 +8,12 @@ from rq_scheduler import Scheduler
 from sqlalchemy.orm import Session
 
 # Add the backend app to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "backend"))
 
 from app.models import EmailConfiguration
-from banktransactions.email_automation.workers.email_processor import EmailProcessor
+from banktransactions.email_automation.workers.email_processor import (
+    process_user_emails_standalone,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +44,10 @@ class EmailScheduler:
             if not next_run:
                 return
 
-            # Schedule the job
+            # Schedule the job using the standalone function
             self.scheduler.enqueue_at(
                 next_run,
-                EmailProcessor(self.db).process_user_emails,
+                process_user_emails_standalone,
                 config.user_id,
                 job_id=f"email_process_{config.user_id}_{next_run.timestamp()}",
             )

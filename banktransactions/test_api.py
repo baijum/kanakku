@@ -4,7 +4,15 @@ import os
 import sys
 import json
 from dotenv import load_dotenv
-from transaction_data import get_mappings_from_api, construct_transaction_data
+
+# Add parent directory to Python path for absolute imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from banktransactions.transaction_data import get_mappings_from_api, construct_transaction_data
+except ImportError:
+    # Fallback to relative import if running from within the directory
+    from transaction_data import get_mappings_from_api, construct_transaction_data
 
 
 def main():

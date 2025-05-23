@@ -4,12 +4,16 @@ import logging
 import email
 from imapclient import IMAPClient
 from datetime import datetime, timedelta
+import ssl
 
 # Import from our other modules
-from email_parser import decode_str, extract_transaction_details_pure_llm
-from api_client import send_transaction_to_api
+from banktransactions.email_parser import (
+    decode_str,
+    extract_transaction_details_pure_llm,
+)
+from banktransactions.api_client import send_transaction_to_api
 
-from transaction_data import construct_transaction_data
+from banktransactions.transaction_data import construct_transaction_data
 
 
 def get_bank_emails(
@@ -276,3 +280,78 @@ def get_bank_emails(
             f"Error connecting to mail server or during processing: {e}", exc_info=True
         )
         return processed_gmail_msgids, newly_processed_count
+
+
+class IMAPClient:
+    """
+    Custom IMAPClient wrapper for the Flask application.
+
+    This class provides a simplified interface for testing IMAP connections
+    that matches what the Flask email automation expects.
+    """
+
+    def __init__(self, server="imap.gmail.com", port=993, username=None, password=None):
+        """
+        Initialize the IMAP client with connection parameters.
+
+        Args:
+            server (str): IMAP server hostname
+            port (int): IMAP server port
+            username (str): Email username
+            password (str): Email password or app password
+        """
+        self.server = server
+        self.port = port
+        self.username = username
+        self.password = password
+        self._client = None
+
+    def connect(self):
+        """
+        Connect to the IMAP server and authenticate.
+
+        Raises:
+            Exception: If connection or authentication fails
+        """
+        try:
+            # Import the real IMAPClient from imapclient library
+            from imapclient import IMAPClient as RealIMAPClient
+
+            # Create SSL context with proper certificate handling
+            ssl_context = ssl.create_default_context()
+
+            # For development/testing, we can be more lenient with certificates
+            # In production, you should use proper certificates
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
+            # Create connection with custom SSL context
+            self._client = RealIMAPClient(
+                self.server, port=self.port, ssl=True, ssl_context=ssl_context
+            )
+
+            # Authenticate
+            self._client.login(self.username, self.password)
+
+            return True
+
+        except Exception as e:
+            if self._client:
+                try:
+                    self._client.logout()
+                except:
+                    pass
+                self._client = None
+            raise e
+
+    def disconnect(self):
+        """
+        Disconnect from the IMAP server.
+        """
+        if self._client:
+            try:
+                self._client.logout()
+            except:
+                pass
+            finally:
+                self._client = None

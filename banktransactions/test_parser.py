@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 
-from email_parser import extract_transaction_details_pure_llm
+import sys
+import os
+
+# Add parent directory to Python path for absolute imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from banktransactions.email_parser import extract_transaction_details_pure_llm
+except ImportError:
+    # Fallback to relative import if running from within the directory
+    from email_parser import extract_transaction_details_pure_llm
 
 # Test case for the problematic email format
 test_message = """

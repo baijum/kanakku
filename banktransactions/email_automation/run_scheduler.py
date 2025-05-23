@@ -19,7 +19,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Add the backend app to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 
 from banktransactions.email_automation.workers.scheduler import EmailScheduler
 
@@ -29,8 +29,10 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(os.path.dirname(__file__), '..', 'logs', 'scheduler.log'))
-    ]
+        logging.FileHandler(
+            os.path.join(os.path.dirname(__file__), "..", "logs", "scheduler.log")
+        ),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,7 @@ def create_db_session():
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
         raise ValueError("DATABASE_URL environment variable not set")
-    
+
     engine = create_engine(db_url)
     Session = sessionmaker(bind=engine)
     return Session()
@@ -51,35 +53,35 @@ def main():
     parser.add_argument(
         "--redis-url",
         default=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
-        help="Redis URL (default: redis://localhost:6379/0)"
+        help="Redis URL (default: redis://localhost:6379/0)",
     )
     parser.add_argument(
         "--interval",
         type=int,
         default=300,  # 5 minutes
-        help="Scheduling interval in seconds (default: 300)"
+        help="Scheduling interval in seconds (default: 300)",
     )
-    
+
     args = parser.parse_args()
-    
+
     try:
         # Connect to Redis
         redis_conn = redis.from_url(args.redis_url)
-        
+
         # Test Redis connection
         redis_conn.ping()
         logger.info(f"Connected to Redis at {args.redis_url}")
-        
+
         # Create database session
         db_session = create_db_session()
         logger.info("Connected to database")
-        
+
         # Create scheduler
         scheduler = EmailScheduler(redis_conn, db_session)
-        
+
         logger.info(f"Starting scheduler with {args.interval}s interval")
         logger.info("Scheduler is ready. Press Ctrl+C to stop.")
-        
+
         # Run scheduler loop
         while True:
             try:
@@ -92,7 +94,7 @@ def main():
             except Exception as e:
                 logger.error(f"Error in scheduler loop: {str(e)}", exc_info=True)
                 time.sleep(args.interval)
-                
+
     except KeyboardInterrupt:
         logger.info("Scheduler stopped by user")
     except Exception as e:

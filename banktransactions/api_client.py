@@ -162,3 +162,35 @@ def send_transaction_to_api(transaction_data):
             f"An unexpected error occurred during API call: {e}", exc_info=True
         )
         return False
+
+
+class APIClient:
+    """
+    API client class for creating transactions via the Kanakku API.
+    This wraps the existing send_transaction_to_api function for use by the email processor.
+    """
+
+    def __init__(self):
+        """Initialize the API client."""
+        pass
+
+    def create_transaction(self, user_id: int, transaction_data: dict) -> dict:
+        """
+        Create a transaction via the API.
+
+        Args:
+            user_id (int): The user ID (currently not used but kept for compatibility)
+            transaction_data (dict): Transaction data to send to the API
+
+        Returns:
+            dict: Response with 'success' key indicating if the operation was successful
+        """
+        try:
+            success = send_transaction_to_api(transaction_data)
+            return {
+                "success": success,
+                "error": None if success else "Failed to create transaction",
+            }
+        except Exception as e:
+            logging.error(f"Error in APIClient.create_transaction: {str(e)}")
+            return {"success": False, "error": str(e)}
