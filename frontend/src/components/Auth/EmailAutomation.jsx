@@ -31,7 +31,7 @@ import {
 } from '@mui/material';
 import {
   Save as SaveIcon,
-  TestTube as TestIcon,
+  Science as TestIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
