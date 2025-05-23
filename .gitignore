@@ -21,5 +21,4 @@ tools/accountimporter/**/*.pdb
 .idea/
 .vscode/
 *.iml
-.cursor/ 
 .aider*

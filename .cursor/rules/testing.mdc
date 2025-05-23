@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+* When encountering test failures, prioritize updating the test to match the
+  intended implementation, rather than changing the implementation to match the test, unless:
+
+    1. The implementation is clearly wrong or inconsistent with requirements
+    2. The implementation introduces a security risk or bug
+    3. The test correctly reflects the desired behavior documented in requirements
