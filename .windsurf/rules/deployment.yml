@@ -1,0 +1,119 @@
+# Windsurf Deployment Rules
+version: 1.0
+
+description: Production deployment standards for server management, security, and monitoring
+
+rules:
+  - name: server_management
+    description: Server management standards
+    applies_to: "docker-compose.yml,Dockerfile,**/*.{sh,yml,yaml}"
+    always_apply: true
+    content: |
+      - Kill running servers before starting new ones
+      - Start new server after changes for testing
+
+  - name: environment
+    description: Environment configuration
+    content: |
+      - Separate configs per environment
+      - Never commit production secrets
+      - Generate strong secret keys
+      - Different DB credentials per env
+      - HTTPS required in production
+      - Environment variable naming: KANAKKU_* prefix
+
+  - name: docker
+    description: Docker best practices
+    content: |
+      - Use multi-stage builds
+      - Run as non-root users
+      - Specific version tags (not 'latest')
+      - Implement health checks
+      - Use volumes for persistent data
+
+  - name: database
+    description: Database deployment
+    content: |
+      - Use PostgreSQL in production
+      - Automated migrations (Alembic)
+      - Regular encrypted backups
+      - Connection pooling
+      - Performance monitoring
+
+  - name: web_server
+    description: Web server configuration
+    content: |
+      - Nginx as reverse proxy
+      - Strong SSL/TLS configuration
+      - Security headers (HSTS, CSP, etc.)
+      - Static asset caching
+      - Rate limiting
+
+  - name: app_server
+    description: Application server
+    content: |
+      - Gunicorn with multiple workers
+      - Graceful shutdowns
+      - Log to stdout/stderr
+      - Performance monitoring
+
+  - name: monitoring
+    description: Monitoring and logging
+    content: |
+      - Centralized logging
+      - Application performance monitoring
+      - Health check endpoints
+      - Resource usage alerts
+
+  - name: security
+    description: Security hardening
+    content: |
+      - Firewall restrictions
+      - Strict user permissions
+      - Regular security updates
+      - Secrets management
+      - Intrusion detection
+
+  - name: backups
+    description: Backup and recovery
+    content: |
+      - Automated daily backups
+      - Test restoration procedures
+      - Multiple backup locations
+      - Disaster recovery documentation
+
+  - name: ci_cd
+    description: CI/CD pipeline
+    content: |
+      - Automated testing
+      - Linting/quality checks
+      - Security scanning
+      - Zero-downtime deployments
+      - Rollback capability
+
+  - name: performance
+    description: Performance optimization
+    content: |
+      - CDN for static assets
+      - Caching strategies
+      - Database optimization
+      - HTTP compression
+      - Startup time monitoring
+
+  - name: scalability
+    description: Scalability considerations
+    content: |
+      - Design for horizontal scaling
+      - Load balancers
+      - Distributed session storage
+      - Message queues
+      - Database scaling strategies
+
+  - name: documentation
+    description: Documentation requirements
+    content: |
+      - Maintain deployment docs
+      - Document all environment variables
+      - Create operational runbooks
+      - Troubleshooting procedures
+      - Current architecture diagrams

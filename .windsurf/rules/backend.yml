@@ -1,0 +1,115 @@
+# Windsurf Backend Rules
+version: 1.0
+
+description: Flask backend development standards including database, authentication, and API design
+
+rules:
+  - name: flask_structure
+    description: Standards for Flask application structure
+    applies_to: "**/*.py"
+    always_apply: true
+    content: |
+      - Use Flask Blueprints to organize routes by functionality (auth, accounts, transactions)
+      - Follow application factory pattern with `create_app()`
+      - Keep route handlers lean (business logic in services)
+      - Use `/api/v1/` prefix for API endpoints
+      - Register application-wide error handlers
+      
+      Example blueprint structure:
+      ```python
+      # ✅ DO: Good structure
+      accounts/
+        ├── __init__.py
+        ├── routes.py
+        ├── services.py
+        ├── models.py
+        └── schemas.py
+      ```
+
+  - name: database_standards
+    description: SQLAlchemy and database standards
+    content: |
+      - Use SQLAlchemy with proper relationships/constraints
+      - Use Alembic for all schema changes
+      - Follow snake_case naming conventions
+      - Add indexes for performance
+      - Use transactions for atomic operations
+      - Prefer explicit column selection
+      - Encapsulate all CRUD in service functions
+      
+      Example model:
+      ```python
+      # ✅ DO: Good model example
+      class Account(db.Model):
+          __tablename__ = 'accounts'
+          id = db.Column(db.Integer, primary_key=True)
+          name = db.Column(db.String(80), nullable=False)
+      ```
+
+  - name: auth_security
+    description: Authentication and security standards
+    content: |
+      - Use Flask-JWT-Extended for JWT
+      - Implement both JWT and API key auth
+      - Use werkzeug.security for password hashing
+      
+      Reference security.yml for comprehensive standards
+
+  - name: configuration
+    description: Configuration management
+    content: |
+      - Use environment-specific config classes
+      - Generate strong secret keys for production
+      - Implement proper logging
+      - Use different DB URLs per environment
+      - Access config via `current_app.config`
+
+  - name: error_handling
+    description: Error handling and logging
+    content: |
+      - Don't expose sensitive info in errors
+      - Use structured logging (JSON preferred)
+      - Log security events
+      - Define custom business exceptions
+      - Return consistent error formats
+
+  - name: api_design
+    description: API design standards
+    content: |
+      - Use Flask Blueprints with route decorators
+      - Use marshmallow for validation
+      - Return proper HTTP status codes
+      - Use JSON for all bodies
+      - Implement pagination
+      
+      Reference api_design.yml for comprehensive standards
+
+  - name: code_quality
+    description: Code quality standards
+    content: |
+      - Follow PEP 8 and use Black
+      - Use type hints
+      - Keep functions small/single-purpose
+      - Use descriptive names
+      - Add docstrings
+      - Replicate existing patterns
+
+  - name: performance
+    description: Performance optimization
+    content: |
+      - Use connection pooling
+      - Implement caching
+      - Use background tasks (RQ)
+      - Monitor slow queries
+      - Proper database indexing
+
+  - name: production
+    description: Production deployment standards
+    content: |
+      - Use Gunicorn WSGI
+      - Health check endpoints
+      - Environment variables for config
+      - Log rotation/monitoring
+      - DB backup procedures
+      
+      Reference deployment.yml for comprehensive standards

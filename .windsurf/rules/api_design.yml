@@ -1,0 +1,118 @@
+# Windsurf API Design Rules
+version: 1.0
+
+description: REST API design principles, request/response standards, and frontend API integration guidelines
+
+rules:
+  - name: rest_principles
+    description: REST API design principles
+    applies_to: "**/*.{js,jsx,ts,tsx,py}"
+    always_apply: true
+    content: |
+      - Use consistent URL patterns: `/api/v1/resource-names` (plural)
+      - Follow HTTP method conventions:
+        - GET: Read
+        - POST: Create
+        - PUT: Update
+        - DELETE: Remove
+      - Implement proper status codes:
+        - 200 OK: General success
+        - 201 Created: Resource created
+        - 204 No Content: Success with no body
+        - 400 Bad Request: Client error
+        - 401 Unauthorized: Auth required/failed
+        - 403 Forbidden: No permission
+        - 404 Not Found
+        - 500 Server Error
+      - Ensure PUT/DELETE are idempotent
+      - Use ISO 8601 for dates
+      - Use PUT for full updates, PATCH for partial
+
+  - name: request_response
+    description: Request/response standards
+    content: |
+      - Use JSON for all bodies
+      - Include Content-Type: application/json
+      - Use camelCase for JSON fields
+      - Implement pagination with metadata:
+        ```json
+        {
+          "data": [],
+          "meta": {
+            "totalItems": 100,
+            "pageSize": 10,
+            "currentPage": 1
+          }
+        }
+        ```
+      - Validation error format:
+        ```json
+        {
+          "error": "ValidationFailed",
+          "message": "Input validation failed",
+          "details": {
+            "field1": ["Error 1", "Error 2"]
+          }
+        }
+        ```
+
+  - name: auth
+    description: Authentication standards
+    content: |
+      - Require auth for all endpoints except health checks
+      - Support JWT Bearer tokens and API keys
+      - Return 401 for auth failures, 403 for permission issues
+      
+      Reference security.yml for comprehensive standards
+
+  - name: versioning
+    description: API versioning standards
+    content: |
+      - Use URL path versioning: /api/v1/, /api/v2/
+      - Maintain backward compatibility
+      - Document breaking changes
+      - Deprecate old versions with notice
+
+  - name: frontend_integration
+    description: Frontend API integration
+    content: |
+      - Use configured axiosInstance
+      - Wrap calls in try/catch
+      - Show loading states
+      - Handle errors gracefully
+      - Verify existing endpoints before use
+      - Adhere to established patterns
+
+  - name: validation
+    description: Data validation standards
+    content: |
+      - Validate all input server-side
+      - Use proper data types/constraints
+      - Return detailed validation errors
+      - Implement input sanitization
+
+  - name: performance
+    description: Performance optimization
+    content: |
+      - Implement proper database indexing
+      - Use pagination for large results
+      - Include ETag headers
+      - Use connection pooling
+      - Monitor slow queries
+
+  - name: documentation
+    description: API documentation standards
+    content: |
+      - Maintain OpenAPI/Swagger docs
+      - Include examples for all endpoints
+      - Document all parameters
+      - Keep docs synchronized
+
+  - name: monitoring
+    description: Monitoring and logging
+    content: |
+      - Log all API requests
+      - Include correlation IDs
+      - Monitor response times
+      - Implement health checks
+      - Set up failure alerts

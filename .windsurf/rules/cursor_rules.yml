@@ -1,0 +1,64 @@
+# Windsurf Rules Configuration
+version: 1.0
+
+description: Guidelines for creating and maintaining rule files with proper structure and formatting
+
+rules:
+  - name: rule_structure
+    description: Required structure for all rule files
+    applies_to: ".windsurf/rules/**/*.yml"
+    always_apply: true
+    content: |
+      Each rule file must contain:
+      - Clear description
+      - Applicability scope
+      - Specific requirements
+      - Examples of correct implementation
+      
+      Example structure:
+      ```yaml
+      - name: example_rule
+        description: Example rule description
+        applies_to: "path/to/files/*.ext"
+        always_apply: false
+        content: |
+          Detailed rule explanation
+          - With bullet points
+          - And code examples
+      ```
+
+  - name: file_references
+    description: How to reference files in rules
+    content: |
+      Use standard markdown links for file references
+      Example: [schema.prisma](../prisma/schema.prisma)
+
+  - name: code_examples
+    description: Format for code examples in rules
+    content: |
+      Always provide both positive and negative examples:
+      ```typescript
+      // ✅ DO: Good example
+      const good = true;
+      
+      // ❌ DON'T: Bad example
+      const bad = false;
+      ```
+
+  - name: content_guidelines
+    description: Guidelines for rule content
+    content: |
+      - Start with high-level overview
+      - Include specific requirements
+      - Show implementation examples
+      - Reference existing code patterns
+      - Keep rules DRY
+
+  - name: best_practices
+    description: General rule authoring best practices
+    content: |
+      - Use bullet points for clarity
+      - Keep descriptions concise
+      - Include DO/DON'T examples
+      - Prefer actual code references
+      - Maintain consistent formatting

@@ -1,0 +1,27 @@
+# Windsurf Domain Rules Template
+version: 1.0
+
+description: Rules for [DOMAIN_NAME]
+
+rules:
+  - name: example_rule
+    description: Description of what this rule enforces
+    applies_to: "path/to/files/*.ext"
+    always_apply: false
+    content: |
+      Detailed rule explanation including:
+      - Key requirements
+      - Implementation examples
+      - Common pitfalls
+      
+      Example:
+      ```typescript
+      // ✅ DO: Preferred pattern
+      const example = goodPractice();
+      
+      // ❌ DON'T: Anti-pattern
+      const example = badPractice();
+      ```
+
+  # Add additional rules below following the same structure
+  # Use this template for all domain-specific rule files
