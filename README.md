@@ -519,11 +519,16 @@ Kanakku includes a comprehensive email automation system that automatically proc
    redis-server
    ```
 
-3. **Start Email Workers**:
+3. **Start Email Workers and Scheduler**:
 
    ```bash
    cd banktransactions/email_automation
+   
+   # Start the email worker (processes jobs)
    python run_worker.py
+   
+   # Start the scheduler (schedules periodic jobs) - in another terminal
+   python run_scheduler.py --interval 300
    ```
 
 4. **Configure in Web Interface**:
@@ -557,6 +562,28 @@ The email automation system consists of:
 - **Scheduler** (`banktransactions/email_automation/run_scheduler.py`) - Periodic job scheduling
 - **Frontend UI** - User-friendly configuration interface
 
+### Components
+
+#### Email Worker (`run_worker.py`)
+Processes email automation jobs from the Redis queue:
+- Connects to Gmail via IMAP
+- Extracts transaction data using AI
+- Creates transactions in the ledger
+- Handles errors and retries
+
+#### Scheduler (`run_scheduler.py`)
+Manages periodic email processing:
+- Schedules jobs based on user polling intervals (hourly/daily)
+- Monitors enabled email configurations
+- Enqueues jobs at appropriate times
+- Runs continuously in the background
+
+**Important**: Always run from the `banktransactions/email_automation` directory:
+```bash
+cd banktransactions/email_automation
+python run_scheduler.py --interval 300
+```
+
 ### Production Deployment
 
 For production, run workers as systemd services:
@@ -565,11 +592,23 @@ For production, run workers as systemd services:
 # Start email worker
 sudo systemctl start kanakku-email-worker
 
-# Start scheduler (optional)
+# Start scheduler (recommended for automatic processing)
 sudo systemctl start kanakku-email-scheduler
 ```
 
-For detailed setup instructions, see [Email Automation README](banktransactions/email_automation/README.md).
+**Environment Variables Required:**
+- `DATABASE_URL`: PostgreSQL connection string
+- `REDIS_URL`: Redis server URL
+- `ENCRYPTION_KEY`: 32-byte base64 encoded key for encrypting email passwords
+
+**Generate encryption key:**
+```bash
+python -c "from cryptography.fernet import Fernet; print('ENCRYPTION_KEY=' + Fernet.generate_key().decode())"
+```
+
+**Documentation:**
+- [Email Automation README](banktransactions/email_automation/README.md) - Complete setup guide
+- [Scheduler Documentation](banktransactions/email_automation/SCHEDULER.md) - Detailed scheduler usage and troubleshooting
 
 ## Legacy Bank Transaction Processing
 

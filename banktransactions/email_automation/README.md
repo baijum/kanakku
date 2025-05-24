@@ -23,6 +23,56 @@ The email automation system consists of several components:
 - **Status Monitoring**: Real-time status tracking and error reporting
 - **Manual Triggers**: On-demand email processing
 
+## Quick Start
+
+### 1. Prerequisites Check
+```bash
+# Check if Redis is running
+redis-cli ping  # Should return "PONG"
+
+# Check if PostgreSQL is accessible
+psql $DATABASE_URL -c "SELECT 1;"  # Should return "1"
+```
+
+### 2. One-Command Setup
+```bash
+# Navigate to email automation directory
+cd banktransactions/email_automation
+
+# Install dependencies (if not already installed)
+pip install -r requirements.txt
+
+# Set required environment variables
+export DATABASE_URL="postgresql://kanakku_dev:secret123@localhost:5432/kanakku_dev_db1"
+export REDIS_URL="redis://localhost:6379/0"
+export ENCRYPTION_KEY=$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+
+# Test the system
+python test_system.py
+
+# Start the worker (in one terminal)
+python run_worker.py &
+
+# Start the scheduler (in another terminal)
+python run_scheduler.py --interval 300
+```
+
+### 3. Verify Everything is Working
+```bash
+# Check if scheduler is running
+ps aux | grep run_scheduler
+
+# Check if worker is running  
+ps aux | grep run_worker
+
+# Check Redis queues
+redis-cli LLEN rq:queue:default
+
+# Check logs
+tail -f ../logs/scheduler.log
+tail -f ../logs/worker.log
+```
+
 ## Setup Instructions
 
 ### 1. Prerequisites
@@ -160,13 +210,50 @@ Options:
 
 ### Run Scheduler
 
+The scheduler manages periodic email processing jobs for all enabled user configurations.
+
+**Important**: Always run the scheduler from the `banktransactions/email_automation` directory.
+
 ```bash
+cd banktransactions/email_automation
 python run_scheduler.py [options]
 
 Options:
   --redis-url REDIS_URL    Redis URL (default: redis://localhost:6379/0)
-  --interval SECONDS       Scheduling interval (default: 300)
+  --interval SECONDS       Scheduling interval in seconds (default: 300)
 ```
+
+**Environment Variables Required:**
+- `DATABASE_URL`: PostgreSQL connection string
+- `REDIS_URL`: Redis server URL (optional, defaults to redis://localhost:6379/0)
+- `ENCRYPTION_KEY`: 32-byte base64 encoded key for encrypting sensitive data
+
+**Example with environment variables:**
+```bash
+cd banktransactions/email_automation
+export DATABASE_URL="postgresql://user:password@localhost:5432/kanakku"
+export REDIS_URL="redis://localhost:6379/0"
+export ENCRYPTION_KEY="your_32_byte_base64_encoded_key"
+python run_scheduler.py --interval 300
+```
+
+**Generate encryption key:**
+```bash
+python -c "from cryptography.fernet import Fernet; print('ENCRYPTION_KEY=' + Fernet.generate_key().decode())"
+```
+
+**What the scheduler does:**
+- Checks for enabled email configurations every interval
+- Schedules email processing jobs based on user polling intervals
+- Uses Redis Queue (RQ) to manage background jobs
+- Logs all scheduling activities
+
+**Monitoring:**
+- Scheduler logs: `../logs/scheduler.log`
+- Check Redis queues: `redis-cli LLEN rq:queue:default`
+- Monitor with: `ps aux | grep run_scheduler`
+
+**📖 For detailed scheduler documentation, see [SCHEDULER.md](./SCHEDULER.md)**
 
 ## Database Schema
 
@@ -202,17 +289,33 @@ CREATE TABLE user_email_configurations (
 
 ### Common Issues
 
-1. **Connection Failed**
+1. **Scheduler/Worker Import Errors**
+   - **Error**: `ModuleNotFoundError: No module named 'banktransactions'`
+   - **Solution**: Always run scripts from the `banktransactions/email_automation` directory
+   - **Example**: `cd banktransactions/email_automation && python run_scheduler.py`
+
+2. **Database Connection Issues**
+   - **Error**: `DATABASE_URL environment variable not set`
+   - **Solution**: Set the DATABASE_URL environment variable
+   - **Example**: `export DATABASE_URL="postgresql://user:password@localhost:5432/kanakku"`
+
+3. **Encryption Key Issues**
+   - **Error**: `Working outside of application context` or encryption failures
+   - **Solution**: Generate and set ENCRYPTION_KEY environment variable
+   - **Command**: `python -c "from cryptography.fernet import Fernet; print('ENCRYPTION_KEY=' + Fernet.generate_key().decode())"`
+
+4. **Connection Failed**
    - Verify Gmail app password is correct
    - Check 2FA is enabled on Gmail account
    - Ensure IMAP is enabled in Gmail settings
 
-2. **Worker Not Processing**
-   - Check Redis connection
+5. **Worker Not Processing**
+   - Check Redis connection: `redis-cli ping`
    - Verify DATABASE_URL is correct
    - Check worker logs for errors
+   - Ensure worker is running: `ps aux | grep run_worker`
 
-3. **AI Parsing Issues**
+6. **AI Parsing Issues**
    - Add more sample emails for better accuracy
    - Verify GOOGLE_API_KEY is set correctly
    - Check if email format is supported
