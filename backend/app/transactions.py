@@ -5,7 +5,7 @@ from datetime import datetime
 import traceback
 import json
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import text
+from sqlalchemy import text, func, or_
 
 transactions = Blueprint("transactions", __name__)
 
@@ -210,12 +210,49 @@ def get_transactions():
         limit = request.args.get("limit", type=int)
         start_date = request.args.get("startDate")
         end_date = request.args.get("endDate")
+        search_term = request.args.get("search", "").strip()
         offset = request.args.get("offset", type=int, default=0)
 
         # Start with base query - filter by user and active book
         query = Transaction.query.filter_by(
             user_id=g.current_user.id, book_id=active_book_id
         )
+
+        # Apply search filter if provided
+        if search_term:
+            # Check if we're using PostgreSQL (FTS only works with PostgreSQL)
+            db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '').lower()
+            if 'postgresql' in db_url:
+                # Convert search term to tsquery with prefix matching for last word
+                search_words = search_term.split()
+                if search_words:
+                    # Add prefix matching to the last word, exact matching for others
+                    tsquery_parts = []
+                    for i, word in enumerate(search_words):
+                        if i == len(search_words) - 1:  # Last word gets prefix matching
+                            tsquery_parts.append(f"{word}:*")
+                        else:
+                            tsquery_parts.append(word)
+                    
+                    search_query = ' & '.join(tsquery_parts)
+                    current_app.logger.debug(f"Search query: {search_query}")
+                    
+                    query = query.filter(
+                        Transaction.search_vector.op('@@')(
+                            func.to_tsquery('english', search_query)
+                        )
+                    )
+            else:
+                # Fallback to basic text search for non-PostgreSQL databases
+                current_app.logger.debug(f"Using fallback search for: {search_term}")
+                search_filter = f"%{search_term}%"
+                query = query.filter(
+                    or_(
+                        Transaction.description.ilike(search_filter),
+                        Transaction.payee.ilike(search_filter),
+                        Transaction.currency.ilike(search_filter)
+                    )
+                )
 
         # Apply date filters if provided
         if start_date:

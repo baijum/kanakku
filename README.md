@@ -23,6 +23,15 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - **Background Processing**: Redis Queue for asynchronous email processing
 - **Secure Configuration**: Encrypted storage of email credentials
 - **Few-Shot Learning**: Improves accuracy with user-provided sample emails
+- **Comprehensive PostgreSQL Full-Text Search**: Search across ALL transaction and account fields
+- **Smart Search Capabilities**:
+  - **Financial Data**: Search by amounts (e.g., "100", "50.75"), currencies ("INR", "USD")
+  - **Status Search**: Use natural language - "cleared", "pending", "unmarked" instead of symbols
+  - **Account Integration**: Search by account names and descriptions
+  - **Combined Queries**: "starbucks 50 cleared checking" finds cleared $50 Starbucks transactions in checking accounts
+- **Real-time Search**: Debounced search with 300ms delay for responsive UX
+- **Prefix Matching**: Supports partial word matching as you type
+- **Database Compatibility**: Full PostgreSQL FTS with SQLite fallback for development
 
 ## Prerequisites
 
@@ -705,3 +714,151 @@ The project includes the following rule sets:
 5. Ensure all CI checks pass before submitting pull requests
 
 For detailed information about specific development standards, refer to the individual rule files in the `.cursor/rules/` directory.
+
+## PostgreSQL Full-Text Search Implementation
+
+#### Database Changes
+- Added `search_vector` column (TSVECTOR) to `transaction` table
+- Created comprehensive PostgreSQL triggers that automatically update search vectors
+- Status mapping: `*` → "Cleared", `!` → "Pending", `NULL` → "Unmarked"
+- Amount formatting for both integer and decimal searches
+- GIN index for optimal search performance
+
+#### Backend Enhancements
+- Enhanced `GET /api/v1/transactions` API with `search` parameter
+- Intelligent database detection (PostgreSQL FTS vs SQLite fallback)
+- Comprehensive search across: description, payee, amount, currency, status, account name, account description
+- Prefix matching support for real-time search
+
+#### Frontend Improvements
+- New search input field in ViewTransactions component
+- Debounced search (300ms) to prevent excessive API calls
+- Helpful search examples and placeholder text
+- Responsive grid layout accommodating search field
+- Automatic pagination reset when searching
+
+#### Search Examples
+```
+# Financial searches
+"100"           → Find all transactions with amount 100
+"50.75"         → Find transactions with exact decimal amounts
+"INR"           → Find all INR transactions
+
+# Status searches  
+"cleared"       → Find all cleared transactions (status = '*')
+"pending"       → Find all pending transactions (status = '!')
+"unmarked"      → Find all unmarked transactions (no status)
+
+# Combined searches
+"starbucks 50 cleared"              → Cleared $50 Starbucks transactions
+"groceries checking unmarked"       → Unmarked grocery transactions in checking account
+"100 INR pending"                   → Pending 100 INR transactions
+"salary deposit cleared"            → Cleared salary deposits
+```
+
+## Search API
+```
+GET /api/v1/transactions?search={term}&startDate={date}&endDate={date}&limit={n}&offset={n}
+```
+
+**Parameters:**
+- `search`: Search term for comprehensive FTS
+- `startDate`: Filter by start date (YYYY-MM-DD)
+- `endDate`: Filter by end date (YYYY-MM-DD)
+- `limit`: Number of results per page
+- `offset`: Pagination offset
+
+**Response:**
+```json
+{
+  "transactions": [
+    {
+      "id": 1,
+      "date": "2024-01-15",
+      "payee": "Starbucks",
+      "status": "*",
+      "postings": [
+        {
+          "id": 1,
+          "account": "Checking",
+          "amount": "50.00",
+          "currency": "INR"
+        }
+      ]
+    }
+  ],
+  "total": 1
+}
+```
+
+## Database Schema
+
+### Transaction Table (Enhanced)
+```sql
+CREATE TABLE transaction (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    book_id INTEGER NOT NULL,
+    account_id INTEGER,
+    date DATE NOT NULL,
+    description VARCHAR(200) NOT NULL,
+    payee VARCHAR(100),
+    amount FLOAT NOT NULL,
+    currency VARCHAR(3) DEFAULT 'INR',
+    status VARCHAR(1),  -- '*' = cleared, '!' = pending, NULL = unmarked
+    search_vector TSVECTOR,  -- Full-text search vector
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- GIN index for efficient full-text search
+CREATE INDEX idx_transaction_search_vector ON transaction USING GIN (search_vector);
+```
+
+### Search Vector Content
+The `search_vector` includes:
+- Transaction description and payee
+- Formatted amount (both integer and decimal)
+- Currency code
+- Verbose status ("Cleared", "Pending", "Unmarked")
+- Associated account name and description
+
+## Performance Considerations
+
+### Search Performance
+- **GIN Index**: Single index covers all search scenarios
+- **Efficient Updates**: Triggers only update search vectors when relevant fields change
+- **Prefix Matching**: Supports real-time search as users type
+- **Scalability**: FTS performance remains consistent as transaction volume grows
+
+### Database Compatibility
+- **PostgreSQL**: Full FTS with comprehensive search capabilities
+- **SQLite**: Graceful fallback to basic text search for development
+- **Automatic Detection**: Backend automatically detects database type
+
+## Contributing
+
+### Code Quality Standards
+- Follow PEP 8 for Python code
+- Use ESLint and Prettier for JavaScript/React
+- Comprehensive error handling and logging
+- Write tests for new functionality
+- Update documentation for significant changes
+
+### Search Feature Development
+- Test with both PostgreSQL and SQLite
+- Verify trigger functionality after schema changes
+- Test search performance with large datasets
+- Ensure frontend search UX remains responsive
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For issues related to the search functionality:
+1. Check database configuration (PostgreSQL vs SQLite)
+2. Verify migration has been applied: `python -m flask db current`
+3. Test search API directly: `GET /api/v1/transactions?search=test`
+4. Check browser console for frontend errors
+5. Review backend logs for search query processing

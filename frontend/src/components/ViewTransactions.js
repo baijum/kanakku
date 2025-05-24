@@ -41,6 +41,7 @@ function ViewTransactions() {
   const [totalCount, setTotalCount] = useState(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   
   // UI state
   const [loading, setLoading] = useState(true);
@@ -102,6 +103,7 @@ function ViewTransactions() {
 
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
+      if (searchTerm.trim()) params.search = searchTerm.trim();
 
       const response = await axiosInstance.get('/api/v1/transactions', { params });
       
@@ -136,7 +138,7 @@ function ViewTransactions() {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, startDate, endDate]);
+  }, [page, rowsPerPage, startDate, endDate, searchTerm]);
 
   // Fetch preambles for export functionality
   const fetchPreambles = useCallback(async () => {
@@ -163,9 +165,22 @@ function ViewTransactions() {
 
   // Load data when component mounts or dependencies change
   useEffect(() => {
-    fetchTransactions();
     fetchPreambles();
-  }, [fetchTransactions, fetchPreambles]);
+  }, [fetchPreambles]);
+
+  // Add debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setPage(0); // Reset to first page when searching
+      fetchTransactions();
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, fetchTransactions]);
+
+  // Load data when other dependencies change (excluding searchTerm to avoid double calls)
+  useEffect(() => {
+    fetchTransactions();
+  }, [page, rowsPerPage, startDate, endDate, fetchTransactions]);
 
   // Event handlers
   const handleChangePage = (event, newPage) => {
@@ -336,7 +351,17 @@ function ViewTransactions() {
       {/* Filters and Export Section */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={5}>
+          <Grid item xs={12} sm={6} md={4}>
+            <TextField
+              fullWidth
+              label="Search transactions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by description, payee, amount, status, or account"
+              helperText="Try: 'starbucks 50 cleared' or 'groceries checking unmarked'"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
             <TextField
               fullWidth
               label="Start Date"
@@ -346,7 +371,7 @@ function ViewTransactions() {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item xs={12} sm={5}>
+          <Grid item xs={12} sm={6} md={3}>
             <TextField
               fullWidth
               label="End Date"
@@ -356,7 +381,7 @@ function ViewTransactions() {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item xs={12} sm={2} sx={{ display: 'flex', alignItems: 'center' }}>
+          <Grid item xs={12} sm={6} md={2}>
             <Button
               variant="outlined"
               startIcon={<FileDownloadIcon />}

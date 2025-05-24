@@ -10,12 +10,26 @@ from sqlalchemy import (
     Boolean,
     UniqueConstraint,
     Text,
+    TypeDecorator,
 )
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from .extensions import db
 import secrets
+
+
+class SearchVectorType(TypeDecorator):
+    """Custom type that uses TSVECTOR for PostgreSQL and TEXT for other databases"""
+    impl = Text
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(TSVECTOR())
+        else:
+            return dialect.type_descriptor(Text())
 
 
 class Book(db.Model):
@@ -204,6 +218,7 @@ class Transaction(db.Model):
     amount = Column(Float, nullable=False)
     currency = Column(String(3), default="INR")
     status = Column(String(1), nullable=True)  # * for cleared, ! for pending
+    search_vector = Column(SearchVectorType, nullable=True)  # Full-text search vector
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
