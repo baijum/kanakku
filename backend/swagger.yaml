@@ -548,13 +548,56 @@ paths:
       summary: Get all accounts with full details
       responses:
         200:
-          description: List of accounts with details
+          description: List of accounts with full details
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Account'
+  
+  /api/v1/accounts/autocomplete:
+    get:
+      tags:
+        - Accounts
+      summary: Get account name suggestions for auto-completion
+      description: |
+        Returns account name suggestions based on a prefix. Auto-completion only activates 
+        when the prefix contains at least one colon (:) to support Ledger CLI-style 
+        hierarchical account names like "Assets:Bank:Checking".
+      parameters:
+        - name: prefix
+          in: query
+          required: false
+          schema:
+            type: string
+          description: The account name prefix to search for (must contain at least one colon)
+          example: "Assets:Bank:"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Maximum number of suggestions to return
+      responses:
+        200:
+          description: List of account name suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                    description: Array of matching account names
+                    example: ["Assets:Bank:Checking", "Assets:Bank:Savings", "Assets:Bank"]
+                  prefix:
+                    type: string
+                    description: The prefix that was searched for
+                    example: "Assets:Bank:"
   
   /api/v1/accounts/{accountId}:
     get:

@@ -26,12 +26,15 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  Tooltip,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
+import AccountAutocomplete from './AccountAutocomplete';
 
 function ViewTransactions() {
   // State management
@@ -46,6 +49,7 @@ function ViewTransactions() {
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   
   // Dialog states
@@ -91,9 +95,11 @@ function ViewTransactions() {
   };
 
   // Main function to fetch transactions with pagination and filtering
-  const fetchTransactions = useCallback(async () => {
+  const fetchTransactions = useCallback(async (isRetry = false) => {
     setLoading(true);
-    setError('');
+    if (!isRetry) {
+      setError(''); // Clear error only on new requests, not retries
+    }
     
     try {
       const params = {
@@ -124,17 +130,37 @@ function ViewTransactions() {
         
         setTransactions(completeTransactions);
         
-        // Get total count from API if available, otherwise use a default
-        setTotalCount(response.data.total || 100);
+        // Get total count from API - use 0 if not provided, don't default to 100
+        setTotalCount(response.data.total ?? 0);
+        
+        // Clear error and retry count on success
+        setError('');
+        setRetryCount(0);
       } else {
         console.error('Unexpected response structure for transactions:', response.data);
         setTransactions([]);
-        setError('Failed to load transaction data');
+        // Don't show persistent error for data structure issues
+        // Just log and show empty state
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setTransactions([]);
-      setError('Error loading transactions. Please try again.');
+      
+      // Only show error state for network/server errors, not for empty results
+      if (error.response?.status >= 500 || !error.response) {
+        setError('network_error');
+        
+        // Show a brief snackbar notification instead of persistent error
+        setSnackbar({
+          open: true,
+          message: 'Unable to load transactions. Check your connection.',
+          severity: 'warning'
+        });
+      } else {
+        // For client errors (400-499), don't show network error
+        // These are usually validation errors or "not found" which are not network issues
+        console.log('Client error or empty result, not showing network error');
+      }
     } finally {
       setLoading(false);
     }
@@ -342,23 +368,42 @@ function ViewTransactions() {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  // Retry function for failed requests
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    fetchTransactions(true);
+  };
+
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
-      <Typography variant="h4" gutterBottom>
-        Transactions
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4" sx={{ flexGrow: 1 }}>
+          Transactions
+        </Typography>
+        {error === 'network_error' && transactions.length > 0 && (
+          <Tooltip title="Refresh transactions">
+            <IconButton 
+              onClick={handleRetry}
+              disabled={loading}
+              color="primary"
+              size="small"
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
 
       {/* Filters and Export Section */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={4}>
-            <TextField
-              fullWidth
-              label="Search transactions..."
+            <AccountAutocomplete
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={setSearchTerm}
+              label="Search transactions..."
               placeholder="Search by description, payee, amount, status, or account"
-              helperText="Try: 'starbucks 50 cleared' or 'groceries checking unmarked'"
+              helperText="Try: 'starbucks 50 cleared' or 'groceries checking unmarked'. Type ':' for account suggestions."
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -396,22 +441,35 @@ function ViewTransactions() {
       </Paper>
 
       {/* Main Content */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
       <TableContainer component={Paper}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
           </Box>
         ) : transactions.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No transactions found. Try adjusting your filters.
-            </Typography>
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            {error === 'network_error' ? (
+              <>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  Unable to load transactions
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Please check your internet connection and try again.
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  onClick={handleRetry}
+                  disabled={loading}
+                >
+                  {loading ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+                  Try Again
+                </Button>
+              </>
+            ) : (
+              <Typography variant="body1" color="text.secondary">
+                No transactions found. Try adjusting your filters.
+              </Typography>
+            )}
           </Box>
         ) : (
           <>

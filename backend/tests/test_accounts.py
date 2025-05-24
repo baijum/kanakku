@@ -258,3 +258,95 @@ def test_delete_account_with_transactions(authenticated_client, user, app):
     with app.app_context():
         assert db.session.get(Account, account_id) is not None
         assert Transaction.query.filter_by(account_id=account_id).count() == 1
+
+
+def test_autocomplete_accounts(authenticated_client, user, app):
+    """Test account autocomplete functionality"""
+    with app.app_context():
+        book = Book.query.filter_by(user_id=user.id).first()
+        if not book:
+            book = Book(user_id=user.id, name="Test Book")
+            db.session.add(book)
+            db.session.commit()
+
+        # Create test accounts with Ledger CLI-style names
+        test_accounts = [
+            Account(user_id=user.id, book_id=book.id, name="Assets:Bank:Checking", currency="INR"),
+            Account(user_id=user.id, book_id=book.id, name="Assets:Bank:Savings", currency="INR"),
+            Account(user_id=user.id, book_id=book.id, name="Assets:Cash", currency="INR"),
+            Account(user_id=user.id, book_id=book.id, name="Expenses:Food:Restaurant", currency="INR"),
+            Account(user_id=user.id, book_id=book.id, name="Expenses:Food:Groceries", currency="INR"),
+            Account(user_id=user.id, book_id=book.id, name="Expenses:Transport", currency="INR"),
+            Account(user_id=user.id, book_id=book.id, name="Income:Salary", currency="INR"),
+        ]
+        
+        for account in test_accounts:
+            db.session.add(account)
+        db.session.commit()
+
+    # Test autocomplete with no prefix (should return empty)
+    response = authenticated_client.get("/api/v1/accounts/autocomplete")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["suggestions"] == []
+
+    # Test autocomplete without colon (should return empty)
+    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=Assets")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["suggestions"] == []
+
+    # Test autocomplete with Assets: prefix
+    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=Assets:")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "suggestions" in data
+    suggestions = data["suggestions"]
+    
+    # Should include both exact matches and next segment suggestions
+    assert "Assets:Bank:Checking" in suggestions
+    assert "Assets:Bank:Savings" in suggestions
+    assert "Assets:Cash" in suggestions
+    # Should also suggest next segments
+    assert "Assets:Bank" in suggestions
+
+    # Test autocomplete with Assets:Bank: prefix
+    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=Assets:Bank:")
+    assert response.status_code == 200
+    data = response.get_json()
+    suggestions = data["suggestions"]
+    
+    assert "Assets:Bank:Checking" in suggestions
+    assert "Assets:Bank:Savings" in suggestions
+    # Should not include Assets:Cash since it doesn't match the prefix
+    assert "Assets:Cash" not in suggestions
+
+    # Test autocomplete with Expenses:Food: prefix
+    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=Expenses:Food:")
+    assert response.status_code == 200
+    data = response.get_json()
+    suggestions = data["suggestions"]
+    
+    assert "Expenses:Food:Restaurant" in suggestions
+    assert "Expenses:Food:Groceries" in suggestions
+    # Should not include other expense accounts
+    assert "Expenses:Transport" not in suggestions
+
+    # Test case insensitive matching
+    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=assets:")
+    assert response.status_code == 200
+    data = response.get_json()
+    suggestions = data["suggestions"]
+    
+    # Should match case-insensitively
+    assert len(suggestions) > 0
+    assert any("Assets:" in suggestion for suggestion in suggestions)
+
+    # Test limit parameter
+    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=Assets:&limit=2")
+    assert response.status_code == 200
+    data = response.get_json()
+    suggestions = data["suggestions"]
+    
+    # Should respect the limit
+    assert len(suggestions) <= 2

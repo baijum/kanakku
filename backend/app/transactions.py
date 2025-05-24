@@ -229,19 +229,36 @@ def get_transactions():
                     # Add prefix matching to the last word, exact matching for others
                     tsquery_parts = []
                     for i, word in enumerate(search_words):
-                        if i == len(search_words) - 1:  # Last word gets prefix matching
-                            tsquery_parts.append(f"{word}:*")
-                        else:
-                            tsquery_parts.append(word)
+                        # Sanitize word by removing special characters that break tsquery
+                        # Keep alphanumeric characters and basic punctuation
+                        sanitized_word = ''.join(c for c in word if c.isalnum() or c in '-_')
+                        if sanitized_word:  # Only add non-empty words
+                            if i == len(search_words) - 1:  # Last word gets prefix matching
+                                tsquery_parts.append(f"{sanitized_word}:*")
+                            else:
+                                tsquery_parts.append(sanitized_word)
                     
-                    search_query = ' & '.join(tsquery_parts)
-                    current_app.logger.debug(f"Search query: {search_query}")
-                    
-                    query = query.filter(
-                        Transaction.search_vector.op('@@')(
-                            func.to_tsquery('english', search_query)
-                        )
-                    )
+                    if tsquery_parts:  # Only proceed if we have valid search terms
+                        search_query = ' & '.join(tsquery_parts)
+                        current_app.logger.debug(f"Search query: {search_query}")
+                        
+                        try:
+                            query = query.filter(
+                                Transaction.search_vector.op('@@')(
+                                    func.to_tsquery('english', search_query)
+                                )
+                            )
+                        except Exception as e:
+                            # If tsquery fails, fall back to basic text search
+                            current_app.logger.warning(f"FTS query failed, falling back to basic search: {e}")
+                            search_filter = f"%{search_term}%"
+                            query = query.filter(
+                                or_(
+                                    Transaction.description.ilike(search_filter),
+                                    Transaction.payee.ilike(search_filter),
+                                    Transaction.currency.ilike(search_filter)
+                                )
+                            )
             else:
                 # Fallback to basic text search for non-PostgreSQL databases
                 current_app.logger.debug(f"Using fallback search for: {search_term}")

@@ -480,6 +480,40 @@ curl -X DELETE http://localhost:8000/api/v1/accounts/3 \
 }
 ```
 
+### Account Autocomplete
+```
+GET /api/v1/accounts/autocomplete
+```
+
+**Description:** Get account name suggestions for auto-completion based on a prefix. Auto-completion only activates when the prefix contains at least one colon (:) to support Ledger CLI-style hierarchical account names.
+
+**Parameters:**
+- `prefix` (optional): The account name prefix to search for (must contain at least one colon)
+- `limit` (optional): Maximum number of suggestions to return (default: 20)
+
+**Example:**
+```bash
+curl -X GET "http://localhost:8000/api/v1/accounts/autocomplete?prefix=Assets:Bank:&limit=10" \
+  -H "X-API-Key: your_api_token"
+```
+
+**Response (200 OK):**
+```json
+{
+  "suggestions": [
+    "Assets:Bank:Checking",
+    "Assets:Bank:Savings",
+    "Assets:Bank"
+  ],
+  "prefix": "Assets:Bank:"
+}
+```
+
+**Use Cases:**
+- When user types `Assets:`, suggestions include `Assets:Bank:Checking`, `Assets:Bank:Savings`, `Assets:Cash`, and `Assets:Bank`
+- When user types `Assets:Bank:`, suggestions include `Assets:Bank:Checking`, `Assets:Bank:Savings`
+- When user types `Expenses:Food:`, suggestions include `Expenses:Food:Restaurant`, `Expenses:Food:Groceries`
+
 ## Transaction Endpoints
 
 ### List Transactions

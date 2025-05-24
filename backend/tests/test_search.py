@@ -657,4 +657,59 @@ class TestTransactionSearch:
         assert response.status_code == 200
         data = response.get_json()
         assert len(data["transactions"]) == 0
-        assert data["total"] == 0 
+        assert data["total"] == 0
+
+    def test_search_with_special_characters(self, authenticated_client, user, app):
+        """Test search with special characters like colons doesn't cause server errors"""
+        with app.app_context():
+            book = Book.query.filter_by(user_id=user.id).first()
+            if not book:
+                book = Book(user_id=user.id, name="Test Book")
+                db.session.add(book)
+                db.session.commit()
+
+            account = Account(
+                user_id=user.id,
+                book_id=book.id,
+                name="Checking",
+                currency="INR",
+                balance=1000.0,
+            )
+            db.session.add(account)
+            db.session.commit()
+
+            # Create a transaction
+            transaction = Transaction(
+                user_id=user.id,
+                book_id=book.id,
+                account_id=account.id,
+                date=date(2024, 1, 1),
+                description="Coffee purchase",
+                payee="Starbucks",
+                amount=5.50,
+                currency="INR",
+            )
+            db.session.add(transaction)
+            db.session.commit()
+
+        # Test search terms with special characters that could break PostgreSQL tsquery
+        special_search_terms = [
+            "Assets:",
+            "Assets:Bank:",
+            "Expenses:Food:",
+            "test:with:colons",
+            "search@with#symbols",
+            "term&with|operators",
+            "Assets::double",
+        ]
+        
+        for search_term in special_search_terms:
+            response = authenticated_client.get(f"/api/v1/transactions?search={search_term}")
+            # Should return 200 (success) even if no results found, not 500 (server error)
+            assert response.status_code == 200, f"Search term '{search_term}' caused server error"
+            data = response.get_json()
+            assert "transactions" in data, f"Response missing 'transactions' key for search term '{search_term}'"
+            assert "total" in data, f"Response missing 'total' key for search term '{search_term}'"
+            # Results can be empty (0) or contain matches, both are valid
+            assert isinstance(data["transactions"], list), f"'transactions' should be a list for search term '{search_term}'"
+            assert isinstance(data["total"], int), f"'total' should be an integer for search term '{search_term}'" 
