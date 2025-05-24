@@ -270,7 +270,7 @@ def trigger_email_processing():
         redis_conn = redis.from_url(redis_url)
 
         # Create queue
-        queue = Queue(connection=redis_conn)
+        queue = Queue("email_processing", connection=redis_conn)
 
         # Import the standalone function that can be safely pickled
         from banktransactions.email_automation.workers.email_processor import (

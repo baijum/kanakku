@@ -19,6 +19,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
+# Fix for macOS forking issue
+os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
+
 # Load environment variables from .env file
 # This will look for .env files in the following order:
 # 1. Current directory
@@ -96,7 +99,7 @@ def main():
         # Create queue
         queue = Queue(args.queue_name, connection=redis_conn)
 
-        # Create worker
+        # Create worker with fork_job_execution=False to avoid forking issues on macOS
         worker_name = args.worker_name or f"email_worker_{os.getpid()}"
         worker = Worker([queue], connection=redis_conn, name=worker_name)
 

@@ -53,6 +53,7 @@ class EmailScheduler:
                 process_user_emails_standalone,
                 config.user_id,
                 job_id=f"email_process_{config.user_id}_{next_run.timestamp()}",
+                queue_name="email_processing",
             )
 
             logger.info(f"Scheduled job for user {config.user_id} at {next_run}")
