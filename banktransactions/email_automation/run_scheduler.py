@@ -32,8 +32,9 @@ load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
-# Add the backend app to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
+# Add the project root to the Python path so we can import banktransactions module
+project_root = os.path.join(os.path.dirname(__file__), "..", "..")
+sys.path.insert(0, project_root)
 
 from banktransactions.email_automation.workers.scheduler import EmailScheduler
 
