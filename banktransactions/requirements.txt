@@ -12,7 +12,7 @@ gunicorn==21.2.0
 google-genai>=1.14.0
 requests>=2.25.0
 redis==5.0.1
-rq==1.15.1
-rq-scheduler==0.13.1
+rq==2.3.3
+rq-scheduler==0.14
 cryptography==42.0.2
 python-jose==3.3.0
