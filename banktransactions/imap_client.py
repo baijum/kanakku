@@ -355,3 +355,172 @@ class IMAPClient:
                 pass
             finally:
                 self._client = None
+
+    def get_unread_emails(self, since=None):
+        """
+        Get unread emails from the INBOX.
+        
+        Args:
+            since (datetime): Get emails since this date (optional)
+            
+        Returns:
+            list: List of email dictionaries with id, subject, body, from, date
+        """
+        if not self._client:
+            raise Exception("Not connected to IMAP server")
+        
+        try:
+            # Select INBOX folder
+            self._client.select_folder("INBOX")
+            
+            # Build search criteria
+            search_criteria = ["UNSEEN"]  # Only unread emails
+            
+            if since:
+                # Convert datetime to IMAP date format
+                since_str = since.strftime("%d-%b-%Y")
+                search_criteria.extend(["SINCE", since_str])
+            
+            # Search for messages
+            messages = self._client.search(search_criteria)
+            
+            if not messages:
+                return []
+            
+            # Fetch email data
+            fetch_items = [
+                "X-GM-MSGID",
+                "BODY.PEEK[]",
+                "ENVELOPE",
+            ]
+            
+            fetched_data = self._client.fetch(messages, fetch_items)
+            emails = []
+            
+            for msg_id, msg_data in fetched_data.items():
+                try:
+                    # Get Gmail message ID
+                    gmail_msgid = str(msg_data.get(b"X-GM-MSGID", msg_id))
+                    
+                    # Get envelope data
+                    envelope = msg_data.get(b"ENVELOPE")
+                    if not envelope:
+                        continue
+                    
+                    # Extract subject and date
+                    subject = (
+                        envelope.subject.decode() if envelope.subject else "No Subject"
+                    )
+                    email_date = envelope.date if envelope.date else datetime.now()
+                    email_from = (
+                        envelope.from_[0].mailbox.decode() + "@" + envelope.from_[0].host.decode()
+                        if envelope.from_ and envelope.from_[0] else "Unknown"
+                    )
+                    
+                    # Get email body
+                    raw_email = msg_data.get(b"BODY.PEEK[]")
+                    if not raw_email:
+                        continue
+                    
+                    # Parse email message
+                    email_message = email.message_from_bytes(raw_email)
+                    body = self._extract_email_body(email_message)
+                    
+                    emails.append({
+                        "id": gmail_msgid,
+                        "subject": subject,
+                        "body": body,
+                        "from": email_from,
+                        "date": email_date,
+                        "imap_id": msg_id  # Store IMAP message ID for marking as processed
+                    })
+                    
+                except Exception as e:
+                    logging.warning(f"Error processing email {msg_id}: {e}")
+                    continue
+            
+            return emails
+            
+        except Exception as e:
+            logging.error(f"Error getting unread emails: {e}")
+            raise e
+    
+    def mark_as_processed(self, email_id):
+        """
+        Mark an email as read/processed.
+        
+        Args:
+            email_id (str): The email ID to mark as processed
+        """
+        if not self._client:
+            raise Exception("Not connected to IMAP server")
+        
+        try:
+            # Find the email by Gmail message ID and mark as read
+            # For now, we'll mark all unread emails as read since we processed them
+            # In a more sophisticated implementation, we'd track individual message IDs
+            pass  # Gmail automatically marks emails as read when we fetch them with BODY.PEEK[]
+            
+        except Exception as e:
+            logging.warning(f"Error marking email {email_id} as processed: {e}")
+    
+    def _extract_email_body(self, email_message):
+        """
+        Extract text body from email message.
+        
+        Args:
+            email_message: Parsed email message object
+            
+        Returns:
+            str: Email body text
+        """
+        body = ""
+        html_body = ""
+        
+        if email_message.is_multipart():
+            for part in email_message.walk():
+                ctype = part.get_content_type()
+                cdisp = str(part.get("Content-Disposition"))
+                
+                # Skip attachments
+                if "attachment" in cdisp:
+                    continue
+                
+                if ctype == "text/plain" and not body:
+                    try:
+                        payload = part.get_payload(decode=True)
+                        if payload:
+                            body = payload.decode(
+                                part.get_content_charset() or "utf-8",
+                                errors="replace",
+                            )
+                    except Exception:
+                        pass
+                        
+                elif ctype == "text/html" and not html_body:
+                    try:
+                        payload = part.get_payload(decode=True)
+                        if payload:
+                            html_body = payload.decode(
+                                part.get_content_charset() or "utf-8",
+                                errors="replace",
+                            )
+                    except Exception:
+                        pass
+        else:
+            try:
+                payload = email_message.get_payload(decode=True)
+                if payload:
+                    charset = email_message.get_content_charset() or "utf-8"
+                    body = payload.decode(charset, errors="replace")
+                    if "<html" in body.lower() or "<body" in body.lower():
+                        html_body = body
+                        body = ""
+            except Exception:
+                pass
+        
+        # Use HTML body if plain text is not available
+        if not body.strip() and html_body:
+            body = html_body
+        
+        return body

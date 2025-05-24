@@ -56,7 +56,7 @@ class EmailScheduler:
                 queue_name="email_processing",
             )
 
-            logger.info(f"Scheduled job for user {config.user_id} at {next_run}")
+            logger.info(f"Scheduled job for user {config.user_id} ({config.email_address}) at {next_run}")
 
         except Exception as e:
             logger.error(f"Error scheduling job for user {config.user_id}: {str(e)}")
