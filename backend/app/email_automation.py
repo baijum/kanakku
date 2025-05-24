@@ -272,7 +272,7 @@ def trigger_email_processing():
         # Create queue
         queue = Queue("email_processing", connection=redis_conn)
 
-        # Import the standalone function that can be safely pickled
+        # Import the function directly from the workers module
         from banktransactions.email_automation.workers.email_processor import (
             process_user_emails_standalone,
         )

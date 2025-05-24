@@ -11,16 +11,19 @@ Usage:
 
 import os
 import sys
+import platform
+
+# Fix for macOS forking issue - set this before any other imports
+if platform.system() == 'Darwin':  # macOS
+    os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
+
 import logging
 import argparse
 import redis
-from rq import Worker, Queue, Connection
+from rq import Queue, Worker, SimpleWorker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
-
-# Fix for macOS forking issue
-os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
 
 # Load environment variables from .env file
 # This will look for .env files in the following order:
@@ -66,6 +69,17 @@ def create_db_session():
     return Session()
 
 
+def get_worker_class():
+    """Get the appropriate worker class based on the operating system."""
+    system = platform.system()
+    if system == 'Darwin':  # macOS
+        logger.info("Detected macOS - using SimpleWorker to avoid forking issues")
+        return SimpleWorker
+    else:  # Linux, Windows, etc.
+        logger.info(f"Detected {system} - using regular Worker for better performance")
+        return Worker
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run email automation worker")
     parser.add_argument(
@@ -80,6 +94,11 @@ def main():
     )
     parser.add_argument(
         "--worker-name", default=None, help="Worker name (default: auto-generated)"
+    )
+    parser.add_argument(
+        "--force-simple-worker", 
+        action="store_true",
+        help="Force use of SimpleWorker regardless of OS (useful for debugging)"
     )
 
     args = parser.parse_args()
@@ -99,16 +118,22 @@ def main():
         # Create queue
         queue = Queue(args.queue_name, connection=redis_conn)
 
-        # Create worker with fork_job_execution=False to avoid forking issues on macOS
-        worker_name = args.worker_name or f"email_worker_{os.getpid()}"
-        worker = Worker([queue], connection=redis_conn, name=worker_name)
+        # Choose worker class based on OS or force flag
+        if args.force_simple_worker:
+            worker_class = SimpleWorker
+            worker_type = "SimpleWorker (forced)"
+        else:
+            worker_class = get_worker_class()
+            worker_type = worker_class.__name__
 
-        logger.info(f"Starting worker '{worker_name}' for queue '{args.queue_name}'")
+        worker_name = args.worker_name or f"email_worker_{os.getpid()}"
+        worker = worker_class([queue], connection=redis_conn, name=worker_name)
+
+        logger.info(f"Starting {worker_type} '{worker_name}' for queue '{args.queue_name}'")
         logger.info("Worker is ready to process jobs. Press Ctrl+C to stop.")
 
         # Start the worker
-        with Connection(redis_conn):
-            worker.work()
+        worker.work()
 
     except KeyboardInterrupt:
         logger.info("Worker stopped by user")
