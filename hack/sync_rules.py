@@ -12,8 +12,42 @@ def load_yaml_file(file_path):
         print(f"Error parsing {file_path}: {e}", file=sys.stderr)
         return None
 
+def clean_markdown_content(text):
+    """Clean up markdown content by ensuring consistent single blank lines."""
+    if not text:
+        return text
+    
+    import re
+    # Normalize all line endings to \n and remove trailing whitespace
+    lines = [line.rstrip() for line in text.replace('\r\n', '\n').split('\n')]
+    
+    # Process lines to ensure single blank lines
+    cleaned_lines = []
+    prev_was_blank = False
+    
+    for line in lines:
+        is_blank = not line.strip()
+        
+        # Skip multiple consecutive blank lines
+        if is_blank and prev_was_blank:
+            continue
+            
+        cleaned_lines.append(line)
+        prev_was_blank = is_blank
+    
+    # Join with single newlines and ensure exactly one at the end
+    result = '\n'.join(cleaned_lines).strip() + '\n'
+    
+    # Ensure exactly one blank line before headers
+    result = re.sub(r'([^\n])(\n## )', r'\1\n\n## ', result)
+    
+    # Fix any double blank lines that might have been introduced
+    result = re.sub(r'\n{3,}', '\n\n', result)
+    
+    return result
+
 def convert_rule_to_markdown(rule):
-    """Convert a single rule to markdown format."""
+    """Convert a single rule to markdown format with clean formatting."""
     markdown = []
     
     # Handle rule name/header
@@ -25,22 +59,33 @@ def convert_rule_to_markdown(rule):
     
     # Add description if exists
     if 'description' in rule and rule['description']:
-        markdown.append(f"\n{rule['description']}\n")
+        markdown.append(rule['description'])
     
     # Add content if exists
     if 'content' in rule and rule['content']:
         content = rule['content']
         if isinstance(content, str):
-            markdown.append(f"{content}\n")
+            markdown.append(content)
         elif isinstance(content, list):
-            markdown.append('\n'.join(f"- {item}" if isinstance(item, str) else str(item) 
-                                     for item in content) + '\n')
+            items = []
+            for item in content:
+                if isinstance(item, str):
+                    items.append(f"- {item}")
+                elif isinstance(item, dict) and 'name' in item and 'description' in item:
+                    items.append(f"- **{item['name']}**: {item['description']}")
+                else:
+                    items.append(f"- {str(item)}")
+            markdown.append('\n'.join(items))
     
     # Add applies_to if exists
     if 'applies_to' in rule and rule['applies_to']:
-        markdown.append(f"\n**Applies to:** {rule['applies_to']}\n")
+        markdown.append(f"**Applies to:** {rule['applies_to']}")
     
-    return '\n'.join(markdown) + '\n\n'
+    # Join all non-empty parts with single newlines
+    result = '\n'.join(part.strip() for part in markdown if part and part.strip())
+    
+    # Clean up any remaining spacing issues
+    return clean_markdown_content(result) + '\n'
 
 def convert_to_mdc(yaml_path, output_dir):
     """Convert a YAML rules file to MDC format."""
@@ -86,9 +131,14 @@ def main():
     # Ensure output directory exists
     os.makedirs(cursor_rules_dir, exist_ok=True)
     
-    # Process each YAML file
+    # Remove existing index.mdc if it exists
+    index_mdc = cursor_rules_dir / 'index.mdc'
+    if index_mdc.exists():
+        os.remove(index_mdc)
+    
+    # Process each YAML file except index.yml and _template.yml
     for yaml_file in windsurf_rules_dir.glob('*.yml'):
-        if yaml_file.name != '_template.yml':
+        if yaml_file.name not in ['_template.yml', 'index.yml']:
             convert_to_mdc(yaml_file, cursor_rules_dir)
 
 if __name__ == "__main__":

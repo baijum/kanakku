@@ -1,62 +1,63 @@
 ---
-description: Guidelines for creating and maintaining cursor rule files with proper structure and formatting
-globs: ".cursor/rules/**/*.mdc"
+description: Guidelines for creating and maintaining rule files with proper structure and formatting
+globs: "**/*"
 alwaysApply: true
 ---
-# Cursor Rules Guidelines
 
-## Required Rule Structure
+## Rule Structure
+Required structure for all rule files
+Each rule file must contain:
+- Clear description
+- Applicability scope
+- Specific requirements
+- Examples of correct implementation
 
-```markdown
----
-description: Clear, one-line description of what the rule enforces
-globs: path/to/files/*.ext, other/path/**/*
-alwaysApply: boolean
----
-
-- **Main Points in Bold**
-  - Sub-points with details
-  - Examples and explanations
-- **Rule Scope and Applicability**: When defining a rule, clearly state its scope if it's not global. The `globs` field handles file matching, but also include a textual note if a rule applies only to a specific layer (e.g., 'This rule applies only to frontend React components handling API state') or a particular technology (e.g., 'For SQLAlchemy model definitions only').
-- **New Rule Files**: Group rules by domain (e.g., `frontend.mdc`, `backend.mdc`, `security.mdc`). Create a new rule file only if a distinct new domain, major technology (e.g., a new primary database type, a new major framework replacing an old one), or a substantially new aspect of development (e.g., `mobile_development.mdc`) is introduced and requires a significant set of its own rules.
-- **Rationale for Rules**: Where the 'why' behind a rule isn't immediately obvious or if it represents a specific choice among alternatives, include a brief `*(Rationale: ...)*` note. This helps the AI (and humans) understand the underlying principle, fostering better adherence and more intelligent application of the rule.
+Example structure:
+```yaml
+- name: example_rule
+  description: Example rule description
+  applies_to: "path/to/files/*.ext"
+  always_apply: false
+  content: |
+    Detailed rule explanation
+    - With bullet points
+    - And code examples
 ```
+**Applies to:** .windsurf/rules/**/*.yml
+
 
 ## File References
+How to reference files in rules
+Use standard markdown links for file references
+Example: [schema.prisma](../prisma/schema.prisma)
 
-- Use `[filename](mdc:path/to/file)` ([filename](mdc:filename)) to reference files
-- Example: [prisma.mdc](mdc:.cursor/rules/prisma.mdc) for rule references
-- Example: [schema.prisma](mdc:prisma/schema.prisma) for code references
 
 ## Code Examples
-
-- Use language-specific code blocks
-
+Format for code examples in rules
+Always provide both positive and negative examples:
 ```typescript
-// ✅ DO: Show good examples
-const goodExample = true;
+// ✅ DO: Good example
+const good = true;
 
-// ❌ DON'T: Show anti-patterns
-const badExample = false;
+// ❌ DON'T: Bad example
+const bad = false;
 ```
 
-## Rule Content Guidelines
 
+## Content Guidelines
+Guidelines for rule content
 - Start with high-level overview
-- Include specific, actionable requirements
-- Show examples of correct implementation
-- Reference existing code when possible. When you, the AI, are tasked with *improving these rules* or *proposing new rules*, ensure any new code examples you provide are directly relevant to the `kanakku` tech stack (Flask, SQLAlchemy, React, MUI, PostgreSQL, etc.) and, where possible, mirror patterns found in the actual `kanakku` codebase.
-- Keep rules DRY by referencing other rules
-- When proposing improvements to any `.mdc` rule file, ensure your suggestions strictly adhere to the formatting and content guidelines outlined in this `cursor_rules.mdc` file. For instance, if suggesting new example code within a rule, use the `// ✅ DO:` / `// ❌ DON'T:` format. Proposed changes should be specific, actionable, and directly address an identified ambiguity, gap, or potential for misinterpretation.
+- Include specific requirements
+- Show implementation examples
+- Reference existing code patterns
+- Keep rules DRY
+
 
 ## Best Practices
-
+General rule authoring best practices
 - Use bullet points for clarity
 - Keep descriptions concise
-- Include both DO and DON'T examples
-- Reference actual code over theoretical examples
-- Use consistent formatting across rules
+- Include DO/DON'T examples
+- Prefer actual code references
+- Maintain consistent formatting
 
-## Rule Maintenance
-
-For rule maintenance, improvement processes, and lifecycle management, see [self_improve.mdc](mdc:.cursor/rules/self_improve.mdc). 

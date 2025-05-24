@@ -1,107 +1,99 @@
 ---
 description: Security standards for authentication, authorization, input validation, and production deployment
-globs: "**/*.{js,jsx,ts,tsx,py}"
+globs: "**/*"
 alwaysApply: true
 ---
-# Security Standards
 
-## Authentication & Authorization
+## Auth
+Authentication standards
+- Use configured axiosInstance (never import axios directly)
+- JWT implementation:
+  - Access tokens: Short-lived, stored in memory
+  - Refresh tokens: Long-lived, HttpOnly Secure cookies
+  - Backend validation: Check signature, expiration, claims
+  - Automatic refresh: Via axios interceptor
+- Use API tokens for programmatic access
+- Implement rate limiting (Flask-Limiter with Redis)
+- Never implement custom crypto - use werkzeug.security/cryptography
+**Applies to:** **/*.{js,jsx,ts,tsx,py}
 
-- Always use the configured `axiosInstance` from `src/api/axiosInstance.js` for API requests - never import axios directly
-- Implement JWT handling as follows for `kanakku`:
-    - **Access Tokens:** Short-lived (e.g., 15-60 minutes). Stored securely in JavaScript memory on the frontend (e.g., in a variable within a closure in `axiosInstance` or an Auth Context). **Never store access tokens in `localStorage` or `sessionStorage`**.
-    - **Refresh Tokens:** Longer-lived (e.g., 7-30 days). If used, they must be stored in `HttpOnly`, `Secure` cookies with the `SameSite=Strict` (or `Lax`) attribute. The backend (`Flask-JWT-Extended`) should handle refresh token validation and new access token issuance.
-    - **Backend Validation:** Flask-JWT-Extended must validate JWT signature, expiration (`exp`), and relevant claims (e.g., `identity`) on every protected request.
-    - **Automatic Refresh (Frontend):** `axiosInstance` should include an interceptor to automatically attempt to refresh the access token using the refresh token mechanism when a 401 response (due to expired access token) is received. If refresh fails, log the user out.
-  *(Rationale: This clarifies secure JWT storage and refresh flow, crucial for preventing token theft via XSS.)*
-- Use API tokens for programmatic access with appropriate expiration times
-- Validate user permissions on both frontend and backend for all protected operations
-- Implement rate limiting on authentication endpoints to prevent brute force attacks. Also implement on other resource-intensive or sensitive API endpoints to protect against denial-of-service (DoS) attacks and abuse. Use a library like `Flask-Limiter` with Redis for distributed rate limiting.
-- When implementing or modifying any logic related to user authentication (login, registration, token handling) or authorization (permission checks, role-based access control, data ownership verification):
-    1.  All authoritative checks *must* be performed on the backend. Do not rely on frontend checks for security decisions, as they can be bypassed.
-    2.  Strictly adhere to the established authentication patterns in `kanakku` using `Flask-JWT-Extended` on the backend and secure JWT handling via `axiosInstance` and memory/HttpOnly cookie storage on the frontend.
-    3.  Do not invent new authentication schemes, token types, or permission models without explicit design and approval.
-- Do not implement custom cryptographic algorithms or protocols (e.g., for encryption, hashing, signing). Use well-vetted, standard libraries and algorithms provided by `werkzeug.security` (for passwords), the `cryptography` library (for general encryption like AES-GCM with `ENCRYPTION_KEY`), or built-in features of `Flask-JWT-Extended`. Ensure keys are strong and managed securely (via environment variables).
 
-## Environment Variables & Secrets
+## Secrets
+Secrets management
+- Never commit .env files
+- Use strong random keys for SECRET_KEY/JWT_SECRET_KEY
+- Store config in environment variables
+- Use different secrets per environment
+- Encrypt sensitive data (AES-256-GCM)
+- Never hardcode secrets
 
-- Never commit `.env` files or any files containing secrets to version control
-- Use strong, randomly generated keys for `SECRET_KEY` and `JWT_SECRET_KEY` in production
-- Store sensitive configuration in environment variables, not in code
-- Use different secrets for different environments (dev, staging, production)
-- Encrypt sensitive data (e.g., third-party API keys, email credentials if stored) before persisting to the database. Use a strong, authenticated encryption algorithm like AES-256-GCM. Implement this using the `cryptography` library in Python. Create utility functions (e.g., in `app/utils/encryption.py`) that take plaintext data and the `ENCRYPTION_KEY` (from `current_app.config`) to produce an encrypted ciphertext (and vice-versa for decryption). Store the `ENCRYPTION_KEY` securely as an environment variable, never in code.
-- Never hardcode any secrets (API keys, database passwords, `SECRET_KEY`, `JWT_SECRET_KEY`, `ENCRYPTION_KEY`, etc.) directly in source code files, configuration files committed to version control, or Docker images. All secrets must be loaded from environment variables at runtime (or a dedicated secrets management service if `kanakku` adopts one).
 
-## Input Validation & Sanitization
+## Input Validation
+Input validation standards
+- Validate all inputs (frontend + backend)
+- Use parameterized queries
+- Sanitize UI output
+- CSRF protection for cookie-based auth
+- Secure file upload handling:
+  - Validate file types/sizes
+  - Scan for malware
+  - Store in non-public locations
+  - Serve via secure endpoints
 
-- Validate all user inputs on both frontend and backend
-- Use parameterized queries to prevent SQL injection attacks
-- Sanitize data before displaying in the UI to prevent XSS attacks
-- `kanakku`'s API primarily uses JWT Bearer token authentication, which is generally not vulnerable to CSRF if tokens are not sent via cookies automatically by the browser. However:
-    - If any part of the application uses traditional session cookies or submits forms that rely on cookie-based authentication, Flask-WTF or Flask-SeaSurf must be used for CSRF protection on those routes.
-    - If JWT refresh tokens are stored in cookies, ensure the `SameSite=Strict` (or `Lax`) attribute is set on those cookies to mitigate CSRF related to token refresh operations initiated by cookie-bearing requests.
-- **File Upload Security (Detailed)**: When handling file uploads:
-    1.  Validate file types rigorously on the backend (checking MIME type and file extension, relying more on content sniffing if possible).
-    2.  Enforce strict limits on file sizes.
-    3.  Scan uploaded files for malware using an appropriate antivirus/malware scanning tool before making them accessible.
-    4.  Store user-uploaded files in a designated, non-publicly accessible location (e.g., a private S3 bucket or a directory outside the web root). *Never* store them in a directory served directly by the webserver.
-    5.  If files need to be served, do so via a secure, moderated backend endpoint that performs authorization checks.
-    6.  Do not execute or interpret user-uploaded files on the server.
-- Treat all data originating from external sources (user inputs in HTTP request bodies, query parameters, headers; data from file uploads; data from third-party APIs) as untrusted.
-    - **Backend:** Always validate format, type, length, and range, and sanitize or reject unexpected data before processing or storing it. Use parameterized queries or ORM methods (SQLAlchemy) to prevent SQL injection.
-    - **Frontend:** While backend validation is authoritative, perform client-side validation for better UX. When rendering data in the UI, ensure it is properly encoded/sanitized (React largely handles this for direct rendering, but be cautious with `dangerouslySetInnerHTML` or when constructing URLs/attributes from data) to prevent XSS.
 
-## API Security
+## Api Security
+API security standards
+- Use HTTPS in production
+- Configure strict CORS (Flask-CORS)
+- Set security headers:
+  - Content-Security-Policy
+  - HSTS
+  - X-Content-Type-Options
+  - X-Frame-Options
+  - Referrer-Policy
+- Log security events
+- Implement API versioning
 
-- Use HTTPS in production for all API communications
-- Configure CORS on the Flask backend (e.g., using `Flask-CORS` extension) to allow requests *only* from the specific domain(s) where the `kanakku` frontend is hosted. Set `Access-Control-Allow-Origin` to these specific domains. Avoid using wildcard (`*`) for `Access-Control-Allow-Origin` in production. Expose only necessary HTTP methods and headers.
-- Ensure Nginx or the Flask application sets the following HTTP security headers:
-    - `Content-Security-Policy` (CSP): Define a strict policy to mitigate XSS and data injection attacks.
-    - `HTTP Strict-Transport-Security` (HSTS): Enforces HTTPS.
-    - `X-Content-Type-Options: nosniff`: Prevents MIME-type sniffing.
-    - `X-Frame-Options: DENY` or `SAMEORIGIN`: Protects against clickjacking.
-    - `Referrer-Policy: strict-origin-when-cross-origin` or similar.
-    - `Permissions-Policy` (Feature-Policy): Control browser features.
-- Log security events and failed authentication attempts
-- Implement API versioning to maintain backward compatibility securely
 
-## Database Security
+## Db Security
+Database security
+- Use connection pooling
+- Least privilege for DB user
+- Encrypt sensitive data at rest
+- Regular encrypted backups
+- Monitor access patterns
+- Secure password storage (werkzeug.security)
 
-- Use connection pooling and prepared statements
-- The PostgreSQL user account configured for the `kanakku` application in production must adhere to the principle of least privilege. This user should *only* have `SELECT`, `INSERT`, `UPDATE`, `DELETE` permissions on the application's specific tables and schemas. It must *not* have `SUPERUSER` rights, DDL privileges (like `CREATE TABLE`, `DROP TABLE`, `ALTER TABLE` - these should be managed via Alembic migrations run by a more privileged user during deployment), or access to other databases on the server.
-- Encrypt sensitive data at rest in the database
-- Regular database backups with encryption
-- Monitor for unusual database access patterns
-- **Password Storage (if applicable)**: If `kanakku` directly manages user passwords (not solely relying on OAuth/SSO), they must be stored using a strong, salted, adaptive hashing algorithm. Use `werkzeug.security.generate_password_hash` (which implements PBKDF2 by default) and `werkzeug.security.check_password_hash`.
 
 ## Frontend Security
+Frontend security
+- No sensitive data in localStorage/sessionStorage
+- Secure session management
+- CSP headers
+- Input validation/sanitization
+- Safe error handling
 
-- Never store sensitive data in localStorage or sessionStorage
-- Implement proper session management with secure cookies
-- Use Content Security Policy (CSP) headers to prevent XSS
-- Validate and sanitize all user inputs before processing
-- Implement proper error handling that doesn't expose sensitive information
 
-## Production Security
+## Production
+Production security
+- Use SSL/TLS
+- Secure cookie attributes:
+  - Secure
+  - HttpOnly
+  - SameSite
+- Secure logging
+- Regular dependency updates
+- Security scanning in CI/CD
+- Dependency vulnerability management:
+  - pip-audit/safety check (Python)
+  - npm/yarn audit (JS)
 
-- Use SSL/TLS certificates for all production deployments
-- Any cookies set by the `kanakku` application (e.g., for refresh tokens, session management if parts use it) must have the following attributes set:
-    - `Secure`: Ensures the cookie is only sent over HTTPS.
-    - `HttpOnly`: Prevents client-side JavaScript from accessing the cookie, mitigating XSS.
-    - `SameSite=Strict` (preferred) or `SameSite=Lax`: Protects against CSRF attacks.
-  Set appropriate `Max-Age` or `Expires` attributes.
-- Implement proper logging without exposing sensitive data
-- Regular security updates for all dependencies
-- Use security scanning tools in CI/CD pipeline
-- **Dependency Vulnerability Management**: Regularly scan project dependencies for known vulnerabilities:
-    - **Backend (Python):** Use `pip-audit` or `safety check` against `requirements.txt`.
-    - **Frontend (JavaScript):** Use `npm audit` or `yarn audit`.
-  Integrate these scans into the CI/CD pipeline. Update vulnerable dependencies promptly after assessing impact.
 
 ## Error Handling
+Security error handling
+- Generic API error messages
+- Log security-relevant errors
+- React error boundaries
+- Generic auth failure messages
+- Monitor error patterns
 
-- API error responses (as defined in `api_design.mdc` and handled by backend error handlers in `backend.mdc`) must provide generic error messages and an error code/identifier for client-side handling. Sensitive details like internal server paths, configuration values, fragments of SQL queries, or full exception messages and stack traces must *never* be sent in API responses to the client. Log these details securely on the server-side only.
-- Log security-relevant errors for monitoring and analysis
-- Implement proper error boundaries in React components
-- Use generic error messages for authentication failures
-- Monitor and alert on unusual error patterns
