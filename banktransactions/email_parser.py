@@ -615,7 +615,7 @@ if __name__ == "__main__":
             print("\n✓ Successfully extracted all fields!")
     else:
         print("Usage: python email_parser.py <email_file_path>")
-        print("Example: python email_parser.py sample_email.eml")
+        print("Example: python email_parser.py your_email.eml")
 
         # Sample email for testing
         sample_email = """From: ICICI Bank <noreply@icicibank.com>

@@ -67,12 +67,7 @@ print(transaction_details)
 
 ### Testing and Examples
 
-1. Run the example script to test parsing:
-   ```bash
-   python example_gemini.py sample_email.eml
-   ```
-
-2. Run tests:
+1. Run tests:
    ```bash
    pytest
    ```
@@ -96,7 +91,6 @@ The modules can be configured through:
 - `api_client.py` - API integration for transaction submission
 - `processed_ids_db.py` - Database-backed email deduplication
 - `transaction_data.py` - Data models and validation
-- `example_gemini.py` - Example script for testing AI parsing
 - `test_*.py` - Test suite for various components
 - `email_automation/` - Redis RQ-based email automation system
 
