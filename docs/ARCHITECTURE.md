@@ -506,12 +506,12 @@ flowchart TD
     end
     
     subgraph "Configuration"
-        Config[config.toml]
+        Database[Database Mappings]
         EnvVars[Environment Variables]
     end
     
-    Config --> EmailParser
-    Config --> TransactionProcessor
+    Database --> EmailParser
+    Database --> TransactionProcessor
     EnvVars --> EmailFetcher
     
     classDef email fill:#61dafb,stroke:#333,stroke-width:2px;
@@ -521,7 +521,7 @@ flowchart TD
     
     class EmailServer,EmailFetcher,EmailParser email;
     class TransactionProcessor processor;
-    class Config,EnvVars config;
+    class Database,EnvVars config;
     class Backend backend;
 ```
 
@@ -545,7 +545,7 @@ flowchart TD
    - Maps bank accounts to ledger accounts
    - Submits transactions to the backend API
 
-4. **Configuration** (`banktransactions/config.toml`):
+4. **Configuration** (Database-stored mappings):
    - Bank account mapping
    - Expense category mapping
    - Transaction descriptions
@@ -586,16 +586,10 @@ The system uses two types of configuration:
    BANK_EMAILS=alerts@axisbank.com,alerts@icicibank.com
    ```
 
-2. **TOML Configuration** (`config.toml`):
-
-   ```toml
-   [bank-account-map]
-   XX1648 = "Assets:Bank:Axis"
-   XX0907 = "Liabilities:CC:Axis"
-
-   [expense-account-map]
-   "MERCHANT_NAME" = ["Expenses:Category:Subcategory", "Description"]
-   ```
+2. **Database-stored Mappings** (accessed via API):
+   - Bank account mappings: Map masked account numbers to ledger accounts
+   - Expense account mappings: Map merchant names to expense categories and descriptions
+   - Managed through the web interface or API endpoints
 
 ### Error Handling
 
@@ -612,6 +606,6 @@ The system includes robust error handling for:
 The bank transaction processing system integrates with the main application through:
 
 - REST API endpoints for transaction submission
-- Shared configuration for account mapping
+- Database-stored configuration for account mapping
 - Common transaction data model
 - Unified error handling 

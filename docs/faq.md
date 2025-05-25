@@ -128,24 +128,22 @@ Yes, you'll need a Gmail account with App Password enabled. This is used to secu
 1. Create a Gmail account for bank emails
 2. Enable App Password in your Google Account
 3. Configure the email settings in your `.env` file
-4. Set up account mappings in `config.toml`
+4. Set up account mappings using the web interface (Settings > Bank Account Mappings)
 
 ### How are transactions categorized?
-Transactions are automatically categorized based on merchant names using the mappings in your `config.toml` file. You can customize these mappings to match your preferred categories.
+Transactions are automatically categorized based on merchant names using the mappings configured in the web interface. You can customize these mappings to match your preferred categories by navigating to Settings > Expense Account Mappings.
 
 ### What if a transaction is categorized incorrectly?
 You can:
-1. Update the merchant mapping in `config.toml`
+1. Update the merchant mapping in the web interface (Settings > Expense Account Mappings)
 2. Manually recategorize the transaction in the Transactions view
-3. Add new merchant mappings for future transactions
+3. Add new merchant mappings for future transactions using the web interface
 
 ### How do I map my bank accounts?
-Edit the `[bank-account-map]` section in `config.toml` to map your bank account numbers to ledger accounts. For example:
-```toml
-[bank-account-map]
-XX1648 = "Assets:Bank:Axis"
-XX0907 = "Liabilities:CC:Axis"
-```
+Use the web interface to map your bank account numbers to ledger accounts:
+1. Navigate to Settings > Bank Account Mappings
+2. Add new mappings for your masked account numbers
+3. For example: XX1648 → Assets:Bank:Axis, XX0907 → Liabilities:CC:Axis
 
 ### Are my bank credentials secure?
 Yes. The system only uses Gmail App Password for email access and never stores your actual bank credentials. All sensitive information is stored securely in environment variables.
@@ -173,8 +171,7 @@ The system includes deduplication to prevent double entries, but you should:
 3. Run the processor again to catch any missed transactions
 
 ### Can I customize transaction descriptions?
-Yes, you can add custom descriptions in the `[expense-account-map]` section of `config.toml`:
-```toml
-[expense-account-map]
-"MERCHANT_NAME" = ["Expenses:Category:Subcategory", "Custom Description"]
-``` 
+Yes, you can add custom descriptions when setting up expense account mappings:
+1. Navigate to Settings > Expense Account Mappings
+2. When adding or editing a mapping, include a custom description
+3. For example: "MERCHANT_NAME" → Expenses:Category:Subcategory with description "Custom Description" 

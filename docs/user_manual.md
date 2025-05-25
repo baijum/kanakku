@@ -282,20 +282,14 @@ Kanakku includes an automated bank transaction processing system that can automa
      ```
 
 2. **Configure Account Mapping**:
-   - Edit `config.toml` to map your bank accounts to ledger accounts:
-     ```toml
-     [bank-account-map]
-     XX1648 = "Assets:Bank:Axis"
-     XX0907 = "Liabilities:CC:Axis"
-     ```
+   - Use the web interface to map your bank accounts to ledger accounts
+   - Navigate to Settings > Bank Account Mappings
+   - Add mappings for your masked account numbers (e.g., XX1648 → Assets:Bank:Axis)
 
 3. **Configure Expense Categories**:
-   - Add merchant-to-category mappings in `config.toml`:
-     ```toml
-     [expense-account-map]
-     "GROCERY STORE" = ["Expenses:Food:Groceries", "Monthly groceries"]
-     "RESTAURANT" = ["Expenses:Food:Dining", "Dinner at restaurant"]
-     ```
+   - Use the web interface to set up merchant-to-category mappings
+   - Navigate to Settings > Expense Account Mappings
+   - Add mappings for merchants (e.g., "GROCERY STORE" → Expenses:Food:Groceries)
 
 ### Running the Transaction Processor
 
@@ -335,8 +329,8 @@ Kanakku includes an automated bank transaction processing system that can automa
    - Ensure bank emails are being received
 
 2. **Incorrect Categorization**:
-   - Review and update merchant mappings in `config.toml`
-   - Add new merchants to the expense mapping
+   - Review and update merchant mappings in the web interface
+   - Navigate to Settings > Expense Account Mappings to add new merchants
    - Adjust category assignments as needed
 
 3. **Account Mapping Issues**:

@@ -95,7 +95,6 @@ kanakku/
 │   ├── email_parser.py # Transaction extraction logic
 │   ├── imap_client.py # Email fetching and processing
 │   ├── api_client.py  # API integration
-│   ├── config.toml    # Account and expense mapping
 │   ├── main.py        # Main processing pipeline
 │   └── tests/         # Test suite
 ├── fixes/             # Documentation for major bug fixes

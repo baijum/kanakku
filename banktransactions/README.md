@@ -87,7 +87,7 @@ The modules can be configured through:
    - Expense category mapping
    - Transaction descriptions
 
-**Note:** The `config.toml` file is kept as a reference example but is no longer used for runtime configuration. All mappings are now stored in the database and managed via the web interface or API endpoints.
+**Note:** All mappings are now stored in the database and managed via the web interface or API endpoints.
 
 ## Project Structure
 
@@ -97,7 +97,6 @@ The modules can be configured through:
 - `processed_ids_db.py` - Database-backed email deduplication
 - `transaction_data.py` - Data models and validation
 - `example_gemini.py` - Example script for testing AI parsing
-- `config.toml` - Reference example for account and expense mapping (not used at runtime)
 - `test_*.py` - Test suite for various components
 - `email_automation/` - Redis RQ-based email automation system
 
