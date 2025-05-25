@@ -9,14 +9,14 @@ def test_base_config():
     # Store original env vars
     original_secret_key = os.environ.get("SECRET_KEY")
     original_jwt_secret = os.environ.get("JWT_SECRET_KEY")
-    
+
     try:
         # Clear environment variables to test defaults
         if "SECRET_KEY" in os.environ:
             del os.environ["SECRET_KEY"]
         if "JWT_SECRET_KEY" in os.environ:
             del os.environ["JWT_SECRET_KEY"]
-            
+
         config = Config()
 
         # Check defaults
@@ -47,14 +47,14 @@ def test_development_config():
     # Store original env vars
     original_secret_key = os.environ.get("SECRET_KEY")
     original_jwt_secret = os.environ.get("JWT_SECRET_KEY")
-    
+
     try:
         # Clear environment variables to test defaults
         if "SECRET_KEY" in os.environ:
             del os.environ["SECRET_KEY"]
         if "JWT_SECRET_KEY" in os.environ:
             del os.environ["JWT_SECRET_KEY"]
-            
+
         config = DevelopmentConfig()
 
         # Development specific settings
