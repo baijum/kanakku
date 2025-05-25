@@ -39,8 +39,8 @@ This directory contains the core modules for processing and extracting transacti
   - Prevents processing of duplicate emails
   - User-specific message ID tracking
 
-- **Configuration** (`config_reader.py`)
-  - TOML-based configuration for account and expense mapping
+- **Configuration** 
+  - Database-based configuration for account and expense mapping
   - Environment-based configuration support
 
 ## Prerequisites
@@ -77,42 +77,27 @@ print(transaction_details)
    pytest
    ```
 
-3. Migrate TOML configuration to database:
-   ```bash
-   python migrate_config.py --config config.toml --api-url http://localhost:5000 --api-key your-api-key
-   ```
-
 ## Configuration
 
 The modules can be configured through:
 
 1. Environment variables
-2. `config.toml` file for:
+2. Database-stored mappings accessed via API:
    - Bank account mapping
    - Expense category mapping
    - Transaction descriptions
 
-Example `config.toml`:
-```toml
-[bank-account-map]
-XX1648 = "Assets:Bank:Axis"
-XX0907 = "Liabilities:CC:Axis"
-
-[expense-account-map]
-"MERCHANT_NAME" = ["Expenses:Category:Subcategory", "Description"]
-```
+**Note:** The `config.toml` file is kept as a reference example but is no longer used for runtime configuration. All mappings are now stored in the database and managed via the web interface or API endpoints.
 
 ## Project Structure
 
 - `email_parser.py` - Core AI-powered transaction extraction logic
 - `imap_client.py` - Email fetching and processing via IMAP
 - `api_client.py` - API integration for transaction submission
-- `config_reader.py` - Configuration management for TOML files
 - `processed_ids_db.py` - Database-backed email deduplication
 - `transaction_data.py` - Data models and validation
-- `migrate_config.py` - Utility to migrate TOML config to database
 - `example_gemini.py` - Example script for testing AI parsing
-- `config.toml` - Account and expense mapping configuration
+- `config.toml` - Reference example for account and expense mapping (not used at runtime)
 - `test_*.py` - Test suite for various components
 - `email_automation/` - Redis RQ-based email automation system
 
