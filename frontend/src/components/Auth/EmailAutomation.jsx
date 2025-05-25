@@ -188,7 +188,26 @@ const EmailAutomation = () => {
         setError(response.data.error || 'Failed to trigger email processing');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to trigger email processing');
+      if (err.response?.status === 409) {
+        // Conflict - job already pending
+        const jobStatus = err.response.data.job_status;
+        let statusMessage = 'An email processing job is already pending for your account.';
+        
+        if (jobStatus) {
+          const statusParts = [];
+          if (jobStatus.has_running_job) statusParts.push('running');
+          if (jobStatus.has_scheduled_job) statusParts.push('scheduled');
+          if (jobStatus.has_queued_job) statusParts.push('queued');
+          
+          if (statusParts.length > 0) {
+            statusMessage += ` Status: ${statusParts.join(', ')}.`;
+          }
+        }
+        
+        setError(statusMessage);
+      } else {
+        setError(err.response?.data?.error || 'Failed to trigger email processing');
+      }
     } finally {
       setTriggering(false);
     }

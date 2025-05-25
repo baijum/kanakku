@@ -269,6 +269,27 @@ def trigger_email_processing():
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         redis_conn = redis.from_url(redis_url)
 
+        # Import job utilities
+        from banktransactions.email_automation.workers.job_utils import (
+            generate_job_id,
+            has_user_job_pending,
+            get_user_job_status,
+        )
+
+        # Check if user already has a pending job
+        if has_user_job_pending(redis_conn, user_id):
+            job_status = get_user_job_status(redis_conn, user_id)
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Email processing job already pending for this user",
+                        "job_status": job_status,
+                    }
+                ),
+                409,  # Conflict status code
+            )
+
         # Create queue
         queue = Queue("email_processing", connection=redis_conn)
 
@@ -277,8 +298,16 @@ def trigger_email_processing():
             process_user_emails_standalone,
         )
 
+        # Generate consistent job ID
+        job_id = generate_job_id(user_id)
+
         # Enqueue email processing job using the standalone function
-        job = queue.enqueue(process_user_emails_standalone, user_id, job_timeout="10m")
+        job = queue.enqueue(
+            process_user_emails_standalone, 
+            user_id, 
+            job_id=job_id,
+            job_timeout="10m"
+        )
 
         return (
             jsonify(

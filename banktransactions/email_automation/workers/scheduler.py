@@ -17,6 +17,11 @@ from app.models import EmailConfiguration
 from banktransactions.email_automation.workers.email_processor import (
     process_user_emails_standalone,
 )
+from banktransactions.email_automation.workers.job_utils import (
+    generate_job_id,
+    has_user_job_pending,
+    get_user_job_status,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +29,7 @@ logger = logging.getLogger(__name__)
 class EmailScheduler:
     def __init__(self, redis_conn, db_session: Session):
         self.scheduler = Scheduler(connection=redis_conn)
+        self.redis_conn = redis_conn
         self.db = db_session
 
     def schedule_jobs(self):
@@ -41,22 +47,31 @@ class EmailScheduler:
     def _schedule_user_job(self, config: EmailConfiguration):
         """Schedule a job for a specific user's email configuration."""
         try:
+            # Check if user already has a pending job (running, scheduled, or queued)
+            if has_user_job_pending(self.redis_conn, config.user_id):
+                job_status = get_user_job_status(self.redis_conn, config.user_id)
+                logger.info(f"Skipping job scheduling for user {config.user_id} - job already pending: {job_status}")
+                return
+
             # Calculate next run time based on polling interval
             next_run = self._calculate_next_run(config)
 
             if not next_run:
                 return
 
+            # Generate consistent job ID
+            job_id = generate_job_id(config.user_id, next_run)
+
             # Schedule the job using the standalone function
             self.scheduler.enqueue_at(
                 next_run,
                 process_user_emails_standalone,
                 config.user_id,
-                job_id=f"email_process_{config.user_id}_{next_run.timestamp()}",
+                job_id=job_id,
                 queue_name="email_processing",
             )
 
-            logger.info(f"Scheduled job for user {config.user_id} ({config.email_address}) at {next_run}")
+            logger.info(f"Scheduled job {job_id} for user {config.user_id} ({config.email_address}) at {next_run}")
 
         except Exception as e:
             logger.error(f"Error scheduling job for user {config.user_id}: {str(e)}")
