@@ -8,16 +8,40 @@ from rq_scheduler import Scheduler
 from sqlalchemy.orm import Session
 
 # Add the project root to the Python path so we can import banktransactions module
-project_root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+project_root = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, project_root)
 # Also add the backend app to the Python path
-sys.path.append(os.path.join(project_root, "backend"))
+backend_path = os.path.join(project_root, "..", "backend")
+if backend_path not in sys.path:
+    sys.path.append(backend_path)
 
-from app.models import EmailConfiguration
-from banktransactions.email_automation.workers.email_processor import (
+try:
+    from app.models import EmailConfiguration
+except ImportError:
+    # Fallback: define a minimal EmailConfiguration class for standalone operation
+    from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+    
+    Base = declarative_base()
+    
+    class EmailConfiguration(Base):
+        __tablename__ = "user_email_configurations"
+        
+        id = Column(Integer, primary_key=True)
+        user_id = Column(Integer, nullable=False)
+        is_enabled = Column(Boolean, default=False)
+        imap_server = Column(String(255), default="imap.gmail.com")
+        imap_port = Column(Integer, default=993)
+        email_address = Column(String(255), nullable=False)
+        app_password = Column(String(255), nullable=False)
+        polling_interval = Column(String(50), default="hourly")
+        last_check_time = Column(DateTime, nullable=True)
+        sample_emails = Column(Text, nullable=True)
+        last_processed_email_id = Column(String(255), nullable=True)
+from banktransactions.automation.email_processor import (
     process_user_emails_standalone,
 )
-from banktransactions.email_automation.workers.job_utils import (
+from banktransactions.automation.job_utils import (
     generate_job_id,
     has_user_job_pending,
     get_user_job_status,

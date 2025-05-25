@@ -1,5 +1,5 @@
 import pytest
-from banktransactions.email_parser import extract_transaction_details
+from banktransactions.core.email_parser import extract_transaction_details
 
 # Sample bodies based on provided files and potential variations
 SAMPLE_BODY_1 = """

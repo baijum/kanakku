@@ -36,11 +36,11 @@ from cryptography.fernet import Fernet
 import base64
 
 # Import the working banktransactions modules
-from banktransactions.imap_client import get_bank_emails
-from banktransactions.email_parser import extract_transaction_details
-from banktransactions.transaction_data import construct_transaction_data
-from banktransactions.api_client import send_transaction_to_api
-from banktransactions.processed_ids_db import load_processed_gmail_msgids, save_processed_gmail_msgid
+from banktransactions.core.imap_client import get_bank_emails
+from banktransactions.core.email_parser import extract_transaction_details
+from banktransactions.core.transaction_data import construct_transaction_data
+from banktransactions.core.api_client import send_transaction_to_api
+from banktransactions.core.processed_ids_db import load_processed_gmail_msgids, save_processed_gmail_msgid
 
 logger = logging.getLogger(__name__)
 

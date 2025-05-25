@@ -8,13 +8,13 @@ from datetime import datetime, timedelta
 import ssl
 
 # Import from our other modules
-from banktransactions.email_parser import (
+from banktransactions.core.email_parser import (
     decode_str,
     extract_transaction_details,
 )
-from banktransactions.api_client import send_transaction_to_api
+from banktransactions.core.api_client import send_transaction_to_api
 
-from banktransactions.transaction_data import construct_transaction_data
+from banktransactions.core.transaction_data import construct_transaction_data
 
 
 def get_bank_emails(

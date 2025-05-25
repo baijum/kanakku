@@ -1,47 +1,89 @@
-# Bank Transaction Email Parser - Core Modules
+# Bank Transaction Email Parser - Restructured
 
-This directory contains the core modules for processing and extracting transaction details from bank emails. These modules are used by the Redis RQ-based email automation system in Kanakku.
+This directory contains the restructured modules for processing and extracting transaction details from bank emails. The modules are now organized into logical groups for better maintainability and clarity.
 
-**Note:** The standalone `main.py` script has been replaced by the Redis RQ-based email automation system located in `email_automation/`. This directory now serves as a library of core modules.
+## Directory Structure
 
-## Core Modules
+```
+banktransactions/
+├── core/                    # Core library modules
+├── automation/              # Email automation system
+├── tests/                   # Organized test suite
+├── tools/                   # Development and debugging tools
+├── docs/                    # Documentation
+├── config/                  # Configuration files
+├── data/                    # Runtime data files
+└── logs/                    # Log files
+```
 
-- **Email Processing** (`imap_client.py`)
-  - IMAP client for fetching bank transaction emails
-  - Support for multiple bank email addresses
-  - Robust email body cleaning and encoding handling
+## Core Modules (`core/`)
 
-- **Transaction Extraction** (`email_parser.py`)
-  - AI-powered transaction detail extraction using Google Gemini
-  - Handles various Indian bank formats (ICICI, HDFC, SBI, Axis, etc.)
-  - Extracts comprehensive transaction details:
-    - Transaction amount
-    - Date and time
-    - Account/card number (masked)
-    - Recipient/merchant name
-    - Transaction type
-    - Balance information (when available)
+The core library contains the fundamental functionality for email processing and transaction extraction:
 
-- **Data Processing** (`transaction_data.py`)
-  - Transaction data construction and validation
-  - Automatic mapping of transactions to expense categories
-  - Configurable merchant-to-category mapping
-  - Support for multiple expense accounts per merchant
+- **`email_parser.py`** - AI-powered transaction detail extraction using Google Gemini
+- **`imap_client.py`** - IMAP client for fetching bank transaction emails
+- **`transaction_data.py`** - Transaction data construction and validation
+- **`api_client.py`** - RESTful API client for transaction data submission
+- **`processed_ids_db.py`** - Database-backed email deduplication
 
-- **API Integration** (`api_client.py`)
-  - RESTful API client for transaction data submission
-  - Configurable API endpoints
-  - Error handling and retry mechanisms
-  - Transaction data validation
+### Key Features
+- Handles various Indian bank formats (ICICI, HDFC, SBI, Axis, etc.)
+- Extracts comprehensive transaction details (amount, date, account, recipient, etc.)
+- Automatic mapping of transactions to expense categories
+- Robust email body cleaning and encoding handling
 
-- **Deduplication** (`processed_ids_db.py`)
-  - Database-backed email deduplication
-  - Prevents processing of duplicate emails
-  - User-specific message ID tracking
+## Automation System (`automation/`)
 
-- **Configuration** 
-  - Database-based configuration for account and expense mapping
-  - Environment-based configuration support
+The automation system provides background processing and scheduling:
+
+- **`run_scheduler.py`** - Main scheduler entry point for periodic job scheduling
+- **`run_worker.py`** - Main worker entry point for background job processing
+- **`email_processor.py`** - Core email processing worker logic
+- **`scheduler.py`** - Job scheduling logic and management
+- **`job_utils.py`** - Job utilities and helper functions
+- **`job_wrapper.py`** - Job wrapper for reliable process spawning
+
+### Key Features
+- Redis Queue (RQ) based background processing
+- Configurable polling intervals (hourly, daily)
+- User-specific email configurations
+- Encrypted credential storage
+- Status monitoring and error reporting
+
+## Testing (`tests/`)
+
+Comprehensive test suite organized by functionality:
+
+- **`test_core/`** - Tests for core library modules
+- **`test_automation/`** - Tests for automation system
+- **`test_integration/`** - Integration and system tests
+
+## Tools (`tools/`)
+
+Development and debugging utilities:
+
+- **`debug_encryption.py`** - Encryption debugging utilities
+- **`check_configs.py`** - Configuration validation
+- **`check_failed.py`** - Failed job analysis
+- **`move_jobs.py`** - Job management utilities
+- **`update_test_password.py`** - Test credential management
+- **`start_dev.sh`** - Development environment setup
+
+## Documentation (`docs/`)
+
+Comprehensive documentation:
+
+- **`EMAIL_AUTOMATION.md`** - Email automation system guide
+- **`SCHEDULER.md`** - Scheduler documentation
+- **`JOB_DEDUPLICATION.md`** - Job deduplication strategies
+- **`TEST_SUMMARY.md`** - Testing documentation
+- **`TEST_README.md`** - Test setup and execution guide
+
+## Configuration (`config/`)
+
+Configuration files and environment settings:
+
+- **`.env`** - Environment variables for development
 
 ## Prerequisites
 
@@ -50,74 +92,69 @@ This directory contains the core modules for processing and extracting transacti
 - Redis (for job queue)
 - Google Gemini API key (for AI-powered parsing)
 
+## Quick Start
+
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Set Environment Variables
+```bash
+export DATABASE_URL="postgresql://user:password@localhost/kanakku"
+export REDIS_URL="redis://localhost:6379/0"
+export GOOGLE_API_KEY="your_gemini_api_key"
+export ENCRYPTION_KEY="your_32_byte_base64_encoded_key"
+```
+
+### 3. Start the Services
+
+#### Start Email Worker
+```bash
+cd automation
+python run_worker.py
+```
+
+#### Start Scheduler (optional)
+```bash
+cd automation
+python run_scheduler.py
+```
+
 ## Usage
 
-These modules are primarily used by the Redis RQ-based email automation system. However, they can also be used independently:
-
-### As a Module
+### As a Library
 
 ```python
-from email_parser import extract_transaction_details_pure_llm
+from banktransactions.core import extract_transaction_details
 
 # Extract details from an email body using AI
 email_body = "Your account XX1234 has been debited with INR 1,500.00 on 12-12-2023."
-transaction_details = extract_transaction_details_pure_llm(email_body)
+transaction_details = extract_transaction_details(email_body)
 print(transaction_details)
 ```
 
-### Testing and Examples
+### Testing
 
-1. Run tests:
-   ```bash
-   pytest
-   ```
-
-## Configuration
-
-The modules can be configured through:
-
-1. Environment variables
-2. Database-stored mappings accessed via API:
-   - Bank account mapping
-   - Expense category mapping
-   - Transaction descriptions
-
-**Note:** All mappings are now stored in the database and managed via the web interface or API endpoints.
-
-## Project Structure
-
-- `email_parser.py` - Core AI-powered transaction extraction logic
-- `imap_client.py` - Email fetching and processing via IMAP
-- `api_client.py` - API integration for transaction submission
-- `processed_ids_db.py` - Database-backed email deduplication
-- `transaction_data.py` - Data models and validation
-- `test_*.py` - Test suite for various components
-- `email_automation/` - Redis RQ-based email automation system
-
-## Testing
-
-The modules include comprehensive tests:
-- Unit tests for AI parsing logic
-- Integration tests for email processing
-- API client tests
-- Configuration tests
-- Account mapping tests
-- Data validation tests
-
-Run tests with:
+Run tests from the project root:
 ```bash
-pytest
+pytest tests/
+```
+
+Run specific test categories:
+```bash
+pytest tests/test_core/          # Core module tests
+pytest tests/test_automation/    # Automation tests
+pytest tests/test_integration/   # Integration tests
 ```
 
 ## Integration with Kanakku
 
-These modules are integrated into the main Kanakku application through:
+These modules integrate with the main Kanakku application through:
 
-1. **Email Automation System** (`email_automation/`) - Redis RQ-based background processing
-2. **Backend API** (`backend/app/email_automation.py`) - REST API for configuration
-3. **Frontend UI** - User interface for email automation settings
-
-For the complete email automation setup, see the `email_automation/README.md` file.
+1. **Backend API** (`backend/app/email_automation.py`) - REST API for configuration
+2. **Frontend UI** - User interface for email automation settings
+3. **Database Models** - EmailConfiguration model for user settings
 
 ## Error Handling
 
@@ -128,4 +165,15 @@ The modules include robust error handling for:
 - Configuration problems
 - Invalid transaction data
 - Account mapping errors
-- Database connection issues 
+- Database connection issues
+
+## Migration Notes
+
+This structure represents a major reorganization from the previous layout:
+- Core functionality moved to `core/` package
+- Automation system flattened from `email_automation/workers/`
+- Tests organized by functionality
+- Tools and documentation properly separated
+- Clear separation of concerns between library and automation
+
+For detailed migration information, see the individual module documentation in `docs/`. 

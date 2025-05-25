@@ -7,7 +7,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from banktransactions.email_parser import extract_transaction_details
+    from banktransactions.core.email_parser import extract_transaction_details
 except ImportError:
     # Fallback to relative import if running from within the directory
     from email_parser import extract_transaction_details

@@ -30,7 +30,7 @@ setup_python_path()
 
 # Now we can safely import the actual function
 try:
-    from banktransactions.email_automation.workers.email_processor import process_user_emails_standalone as _process_emails
+    from banktransactions.automation.email_processor import process_user_emails_standalone as _process_emails
 except ImportError as e:
     print(f"Failed to import email processor: {e}")
     print(f"Current working directory: {os.getcwd()}")

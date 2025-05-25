@@ -182,7 +182,7 @@ def test_email_connection():
             sys.path.append(banktransactions_path)
 
         # Import here to avoid circular imports
-        from banktransactions.imap_client import CustomIMAPClient
+        from banktransactions.core.imap_client import CustomIMAPClient
 
         imap_client = CustomIMAPClient(
             server=data.get("imap_server", "imap.gmail.com"),
@@ -270,7 +270,7 @@ def trigger_email_processing():
         redis_conn = redis.from_url(redis_url)
 
         # Import job utilities
-        from banktransactions.email_automation.workers.job_utils import (
+        from banktransactions.automation.job_utils import (
             generate_job_id,
             has_user_job_pending,
             get_user_job_status,
@@ -293,8 +293,8 @@ def trigger_email_processing():
         # Create queue
         queue = Queue("email_processing", connection=redis_conn)
 
-        # Import the function directly from the workers module
-        from banktransactions.email_automation.workers.email_processor import (
+        # Import the function directly from the automation module
+        from banktransactions.automation.email_processor import (
             process_user_emails_standalone,
         )
 

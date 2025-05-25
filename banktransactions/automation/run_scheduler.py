@@ -35,8 +35,12 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 # Add the project root to the Python path so we can import banktransactions module
 project_root = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, project_root)
+# Also add the backend app to the Python path for model imports
+backend_path = os.path.join(project_root, "..", "backend")
+if backend_path not in sys.path:
+    sys.path.append(backend_path)
 
-from banktransactions.email_automation.workers.scheduler import EmailScheduler
+from banktransactions.automation.scheduler import EmailScheduler
 
 # Configure logging
 logging.basicConfig(
