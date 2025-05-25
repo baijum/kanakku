@@ -580,16 +580,52 @@ class GlobalConfiguration(db.Model):
     )
 
     def to_dict(self):
-        """Convert configuration to dictionary for API responses"""
+        """Convert global configuration to dictionary for API responses"""
         return {
             "id": self.id,
             "key": self.key,
             "value": self.value if not self.is_encrypted else "[ENCRYPTED]",
             "description": self.description,
             "is_encrypted": self.is_encrypted,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
         }
 
     def __repr__(self):
         return f"<GlobalConfiguration {self.key}>"
+
+
+class ProcessedGmailMessage(db.Model):
+    """
+    ProcessedGmailMessage model stores Gmail Message IDs that have been processed
+    to avoid duplicate processing. Each record is associated with a specific user.
+    """
+
+    __tablename__ = "processed_gmail_messages"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    gmail_message_id = Column(String(255), nullable=False)
+    processed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    user = relationship("User", backref="processed_gmail_messages", lazy=True)
+
+    # Ensure unique combination of user_id and gmail_message_id
+    __table_args__ = (
+        UniqueConstraint("user_id", "gmail_message_id", name="uq_user_gmail_message"),
+    )
+
+    def to_dict(self):
+        """Convert processed Gmail message to dictionary for API responses"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "gmail_message_id": self.gmail_message_id,
+            "processed_at": self.processed_at.isoformat(),
+            "created_at": self.created_at.isoformat(),
+        }
+
+    def __repr__(self):
+        return f"<ProcessedGmailMessage {self.gmail_message_id} for user {self.user_id}>"

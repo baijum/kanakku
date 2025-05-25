@@ -21,7 +21,7 @@ from banktransactions.transaction_data import construct_transaction_data
 
 
 def get_bank_emails(
-    username, password, bank_email_list=None, processed_gmail_msgids=None
+    username, password, bank_email_list=None, processed_gmail_msgids=None, save_msgid_callback=None
 ):
     """
     Retrieve bank transaction emails from Gmail and send to API
@@ -31,6 +31,8 @@ def get_bank_emails(
     - password: Gmail password or app password
     - bank_email_list: List of bank email addresses to filter by
     - processed_gmail_msgids: Set of already processed Gmail Message IDs
+    - save_msgid_callback: Optional callback function to save individual message IDs
+                          Should accept (gmail_message_id) and return True if saved successfully
     """
     logging.debug(f"Starting get_bank_emails function")
     logging.debug(f"Bank email list: {bank_email_list}")
@@ -340,6 +342,8 @@ def get_bank_emails(
                                     f"No transaction details extracted for Gmail Message ID {gmail_msgid}. Skipping."
                                 )
                                 processed_gmail_msgids.add(gmail_msgid)
+                                if save_msgid_callback:
+                                    save_msgid_callback(gmail_msgid)
                                 continue
 
                             # Construct transaction data
@@ -361,6 +365,8 @@ def get_bank_emails(
                                 processed_gmail_msgids.add(gmail_msgid)
                                 newly_processed_count += 1
                                 logging.debug(f"Newly processed count: {newly_processed_count}")
+                                if save_msgid_callback:
+                                    save_msgid_callback(gmail_msgid)
                             else:
                                 logging.error(
                                     f"Failed to send transaction to API for Gmail Message ID {gmail_msgid}"

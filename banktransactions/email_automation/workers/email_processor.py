@@ -40,7 +40,7 @@ from banktransactions.imap_client import get_bank_emails
 from banktransactions.email_parser import extract_transaction_details_pure_llm
 from banktransactions.transaction_data import construct_transaction_data
 from banktransactions.api_client import send_transaction_to_api
-from banktransactions.processed_ids import load_processed_gmail_msgids, save_processed_gmail_msgids
+from banktransactions.processed_ids_db import load_processed_gmail_msgids, save_processed_gmail_msgid
 
 logger = logging.getLogger(__name__)
 
@@ -178,11 +178,11 @@ def process_user_emails_standalone(user_id: int) -> Dict:
                 }
             logger.debug("App password decrypted successfully")
 
-            # Load processed Gmail message IDs (using the working implementation)
-            logger.debug("Loading processed Gmail message IDs")
-            processed_gmail_msgids = load_processed_gmail_msgids()
+            # Load processed Gmail message IDs (using the database implementation)
+            logger.debug("Loading processed Gmail message IDs from database")
+            processed_gmail_msgids = load_processed_gmail_msgids(user_id=user_id)
             initial_msgid_count = len(processed_gmail_msgids)
-            logger.debug(f"Loaded {initial_msgid_count} previously processed Gmail message IDs")
+            logger.debug(f"Loaded {initial_msgid_count} previously processed Gmail message IDs for user {user_id}")
 
             # Get bank email addresses from sample emails or use default
             bank_emails = ["alerts@axisbank.com"]  # Default
@@ -203,21 +203,31 @@ def process_user_emails_standalone(user_id: int) -> Dict:
 
             logger.debug(f"Processing emails from bank addresses: {bank_emails}")
 
-            # Use the proven working email processing logic from main.py
-            logger.debug("Calling get_bank_emails function with working implementation")
+            # Create a callback function to save individual Gmail message IDs to database
+            def save_msgid_to_db(gmail_message_id):
+                """Callback function to save individual Gmail message ID to database"""
+                try:
+                    result = save_processed_gmail_msgid(gmail_message_id, user_id=user_id)
+                    if result:
+                        logger.debug(f"Saved Gmail Message ID {gmail_message_id} to database for user {user_id}")
+                    else:
+                        logger.warning(f"Failed to save Gmail Message ID {gmail_message_id} to database for user {user_id}")
+                    return result
+                except Exception as e:
+                    logger.error(f"Error saving Gmail Message ID {gmail_message_id} to database for user {user_id}: {e}")
+                    return False
+
+            # Use the proven working email processing logic from main.py with database callback
+            logger.debug("Calling get_bank_emails function with database callback")
             updated_msgids, newly_processed_count = get_bank_emails(
                 username=config.email_address,
                 password=decrypted_password,
                 bank_email_list=bank_emails,
-                processed_gmail_msgids=processed_gmail_msgids
+                processed_gmail_msgids=processed_gmail_msgids,
+                save_msgid_callback=save_msgid_to_db
             )
 
             logger.debug(f"Email processing completed: {newly_processed_count} new transactions processed")
-
-            # Save updated Gmail Message IDs if any new ones were processed
-            if newly_processed_count > 0 or processed_gmail_msgids is not None:
-                logger.debug("Saving updated processed Gmail message IDs")
-                save_processed_gmail_msgids(updated_msgids)
 
             # Update last check time
             logger.debug("Updating last check time in configuration")
