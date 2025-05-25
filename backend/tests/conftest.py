@@ -1,10 +1,12 @@
-import pytest
 import json
 from datetime import date
+
+import pytest
 from flask_jwt_extended import create_access_token
+
 from app import create_app
 from app.extensions import db
-from app.models import User, Transaction, Account, Book
+from app.models import Account, Book, Transaction, User
 
 
 @pytest.fixture(scope="function")

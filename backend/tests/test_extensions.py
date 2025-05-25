@@ -1,7 +1,8 @@
 import json
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
+
 from app.models import ApiToken
-from datetime import datetime, timezone, timedelta
 
 
 def test_api_token_error_handling(client, user, monkeypatch):

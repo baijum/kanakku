@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json
 import os
 import requests
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Optional, Tuple
 from google import genai
 
 # Configure logging
@@ -261,7 +261,7 @@ def get_gemini_api_key_from_config():
     """
     Get the Gemini API key from Global Configuration Settings.
     This function handles both Flask context and standalone usage.
-    
+
     Returns:
         str or None: The decrypted Gemini API key, or None if not found/failed
     """
@@ -271,14 +271,16 @@ def get_gemini_api_key_from_config():
             from flask import current_app
             import sys
             import os
-            
+
             # Add backend directory to Python path
-            backend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'backend')
+            backend_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)), "backend"
+            )
             if backend_path not in sys.path:
                 sys.path.insert(0, backend_path)
-            
+
             from app.utils.config_manager import get_gemini_api_token
-            
+
             # Check if we're in Flask context
             if current_app:
                 logging.debug("Using Flask context to get Gemini API key")
@@ -286,25 +288,25 @@ def get_gemini_api_key_from_config():
         except (ImportError, RuntimeError):
             # Not in Flask context or Flask not available
             pass
-        
+
         # Fallback to standalone database access
         logging.debug("Using standalone database access to get Gemini API key")
-        
+
         # Import encryption utilities
         from cryptography.fernet import Fernet
         import base64
-        
+
         def get_encryption_key_standalone():
             """Get encryption key without Flask context."""
             key = os.environ.get("ENCRYPTION_KEY")
             if not key:
                 logging.warning("No encryption key found in environment")
                 return None
-            
+
             # Ensure the key is properly formatted for Fernet
             if not key.endswith("="):
                 key = key + "=" * (-len(key) % 4)
-            
+
             try:
                 decoded_key = base64.urlsafe_b64decode(key)
                 if len(decoded_key) != 32:
@@ -313,16 +315,16 @@ def get_gemini_api_key_from_config():
             except Exception as e:
                 logging.error(f"Invalid encryption key: {str(e)}")
                 return None
-        
+
         def decrypt_value_standalone(encrypted_value):
             """Decrypt value without Flask context."""
             if not encrypted_value:
                 return None
-            
+
             key = get_encryption_key_standalone()
             if not key:
                 return None
-                
+
             f = Fernet(key.encode() if isinstance(key, str) else key)
             try:
                 decrypted_data = f.decrypt(encrypted_value.encode())
@@ -330,19 +332,19 @@ def get_gemini_api_key_from_config():
             except Exception as e:
                 logging.error(f"Failed to decrypt value: {str(e)}")
                 return None
-        
+
         # Access database directly
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         from sqlalchemy.ext.declarative import declarative_base
         from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
-        
+
         # Create standalone model
         Base = declarative_base()
-        
+
         class GlobalConfiguration(Base):
             __tablename__ = "global_configurations"
-            
+
             id = Column(Integer, primary_key=True)
             key = Column(String(100), unique=True, nullable=False)
             value = Column(Text, nullable=False)
@@ -350,25 +352,29 @@ def get_gemini_api_key_from_config():
             is_encrypted = Column(Boolean, default=True)
             created_at = Column(DateTime)
             updated_at = Column(DateTime)
-        
+
         # Get database URL
         db_url = os.getenv("DATABASE_URL")
         if not db_url:
             logging.error("DATABASE_URL environment variable not set")
             return None
-        
+
         # Create database session
         engine = create_engine(db_url)
         Session = sessionmaker(bind=engine)
         session = Session()
-        
+
         try:
             # Query for GEMINI_API_TOKEN
-            config = session.query(GlobalConfiguration).filter_by(key="GEMINI_API_TOKEN").first()
+            config = (
+                session.query(GlobalConfiguration)
+                .filter_by(key="GEMINI_API_TOKEN")
+                .first()
+            )
             if not config:
                 logging.debug("GEMINI_API_TOKEN not found in global configurations")
                 return None
-            
+
             # Decrypt if encrypted
             if config.is_encrypted:
                 decrypted_value = decrypt_value_standalone(config.value)
@@ -378,10 +384,10 @@ def get_gemini_api_key_from_config():
                 return decrypted_value
             else:
                 return config.value
-                
+
         finally:
             session.close()
-            
+
     except Exception as e:
         logging.error(f"Error retrieving Gemini API key from config: {str(e)}")
         return None
@@ -509,7 +515,9 @@ def _extract_with_llm_few_shot(cleaned_body: str) -> Dict[str, str]:
         examples_text = ""
         for idx, example in enumerate(examples):
             examples_text += f"\nExample {idx+1}:\nEmail: {example['email']}\n"
-            examples_text += f"Extraction: {json.dumps(example['extraction'], indent=2)}\n"
+            examples_text += (
+                f"Extraction: {json.dumps(example['extraction'], indent=2)}\n"
+            )
 
         # Prepare the prompt with few-shot examples
         prompt = f"""You are a specialized financial email parser. Extract transaction details from bank notification emails.

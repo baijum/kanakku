@@ -27,24 +27,28 @@ try:
         clear_processed_gmail_msgids as db_clear_processed_gmail_msgids,
     )
     from app.extensions import db
-    
+
     # Create Flask app context for database operations
     app = create_app()
-    
+
 except ImportError as e:
     logging.warning(f"Could not import Flask app or database service: {e}")
-    logging.warning("Database service not available - processed IDs functionality will be limited")
+    logging.warning(
+        "Database service not available - processed IDs functionality will be limited"
+    )
     app = None
 
 
-def load_processed_gmail_msgids(user_id: Optional[int] = None, filepath: Optional[str] = None) -> Set[str]:
+def load_processed_gmail_msgids(
+    user_id: Optional[int] = None, filepath: Optional[str] = None
+) -> Set[str]:
     """
     Load processed Gmail Message IDs.
-    
+
     Args:
         user_id (int, optional): The ID of the user (required for database mode)
         filepath (str, optional): File path for file-based fallback (deprecated)
-        
+
     Returns:
         Set[str]: Set of processed Gmail Message IDs
     """
@@ -54,23 +58,27 @@ def load_processed_gmail_msgids(user_id: Optional[int] = None, filepath: Optiona
             with app.app_context():
                 return db_load_processed_gmail_msgids(user_id)
         except Exception as e:
-            logging.error(f"Error loading processed Gmail Message IDs from database for user {user_id}: {e}")
+            logging.error(
+                f"Error loading processed Gmail Message IDs from database for user {user_id}: {e}"
+            )
             logging.warning("Falling back to file-based approach")
-    
+
     # Database not available and no fallback
     logging.error("Database service not available and no fallback method")
     return set()
 
 
-def save_processed_gmail_msgids(msgids: Set[str], user_id: Optional[int] = None, filepath: Optional[str] = None) -> bool:
+def save_processed_gmail_msgids(
+    msgids: Set[str], user_id: Optional[int] = None, filepath: Optional[str] = None
+) -> bool:
     """
     Save processed Gmail Message IDs.
-    
+
     Args:
         msgids (Set[str]): Set of Gmail Message IDs to save
         user_id (int, optional): The ID of the user (required for database mode)
         filepath (str, optional): File path for file-based fallback (deprecated)
-        
+
     Returns:
         bool: True if saved successfully, False otherwise
     """
@@ -79,25 +87,31 @@ def save_processed_gmail_msgids(msgids: Set[str], user_id: Optional[int] = None,
         try:
             with app.app_context():
                 saved_count = db_save_processed_gmail_msgids(user_id, msgids)
-                logging.info(f"Saved {saved_count} new processed Gmail Message IDs to database for user {user_id}")
+                logging.info(
+                    f"Saved {saved_count} new processed Gmail Message IDs to database for user {user_id}"
+                )
                 return True
         except Exception as e:
-            logging.error(f"Error saving processed Gmail Message IDs to database for user {user_id}: {e}")
+            logging.error(
+                f"Error saving processed Gmail Message IDs to database for user {user_id}: {e}"
+            )
             logging.warning("Falling back to file-based approach")
-    
+
     # Database not available and no fallback
     logging.error("Database service not available and no fallback method")
     return False
 
 
-def save_processed_gmail_msgid(gmail_message_id: str, user_id: Optional[int] = None) -> bool:
+def save_processed_gmail_msgid(
+    gmail_message_id: str, user_id: Optional[int] = None
+) -> bool:
     """
     Save a single processed Gmail Message ID.
-    
+
     Args:
         gmail_message_id (str): The Gmail Message ID to save
         user_id (int, optional): The ID of the user (required for database mode)
-        
+
     Returns:
         bool: True if saved successfully, False otherwise
     """
@@ -107,22 +121,30 @@ def save_processed_gmail_msgid(gmail_message_id: str, user_id: Optional[int] = N
             with app.app_context():
                 return db_save_processed_gmail_msgid(user_id, gmail_message_id)
         except Exception as e:
-            logging.error(f"Error saving processed Gmail Message ID {gmail_message_id} to database for user {user_id}: {e}")
+            logging.error(
+                f"Error saving processed Gmail Message ID {gmail_message_id} to database for user {user_id}: {e}"
+            )
             return False
     else:
-        logging.error("Database approach not available and single message save not supported in file mode")
+        logging.error(
+            "Database approach not available and single message save not supported in file mode"
+        )
         return False
 
 
-def is_gmail_message_processed(gmail_message_id: str, user_id: Optional[int] = None, processed_msgids: Optional[Set[str]] = None) -> bool:
+def is_gmail_message_processed(
+    gmail_message_id: str,
+    user_id: Optional[int] = None,
+    processed_msgids: Optional[Set[str]] = None,
+) -> bool:
     """
     Check if a Gmail Message ID has been processed.
-    
+
     Args:
         gmail_message_id (str): The Gmail Message ID to check
         user_id (int, optional): The ID of the user (required for database mode)
         processed_msgids (Set[str], optional): Set of processed message IDs for file-based fallback
-        
+
     Returns:
         bool: True if the message has been processed, False otherwise
     """
@@ -132,7 +154,9 @@ def is_gmail_message_processed(gmail_message_id: str, user_id: Optional[int] = N
             with app.app_context():
                 return db_is_gmail_message_processed(user_id, gmail_message_id)
         except Exception as e:
-            logging.error(f"Error checking processed status for Gmail Message ID {gmail_message_id} and user {user_id}: {e}")
+            logging.error(
+                f"Error checking processed status for Gmail Message ID {gmail_message_id} and user {user_id}: {e}"
+            )
             return False
     elif processed_msgids is not None:
         # Fall back to checking in-memory set
@@ -145,10 +169,10 @@ def is_gmail_message_processed(gmail_message_id: str, user_id: Optional[int] = N
 def get_processed_message_count(user_id: Optional[int] = None) -> int:
     """
     Get the total count of processed Gmail messages.
-    
+
     Args:
         user_id (int, optional): The ID of the user (required for database mode)
-        
+
     Returns:
         int: Total count of processed messages
     """
@@ -158,7 +182,9 @@ def get_processed_message_count(user_id: Optional[int] = None) -> int:
             with app.app_context():
                 return db_get_processed_message_count(user_id)
         except Exception as e:
-            logging.error(f"Error getting processed message count for user {user_id}: {e}")
+            logging.error(
+                f"Error getting processed message count for user {user_id}: {e}"
+            )
             return 0
     else:
         logging.error("Database approach not available")
@@ -168,10 +194,10 @@ def get_processed_message_count(user_id: Optional[int] = None) -> int:
 def clear_processed_gmail_msgids(user_id: Optional[int] = None) -> bool:
     """
     Clear all processed Gmail Message IDs.
-    
+
     Args:
         user_id (int, optional): The ID of the user (required for database mode)
-        
+
     Returns:
         bool: True if cleared successfully, False otherwise
     """
@@ -181,7 +207,9 @@ def clear_processed_gmail_msgids(user_id: Optional[int] = None) -> bool:
             with app.app_context():
                 return db_clear_processed_gmail_msgids(user_id)
         except Exception as e:
-            logging.error(f"Error clearing processed Gmail Message IDs for user {user_id}: {e}")
+            logging.error(
+                f"Error clearing processed Gmail Message IDs for user {user_id}: {e}"
+            )
             return False
     else:
         logging.error("Database approach not available")
@@ -195,6 +223,8 @@ def load_processed_gmail_msgids_file(filepath: Optional[str] = None) -> Set[str]
     return load_processed_gmail_msgids(user_id=None, filepath=filepath)
 
 
-def save_processed_gmail_msgids_file(msgids: Set[str], filepath: Optional[str] = None) -> None:
+def save_processed_gmail_msgids_file(
+    msgids: Set[str], filepath: Optional[str] = None
+) -> None:
     """Save processed Gmail Message IDs to file (backward compatibility)."""
-    save_processed_gmail_msgids(msgids, user_id=None, filepath=filepath) 
+    save_processed_gmail_msgids(msgids, user_id=None, filepath=filepath)

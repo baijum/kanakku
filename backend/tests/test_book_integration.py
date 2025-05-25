@@ -1,7 +1,9 @@
-import pytest
-from app.models import User, Book, Account, Transaction, db
 from datetime import date
+
+import pytest
 from sqlalchemy.exc import IntegrityError
+
+from app.models import Account, Book, Transaction, User, db
 
 
 @pytest.fixture

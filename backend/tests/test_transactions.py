@@ -1,6 +1,8 @@
-import pytest
-from app.models import Transaction, db, Account, Book
 from datetime import date, datetime
+
+import pytest
+
+from app.models import Account, Book, Transaction, db
 
 # Removed local app fixture
 
@@ -1024,8 +1026,9 @@ def test_add_transaction_unbalanced(authenticated_client, account, mock_ledger_c
 def test_error_handling_decorator(authenticated_client, user, app):
     """Test the handle_errors decorator."""
     # Instead of trying to mock a route, test the decorator directly
-    from app.transactions import handle_errors
     from sqlalchemy.exc import SQLAlchemyError
+
+    from app.transactions import handle_errors
 
     # Create test functions that will be wrapped by the decorator
     def func_value_error():

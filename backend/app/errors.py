@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify, current_app, request
+from flask import Blueprint, current_app, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
+
 from .extensions import db
 
 errors = Blueprint("errors", __name__)

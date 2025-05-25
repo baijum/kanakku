@@ -49,7 +49,6 @@ function ViewTransactions() {
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [retryCount, setRetryCount] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   
   // Dialog states
@@ -133,9 +132,8 @@ function ViewTransactions() {
         // Get total count from API - use 0 if not provided, don't default to 100
         setTotalCount(response.data.total ?? 0);
         
-        // Clear error and retry count on success
+        // Clear error on success
         setError('');
-        setRetryCount(0);
       } else {
         console.error('Unexpected response structure for transactions:', response.data);
         setTransactions([]);
@@ -370,7 +368,6 @@ function ViewTransactions() {
 
   // Retry function for failed requests
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
     fetchTransactions(true);
   };
 

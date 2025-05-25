@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
-from .models import Book, BankAccountMapping, ExpenseAccountMapping
-from .extensions import db
-from .auth import get_current_user
 from sqlalchemy.exc import SQLAlchemyError
+
+from .auth import get_current_user
+from .extensions import db
+from .models import BankAccountMapping, Book, ExpenseAccountMapping
 
 mappings_bp = Blueprint("mappings", __name__)
 

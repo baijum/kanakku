@@ -1,7 +1,8 @@
-from cryptography.fernet import Fernet
-from flask import current_app
 import base64
 import os
+
+from cryptography.fernet import Fernet
+from flask import current_app
 
 
 def get_encryption_key():

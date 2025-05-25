@@ -1,7 +1,9 @@
 import json
 from datetime import datetime, timedelta
-from app.models import Transaction, Account, Book, db
+
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.models import Account, Book, Transaction, db
 
 
 def test_get_recent_transactions(authenticated_client, user):

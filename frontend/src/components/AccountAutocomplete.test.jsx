@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import AccountAutocomplete from './AccountAutocomplete';
@@ -104,8 +104,9 @@ describe('AccountAutocomplete Component', () => {
     // Wait for suggestions to appear
     await waitFor(() => {
       expect(screen.getByText('Assets:Bank:Checking')).toBeInTheDocument();
-      expect(screen.getByText('Assets:Bank:Savings')).toBeInTheDocument();
     }, { timeout: 1000 });
+    
+    expect(screen.getByText('Assets:Bank:Savings')).toBeInTheDocument();
   });
 
   test('calls onChange when suggestion is selected', async () => {

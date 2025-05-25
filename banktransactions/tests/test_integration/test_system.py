@@ -11,9 +11,7 @@ Usage:
 
 import os
 import sys
-import json
 import redis
-from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -64,6 +62,7 @@ def test_database_connection():
 
         # Test query
         from sqlalchemy import text
+
         result = session.execute(text("SELECT 1"))
         session.close()
         print("✅ Database connection successful")
@@ -77,7 +76,6 @@ def test_email_configuration_model():
     """Test EmailConfiguration model."""
     print("Testing EmailConfiguration model...")
     try:
-        from app.models import EmailConfiguration
 
         print("✅ EmailConfiguration model imported successfully")
         return True
@@ -112,10 +110,6 @@ def test_worker_imports():
     """Test worker module imports."""
     print("Testing worker imports...")
     try:
-        from banktransactions.automation.email_processor import (
-            process_user_emails_standalone,
-        )
-        from banktransactions.automation.scheduler import EmailScheduler
 
         print("✅ Worker modules imported successfully")
         return True
@@ -128,9 +122,6 @@ def test_banktransactions_imports():
     """Test banktransactions module imports."""
     print("Testing banktransactions imports...")
     try:
-        from banktransactions.core.imap_client import CustomIMAPClient
-        from banktransactions.core.email_parser import extract_transaction_details
-        from banktransactions.core.api_client import APIClient
 
         print("✅ Banktransactions modules imported successfully")
         return True

@@ -1,4 +1,5 @@
 from flask import current_app
+
 from .utils.config_manager import get_gemini_api_token
 
 

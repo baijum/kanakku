@@ -14,33 +14,38 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+
 def test_wrapper():
     """Test the wrapper function import and job enqueuing."""
     try:
         # Import the wrapper function
-        from banktransactions.email_automation.job_wrapper import process_user_emails_standalone
+        from banktransactions.email_automation.job_wrapper import (
+            process_user_emails_standalone,
+        )
+
         print("✓ Wrapper function imported successfully")
-        
+
         # Connect to Redis
-        redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         redis_conn = redis.from_url(redis_url)
         print("✓ Connected to Redis")
-        
+
         # Create queue
-        queue = Queue('email_processing', connection=redis_conn)
+        queue = Queue("email_processing", connection=redis_conn)
         print("✓ Queue created")
-        
+
         # Enqueue job
-        job = queue.enqueue(process_user_emails_standalone, 1, job_timeout='10m')
+        job = queue.enqueue(process_user_emails_standalone, 1, job_timeout="10m")
         print(f"✓ Job enqueued: {job.id}")
         print(f"✓ Queue length: {len(queue)}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"✗ Error: {e}")
         return False
 
+
 if __name__ == "__main__":
     success = test_wrapper()
-    sys.exit(0 if success else 1) 
+    sys.exit(0 if success else 1)

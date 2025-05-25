@@ -1,5 +1,6 @@
-from app.models import Account, Transaction, Book, db
 from datetime import date
+
+from app.models import Account, Book, Transaction, db
 
 
 def test_get_accounts(authenticated_client, user, app):
@@ -271,15 +272,44 @@ def test_autocomplete_accounts(authenticated_client, user, app):
 
         # Create test accounts with Ledger CLI-style names
         test_accounts = [
-            Account(user_id=user.id, book_id=book.id, name="Assets:Bank:Checking", currency="INR"),
-            Account(user_id=user.id, book_id=book.id, name="Assets:Bank:Savings", currency="INR"),
-            Account(user_id=user.id, book_id=book.id, name="Assets:Cash", currency="INR"),
-            Account(user_id=user.id, book_id=book.id, name="Expenses:Food:Restaurant", currency="INR"),
-            Account(user_id=user.id, book_id=book.id, name="Expenses:Food:Groceries", currency="INR"),
-            Account(user_id=user.id, book_id=book.id, name="Expenses:Transport", currency="INR"),
-            Account(user_id=user.id, book_id=book.id, name="Income:Salary", currency="INR"),
+            Account(
+                user_id=user.id,
+                book_id=book.id,
+                name="Assets:Bank:Checking",
+                currency="INR",
+            ),
+            Account(
+                user_id=user.id,
+                book_id=book.id,
+                name="Assets:Bank:Savings",
+                currency="INR",
+            ),
+            Account(
+                user_id=user.id, book_id=book.id, name="Assets:Cash", currency="INR"
+            ),
+            Account(
+                user_id=user.id,
+                book_id=book.id,
+                name="Expenses:Food:Restaurant",
+                currency="INR",
+            ),
+            Account(
+                user_id=user.id,
+                book_id=book.id,
+                name="Expenses:Food:Groceries",
+                currency="INR",
+            ),
+            Account(
+                user_id=user.id,
+                book_id=book.id,
+                name="Expenses:Transport",
+                currency="INR",
+            ),
+            Account(
+                user_id=user.id, book_id=book.id, name="Income:Salary", currency="INR"
+            ),
         ]
-        
+
         for account in test_accounts:
             db.session.add(account)
         db.session.commit()
@@ -302,7 +332,7 @@ def test_autocomplete_accounts(authenticated_client, user, app):
     data = response.get_json()
     assert "suggestions" in data
     suggestions = data["suggestions"]
-    
+
     # Should include both exact matches and next segment suggestions
     assert "Assets:Bank:Checking" in suggestions
     assert "Assets:Bank:Savings" in suggestions
@@ -311,22 +341,26 @@ def test_autocomplete_accounts(authenticated_client, user, app):
     assert "Assets:Bank" in suggestions
 
     # Test autocomplete with Assets:Bank: prefix
-    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=Assets:Bank:")
+    response = authenticated_client.get(
+        "/api/v1/accounts/autocomplete?prefix=Assets:Bank:"
+    )
     assert response.status_code == 200
     data = response.get_json()
     suggestions = data["suggestions"]
-    
+
     assert "Assets:Bank:Checking" in suggestions
     assert "Assets:Bank:Savings" in suggestions
     # Should not include Assets:Cash since it doesn't match the prefix
     assert "Assets:Cash" not in suggestions
 
     # Test autocomplete with Expenses:Food: prefix
-    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=Expenses:Food:")
+    response = authenticated_client.get(
+        "/api/v1/accounts/autocomplete?prefix=Expenses:Food:"
+    )
     assert response.status_code == 200
     data = response.get_json()
     suggestions = data["suggestions"]
-    
+
     assert "Expenses:Food:Restaurant" in suggestions
     assert "Expenses:Food:Groceries" in suggestions
     # Should not include other expense accounts
@@ -337,16 +371,18 @@ def test_autocomplete_accounts(authenticated_client, user, app):
     assert response.status_code == 200
     data = response.get_json()
     suggestions = data["suggestions"]
-    
+
     # Should match case-insensitively
     assert len(suggestions) > 0
     assert any("Assets:" in suggestion for suggestion in suggestions)
 
     # Test limit parameter
-    response = authenticated_client.get("/api/v1/accounts/autocomplete?prefix=Assets:&limit=2")
+    response = authenticated_client.get(
+        "/api/v1/accounts/autocomplete?prefix=Assets:&limit=2"
+    )
     assert response.status_code == 200
     data = response.get_json()
     suggestions = data["suggestions"]
-    
+
     # Should respect the limit
     assert len(suggestions) <= 2

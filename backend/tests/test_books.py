@@ -1,6 +1,8 @@
-import pytest
-from app.models import User, Book, Account, Transaction, db
 from datetime import datetime
+
+import pytest
+
+from app.models import Account, Book, Transaction, User, db
 
 
 @pytest.fixture
@@ -171,7 +173,7 @@ def test_get_active_book(app, client, user, books):
     # Explicitly set active book and commit
     with app.app_context():
         # Update directly using the ORM rather than raw SQL
-        from app.models import db, User
+        from app.models import User, db
 
         user_to_update = db.session.get(User, user_obj.id)
         user_to_update.active_book_id = book1.id

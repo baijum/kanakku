@@ -1,7 +1,8 @@
-from flask import Blueprint, jsonify, request, g
-from .models import GlobalConfiguration, db
+from flask import Blueprint, g, jsonify, request
+
 from .auth import api_token_required
-from .utils.encryption import encrypt_value, decrypt_value
+from .models import GlobalConfiguration, db
+from .utils.encryption import decrypt_value, encrypt_value
 
 settings = Blueprint("settings", __name__)
 

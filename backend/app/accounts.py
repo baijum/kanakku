@@ -1,5 +1,7 @@
-from flask import Blueprint, request, jsonify, current_app, g
-from app.models import Account, Transaction, Book, db
+from flask import Blueprint, current_app, g, jsonify, request
+
+from app.models import Account, Book, Transaction, db
+
 from .extensions import api_token_required
 
 accounts = Blueprint("accounts", __name__)
@@ -202,39 +204,38 @@ def delete_account(account_id):
 def autocomplete_accounts():
     """Get account names for auto-completion based on a prefix."""
     current_app.logger.debug("Entered autocomplete_accounts route")
-    
+
     prefix = request.args.get("prefix", "").strip()
     limit = request.args.get("limit", 20, type=int)
-    
+
     if not prefix:
         return jsonify({"suggestions": []})
-    
+
     # Only activate auto-completion if prefix contains at least one colon
     if ":" not in prefix:
         return jsonify({"suggestions": []})
-    
+
     active_book_id = get_active_book_id()
     accounts_list = Account.query.filter_by(
         user_id=g.current_user.id, book_id=active_book_id
     ).all()
-    
+
     account_names = [account.name for account in accounts_list]
-    
+
     # Filter accounts that start with the prefix
     matching_accounts = [
-        name for name in account_names 
-        if name.lower().startswith(prefix.lower())
+        name for name in account_names if name.lower().startswith(prefix.lower())
     ]
-    
+
     # Generate next segment suggestions
     next_segment_suggestions = set()
-    
+
     # If prefix ends with colon, suggest next segments
     if prefix.endswith(":"):
         for name in account_names:
             if name.lower().startswith(prefix.lower()):
                 # Find the next segment after the prefix
-                remaining = name[len(prefix):]
+                remaining = name[len(prefix) :]
                 if ":" in remaining:
                     next_segment = remaining.split(":")[0]
                     next_segment_suggestion = prefix + next_segment
@@ -244,22 +245,20 @@ def autocomplete_accounts():
         # If prefix doesn't end with colon, suggest partial segments
         prefix_parts = prefix.split(":")
         current_depth = len(prefix_parts)
-        
+
         for name in account_names:
             name_parts = name.split(":")
-            if (len(name_parts) >= current_depth and 
-                name.lower().startswith(prefix.lower())):
+            if len(name_parts) >= current_depth and name.lower().startswith(
+                prefix.lower()
+            ):
                 # Suggest the segment at current depth
                 if len(name_parts) > current_depth:
-                    next_segment = ":".join(name_parts[:current_depth + 1])
+                    next_segment = ":".join(name_parts[: current_depth + 1])
                     if next_segment != prefix and next_segment not in matching_accounts:
                         next_segment_suggestions.add(next_segment)
-    
+
     # Combine all suggestions
     all_suggestions = list(set(matching_accounts + list(next_segment_suggestions)))
     all_suggestions.sort()
-    
-    return jsonify({
-        "suggestions": all_suggestions[:limit],
-        "prefix": prefix
-    })
+
+    return jsonify({"suggestions": all_suggestions[:limit], "prefix": prefix})

@@ -1,5 +1,6 @@
-from flask import Blueprint, send_from_directory, jsonify
 import os
+
+from flask import Blueprint, jsonify, send_from_directory
 
 swagger = Blueprint("swagger", __name__)
 

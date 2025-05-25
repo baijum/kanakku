@@ -3,7 +3,6 @@
 import os
 import requests
 import json
-import uuid
 import logging
 from datetime import datetime  # Added for date formatting
 
@@ -69,19 +68,19 @@ def send_transaction_to_api(transaction_data):
             )
             return False
     else:
-        logging.error(f"Missing transaction_date. Skipping API call")
+        logging.error("Missing transaction_date. Skipping API call")
         return False
 
     # Get payee (fallback to subject if payee is missing)
     from_account = transaction_data.get("from_account")
     if not from_account:
-        logging.error(f"Missing from_account. Skipping API call")
+        logging.error("Missing from_account. Skipping API call")
         return False
 
     # Get account name (use default if missing)
     to_account = transaction_data.get("to_account")
     if not to_account:
-        logging.error(f"Missing to_account. Skipping API call")
+        logging.error("Missing to_account. Skipping API call")
         return False
 
     # --- Construct Payload ---
@@ -139,10 +138,10 @@ def send_transaction_to_api(transaction_data):
         return True
 
     except requests.exceptions.Timeout:
-        logging.error(f"API call timed out.")
+        logging.error("API call timed out.")
         return False
     except requests.exceptions.ConnectionError:
-        logging.error(f"API call failed due to connection error.")
+        logging.error("API call failed due to connection error.")
         return False
     except requests.exceptions.HTTPError as e:
         logging.error(f"API HTTP Error: {e.response.status_code}")

@@ -14,8 +14,8 @@ import sys
 import platform
 
 # Fix for macOS forking issue - set this before any other imports
-if platform.system() == 'Darwin':  # macOS
-    os.environ['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
+if platform.system() == "Darwin":  # macOS
+    os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
 
 import logging
 import argparse
@@ -73,7 +73,7 @@ def create_db_session():
 def get_worker_class():
     """Get the appropriate worker class based on the operating system."""
     system = platform.system()
-    if system == 'Darwin':  # macOS
+    if system == "Darwin":  # macOS
         logger.info("Detected macOS - using SimpleWorker to avoid forking issues")
         return SimpleWorker
     else:  # Linux, Windows, etc.
@@ -97,9 +97,9 @@ def main():
         "--worker-name", default=None, help="Worker name (default: auto-generated)"
     )
     parser.add_argument(
-        "--force-simple-worker", 
+        "--force-simple-worker",
         action="store_true",
-        help="Force use of SimpleWorker regardless of OS (useful for debugging)"
+        help="Force use of SimpleWorker regardless of OS (useful for debugging)",
     )
 
     args = parser.parse_args()
@@ -130,7 +130,9 @@ def main():
         worker_name = args.worker_name or f"email_worker_{os.getpid()}"
         worker = worker_class([queue], connection=redis_conn, name=worker_name)
 
-        logger.info(f"Starting {worker_type} '{worker_name}' for queue '{args.queue_name}'")
+        logger.info(
+            f"Starting {worker_type} '{worker_name}' for queue '{args.queue_name}'"
+        )
         logger.info("Worker is ready to process jobs. Press Ctrl+C to stop.")
 
         # Start the worker

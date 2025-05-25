@@ -1,7 +1,9 @@
-import pytest
 from datetime import date, timedelta
+
+import pytest
+
 from app import db
-from app.models import User, Transaction, Account, Preamble, Book
+from app.models import Account, Book, Preamble, Transaction, User
 
 
 @pytest.fixture

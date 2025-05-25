@@ -2,8 +2,9 @@
 Email utility functions for the Kanakku application.
 """
 
-from flask import render_template_string, current_app
+from flask import current_app, render_template_string
 from flask_mail import Message
+
 from ..extensions import mail
 
 

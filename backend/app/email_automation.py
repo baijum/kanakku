@@ -1,9 +1,11 @@
-from flask import Blueprint, jsonify, request, g
-from .models import EmailConfiguration, db
-from .auth import api_token_required
-from .utils.encryption import encrypt_value
 import json
 from datetime import datetime, timezone
+
+from flask import Blueprint, g, jsonify, request
+
+from .auth import api_token_required
+from .models import EmailConfiguration, db
+from .utils.encryption import encrypt_value
 
 email_automation = Blueprint("email_automation", __name__)
 
@@ -172,8 +174,8 @@ def test_email_connection():
 
     try:
         # Add banktransactions module to Python path
-        import sys
         import os
+        import sys
 
         banktransactions_path = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -252,8 +254,8 @@ def trigger_email_processing():
 
     try:
         # Add banktransactions module to Python path
-        import sys
         import os
+        import sys
 
         banktransactions_path = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -272,8 +274,8 @@ def trigger_email_processing():
         # Import job utilities
         from banktransactions.automation.job_utils import (
             generate_job_id,
-            has_user_job_pending,
             get_user_job_status,
+            has_user_job_pending,
         )
 
         # Check if user already has a pending job
@@ -303,10 +305,7 @@ def trigger_email_processing():
 
         # Enqueue email processing job using the standalone function
         job = queue.enqueue(
-            process_user_emails_standalone, 
-            user_id, 
-            job_id=job_id,
-            job_timeout="10m"
+            process_user_emails_standalone, user_id, job_id=job_id, job_timeout="10m"
         )
 
         return (

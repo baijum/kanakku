@@ -1,8 +1,8 @@
-from flask import Blueprint, jsonify
-from werkzeug.exceptions import MethodNotAllowed
-from flask_wtf.csrf import generate_csrf
-from flask import current_app
 from urllib.parse import urlparse
+
+from flask import Blueprint, current_app, jsonify
+from flask_wtf.csrf import generate_csrf
+from werkzeug.exceptions import MethodNotAllowed
 
 api = Blueprint("api", __name__)
 

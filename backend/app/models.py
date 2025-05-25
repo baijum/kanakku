@@ -1,32 +1,35 @@
-from datetime import datetime, timezone, timedelta
+import secrets
+from datetime import datetime, timedelta, timezone
+
+from flask_login import UserMixin
 from sqlalchemy import (
+    Boolean,
     Column,
-    Integer,
-    String,
+    Date,
+    DateTime,
     Float,
     ForeignKey,
-    DateTime,
-    Date,
-    Boolean,
-    UniqueConstraint,
+    Integer,
+    String,
     Text,
     TypeDecorator,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import relationship
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from .extensions import db
-import secrets
 
 
 class SearchVectorType(TypeDecorator):
     """Custom type that uses TSVECTOR for PostgreSQL and TEXT for other databases"""
+
     impl = Text
     cache_ok = True
 
     def load_dialect_impl(self, dialect):
-        if dialect.name == 'postgresql':
+        if dialect.name == "postgresql":
             return dialect.type_descriptor(TSVECTOR())
         else:
             return dialect.type_descriptor(Text())
@@ -165,9 +168,10 @@ class User(UserMixin, db.Model):
 
     def get_token(self):
         """Generate JWT token for the user with appropriate expiration"""
-        from flask import current_app
+        from datetime import datetime, timedelta, timezone
+
         import jwt
-        from datetime import datetime, timezone, timedelta
+        from flask import current_app
 
         payload = {
             "user_id": self.id,
@@ -628,4 +632,6 @@ class ProcessedGmailMessage(db.Model):
         }
 
     def __repr__(self):
-        return f"<ProcessedGmailMessage {self.gmail_message_id} for user {self.user_id}>"
+        return (
+            f"<ProcessedGmailMessage {self.gmail_message_id} for user {self.user_id}>"
+        )

@@ -1,4 +1,4 @@
-from app.models import User, Book, db
+from app.models import Book, User, db
 
 
 def test_registration_creates_default_book(client, app):

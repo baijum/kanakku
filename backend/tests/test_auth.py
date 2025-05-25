@@ -1,6 +1,7 @@
 import pytest
+
 from app import db
-from app.models import User, Book
+from app.models import Book, User
 
 
 @pytest.fixture

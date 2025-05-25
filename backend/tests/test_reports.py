@@ -1,6 +1,8 @@
 from datetime import date, timedelta
-from app.models import Book, Account, Transaction, db
+
 import pytest
+
+from app.models import Account, Book, Transaction, db
 
 
 def test_get_balance(authenticated_client, setup_test_data):

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   TextField,
   Autocomplete,
@@ -35,37 +35,40 @@ function AccountAutocomplete({
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
 
-  // Debounced function to fetch suggestions
-  const fetchSuggestions = useCallback(
-    debounce(async (searchValue) => {
-      if (!searchValue || !searchValue.includes(':')) {
-        setSuggestions([]);
-        setLoading(false);
-        return;
-      }
+  // Function to fetch suggestions
+  const fetchSuggestionsBase = useCallback(async (searchValue) => {
+    if (!searchValue || !searchValue.includes(':')) {
+      setSuggestions([]);
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setLoading(true);
-        const response = await axiosInstance.get('/api/v1/accounts/autocomplete', {
-          params: {
-            prefix: searchValue,
-            limit: 10
-          }
-        });
-
-        if (response.data && response.data.suggestions) {
-          setSuggestions(response.data.suggestions);
-        } else {
-          setSuggestions([]);
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get('/api/v1/accounts/autocomplete', {
+        params: {
+          prefix: searchValue,
+          limit: 10
         }
-      } catch (error) {
-        console.error('Error fetching account suggestions:', error);
+      });
+
+      if (response.data && response.data.suggestions) {
+        setSuggestions(response.data.suggestions);
+      } else {
         setSuggestions([]);
-      } finally {
-        setLoading(false);
       }
-    }, 300),
-    []
+    } catch (error) {
+      console.error('Error fetching account suggestions:', error);
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Debounced function to fetch suggestions
+  const fetchSuggestions = useMemo(
+    () => debounce(fetchSuggestionsBase, 300),
+    [fetchSuggestionsBase]
   );
 
   // Effect to fetch suggestions when input value changes

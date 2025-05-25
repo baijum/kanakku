@@ -154,7 +154,6 @@ Dear Customer, Your monthly statement is ready. Please log in to view.
                 "currency": "INR",
             },
         ),
-
         # Test Case 9: Test recipient cleaning (= artifact)
         (
             "Transaction Info: UPI/ABC/DEF/GENERIC_PAYEE=\n",

@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 from datetime import datetime, timedelta
-from typing import List
 
 from rq_scheduler import Scheduler
 from sqlalchemy.orm import Session
@@ -21,12 +20,12 @@ except ImportError:
     # Fallback: define a minimal EmailConfiguration class for standalone operation
     from sqlalchemy.ext.declarative import declarative_base
     from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
-    
+
     Base = declarative_base()
-    
+
     class EmailConfiguration(Base):
         __tablename__ = "user_email_configurations"
-        
+
         id = Column(Integer, primary_key=True)
         user_id = Column(Integer, nullable=False)
         is_enabled = Column(Boolean, default=False)
@@ -38,6 +37,8 @@ except ImportError:
         last_check_time = Column(DateTime, nullable=True)
         sample_emails = Column(Text, nullable=True)
         last_processed_email_id = Column(String(255), nullable=True)
+
+
 from banktransactions.automation.email_processor import (
     process_user_emails_standalone,
 )
@@ -74,7 +75,9 @@ class EmailScheduler:
             # Check if user already has a pending job (running, scheduled, or queued)
             if has_user_job_pending(self.redis_conn, config.user_id):
                 job_status = get_user_job_status(self.redis_conn, config.user_id)
-                logger.info(f"Skipping job scheduling for user {config.user_id} - job already pending: {job_status}")
+                logger.info(
+                    f"Skipping job scheduling for user {config.user_id} - job already pending: {job_status}"
+                )
                 return
 
             # Calculate next run time based on polling interval
@@ -95,7 +98,9 @@ class EmailScheduler:
                 queue_name="email_processing",
             )
 
-            logger.info(f"Scheduled job {job_id} for user {config.user_id} ({config.email_address}) at {next_run}")
+            logger.info(
+                f"Scheduled job {job_id} for user {config.user_id} ({config.email_address}) at {next_run}"
+            )
 
         except Exception as e:
             logger.error(f"Error scheduling job for user {config.user_id}: {str(e)}")

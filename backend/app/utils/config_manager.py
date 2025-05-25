@@ -1,7 +1,9 @@
-from flask import current_app
-from ..models import GlobalConfiguration, db
-from .encryption import encrypt_value, decrypt_value
 import re
+
+from flask import current_app
+
+from ..models import GlobalConfiguration, db
+from .encryption import decrypt_value, encrypt_value
 
 
 def get_configuration(key, default=None):

@@ -1,0 +1,37 @@
+[tool.ruff]
+# Exclude certain directories from linting
+exclude = [
+    "__pycache__",
+    "logs",
+    "logs_old",
+    "data",
+]
+
+# Set line length to match Black
+line-length = 88
+
+[tool.ruff.lint]
+# Ignore specific error codes that are less critical for this codebase
+ignore = [
+    "E402",  # Module level import not at top of file (common in this codebase due to path manipulation)
+    "F841",  # Local variable assigned but never used (some are intentional for debugging)
+    "E722",  # Do not use bare except (some are intentional for cleanup)
+    "E501",  # Line too long (will be handled by Black formatter)
+    "F401",  # Imported but unused (some imports are conditional or for future use)
+]
+
+# Select the rules to check
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow additional flexibility in test files
+"tests/**/*.py" = ["F401", "F841"]  # Allow unused imports and variables in tests
+"tools/**/*.py" = ["F401", "F841"]  # Allow unused imports and variables in tools
+
+[tool.black]
+line-length = 88
+target-version = ['py38'] 

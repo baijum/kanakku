@@ -1,6 +1,8 @@
-import pytest
-from app.models import User, Transaction, Account, Book
 from datetime import date
+
+import pytest
+
+from app.models import Account, Book, Transaction, User
 
 
 @pytest.fixture

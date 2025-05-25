@@ -5,27 +5,36 @@ Revises: a1b2c3d4e5f6
 Create Date: 2025-05-24 20:47:27.620159
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision = 'dc70cfcfbace'
-down_revision = 'a1b2c3d4e5f6'
+revision = "dc70cfcfbace"
+down_revision = "a1b2c3d4e5f6"
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
     # Add search_vector column to transaction table
-    op.add_column('transaction', sa.Column('search_vector', postgresql.TSVECTOR(), nullable=True))
-    
+    op.add_column(
+        "transaction", sa.Column("search_vector", postgresql.TSVECTOR(), nullable=True)
+    )
+
     # Create GIN index for efficient full-text search
-    op.create_index('idx_transaction_search_vector', 'transaction', ['search_vector'], postgresql_using='gin')
-    
+    op.create_index(
+        "idx_transaction_search_vector",
+        "transaction",
+        ["search_vector"],
+        postgresql_using="gin",
+    )
+
     # Create comprehensive trigger function with status mapping and amount formatting
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION update_transaction_search_vector() RETURNS TRIGGER AS $$
         DECLARE
             status_text TEXT;
@@ -91,23 +100,29 @@ def upgrade():
             RETURN NULL;
         END;
         $$ LANGUAGE plpgsql;
-    """)
-    
+    """
+    )
+
     # Create triggers for both tables
-    op.execute("""
+    op.execute(
+        """
         CREATE TRIGGER transaction_search_vector_update
             BEFORE INSERT OR UPDATE OF description, payee, amount, currency, status, account_id ON transaction
             FOR EACH ROW EXECUTE FUNCTION update_transaction_search_vector();
-    """)
-    
-    op.execute("""
+    """
+    )
+
+    op.execute(
+        """
         CREATE TRIGGER account_search_vector_update
             AFTER UPDATE OF name, description ON account
             FOR EACH ROW EXECUTE FUNCTION update_transaction_search_vector();
-    """)
-    
+    """
+    )
+
     # Populate existing records with comprehensive search vectors
-    op.execute("""
+    op.execute(
+        """
         UPDATE transaction 
         SET search_vector = to_tsvector('english', 
             COALESCE(description, '') || ' ' || 
@@ -125,19 +140,22 @@ def upgrade():
             COALESCE((SELECT name FROM account WHERE account.id = transaction.account_id), '') || ' ' ||
             COALESCE((SELECT description FROM account WHERE account.id = transaction.account_id), '')
         );
-    """)
+    """
+    )
 
 
 def downgrade():
     # Drop triggers
-    op.execute("DROP TRIGGER IF EXISTS transaction_search_vector_update ON transaction;")
+    op.execute(
+        "DROP TRIGGER IF EXISTS transaction_search_vector_update ON transaction;"
+    )
     op.execute("DROP TRIGGER IF EXISTS account_search_vector_update ON account;")
-    
+
     # Drop trigger function
     op.execute("DROP FUNCTION IF EXISTS update_transaction_search_vector();")
-    
+
     # Drop index
-    op.drop_index('idx_transaction_search_vector', table_name='transaction')
-    
+    op.drop_index("idx_transaction_search_vector", table_name="transaction")
+
     # Drop column
-    op.drop_column('transaction', 'search_vector')
+    op.drop_column("transaction", "search_vector")

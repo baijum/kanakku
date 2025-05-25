@@ -1,7 +1,9 @@
-import pytest
-from app.models import Transaction, Account, Book, db
 from datetime import date
+
+import pytest
 from flask import current_app
+
+from app.models import Account, Book, Transaction, db
 
 
 class TestTransactionSearch:
@@ -11,9 +13,11 @@ class TestTransactionSearch:
         """Test searching transactions by description"""
         with app.app_context():
             # Skip if not PostgreSQL
-            database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            if 'postgresql' not in database_url.lower():
-                pytest.skip("PostgreSQL Full-Text Search tests require PostgreSQL database")
+            database_url = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+            if "postgresql" not in database_url.lower():
+                pytest.skip(
+                    "PostgreSQL Full-Text Search tests require PostgreSQL database"
+                )
 
             # Create test data
             book = Book.query.filter_by(user_id=user.id).first()
@@ -75,7 +79,9 @@ class TestTransactionSearch:
         # With PostgreSQL FTS, should find the coffee transaction
         assert len(data["transactions"]) >= 1
         found_transaction = data["transactions"][0]
-        assert "Starbucks" in found_transaction["payee"] or "Coffee" in str(found_transaction)
+        assert "Starbucks" in found_transaction["payee"] or "Coffee" in str(
+            found_transaction
+        )
 
         # Test search by payee
         response = authenticated_client.get("/api/v1/transactions?search=starbucks")
@@ -88,9 +94,11 @@ class TestTransactionSearch:
         """Test searching transactions by amount"""
         with app.app_context():
             # Skip if not PostgreSQL
-            database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            if 'postgresql' not in database_url.lower():
-                pytest.skip("PostgreSQL Full-Text Search tests require PostgreSQL database")
+            database_url = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+            if "postgresql" not in database_url.lower():
+                pytest.skip(
+                    "PostgreSQL Full-Text Search tests require PostgreSQL database"
+                )
 
             book = Book.query.filter_by(user_id=user.id).first()
             if not book:
@@ -150,7 +158,9 @@ class TestTransactionSearch:
         data = response.get_json()
         # With PostgreSQL FTS, should find by amount in search vector
         assert len(data["transactions"]) >= 1
-        found_amounts = [float(tx["postings"][0]["amount"]) for tx in data["transactions"]]
+        found_amounts = [
+            float(tx["postings"][0]["amount"]) for tx in data["transactions"]
+        ]
         assert 100.0 in found_amounts
 
         # Test search by decimal amount
@@ -158,16 +168,20 @@ class TestTransactionSearch:
         assert response.status_code == 200
         data = response.get_json()
         assert len(data["transactions"]) >= 1
-        found_amounts = [float(tx["postings"][0]["amount"]) for tx in data["transactions"]]
+        found_amounts = [
+            float(tx["postings"][0]["amount"]) for tx in data["transactions"]
+        ]
         assert 50.75 in found_amounts
 
     def test_search_by_status(self, authenticated_client, user, app):
         """Test searching transactions by status using verbose labels"""
         with app.app_context():
             # Skip if not PostgreSQL
-            database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            if 'postgresql' not in database_url.lower():
-                pytest.skip("PostgreSQL Full-Text Search tests require PostgreSQL database")
+            database_url = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+            if "postgresql" not in database_url.lower():
+                pytest.skip(
+                    "PostgreSQL Full-Text Search tests require PostgreSQL database"
+                )
 
             book = Book.query.filter_by(user_id=user.id).first()
             if not book:
@@ -252,9 +266,11 @@ class TestTransactionSearch:
         """Test searching transactions by currency"""
         with app.app_context():
             # Skip if not PostgreSQL
-            database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            if 'postgresql' not in database_url.lower():
-                pytest.skip("PostgreSQL Full-Text Search tests require PostgreSQL database")
+            database_url = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+            if "postgresql" not in database_url.lower():
+                pytest.skip(
+                    "PostgreSQL Full-Text Search tests require PostgreSQL database"
+                )
 
             book = Book.query.filter_by(user_id=user.id).first()
             if not book:
@@ -303,16 +319,20 @@ class TestTransactionSearch:
         assert response.status_code == 200
         data = response.get_json()
         assert len(data["transactions"]) >= 1
-        found_currencies = [tx["postings"][0]["currency"] for tx in data["transactions"]]
+        found_currencies = [
+            tx["postings"][0]["currency"] for tx in data["transactions"]
+        ]
         assert "USD" in found_currencies
 
     def test_search_by_account_name(self, authenticated_client, user, app):
         """Test searching transactions by account name"""
         with app.app_context():
             # Skip if not PostgreSQL
-            database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            if 'postgresql' not in database_url.lower():
-                pytest.skip("PostgreSQL Full-Text Search tests require PostgreSQL database")
+            database_url = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+            if "postgresql" not in database_url.lower():
+                pytest.skip(
+                    "PostgreSQL Full-Text Search tests require PostgreSQL database"
+                )
 
             book = Book.query.filter_by(user_id=user.id).first()
             if not book:
@@ -376,9 +396,11 @@ class TestTransactionSearch:
         """Test complex multi-field search queries"""
         with app.app_context():
             # Skip if not PostgreSQL
-            database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            if 'postgresql' not in database_url.lower():
-                pytest.skip("PostgreSQL Full-Text Search tests require PostgreSQL database")
+            database_url = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+            if "postgresql" not in database_url.lower():
+                pytest.skip(
+                    "PostgreSQL Full-Text Search tests require PostgreSQL database"
+                )
 
             book = Book.query.filter_by(user_id=user.id).first()
             if not book:
@@ -412,7 +434,9 @@ class TestTransactionSearch:
             db.session.commit()
 
         # Test complex search: "starbucks 50 cleared checking"
-        response = authenticated_client.get("/api/v1/transactions?search=starbucks 50 cleared checking")
+        response = authenticated_client.get(
+            "/api/v1/transactions?search=starbucks 50 cleared checking"
+        )
         assert response.status_code == 200
         data = response.get_json()
         # PostgreSQL FTS should find this transaction matching multiple criteria
@@ -424,9 +448,11 @@ class TestTransactionSearch:
         """Test prefix matching for real-time search"""
         with app.app_context():
             # Skip if not PostgreSQL
-            database_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            if 'postgresql' not in database_url.lower():
-                pytest.skip("PostgreSQL Full-Text Search tests require PostgreSQL database")
+            database_url = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+            if "postgresql" not in database_url.lower():
+                pytest.skip(
+                    "PostgreSQL Full-Text Search tests require PostgreSQL database"
+                )
 
             book = Book.query.filter_by(user_id=user.id).first()
             if not book:
@@ -510,7 +536,9 @@ class TestTransactionSearch:
         assert len(data["transactions"]) <= 5
 
         # Test search with offset
-        response = authenticated_client.get("/api/v1/transactions?search=test&limit=5&offset=5")
+        response = authenticated_client.get(
+            "/api/v1/transactions?search=test&limit=5&offset=5"
+        )
         assert response.status_code == 200
         data = response.get_json()
         assert len(data["transactions"]) <= 5
@@ -702,14 +730,26 @@ class TestTransactionSearch:
             "term&with|operators",
             "Assets::double",
         ]
-        
+
         for search_term in special_search_terms:
-            response = authenticated_client.get(f"/api/v1/transactions?search={search_term}")
+            response = authenticated_client.get(
+                f"/api/v1/transactions?search={search_term}"
+            )
             # Should return 200 (success) even if no results found, not 500 (server error)
-            assert response.status_code == 200, f"Search term '{search_term}' caused server error"
+            assert (
+                response.status_code == 200
+            ), f"Search term '{search_term}' caused server error"
             data = response.get_json()
-            assert "transactions" in data, f"Response missing 'transactions' key for search term '{search_term}'"
-            assert "total" in data, f"Response missing 'total' key for search term '{search_term}'"
+            assert (
+                "transactions" in data
+            ), f"Response missing 'transactions' key for search term '{search_term}'"
+            assert (
+                "total" in data
+            ), f"Response missing 'total' key for search term '{search_term}'"
             # Results can be empty (0) or contain matches, both are valid
-            assert isinstance(data["transactions"], list), f"'transactions' should be a list for search term '{search_term}'"
-            assert isinstance(data["total"], int), f"'total' should be an integer for search term '{search_term}'" 
+            assert isinstance(
+                data["transactions"], list
+            ), f"'transactions' should be a list for search term '{search_term}'"
+            assert isinstance(
+                data["total"], int
+            ), f"'total' should be an integer for search term '{search_term}'"

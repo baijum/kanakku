@@ -4,9 +4,10 @@
 Script to set up a test database with sample data for testing
 """
 
-from app import create_app, db
-from app.models import User, Book, BankAccountMapping, ExpenseAccountMapping, ApiToken
 import os
+
+from app import create_app, db
+from app.models import ApiToken, BankAccountMapping, Book, ExpenseAccountMapping, User
 
 
 def setup_test_db():

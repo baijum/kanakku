@@ -1,6 +1,7 @@
 import os
-from app.config import Config, DevelopmentConfig, TestConfig, ProductionConfig
 from datetime import timedelta
+
+from app.config import Config, DevelopmentConfig, ProductionConfig, TestConfig
 
 
 def test_base_config():
@@ -11,8 +12,8 @@ def test_base_config():
     assert config.SECRET_KEY == "dev-secret-key-change-in-production"
     assert config.SQLALCHEMY_TRACK_MODIFICATIONS is False
     assert config.JWT_SECRET_KEY == "jwt-secret-key-change-in-production"
-    assert config.JWT_ACCESS_TOKEN_EXPIRES == timedelta(hours=24)
-    assert config.JWT_REFRESH_TOKEN_EXPIRES == timedelta(days=30)
+    assert timedelta(hours=24) == config.JWT_ACCESS_TOKEN_EXPIRES
+    assert timedelta(days=30) == config.JWT_REFRESH_TOKEN_EXPIRES
     assert config.MAIL_SERVER == "smtp.gmail.com"
     assert config.MAIL_PORT == 587
     assert config.MAIL_USE_TLS is True

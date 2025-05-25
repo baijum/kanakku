@@ -1,16 +1,18 @@
+import json
+from unittest.mock import MagicMock, patch
+
 import pytest
 from flask import current_app
-from unittest.mock import patch, MagicMock
-import json
+
+from app.models import User
+from app.utils.email_utils import send_password_reset_email
 from app.utils.logging_utils import (
+    log_db_error,
+    log_error,
+    log_function_call,
     log_request,
     log_response,
-    log_function_call,
-    log_error,
-    log_db_error,
 )
-from app.utils.email_utils import send_password_reset_email
-from app.models import User
 
 
 class TestLoggingUtils:

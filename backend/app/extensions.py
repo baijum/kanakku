@@ -1,14 +1,15 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_mail import Mail
-from flask_jwt_extended import JWTManager
-from flask import request, g, current_app, jsonify
 import functools
-from werkzeug.exceptions import NotFound
+import os
+
+from flask import current_app, g, jsonify, request
+from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_login import LoginManager
+from flask_mail import Mail
+from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
-import os
+from werkzeug.exceptions import NotFound
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -20,8 +21,8 @@ csrf = CSRFProtect()
 # Define a function to handle CSRF validation that includes header tokens
 def custom_csrf_check():
     """Custom CSRF check that works with header-based tokens"""
+    from flask import abort, current_app, request
     from flask_wtf.csrf import validate_csrf
-    from flask import request, current_app, abort
 
     # Skip for exempted views or methods
     if request.method not in current_app.config.get(
@@ -123,17 +124,18 @@ def api_token_required(f):
 
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
-        from .models import ApiToken, User
-        from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+        from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
         from flask_jwt_extended.exceptions import (
-            NoAuthorizationError,
+            CSRFError,
+            FreshTokenRequired,
             InvalidHeaderError,
             JWTDecodeError,
-            WrongTokenError,
+            NoAuthorizationError,
             RevokedTokenError,
-            FreshTokenRequired,
-            CSRFError,
+            WrongTokenError,
         )
+
+        from .models import ApiToken, User
 
         try:
             # First try JWT token authentication

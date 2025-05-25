@@ -1,29 +1,33 @@
+import secrets
+from datetime import datetime, timedelta
+
+import requests
 from flask import (
     Blueprint,
-    request,
-    jsonify,
-    current_app,
     Response,
-    url_for,
-    redirect,
+    current_app,
     g,
+    jsonify,
+    redirect,
+    request,
     session,
+    url_for,
 )
 from flask_jwt_extended import (
     create_access_token,
+)
+from flask_jwt_extended import (
     current_user as flask_jwt_current_user,
 )
-from app.models import User, db
-from app.utils.email_utils import send_password_reset_email
+
 from app.extensions import (
     api_token_required,
     auth_rate_limit,
-    limiter,
     csrf_exempt,
+    limiter,
 )
-import requests
-import secrets
-from datetime import datetime, timedelta
+from app.models import User, db
+from app.utils.email_utils import send_password_reset_email
 
 auth = Blueprint("auth", __name__)
 
@@ -273,9 +277,9 @@ def login():
     """Simple login endpoint that accepts email/password and returns a token"""
     # Log the request for debugging
     current_app.logger.debug("LOGIN ENDPOINT CALLED")
-    current_app.logger.debug("Request method: {}".format(request.method))
-    current_app.logger.debug("Request headers: {}".format(dict(request.headers)))
-    current_app.logger.debug("Request data: {}".format(request.get_data(as_text=True)))
+    current_app.logger.debug(f"Request method: {request.method}")
+    current_app.logger.debug(f"Request headers: {dict(request.headers)}")
+    current_app.logger.debug(f"Request data: {request.get_data(as_text=True)}")
 
     # Get the JSON data or form data
     data = None
@@ -284,11 +288,11 @@ def login():
         if data is None:
             # Try to get form data instead
             data = request.form.to_dict() or {}
-            current_app.logger.debug("Got form data: {}".format(data))
+            current_app.logger.debug(f"Got form data: {data}")
         else:
-            current_app.logger.debug("Got JSON data: {}".format(data))
+            current_app.logger.debug(f"Got JSON data: {data}")
     except Exception as e:
-        current_app.logger.error("Error parsing request data: {}".format(e))
+        current_app.logger.error(f"Error parsing request data: {e}")
         data = {}
 
     # Handle case with no data

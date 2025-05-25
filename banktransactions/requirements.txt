@@ -16,3 +16,5 @@ rq==2.3.3
 rq-scheduler==0.14
 cryptography==42.0.2
 python-jose==3.3.0
+ruff>=0.1.0
+black>=23.0.0

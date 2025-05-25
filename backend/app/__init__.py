@@ -1,28 +1,29 @@
-from flask import Flask, request, g, has_request_context, jsonify
+import logging
+import os
+import sys
+import uuid
+from logging.handlers import RotatingFileHandler
+
+from flask import Flask, g, has_request_context, jsonify, request
 from flask_cors import CORS
 from flask_migrate import Migrate
-import logging
-import uuid
-import sys
-import os
-from logging.handlers import RotatingFileHandler
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .extensions import db, login_manager, jwt, mail, limiter, setup_csrf
-from .config import config
-from .auth import auth as auth_bp
-from .transactions import transactions as transactions_bp
 from .accounts import accounts as accounts_bp
-from .books import books as books_bp
-from .reports import reports as reports_bp
 from .api import api as api_bp
-from .ledger import ledger as ledger_bp
-from .preamble import preamble as preamble_bp
-from .mappings import mappings_bp
-from .errors import errors as errors_bp
-from .swagger import swagger as swagger_bp
-from .settings import settings as settings_bp
+from .auth import auth as auth_bp
+from .books import books as books_bp
+from .config import config
 from .email_automation import email_automation as email_automation_bp
+from .errors import errors as errors_bp
+from .extensions import db, jwt, limiter, login_manager, mail, setup_csrf
+from .ledger import ledger as ledger_bp
+from .mappings import mappings_bp
+from .preamble import preamble as preamble_bp
+from .reports import reports as reports_bp
+from .settings import settings as settings_bp
+from .swagger import swagger as swagger_bp
+from .transactions import transactions as transactions_bp
 
 
 def setup_logging(app):

@@ -1,6 +1,7 @@
-from app.models import GlobalConfiguration, User, db
-from app.utils.encryption import encrypt_value, decrypt_value
 from cryptography.fernet import Fernet
+
+from app.models import GlobalConfiguration, User, db
+from app.utils.encryption import decrypt_value, encrypt_value
 
 
 class TestGlobalSettings:

@@ -3,7 +3,7 @@ Core modules for bank transaction processing.
 
 This package contains the core functionality for:
 - Email parsing and transaction extraction
-- IMAP client for email retrieval  
+- IMAP client for email retrieval
 - Transaction data processing
 - API client for transaction submission
 - Email deduplication
@@ -17,14 +17,14 @@ from .api_client import send_transaction_to_api, APIClient
 from .processed_ids_db import load_processed_gmail_msgids, save_processed_gmail_msgid
 
 __all__ = [
-    'extract_transaction_details',
-    'decode_str', 
-    'get_bank_emails',
-    'CustomIMAPClient',
-    'construct_transaction_data',
-    'get_mappings_from_api',
-    'send_transaction_to_api',
-    'APIClient',
-    'load_processed_gmail_msgids',
-    'save_processed_gmail_msgid'
+    "extract_transaction_details",
+    "decode_str",
+    "get_bank_emails",
+    "CustomIMAPClient",
+    "construct_transaction_data",
+    "get_mappings_from_api",
+    "send_transaction_to_api",
+    "APIClient",
+    "load_processed_gmail_msgids",
+    "save_processed_gmail_msgid",
 ]

@@ -1,11 +1,14 @@
-from flask import Blueprint, request, jsonify, current_app, g
-from app.models import db, Transaction, Account, Book
-from .extensions import api_token_required
-from datetime import datetime
-import traceback
 import json
+import traceback
+from datetime import datetime
+
+from flask import Blueprint, current_app, g, jsonify, request
+from sqlalchemy import func, or_, text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import text, func, or_
+
+from app.models import Account, Book, Transaction, db
+
+from .extensions import api_token_required
 
 transactions = Blueprint("transactions", __name__)
 
@@ -136,7 +139,7 @@ def create_transaction():
             ).first()
 
             if not account:
-                current_app.logger.error("Account not found: {}".format(account_name))
+                current_app.logger.error(f"Account not found: {account_name}")
                 return jsonify({"error": "Account not found in the active book"}), 404
 
             # Create transaction object within the active book
@@ -221,8 +224,8 @@ def get_transactions():
         # Apply search filter if provided
         if search_term:
             # Check if we're using PostgreSQL (FTS only works with PostgreSQL)
-            db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '').lower()
-            if 'postgresql' in db_url:
+            db_url = current_app.config.get("SQLALCHEMY_DATABASE_URI", "").lower()
+            if "postgresql" in db_url:
                 # Convert search term to tsquery with prefix matching for last word
                 search_words = search_term.split()
                 if search_words:
@@ -231,32 +234,38 @@ def get_transactions():
                     for i, word in enumerate(search_words):
                         # Sanitize word by removing special characters that break tsquery
                         # Keep alphanumeric characters and basic punctuation
-                        sanitized_word = ''.join(c for c in word if c.isalnum() or c in '-_')
+                        sanitized_word = "".join(
+                            c for c in word if c.isalnum() or c in "-_"
+                        )
                         if sanitized_word:  # Only add non-empty words
-                            if i == len(search_words) - 1:  # Last word gets prefix matching
+                            if (
+                                i == len(search_words) - 1
+                            ):  # Last word gets prefix matching
                                 tsquery_parts.append(f"{sanitized_word}:*")
                             else:
                                 tsquery_parts.append(sanitized_word)
-                    
+
                     if tsquery_parts:  # Only proceed if we have valid search terms
-                        search_query = ' & '.join(tsquery_parts)
+                        search_query = " & ".join(tsquery_parts)
                         current_app.logger.debug(f"Search query: {search_query}")
-                        
+
                         try:
                             query = query.filter(
-                                Transaction.search_vector.op('@@')(
-                                    func.to_tsquery('english', search_query)
+                                Transaction.search_vector.op("@@")(
+                                    func.to_tsquery("english", search_query)
                                 )
                             )
                         except Exception as e:
                             # If tsquery fails, fall back to basic text search
-                            current_app.logger.warning(f"FTS query failed, falling back to basic search: {e}")
+                            current_app.logger.warning(
+                                f"FTS query failed, falling back to basic search: {e}"
+                            )
                             search_filter = f"%{search_term}%"
                             query = query.filter(
                                 or_(
                                     Transaction.description.ilike(search_filter),
                                     Transaction.payee.ilike(search_filter),
-                                    Transaction.currency.ilike(search_filter)
+                                    Transaction.currency.ilike(search_filter),
                                 )
                             )
             else:
@@ -267,7 +276,7 @@ def get_transactions():
                     or_(
                         Transaction.description.ilike(search_filter),
                         Transaction.payee.ilike(search_filter),
-                        Transaction.currency.ilike(search_filter)
+                        Transaction.currency.ilike(search_filter),
                     )
                 )
 
@@ -416,13 +425,11 @@ def update_transaction(transaction_id):
         try:
             data = request.get_json()
             if data is None:
-                current_app.logger.error(
-                    "Failed to parse JSON: {}".format(request.data)
-                )
+                current_app.logger.error(f"Failed to parse JSON: {request.data}")
                 return jsonify({"error": "Request must be valid JSON"}), 400
         except Exception as json_error:
             current_app.logger.error(
-                "JSON parsing error: {}: {}".format(str(json_error), request.data)
+                f"JSON parsing error: {str(json_error)}: {request.data}"
             )
             return jsonify({"error": "Invalid JSON format"}), 400
 
@@ -481,9 +488,7 @@ def update_transaction(transaction_id):
             # Calculate the difference between the new and old amounts
             amount_difference = transaction.amount - original_amount
             current_app.logger.debug(
-                "Original amount: {}, New amount: {}, Difference: {}".format(
-                    original_amount, transaction.amount, amount_difference
-                )
+                f"Original amount: {original_amount}, New amount: {transaction.amount}, Difference: {amount_difference}"
             )
 
             # Apply the difference to the account balance
@@ -491,10 +496,10 @@ def update_transaction(transaction_id):
                 id=transaction.account_id, user_id=g.current_user.id
             ).first()
             if account:
-                current_app.logger.debug("Current balance: {}".format(account.balance))
+                current_app.logger.debug(f"Current balance: {account.balance}")
                 # No longer checking account type, simply add the difference
                 account.balance += amount_difference
-                current_app.logger.debug("New balance: {}".format(account.balance))
+                current_app.logger.debug(f"New balance: {account.balance}")
 
         # Commit changes
         try:
@@ -503,7 +508,7 @@ def update_transaction(transaction_id):
             db.session.refresh(transaction)
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error("Database commit error: {}".format(str(e)))
+            current_app.logger.error(f"Database commit error: {str(e)}")
             return jsonify({"error": "Failed to update transaction"}), 500
 
         # Prepare response
@@ -513,16 +518,14 @@ def update_transaction(transaction_id):
         }
 
         current_app.logger.debug(
-            "Transaction update response: {}".format(json.dumps(response_data))
+            f"Transaction update response: {json.dumps(response_data)}"
         )
         return jsonify(response_data), 200
 
     except Exception as e:
         # Catch-all for any unexpected errors during processing
         current_app.logger.error(
-            "Unhandled error in update_transaction: {} - Traceback: {}".format(
-                str(e), traceback.format_exc()
-            )
+            f"Unhandled error in update_transaction: {str(e)} - Traceback: {traceback.format_exc()}"
         )
         return jsonify({"error": "An unexpected server error occurred"}), 500
 
@@ -578,7 +581,7 @@ def update_transaction_with_postings(transaction_id):
             original_transaction_ids = [original_transaction_ids]
 
         current_app.logger.debug(
-            "Original transaction IDs to replace: {}".format(original_transaction_ids)
+            f"Original transaction IDs to replace: {original_transaction_ids}"
         )
 
         # Find all original transactions
@@ -591,7 +594,7 @@ def update_transaction_with_postings(transaction_id):
                 original_transactions.append(tx)
             else:
                 current_app.logger.warning(
-                    "Original transaction ID {} not found".format(orig_id)
+                    f"Original transaction ID {orig_id} not found"
                 )
 
         if not original_transactions:
@@ -683,7 +686,7 @@ def update_transaction_with_postings(transaction_id):
             ).first()
 
             if not account:
-                current_app.logger.error("Account not found: {}".format(account_name))
+                current_app.logger.error(f"Account not found: {account_name}")
                 db.session.rollback()
                 return jsonify({"error": "Account not found in active book"}), 404
 

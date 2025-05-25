@@ -24,10 +24,9 @@ sys.path.append(os.path.join(project_root, "backend"))
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Dict
 
 from rq import get_current_job
-from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -37,10 +36,10 @@ import base64
 
 # Import the working banktransactions modules
 from banktransactions.core.imap_client import get_bank_emails
-from banktransactions.core.email_parser import extract_transaction_details
-from banktransactions.core.transaction_data import construct_transaction_data
-from banktransactions.core.api_client import send_transaction_to_api
-from banktransactions.core.processed_ids_db import load_processed_gmail_msgids, save_processed_gmail_msgid
+from banktransactions.core.processed_ids_db import (
+    load_processed_gmail_msgids,
+    save_processed_gmail_msgid,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +81,9 @@ def decrypt_value_standalone(encrypted_value):
     """
     Decrypt an encrypted value without Flask context.
     """
-    logger.debug(f"Attempting to decrypt value (length: {len(encrypted_value) if encrypted_value else 0})")
+    logger.debug(
+        f"Attempting to decrypt value (length: {len(encrypted_value) if encrypted_value else 0})"
+    )
     if not encrypted_value:
         logger.debug("No encrypted value provided, returning None")
         return None
@@ -97,7 +98,9 @@ def decrypt_value_standalone(encrypted_value):
         return decrypted_result
     except Exception as e:
         logger.error(f"Failed to decrypt value: {str(e)}")
-        logger.debug(f"Decryption failed with encrypted_value type: {type(encrypted_value)}")
+        logger.debug(
+            f"Decryption failed with encrypted_value type: {type(encrypted_value)}"
+        )
         return None
 
 
@@ -112,14 +115,14 @@ def process_user_emails_standalone(user_id: int) -> Dict:
         # We need to set up the database models manually
         logger.debug("Importing SQLAlchemy components and setting up models")
         from sqlalchemy.ext.declarative import declarative_base
-        from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
-        
+        from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+
         # Create a standalone model definition
         Base = declarative_base()
-        
+
         class EmailConfiguration(Base):
             __tablename__ = "user_email_configurations"
-            
+
             id = Column(Integer, primary_key=True)
             user_id = Column(Integer, nullable=False)
             is_enabled = Column(Boolean, default=False)
@@ -150,7 +153,9 @@ def process_user_emails_standalone(user_id: int) -> Dict:
         try:
             # Get the current job (optional for manual testing)
             job = get_current_job()
-            logger.debug(f"Current RQ job: {job.id if job else 'None (manual execution)'}")
+            logger.debug(
+                f"Current RQ job: {job.id if job else 'None (manual execution)'}"
+            )
 
             # Get user's email configuration
             logger.debug(f"Fetching email configuration for user_id: {user_id}")
@@ -158,13 +163,17 @@ def process_user_emails_standalone(user_id: int) -> Dict:
                 db_session.query(EmailConfiguration).filter_by(user_id=user_id).first()
             )
             if not config or not config.is_enabled:
-                logger.debug(f"Email configuration not found or disabled for user_id: {user_id}")
+                logger.debug(
+                    f"Email configuration not found or disabled for user_id: {user_id}"
+                )
                 return {
                     "status": "skipped",
                     "reason": "configuration_not_found_or_disabled",
                 }
 
-            logger.debug(f"Found email configuration: server={config.imap_server}, port={config.imap_port}, email={config.email_address}")
+            logger.debug(
+                f"Found email configuration: server={config.imap_server}, port={config.imap_port}, email={config.email_address}"
+            )
             logger.debug(f"Last check time: {config.last_check_time}")
 
             # Decrypt the app password using standalone function
@@ -182,7 +191,9 @@ def process_user_emails_standalone(user_id: int) -> Dict:
             logger.debug("Loading processed Gmail message IDs from database")
             processed_gmail_msgids = load_processed_gmail_msgids(user_id=user_id)
             initial_msgid_count = len(processed_gmail_msgids)
-            logger.debug(f"Loaded {initial_msgid_count} previously processed Gmail message IDs for user {user_id}")
+            logger.debug(
+                f"Loaded {initial_msgid_count} previously processed Gmail message IDs for user {user_id}"
+            )
 
             # Get bank email addresses from sample emails or use default
             bank_emails = ["alerts@axisbank.com"]  # Default
@@ -195,11 +206,17 @@ def process_user_emails_standalone(user_id: int) -> Dict:
                         if isinstance(sample, dict) and "from" in sample:
                             bank_emails_from_samples.append(sample["from"])
                     if bank_emails_from_samples:
-                        bank_emails = list(set(bank_emails_from_samples))  # Remove duplicates
+                        bank_emails = list(
+                            set(bank_emails_from_samples)
+                        )  # Remove duplicates
                         logger.debug(f"Using bank emails from samples: {bank_emails}")
                 except json.JSONDecodeError:
-                    logger.warning(f"Failed to parse sample emails for user {config.user_id}")
-                    logger.debug(f"Sample emails JSON parse error for: {config.sample_emails[:100]}...")
+                    logger.warning(
+                        f"Failed to parse sample emails for user {config.user_id}"
+                    )
+                    logger.debug(
+                        f"Sample emails JSON parse error for: {config.sample_emails[:100]}..."
+                    )
 
             logger.debug(f"Processing emails from bank addresses: {bank_emails}")
 
@@ -207,14 +224,22 @@ def process_user_emails_standalone(user_id: int) -> Dict:
             def save_msgid_to_db(gmail_message_id):
                 """Callback function to save individual Gmail message ID to database"""
                 try:
-                    result = save_processed_gmail_msgid(gmail_message_id, user_id=user_id)
+                    result = save_processed_gmail_msgid(
+                        gmail_message_id, user_id=user_id
+                    )
                     if result:
-                        logger.debug(f"Saved Gmail Message ID {gmail_message_id} to database for user {user_id}")
+                        logger.debug(
+                            f"Saved Gmail Message ID {gmail_message_id} to database for user {user_id}"
+                        )
                     else:
-                        logger.warning(f"Failed to save Gmail Message ID {gmail_message_id} to database for user {user_id}")
+                        logger.warning(
+                            f"Failed to save Gmail Message ID {gmail_message_id} to database for user {user_id}"
+                        )
                     return result
                 except Exception as e:
-                    logger.error(f"Error saving Gmail Message ID {gmail_message_id} to database for user {user_id}: {e}")
+                    logger.error(
+                        f"Error saving Gmail Message ID {gmail_message_id} to database for user {user_id}: {e}"
+                    )
                     return False
 
             # Use the proven working email processing logic from main.py with database callback
@@ -224,10 +249,12 @@ def process_user_emails_standalone(user_id: int) -> Dict:
                 password=decrypted_password,
                 bank_email_list=bank_emails,
                 processed_gmail_msgids=processed_gmail_msgids,
-                save_msgid_callback=save_msgid_to_db
+                save_msgid_callback=save_msgid_to_db,
             )
 
-            logger.debug(f"Email processing completed: {newly_processed_count} new transactions processed")
+            logger.debug(
+                f"Email processing completed: {newly_processed_count} new transactions processed"
+            )
 
             # Update last check time
             logger.debug("Updating last check time in configuration")
@@ -252,6 +279,3 @@ def process_user_emails_standalone(user_id: int) -> Dict:
         logger.error(f"Error in process_user_emails_standalone: {str(e)}")
         logger.debug(f"Exception details: {type(e).__name__}: {str(e)}")
         return {"status": "error", "error": str(e)}
-
-
-

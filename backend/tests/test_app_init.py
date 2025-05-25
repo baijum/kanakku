@@ -1,7 +1,9 @@
 import logging
-from unittest.mock import patch, MagicMock
-from app import create_app, setup_logging
+from unittest.mock import MagicMock, patch
+
 from flask import g
+
+from app import create_app, setup_logging
 
 
 def test_create_app():
@@ -147,11 +149,12 @@ def test_log_response_middleware():
     log_response_func = None
     for func in app.after_request_funcs[None]:
         # Check if it's a functools.partial object
-        if hasattr(func, "func") and func.func.__name__ == "log_response":
-            log_response_func = func
-            break
-        # Or a regular function
-        elif hasattr(func, "__name__") and func.__name__ == "log_response":
+        if (
+            hasattr(func, "func")
+            and func.func.__name__ == "log_response"
+            or hasattr(func, "__name__")
+            and func.__name__ == "log_response"
+        ):
             log_response_func = func
             break
 

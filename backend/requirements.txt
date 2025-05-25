@@ -32,3 +32,7 @@ google-genai>=1.14.0
 # Email automation
 rq==2.3.3
 rq-scheduler==0.14
+# Development tools
+ruff>=0.1.0
+black>=23.0.0
+mypy>=1.0.0
