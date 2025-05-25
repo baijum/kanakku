@@ -50,7 +50,7 @@ def is_user_job_running(redis_conn, user_id: int) -> bool:
                 job = Job.fetch(job_id, connection=redis_conn)
                 if (
                     job.func_name
-                    == "banktransactions.email_automation.workers.email_processor.process_user_emails_standalone"
+                    == "banktransactions.automation.email_processor.process_user_emails_standalone"
                     and len(job.args) > 0
                     and job.args[0] == user_id
                 ):
@@ -86,7 +86,7 @@ def is_user_job_scheduled(redis_conn, user_id: int) -> bool:
                 job = Job.fetch(job_id, connection=redis_conn)
                 if (
                     job.func_name
-                    == "banktransactions.email_automation.workers.email_processor.process_user_emails_standalone"
+                    == "banktransactions.automation.email_processor.process_user_emails_standalone"
                     and len(job.args) > 0
                     and job.args[0] == user_id
                 ):
@@ -125,7 +125,7 @@ def is_user_job_queued(
                 job = Job.fetch(job_id, connection=redis_conn)
                 if (
                     job.func_name
-                    == "banktransactions.email_automation.workers.email_processor.process_user_emails_standalone"
+                    == "banktransactions.automation.email_processor.process_user_emails_standalone"
                     and len(job.args) > 0
                     and job.args[0] == user_id
                 ):

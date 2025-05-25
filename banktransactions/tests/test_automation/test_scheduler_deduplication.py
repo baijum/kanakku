@@ -13,8 +13,8 @@ from unittest.mock import Mock, patch
 project_root = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, project_root)
 
-from banktransactions.email_automation.workers.scheduler import EmailScheduler
-from banktransactions.email_automation.workers.job_utils import (
+from banktransactions.automation.scheduler import EmailScheduler
+from banktransactions.automation.job_utils import (
     generate_job_id,
     has_user_job_pending,
     get_user_job_status,
@@ -37,7 +37,7 @@ class TestSchedulerDeduplication:
     @pytest.fixture
     def email_scheduler(self, mock_redis_conn, mock_db_session):
         """Create an EmailScheduler instance with mocked dependencies."""
-        with patch("banktransactions.email_automation.workers.scheduler.Scheduler"):
+        with patch("banktransactions.automation.scheduler.Scheduler"):
             return EmailScheduler(mock_redis_conn, mock_db_session)
 
     @pytest.fixture
@@ -56,10 +56,10 @@ class TestSchedulerDeduplication:
 
         # Mock has_user_job_pending to return True
         with patch(
-            "banktransactions.email_automation.workers.scheduler.has_user_job_pending"
+            "banktransactions.automation.scheduler.has_user_job_pending"
         ) as mock_has_pending:
             with patch(
-                "banktransactions.email_automation.workers.scheduler.get_user_job_status"
+                "banktransactions.automation.scheduler.get_user_job_status"
             ) as mock_get_status:
                 mock_has_pending.return_value = True
                 mock_get_status.return_value = {
@@ -94,10 +94,10 @@ class TestSchedulerDeduplication:
 
         # Mock has_user_job_pending to return False
         with patch(
-            "banktransactions.email_automation.workers.scheduler.has_user_job_pending"
+            "banktransactions.automation.scheduler.has_user_job_pending"
         ) as mock_has_pending:
             with patch(
-                "banktransactions.email_automation.workers.scheduler.generate_job_id"
+                "banktransactions.automation.scheduler.generate_job_id"
             ) as mock_gen_id:
                 mock_has_pending.return_value = False
                 mock_gen_id.return_value = "email_process_123_1234567890"
@@ -185,7 +185,7 @@ class TestSchedulerDeduplication:
 
         # Mock has_user_job_pending to raise an exception
         with patch(
-            "banktransactions.email_automation.workers.scheduler.has_user_job_pending"
+            "banktransactions.automation.scheduler.has_user_job_pending"
         ) as mock_has_pending:
             mock_has_pending.side_effect = Exception("Redis connection error")
 

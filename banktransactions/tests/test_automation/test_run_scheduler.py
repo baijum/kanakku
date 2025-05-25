@@ -8,14 +8,14 @@ from unittest.mock import patch, Mock
 # Add banktransactions directory to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from banktransactions.email_automation.run_scheduler import create_db_session, main
+from banktransactions.automation.run_scheduler import create_db_session, main
 
 
 class TestRunScheduler:
     """Test cases for the run_scheduler.py script."""
 
-    @patch("banktransactions.email_automation.run_scheduler.create_engine")
-    @patch("banktransactions.email_automation.run_scheduler.sessionmaker")
+    @patch("banktransactions.automation.run_scheduler.create_engine")
+    @patch("banktransactions.automation.run_scheduler.sessionmaker")
     @patch.dict(os.environ, {"DATABASE_URL": "postgresql://test:test@localhost/test"})
     def test_create_db_session_success(self, mock_sessionmaker, mock_create_engine):
         """Test successful database session creation."""
@@ -45,7 +45,7 @@ class TestRunScheduler:
         ):
             create_db_session()
 
-    @patch("banktransactions.email_automation.run_scheduler.create_engine")
+    @patch("banktransactions.automation.run_scheduler.create_engine")
     @patch.dict(os.environ, {"DATABASE_URL": "postgresql://test:test@localhost/test"})
     def test_create_db_session_engine_error(self, mock_create_engine):
         """Test handling of database engine creation errors."""
@@ -54,11 +54,11 @@ class TestRunScheduler:
         with pytest.raises(Exception, match="Database connection failed"):
             create_db_session()
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_scheduler.redis.from_url")
-    @patch("banktransactions.email_automation.run_scheduler.create_db_session")
-    @patch("banktransactions.email_automation.run_scheduler.EmailScheduler")
-    @patch("banktransactions.email_automation.run_scheduler.time.sleep")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.redis.from_url")
+    @patch("banktransactions.automation.run_scheduler.create_db_session")
+    @patch("banktransactions.automation.run_scheduler.EmailScheduler")
+    @patch("banktransactions.automation.run_scheduler.time.sleep")
     def test_main_success_single_iteration(
         self,
         mock_sleep,
@@ -106,8 +106,8 @@ class TestRunScheduler:
         # Verify sleep was called with correct interval
         mock_sleep.assert_called_once_with(300)
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_scheduler.redis.from_url")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.redis.from_url")
     def test_main_redis_connection_error(self, mock_redis_from_url, mock_parser_class):
         """Test handling of Redis connection errors."""
         # Mock argument parser
@@ -126,9 +126,9 @@ class TestRunScheduler:
         with pytest.raises(SystemExit):
             main()
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_scheduler.redis.from_url")
-    @patch("banktransactions.email_automation.run_scheduler.create_db_session")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.redis.from_url")
+    @patch("banktransactions.automation.run_scheduler.create_db_session")
     def test_main_database_connection_error(
         self, mock_create_db_session, mock_redis_from_url, mock_parser_class
     ):
@@ -151,11 +151,11 @@ class TestRunScheduler:
         with pytest.raises(SystemExit):
             main()
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_scheduler.redis.from_url")
-    @patch("banktransactions.email_automation.run_scheduler.create_db_session")
-    @patch("banktransactions.email_automation.run_scheduler.EmailScheduler")
-    @patch("banktransactions.email_automation.run_scheduler.time.sleep")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.redis.from_url")
+    @patch("banktransactions.automation.run_scheduler.create_db_session")
+    @patch("banktransactions.automation.run_scheduler.EmailScheduler")
+    @patch("banktransactions.automation.run_scheduler.time.sleep")
     def test_main_keyboard_interrupt_immediate(
         self,
         mock_sleep,
@@ -197,11 +197,11 @@ class TestRunScheduler:
         # Sleep should not be called if KeyboardInterrupt happens in schedule_jobs
         mock_sleep.assert_not_called()
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_scheduler.redis.from_url")
-    @patch("banktransactions.email_automation.run_scheduler.create_db_session")
-    @patch("banktransactions.email_automation.run_scheduler.EmailScheduler")
-    @patch("banktransactions.email_automation.run_scheduler.time.sleep")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.redis.from_url")
+    @patch("banktransactions.automation.run_scheduler.create_db_session")
+    @patch("banktransactions.automation.run_scheduler.EmailScheduler")
+    @patch("banktransactions.automation.run_scheduler.time.sleep")
     def test_main_scheduler_exception_recovery(
         self,
         mock_sleep,
@@ -248,7 +248,7 @@ class TestRunScheduler:
         # Verify sleep was called for error recovery
         assert mock_sleep.call_count == 2
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
     def test_main_argument_parsing(self, mock_parser_class):
         """Test that command line arguments are parsed correctly."""
         mock_parser = Mock()
@@ -268,11 +268,11 @@ class TestRunScheduler:
         assert "--redis-url" in arg_names
         assert "--interval" in arg_names
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_scheduler.redis.from_url")
-    @patch("banktransactions.email_automation.run_scheduler.create_db_session")
-    @patch("banktransactions.email_automation.run_scheduler.EmailScheduler")
-    @patch("banktransactions.email_automation.run_scheduler.time.sleep")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.redis.from_url")
+    @patch("banktransactions.automation.run_scheduler.create_db_session")
+    @patch("banktransactions.automation.run_scheduler.EmailScheduler")
+    @patch("banktransactions.automation.run_scheduler.time.sleep")
     def test_main_default_arguments(
         self,
         mock_sleep,
@@ -310,7 +310,7 @@ class TestRunScheduler:
         mock_sleep.assert_called_once_with(300)
 
     @patch.dict(os.environ, {"REDIS_URL": "redis://custom:6379/1"})
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
     def test_main_environment_variable_defaults(self, mock_parser_class):
         """Test that environment variables are used for default values."""
         mock_parser = Mock()
@@ -336,11 +336,11 @@ class TestRunScheduler:
         # The default should include the environment variable value
         assert "redis://custom:6379/1" in str(redis_url_call)
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_scheduler.redis.from_url")
-    @patch("banktransactions.email_automation.run_scheduler.create_db_session")
-    @patch("banktransactions.email_automation.run_scheduler.EmailScheduler")
-    @patch("banktransactions.email_automation.run_scheduler.time.sleep")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.redis.from_url")
+    @patch("banktransactions.automation.run_scheduler.create_db_session")
+    @patch("banktransactions.automation.run_scheduler.EmailScheduler")
+    @patch("banktransactions.automation.run_scheduler.time.sleep")
     def test_main_custom_interval(
         self,
         mock_sleep,
@@ -377,11 +377,11 @@ class TestRunScheduler:
         # Verify custom interval was used
         mock_sleep.assert_called_once_with(600)
 
-    @patch("banktransactions.email_automation.run_scheduler.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_scheduler.redis.from_url")
-    @patch("banktransactions.email_automation.run_scheduler.create_db_session")
-    @patch("banktransactions.email_automation.run_scheduler.EmailScheduler")
-    @patch("banktransactions.email_automation.run_scheduler.time.sleep")
+    @patch("banktransactions.automation.run_scheduler.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_scheduler.redis.from_url")
+    @patch("banktransactions.automation.run_scheduler.create_db_session")
+    @patch("banktransactions.automation.run_scheduler.EmailScheduler")
+    @patch("banktransactions.automation.run_scheduler.time.sleep")
     def test_main_multiple_iterations(
         self,
         mock_sleep,

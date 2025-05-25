@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 # Add banktransactions directory to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from banktransactions.email_automation.workers.scheduler import EmailScheduler
+from banktransactions.automation.scheduler import EmailScheduler
 
 
 class TestEmailScheduler:
@@ -69,7 +69,7 @@ class TestEmailScheduler:
         assert scheduler.db == mock_db_session
         assert scheduler.scheduler is not None
 
-    @patch("banktransactions.email_automation.workers.scheduler.Scheduler")
+    @patch("banktransactions.automation.scheduler.Scheduler")
     def test_schedule_jobs_success(
         self, mock_scheduler_class, email_scheduler, mock_email_configs
     ):
@@ -115,7 +115,7 @@ class TestEmailScheduler:
         # Should not raise exception
         email_scheduler.schedule_jobs()
 
-    @patch("banktransactions.email_automation.workers.scheduler.Scheduler")
+    @patch("banktransactions.automation.scheduler.Scheduler")
     def test_schedule_user_job_hourly_overdue(
         self, mock_scheduler_class, email_scheduler
     ):
@@ -139,7 +139,7 @@ class TestEmailScheduler:
         call_args = mock_scheduler.enqueue_at.call_args
         assert call_args[1]["queue_name"] == "email_processing"
 
-    @patch("banktransactions.email_automation.workers.scheduler.Scheduler")
+    @patch("banktransactions.automation.scheduler.Scheduler")
     def test_schedule_user_job_daily_overdue(
         self, mock_scheduler_class, email_scheduler
     ):
@@ -161,7 +161,7 @@ class TestEmailScheduler:
         # Verify job was scheduled
         mock_scheduler.enqueue_at.assert_called_once()
 
-    @patch("banktransactions.email_automation.workers.scheduler.Scheduler")
+    @patch("banktransactions.automation.scheduler.Scheduler")
     def test_schedule_user_job_no_next_run(self, mock_scheduler_class, email_scheduler):
         """Test scheduling when _calculate_next_run returns None."""
         mock_scheduler = Mock()
@@ -273,7 +273,7 @@ class TestEmailScheduler:
         # Should handle uppercase interval
         assert result is not None
 
-    @patch("banktransactions.email_automation.workers.scheduler.Scheduler")
+    @patch("banktransactions.automation.scheduler.Scheduler")
     def test_job_id_generation(self, mock_scheduler_class, email_scheduler):
         """Test that job IDs are generated correctly."""
         mock_scheduler = Mock()
@@ -292,9 +292,9 @@ class TestEmailScheduler:
         call_args = mock_scheduler.enqueue_at.call_args
         job_id = call_args[1]["job_id"]
         assert job_id.startswith("email_process_123_")
-        assert str(next_run.timestamp()) in job_id
+        assert str(int(next_run.timestamp())) in job_id
 
-    @patch("banktransactions.email_automation.workers.scheduler.Scheduler")
+    @patch("banktransactions.automation.scheduler.Scheduler")
     def test_function_reference_in_schedule(
         self, mock_scheduler_class, email_scheduler
     ):
@@ -316,7 +316,7 @@ class TestEmailScheduler:
         user_id_arg = call_args[0][2]  # Third positional argument
 
         # Import the function to compare
-        from banktransactions.email_automation.workers.email_processor import (
+        from banktransactions.automation.email_processor import (
             process_user_emails_standalone,
         )
 

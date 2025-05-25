@@ -13,7 +13,7 @@ from rq import Queue
 project_root = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, project_root)
 
-from banktransactions.email_automation.workers.job_utils import (
+from banktransactions.automation.job_utils import (
     generate_job_id,
     has_user_job_pending,
     get_user_job_status,
@@ -21,7 +21,7 @@ from banktransactions.email_automation.workers.job_utils import (
     is_user_job_scheduled,
     is_user_job_queued,
 )
-from banktransactions.email_automation.workers.email_processor import (
+from banktransactions.automation.email_processor import (
     process_user_emails_standalone,
 )
 

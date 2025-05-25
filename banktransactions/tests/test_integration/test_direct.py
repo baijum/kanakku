@@ -52,9 +52,9 @@ def test_direct_email_processing():
         from sqlalchemy.orm import sessionmaker
         from app.models import EmailConfiguration
         from app.utils.encryption import decrypt_value
-        from banktransactions.imap_client import CustomIMAPClient
-        from banktransactions.email_parser import extract_transaction_details
-        from banktransactions.api_client import APIClient
+        from banktransactions.core.imap_client import CustomIMAPClient
+        from banktransactions.core.email_parser import extract_transaction_details
+        from banktransactions.core.api_client import APIClient
 
         # Test with user ID 1
         user_id = 1

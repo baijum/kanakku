@@ -19,7 +19,7 @@ def test_wrapper():
     """Test the wrapper function import and job enqueuing."""
     try:
         # Import the wrapper function
-        from banktransactions.email_automation.job_wrapper import (
+        from banktransactions.automation.job_wrapper import (
             process_user_emails_standalone,
         )
 

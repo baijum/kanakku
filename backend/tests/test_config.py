@@ -6,34 +6,68 @@ from app.config import Config, DevelopmentConfig, ProductionConfig, TestConfig
 
 def test_base_config():
     """Test the base configuration default values"""
-    config = Config()
+    # Store original env vars
+    original_secret_key = os.environ.get("SECRET_KEY")
+    original_jwt_secret = os.environ.get("JWT_SECRET_KEY")
+    
+    try:
+        # Clear environment variables to test defaults
+        if "SECRET_KEY" in os.environ:
+            del os.environ["SECRET_KEY"]
+        if "JWT_SECRET_KEY" in os.environ:
+            del os.environ["JWT_SECRET_KEY"]
+            
+        config = Config()
 
-    # Check defaults
-    assert config.SECRET_KEY == "dev-secret-key-change-in-production"
-    assert config.SQLALCHEMY_TRACK_MODIFICATIONS is False
-    assert config.JWT_SECRET_KEY == "jwt-secret-key-change-in-production"
-    assert timedelta(hours=24) == config.JWT_ACCESS_TOKEN_EXPIRES
-    assert timedelta(days=30) == config.JWT_REFRESH_TOKEN_EXPIRES
-    assert config.MAIL_SERVER == "smtp.gmail.com"
-    assert config.MAIL_PORT == 587
-    assert config.MAIL_USE_TLS is True
-    assert config.MAIL_DEFAULT_SENDER == "no-reply@kanakku.app"
-    assert config.FRONTEND_URL == "http://localhost:3000"
-    assert (
-        config.GOOGLE_DISCOVERY_URL
-        == "https://accounts.google.com/.well-known/openid-configuration"
-    )
+        # Check defaults
+        assert config.SECRET_KEY == "dev-secret-key-change-in-production"
+        assert config.SQLALCHEMY_TRACK_MODIFICATIONS is False
+        assert config.JWT_SECRET_KEY == "jwt-secret-key-change-in-production"
+        assert timedelta(hours=24) == config.JWT_ACCESS_TOKEN_EXPIRES
+        assert timedelta(days=30) == config.JWT_REFRESH_TOKEN_EXPIRES
+        assert config.MAIL_SERVER == "smtp.gmail.com"
+        assert config.MAIL_PORT == 587
+        assert config.MAIL_USE_TLS is True
+        assert config.MAIL_DEFAULT_SENDER == "no-reply@kanakku.app"
+        assert config.FRONTEND_URL == "http://localhost:3000"
+        assert (
+            config.GOOGLE_DISCOVERY_URL
+            == "https://accounts.google.com/.well-known/openid-configuration"
+        )
+    finally:
+        # Restore original env vars
+        if original_secret_key:
+            os.environ["SECRET_KEY"] = original_secret_key
+        if original_jwt_secret:
+            os.environ["JWT_SECRET_KEY"] = original_jwt_secret
 
 
 def test_development_config():
     """Test the development configuration"""
-    config = DevelopmentConfig()
+    # Store original env vars
+    original_secret_key = os.environ.get("SECRET_KEY")
+    original_jwt_secret = os.environ.get("JWT_SECRET_KEY")
+    
+    try:
+        # Clear environment variables to test defaults
+        if "SECRET_KEY" in os.environ:
+            del os.environ["SECRET_KEY"]
+        if "JWT_SECRET_KEY" in os.environ:
+            del os.environ["JWT_SECRET_KEY"]
+            
+        config = DevelopmentConfig()
 
-    # Development specific settings
-    assert config.DEBUG is True
+        # Development specific settings
+        assert config.DEBUG is True
 
-    # Inherited settings
-    assert config.SECRET_KEY == "dev-secret-key-change-in-production"
+        # Inherited settings
+        assert config.SECRET_KEY == "dev-secret-key-change-in-production"
+    finally:
+        # Restore original env vars
+        if original_secret_key:
+            os.environ["SECRET_KEY"] = original_secret_key
+        if original_jwt_secret:
+            os.environ["JWT_SECRET_KEY"] = original_jwt_secret
 
 
 def test_testing_config():
@@ -90,22 +124,22 @@ def test_production_config():
         # Restore original env vars
         if original_secret_key:
             os.environ["SECRET_KEY"] = original_secret_key
-        else:
+        elif "SECRET_KEY" in os.environ:
             del os.environ["SECRET_KEY"]
 
         if original_jwt_secret:
             os.environ["JWT_SECRET_KEY"] = original_jwt_secret
-        else:
+        elif "JWT_SECRET_KEY" in os.environ:
             del os.environ["JWT_SECRET_KEY"]
 
         if original_google_id:
             os.environ["GOOGLE_CLIENT_ID"] = original_google_id
-        else:
+        elif "GOOGLE_CLIENT_ID" in os.environ:
             del os.environ["GOOGLE_CLIENT_ID"]
 
         if original_google_secret:
             os.environ["GOOGLE_CLIENT_SECRET"] = original_google_secret
-        else:
+        elif "GOOGLE_CLIENT_SECRET" in os.environ:
             del os.environ["GOOGLE_CLIENT_SECRET"]
 
         # Reset the class attributes to their original definition
@@ -137,10 +171,10 @@ def test_env_override():
         # Restore original env vars
         if original_mail_server:
             os.environ["MAIL_SERVER"] = original_mail_server
-        else:
+        elif "MAIL_SERVER" in os.environ:
             del os.environ["MAIL_SERVER"]
 
         if original_mail_port:
             os.environ["MAIL_PORT"] = original_mail_port
-        else:
+        elif "MAIL_PORT" in os.environ:
             del os.environ["MAIL_PORT"]

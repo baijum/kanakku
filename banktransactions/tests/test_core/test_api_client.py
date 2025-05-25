@@ -9,7 +9,7 @@ from unittest.mock import patch, Mock
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from banktransactions.api_client import send_transaction_to_api, APIClient
+    from banktransactions.core.api_client import send_transaction_to_api, APIClient
 except ImportError:
     # Fallback to relative import if running from within the directory
     from api_client import send_transaction_to_api, APIClient
@@ -18,7 +18,7 @@ except ImportError:
 class TestSendTransactionToApi:
     """Test cases for the send_transaction_to_api function."""
 
-    @patch("banktransactions.api_client.requests.post")
+    @patch("banktransactions.core.api_client.requests.post")
     @patch.dict(
         os.environ,
         {
@@ -202,7 +202,7 @@ class TestSendTransactionToApi:
         assert result is False
         assert "Missing to_account" in caplog.text
 
-    @patch("banktransactions.api_client.requests.post")
+    @patch("banktransactions.core.api_client.requests.post")
     @patch.dict(
         os.environ,
         {
@@ -291,7 +291,7 @@ class TestSendTransactionToApi:
         assert result is False
         assert "Invalid or unparseable date format" in caplog.text
 
-    @patch("banktransactions.api_client.requests.post")
+    @patch("banktransactions.core.api_client.requests.post")
     @patch.dict(
         os.environ,
         {
@@ -320,7 +320,7 @@ class TestSendTransactionToApi:
         assert payload["postings"][0]["currency"] == "INR"
         assert payload["postings"][1]["currency"] == "INR"
 
-    @patch("banktransactions.api_client.requests.post")
+    @patch("banktransactions.core.api_client.requests.post")
     @patch.dict(
         os.environ,
         {
@@ -355,7 +355,7 @@ class TestSendTransactionToApi:
         assert result is False
         assert "API HTTP Error: 400" in caplog.text
 
-    @patch("banktransactions.api_client.requests.post")
+    @patch("banktransactions.core.api_client.requests.post")
     @patch.dict(
         os.environ,
         {
@@ -383,7 +383,7 @@ class TestSendTransactionToApi:
         assert result is False
         assert "API call timed out" in caplog.text
 
-    @patch("banktransactions.api_client.requests.post")
+    @patch("banktransactions.core.api_client.requests.post")
     @patch.dict(
         os.environ,
         {
@@ -420,7 +420,7 @@ class TestAPIClient:
         client = APIClient()
         assert client is not None
 
-    @patch("banktransactions.api_client.send_transaction_to_api")
+    @patch("banktransactions.core.api_client.send_transaction_to_api")
     def test_create_transaction_success(self, mock_send):
         """Test successful transaction creation via APIClient."""
         mock_send.return_value = True
@@ -439,7 +439,7 @@ class TestAPIClient:
         assert result["error"] is None
         mock_send.assert_called_once_with(transaction_data)
 
-    @patch("banktransactions.api_client.send_transaction_to_api")
+    @patch("banktransactions.core.api_client.send_transaction_to_api")
     def test_create_transaction_failure(self, mock_send):
         """Test failed transaction creation via APIClient."""
         mock_send.return_value = False
@@ -458,7 +458,7 @@ class TestAPIClient:
         assert result["error"] == "Failed to create transaction"
         mock_send.assert_called_once_with(transaction_data)
 
-    @patch("banktransactions.api_client.send_transaction_to_api")
+    @patch("banktransactions.core.api_client.send_transaction_to_api")
     def test_create_transaction_exception(self, mock_send, caplog):
         """Test exception handling in APIClient.create_transaction."""
         import logging

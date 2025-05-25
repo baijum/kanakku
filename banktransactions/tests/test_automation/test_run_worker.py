@@ -8,14 +8,14 @@ from unittest.mock import patch, Mock
 # Add banktransactions directory to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from banktransactions.email_automation.run_worker import create_db_session, main
+from banktransactions.automation.run_worker import create_db_session, main
 
 
 class TestRunWorker:
     """Test cases for the run_worker.py script."""
 
-    @patch("banktransactions.email_automation.run_worker.create_engine")
-    @patch("banktransactions.email_automation.run_worker.sessionmaker")
+    @patch("banktransactions.automation.run_worker.create_engine")
+    @patch("banktransactions.automation.run_worker.sessionmaker")
     @patch.dict(os.environ, {"DATABASE_URL": "postgresql://test:test@localhost/test"})
     def test_create_db_session_success(self, mock_sessionmaker, mock_create_engine):
         """Test successful database session creation."""
@@ -45,7 +45,7 @@ class TestRunWorker:
         ):
             create_db_session()
 
-    @patch("banktransactions.email_automation.run_worker.create_engine")
+    @patch("banktransactions.automation.run_worker.create_engine")
     @patch.dict(os.environ, {"DATABASE_URL": "postgresql://test:test@localhost/test"})
     def test_create_db_session_engine_error(self, mock_create_engine):
         """Test handling of database engine creation errors."""
@@ -54,16 +54,14 @@ class TestRunWorker:
         with pytest.raises(Exception, match="Database connection failed"):
             create_db_session()
 
-    @patch("banktransactions.email_automation.run_worker.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_worker.redis.from_url")
-    @patch("banktransactions.email_automation.run_worker.create_db_session")
-    @patch("banktransactions.email_automation.run_worker.Queue")
-    @patch("banktransactions.email_automation.run_worker.Worker")
-    @patch("banktransactions.email_automation.run_worker.Connection")
+    @patch("banktransactions.automation.run_worker.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_worker.redis.from_url")
+    @patch("banktransactions.automation.run_worker.create_db_session")
+    @patch("banktransactions.automation.run_worker.Queue")
+    @patch("banktransactions.automation.run_worker.get_worker_class")
     def test_main_success(
         self,
-        mock_connection,
-        mock_worker_class,
+        mock_get_worker_class,
         mock_queue_class,
         mock_create_db_session,
         mock_redis_from_url,
@@ -78,6 +76,7 @@ class TestRunWorker:
         mock_args.queue_name = "email_processing"
         mock_args.redis_url = "redis://localhost:6379/0"
         mock_args.worker_name = "test_worker"
+        mock_args.force_simple_worker = False
         mock_parser.parse_args.return_value = mock_args
 
         # Mock Redis connection
@@ -92,16 +91,12 @@ class TestRunWorker:
         mock_queue = Mock()
         mock_queue_class.return_value = mock_queue
 
-        # Mock worker
+        # Mock worker class and instance
+        mock_worker_class = Mock()
+        mock_worker_class.__name__ = "MockWorker"
         mock_worker = Mock()
         mock_worker_class.return_value = mock_worker
-
-        # Mock connection context manager
-        mock_connection_context = Mock()
-        mock_connection.return_value.__enter__ = Mock(
-            return_value=mock_connection_context
-        )
-        mock_connection.return_value.__exit__ = Mock(return_value=None)
+        mock_get_worker_class.return_value = mock_worker_class
 
         main()
 
@@ -119,8 +114,8 @@ class TestRunWorker:
         )
         mock_worker.work.assert_called_once()
 
-    @patch("banktransactions.email_automation.run_worker.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_worker.redis.from_url")
+    @patch("banktransactions.automation.run_worker.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_worker.redis.from_url")
     def test_main_redis_connection_error(self, mock_redis_from_url, mock_parser_class):
         """Test handling of Redis connection errors."""
         # Mock argument parser
@@ -139,9 +134,9 @@ class TestRunWorker:
         with pytest.raises(SystemExit):
             main()
 
-    @patch("banktransactions.email_automation.run_worker.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_worker.redis.from_url")
-    @patch("banktransactions.email_automation.run_worker.create_db_session")
+    @patch("banktransactions.automation.run_worker.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_worker.redis.from_url")
+    @patch("banktransactions.automation.run_worker.create_db_session")
     def test_main_database_connection_error(
         self, mock_create_db_session, mock_redis_from_url, mock_parser_class
     ):
@@ -164,16 +159,14 @@ class TestRunWorker:
         with pytest.raises(SystemExit):
             main()
 
-    @patch("banktransactions.email_automation.run_worker.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_worker.redis.from_url")
-    @patch("banktransactions.email_automation.run_worker.create_db_session")
-    @patch("banktransactions.email_automation.run_worker.Queue")
-    @patch("banktransactions.email_automation.run_worker.Worker")
-    @patch("banktransactions.email_automation.run_worker.Connection")
+    @patch("banktransactions.automation.run_worker.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_worker.redis.from_url")
+    @patch("banktransactions.automation.run_worker.create_db_session")
+    @patch("banktransactions.automation.run_worker.Queue")
+    @patch("banktransactions.automation.run_worker.get_worker_class")
     def test_main_keyboard_interrupt(
         self,
-        mock_connection,
-        mock_worker_class,
+        mock_get_worker_class,
         mock_queue_class,
         mock_create_db_session,
         mock_redis_from_url,
@@ -188,6 +181,7 @@ class TestRunWorker:
         mock_args.queue_name = "email_processing"
         mock_args.redis_url = "redis://localhost:6379/0"
         mock_args.worker_name = None  # Test auto-generated name
+        mock_args.force_simple_worker = False
         mock_parser.parse_args.return_value = mock_args
 
         # Mock Redis connection
@@ -202,17 +196,13 @@ class TestRunWorker:
         mock_queue = Mock()
         mock_queue_class.return_value = mock_queue
 
-        # Mock worker to raise KeyboardInterrupt
+        # Mock worker class and instance to raise KeyboardInterrupt
+        mock_worker_class = Mock()
+        mock_worker_class.__name__ = "MockWorker"
         mock_worker = Mock()
         mock_worker.work.side_effect = KeyboardInterrupt()
         mock_worker_class.return_value = mock_worker
-
-        # Mock connection context manager
-        mock_connection_context = Mock()
-        mock_connection.return_value.__enter__ = Mock(
-            return_value=mock_connection_context
-        )
-        mock_connection.return_value.__exit__ = Mock(return_value=None)
+        mock_get_worker_class.return_value = mock_worker_class
 
         # Should not raise SystemExit for KeyboardInterrupt
         main()
@@ -222,7 +212,7 @@ class TestRunWorker:
         worker_name = worker_call_args[1]["name"]
         assert worker_name.startswith("email_worker_")
 
-    @patch("banktransactions.email_automation.run_worker.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_worker.argparse.ArgumentParser")
     def test_main_argument_parsing(self, mock_parser_class):
         """Test that command line arguments are parsed correctly."""
         mock_parser = Mock()
@@ -243,16 +233,14 @@ class TestRunWorker:
         assert "--redis-url" in arg_names
         assert "--worker-name" in arg_names
 
-    @patch("banktransactions.email_automation.run_worker.argparse.ArgumentParser")
-    @patch("banktransactions.email_automation.run_worker.redis.from_url")
-    @patch("banktransactions.email_automation.run_worker.create_db_session")
-    @patch("banktransactions.email_automation.run_worker.Queue")
-    @patch("banktransactions.email_automation.run_worker.Worker")
-    @patch("banktransactions.email_automation.run_worker.Connection")
+    @patch("banktransactions.automation.run_worker.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_worker.redis.from_url")
+    @patch("banktransactions.automation.run_worker.create_db_session")
+    @patch("banktransactions.automation.run_worker.Queue")
+    @patch("banktransactions.automation.run_worker.get_worker_class")
     def test_main_default_arguments(
         self,
-        mock_connection,
-        mock_worker_class,
+        mock_get_worker_class,
         mock_queue_class,
         mock_create_db_session,
         mock_redis_from_url,
@@ -267,6 +255,7 @@ class TestRunWorker:
         mock_args.queue_name = "email_processing"  # Default value
         mock_args.redis_url = "redis://localhost:6379/0"  # Default value
         mock_args.worker_name = None  # Default value (auto-generated)
+        mock_args.force_simple_worker = False
         mock_parser.parse_args.return_value = mock_args
 
         # Mock other dependencies
@@ -279,14 +268,12 @@ class TestRunWorker:
         mock_queue = Mock()
         mock_queue_class.return_value = mock_queue
 
+        # Mock worker class and instance
+        mock_worker_class = Mock()
+        mock_worker_class.__name__ = "MockWorker"
         mock_worker = Mock()
         mock_worker_class.return_value = mock_worker
-
-        mock_connection_context = Mock()
-        mock_connection.return_value.__enter__ = Mock(
-            return_value=mock_connection_context
-        )
-        mock_connection.return_value.__exit__ = Mock(return_value=None)
+        mock_get_worker_class.return_value = mock_worker_class
 
         main()
 
@@ -301,7 +288,7 @@ class TestRunWorker:
         assert worker_name.startswith("email_worker_")
 
     @patch.dict(os.environ, {"REDIS_URL": "redis://custom:6379/1"})
-    @patch("banktransactions.email_automation.run_worker.argparse.ArgumentParser")
+    @patch("banktransactions.automation.run_worker.argparse.ArgumentParser")
     def test_main_environment_variable_defaults(self, mock_parser_class):
         """Test that environment variables are used for default values."""
         mock_parser = Mock()

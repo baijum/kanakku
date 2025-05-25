@@ -8,7 +8,7 @@ from unittest.mock import patch, Mock
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from banktransactions.transaction_data import (
+    from banktransactions.core.transaction_data import (
         get_mappings_from_api,
         construct_transaction_data,
     )
@@ -20,7 +20,7 @@ except ImportError:
 class TestGetMappingsFromApi:
     """Test cases for the get_mappings_from_api function."""
 
-    @patch("banktransactions.transaction_data.requests.get")
+    @patch("banktransactions.core.transaction_data.requests.get")
     @patch.dict(
         os.environ,
         {"API_ENDPOINT": "http://localhost:5000", "JWT_TOKEN": "test_jwt_token"},
@@ -60,7 +60,7 @@ class TestGetMappingsFromApi:
         assert call_args[1]["headers"]["Authorization"] == "Bearer test_jwt_token"
         assert call_args[1]["headers"]["Content-Type"] == "application/json"
 
-    @patch("banktransactions.transaction_data.requests.get")
+    @patch("banktransactions.core.transaction_data.requests.get")
     @patch.dict(
         os.environ,
         {
@@ -106,7 +106,7 @@ class TestGetMappingsFromApi:
         assert result is None
         assert "API_ENDPOINT or JWT_TOKEN not set" in caplog.text
 
-    @patch("banktransactions.transaction_data.requests.get")
+    @patch("banktransactions.core.transaction_data.requests.get")
     @patch.dict(
         os.environ,
         {"API_ENDPOINT": "http://localhost:5000", "JWT_TOKEN": "test_jwt_token"},
@@ -125,7 +125,7 @@ class TestGetMappingsFromApi:
         assert result is None
         assert "Authentication failed" in caplog.text
 
-    @patch("banktransactions.transaction_data.requests.get")
+    @patch("banktransactions.core.transaction_data.requests.get")
     @patch.dict(
         os.environ,
         {"API_ENDPOINT": "http://localhost:5000", "JWT_TOKEN": "test_jwt_token"},
@@ -145,7 +145,7 @@ class TestGetMappingsFromApi:
         assert result is None
         assert "Error fetching mappings from API: 500" in caplog.text
 
-    @patch("banktransactions.transaction_data.requests.get")
+    @patch("banktransactions.core.transaction_data.requests.get")
     @patch.dict(
         os.environ,
         {"API_ENDPOINT": "http://localhost:5000", "JWT_TOKEN": "test_jwt_token"},
@@ -168,7 +168,7 @@ class TestGetMappingsFromApi:
         assert result is None
         assert "API response missing required mapping keys" in caplog.text
 
-    @patch("banktransactions.transaction_data.requests.get")
+    @patch("banktransactions.core.transaction_data.requests.get")
     @patch.dict(
         os.environ,
         {"API_ENDPOINT": "http://localhost:5000", "JWT_TOKEN": "test_jwt_token"},
@@ -190,7 +190,7 @@ class TestGetMappingsFromApi:
 class TestConstructTransactionData:
     """Test cases for the construct_transaction_data function."""
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_success(self, mock_get_mappings):
         """Test successful construction of transaction data."""
         # Mock API response
@@ -223,7 +223,7 @@ class TestConstructTransactionData:
         assert result["to_account"] == "Expenses:Food:Restaurant"
         assert result["recipient_name"] == "BAKE HOUSE Restaurant at Kattangal"
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_unknown_recipient(self, mock_get_mappings):
         """Test construction with unknown recipient (uses defaults)."""
         mock_get_mappings.return_value = {
@@ -246,7 +246,7 @@ class TestConstructTransactionData:
         assert result["to_account"] == "Expenses:Groceries"  # Default
         assert result["recipient_name"] == "UNKNOWN MERCHANT Unknown"
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_unknown_account(self, mock_get_mappings):
         """Test construction with unknown account number (uses defaults)."""
         mock_get_mappings.return_value = {
@@ -271,7 +271,7 @@ class TestConstructTransactionData:
         assert result["to_account"] == "Expenses:Food:Restaurant"
         assert result["recipient_name"] == "BAKE HOUSE Restaurant at Kattangal"
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_api_failure(self, mock_get_mappings, caplog):
         """Test construction when API call fails."""
         import logging
@@ -295,7 +295,7 @@ class TestConstructTransactionData:
         assert result["recipient_name"] == "SOME MERCHANT Unknown"
         assert "Failed to load configuration from API" in caplog.text
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_missing_transaction_time(
         self, mock_get_mappings
     ):
@@ -318,7 +318,7 @@ class TestConstructTransactionData:
         assert result is not None
         assert result["transaction_time"] == "Unknown"
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_missing_recipient(self, mock_get_mappings):
         """Test construction when recipient is missing."""
         mock_get_mappings.return_value = {
@@ -338,7 +338,7 @@ class TestConstructTransactionData:
         assert result is not None
         assert result["recipient_name"] == "Unknown Unknown"
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_missing_account_number(self, mock_get_mappings):
         """Test construction when account_number is missing."""
         mock_get_mappings.return_value = {
@@ -358,7 +358,7 @@ class TestConstructTransactionData:
         assert result is not None
         assert result["from_account"] == "Assets:Bank:Axis"  # Default
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_recipient_info_single_value(
         self, mock_get_mappings
     ):
@@ -385,7 +385,7 @@ class TestConstructTransactionData:
             result["recipient_name"] == "SIMPLE MERCHANT "
         )  # Space but no second part
 
-    @patch("banktransactions.transaction_data.get_mappings_from_api")
+    @patch("banktransactions.core.transaction_data.get_mappings_from_api")
     def test_construct_transaction_data_all_required_fields(self, mock_get_mappings):
         """Test that all required fields are present in the result."""
         mock_get_mappings.return_value = {
