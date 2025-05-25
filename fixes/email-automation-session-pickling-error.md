@@ -132,4 +132,8 @@ To prevent similar issues in the future:
 1. Always consider serializability when designing RQ job functions
 2. Keep job functions stateless and self-contained
 3. Create resources (database sessions, file handles) within the worker process
-4. Use standalone functions rather than class methods for RQ jobs when possible 
+4. Use standalone functions rather than class methods for RQ jobs when possible
+
+## Update (Post-Fix)
+
+**Note**: The legacy `EmailProcessor` class referenced in this document has been subsequently removed from the codebase. The system now uses only the `process_user_emails_standalone` function, which was the solution implemented to fix this pickling issue. 

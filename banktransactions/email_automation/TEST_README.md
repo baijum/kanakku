@@ -8,7 +8,7 @@ The test suite is organized into several files, each focusing on different aspec
 
 ### Core Component Tests
 
-- **`test_email_processor.py`** - Tests for the `EmailProcessor` class and `process_user_emails_standalone` function
+- **`test_email_processor.py`** - Tests for the `process_user_emails_standalone` function (removed)
 - **`test_scheduler.py`** - Tests for the `EmailScheduler` class and job scheduling logic
 - **`test_run_worker.py`** - Tests for the worker script functionality and command-line interface
 - **`test_run_scheduler.py`** - Tests for the scheduler script functionality and command-line interface
@@ -81,9 +81,6 @@ pytest -m "not external"
 ### Running Specific Test Files
 
 ```bash
-# Test email processor
-pytest test_email_processor.py
-
 # Test scheduler
 pytest test_scheduler.py
 
@@ -95,10 +92,10 @@ pytest test_integration.py
 
 ```bash
 # Test specific class
-pytest test_email_processor.py::TestEmailProcessor
+pytest test_scheduler.py::TestEmailScheduler
 
 # Test specific method
-pytest test_email_processor.py::TestEmailProcessor::test_process_user_emails_success
+pytest test_scheduler.py::TestEmailScheduler::test_schedule_jobs_success
 ```
 
 ## Test Configuration

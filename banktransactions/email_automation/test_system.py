@@ -113,7 +113,7 @@ def test_worker_imports():
     print("Testing worker imports...")
     try:
         from banktransactions.email_automation.workers.email_processor import (
-            EmailProcessor,
+            process_user_emails_standalone,
         )
         from banktransactions.email_automation.workers.scheduler import EmailScheduler
 
@@ -128,7 +128,7 @@ def test_banktransactions_imports():
     """Test banktransactions module imports."""
     print("Testing banktransactions imports...")
     try:
-        from banktransactions.imap_client import IMAPClient
+        from banktransactions.imap_client import CustomIMAPClient
         from banktransactions.email_parser import extract_transaction_details_pure_llm
         from banktransactions.api_client import APIClient
 

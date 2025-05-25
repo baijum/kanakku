@@ -590,8 +590,8 @@ redis-cli CONFIG SET maxmemory-policy allkeys-lru
 
 **Solution**: Use standalone functions instead of class methods:
 ```python
-# ❌ Don't do this
-job = queue.enqueue(EmailProcessor(db_session).process_emails, user_id)
+# ❌ Don't do this (legacy EmailProcessor class removed)
+# job = queue.enqueue(EmailProcessor(db_session).process_emails, user_id)
 
 # ✅ Do this instead
 job = queue.enqueue(process_user_emails_standalone, user_id)

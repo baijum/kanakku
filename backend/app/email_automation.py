@@ -182,9 +182,9 @@ def test_email_connection():
             sys.path.append(banktransactions_path)
 
         # Import here to avoid circular imports
-        from banktransactions.imap_client import IMAPClient
+        from banktransactions.imap_client import CustomIMAPClient
 
-        imap_client = IMAPClient(
+        imap_client = CustomIMAPClient(
             server=data.get("imap_server", "imap.gmail.com"),
             port=data.get("imap_port", 993),
             username=data["email_address"],

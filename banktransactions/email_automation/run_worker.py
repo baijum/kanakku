@@ -45,8 +45,9 @@ sys.path.insert(0, project_root)
 sys.path.append(os.path.join(project_root, "backend"))
 
 # Configure logging
+log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, log_level, logging.DEBUG),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),

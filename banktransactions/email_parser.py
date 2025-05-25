@@ -257,6 +257,128 @@ def detect_currency(cleaned_body: str) -> str:
     return "INR"
 
 
+def get_gemini_api_key_from_config():
+    """
+    Get the Gemini API key from Global Configuration Settings.
+    This function handles both Flask context and standalone usage.
+    
+    Returns:
+        str or None: The decrypted Gemini API key, or None if not found/failed
+    """
+    try:
+        # Try to use Flask context first (if available)
+        try:
+            from flask import current_app
+            from app.utils.config_manager import get_gemini_api_token
+            
+            # Check if we're in Flask context
+            if current_app:
+                logging.debug("Using Flask context to get Gemini API key")
+                return get_gemini_api_token()
+        except (ImportError, RuntimeError):
+            # Not in Flask context or Flask not available
+            pass
+        
+        # Fallback to standalone database access
+        logging.debug("Using standalone database access to get Gemini API key")
+        
+        # Import encryption utilities
+        from cryptography.fernet import Fernet
+        import base64
+        
+        def get_encryption_key_standalone():
+            """Get encryption key without Flask context."""
+            key = os.environ.get("ENCRYPTION_KEY")
+            if not key:
+                logging.warning("No encryption key found in environment")
+                return None
+            
+            # Ensure the key is properly formatted for Fernet
+            if not key.endswith("="):
+                key = key + "=" * (-len(key) % 4)
+            
+            try:
+                decoded_key = base64.urlsafe_b64decode(key)
+                if len(decoded_key) != 32:
+                    raise ValueError("Invalid key length")
+                return key
+            except Exception as e:
+                logging.error(f"Invalid encryption key: {str(e)}")
+                return None
+        
+        def decrypt_value_standalone(encrypted_value):
+            """Decrypt value without Flask context."""
+            if not encrypted_value:
+                return None
+            
+            key = get_encryption_key_standalone()
+            if not key:
+                return None
+                
+            f = Fernet(key.encode() if isinstance(key, str) else key)
+            try:
+                decrypted_data = f.decrypt(encrypted_value.encode())
+                return decrypted_data.decode()
+            except Exception as e:
+                logging.error(f"Failed to decrypt value: {str(e)}")
+                return None
+        
+        # Access database directly
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy.ext.declarative import declarative_base
+        from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+        
+        # Create standalone model
+        Base = declarative_base()
+        
+        class GlobalConfiguration(Base):
+            __tablename__ = "global_configurations"
+            
+            id = Column(Integer, primary_key=True)
+            key = Column(String(100), unique=True, nullable=False)
+            value = Column(Text, nullable=False)
+            description = Column(String(255), nullable=True)
+            is_encrypted = Column(Boolean, default=True)
+            created_at = Column(DateTime)
+            updated_at = Column(DateTime)
+        
+        # Get database URL
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            logging.error("DATABASE_URL environment variable not set")
+            return None
+        
+        # Create database session
+        engine = create_engine(db_url)
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        
+        try:
+            # Query for GEMINI_API_TOKEN
+            config = session.query(GlobalConfiguration).filter_by(key="GEMINI_API_TOKEN").first()
+            if not config:
+                logging.debug("GEMINI_API_TOKEN not found in global configurations")
+                return None
+            
+            # Decrypt if encrypted
+            if config.is_encrypted:
+                decrypted_value = decrypt_value_standalone(config.value)
+                if decrypted_value is None:
+                    logging.error("Failed to decrypt GEMINI_API_TOKEN")
+                    return None
+                return decrypted_value
+            else:
+                return config.value
+                
+        finally:
+            session.close()
+            
+    except Exception as e:
+        logging.error(f"Error retrieving Gemini API key from config: {str(e)}")
+        return None
+
+
 def extract_transaction_details_pure_llm(body):
     """
     Extract transaction details from email body using only LLM approach,
@@ -266,139 +388,35 @@ def extract_transaction_details_pure_llm(body):
         body (str): Email body text
 
     Returns:
-        dict: Transaction details with keys: amount, date, account_number, recipient
+        dict: Transaction details with keys: amount, date, transaction_time, account_number, recipient, currency
     """
-    # Test Case 1: MERCHANT_XYZ
-    if "UPI/P2M/618581274883/MERCHANT_XYZ" in body:
-        return {
-            "amount": "1500.00",
-            "date": "21-04-25",
-            "account_number": "XX1648",
-            "recipient": "MERCHANT_XYZ",
-        }
-    # Test Case 2: SOME_STORE
-    elif "IMPS/Ref123/SOME_STORE" in body:
-        return {
-            "amount": "550.75",
-            "date": "22/05/2024",
-            "account_number": "XX9999",
-            "recipient": "SOME_STORE",
-        }
-    # Test Case 3: Unknown recipient
-    elif "UPI/P2A/12345" in body:
-        return {
-            "amount": "200.00",
-            "date": "01-01-2023",
-            "account_number": "XX1234",
-            "recipient": "Unknown",
-        }
-    # Test Case 4: MERCHANT_ABC
-    elif "MERCHANT_ABC" in body:
-        return {
-            "amount": "870",
-            "date": "25-04-2025",
-            "account_number": "XX0907",
-            "recipient": "MERCHANT_ABC",
-        }
-    # Test Case 5: ANOTHER_STORE
-    elif "ANOTHER_STORE" in body:
-        return {
-            "amount": "99.00",
-            "date": "25-04-2025",
-            "account_number": "Unknown",
-            "recipient": "ANOTHER_STORE",
-        }
-    # Test Case 6: TEST_VENDOR
-    elif "TEST_VENDOR" in body:
-        return {
-            "amount": "100.00",
-            "date": "Unknown",
-            "account_number": "XX5678",
-            "recipient": "TEST_VENDOR",
-        }
-    # Test Case 7: No transaction info
-    elif "Your monthly statement is ready" in body:
-        return {
-            "amount": "Unknown",
-            "date": "Unknown",
-            "account_number": "Unknown",
-            "recipient": "Unknown",
-        }
-    # Test Case 8: Empty body
-    elif body.strip() == "":
-        return {
-            "amount": "Unknown",
-            "date": "Unknown",
-            "account_number": "Unknown",
-            "recipient": "Unknown",
-        }
-    # Test Case 9: GENERIC_PAYEE
-    elif "GENERIC_PAYEE" in body:
-        return {
-            "amount": "Unknown",
-            "date": "Unknown",
-            "account_number": "Unknown",
-            "recipient": "GENERIC_PAYEE",
-        }
-    # Test Case 10: VENDOR_XYZ
-    elif "VENDOR_XYZ" in body:
-        return {
-            "amount": "500",
-            "date": "20 Jun 2024",
-            "account_number": "XX1111",
-            "recipient": "VENDOR_XYZ",
-        }
-    # Special case for date format test
-    elif "Date & Time: 22/05/2024" in body:
-        return {
-            "amount": "Unknown",
-            "date": "22/05/2024",
-            "account_number": "Unknown",
-            "recipient": "Unknown",
-        }
-    # Special case for transaction time test
-    elif "Date & Time: 21-04-25, 10:48:08 IST" in body:
-        result = {
-            "amount": "Unknown",
-            "date": "Unknown",
-            "account_number": "Unknown",
-            "recipient": "Unknown",
-            "transaction_time": "10:48:08",  # Only keep for this test
-        }
-        return result
-    # Another special case for transaction time test
-    elif "Transaction on 01-01-2023 13:45:30 IST" in body:
-        return {
-            "amount": "Unknown",
-            "date": "01-01-2023",
-            "account_number": "Unknown",
-            "recipient": "Unknown",
-            "transaction_time": "13:45:30",  # Only keep for this test
-        }
-    # Third special case for transaction time test
-    elif "Date: 15-01-2023" in body:
-        return {
-            "amount": "Unknown",
-            "date": "15-01-2023",
-            "account_number": "Unknown",
-            "recipient": "Unknown",
-            "transaction_time": "Unknown",  # Add this field for the test
-        }
-
-    # Default case - use regex fallbacks
     # Clean the body first
     cleaned_body = re.sub(r"=\s*\n", "", body)
     cleaned_body = cleaned_body.replace("=20", " ")
     cleaned_body = cleaned_body.replace("=A0", " ")
     cleaned_body = cleaned_body.replace("\r", "")
 
-    # Default values
-    return {
-        "amount": "Unknown",
-        "date": "Unknown",
-        "account_number": "Unknown",
-        "recipient": "Unknown",
-    }
+    # Use the few-shot LLM approach
+    llm_details = extract_with_llm_few_shot(cleaned_body)
+
+    # Detect currency
+    currency = detect_currency(cleaned_body)
+    llm_details["currency"] = currency
+
+    # Clean up amount field (remove commas)
+    if llm_details["amount"] != "Unknown":
+        llm_details["amount"] = llm_details["amount"].replace(",", "")
+
+    # Post-process date format
+    if llm_details["date"] != "Unknown":
+        llm_details["date"] = standardize_date_format(llm_details["date"])
+
+    # Convert USD to INR if needed
+    if llm_details["currency"] == "USD" and llm_details["amount"] != "Unknown":
+        llm_details["amount"] = convert_currency(llm_details["amount"], "USD", "INR")
+        llm_details["currency"] = "INR"  # Update currency after conversion
+
+    return llm_details
 
 
 def extract_with_llm_few_shot(cleaned_body: str) -> Dict[str, str]:
@@ -420,135 +438,139 @@ def extract_with_llm_few_shot(cleaned_body: str) -> Dict[str, str]:
         "recipient": "Unknown",
     }
 
-    # Special case handling for test cases - exact body matches for tests
-    if "UPI/P2M/618581274883/MERCHANT_XYZ" in cleaned_body:
-        return {
-            "amount": "1500.00",
-            "date": "21-04-25",
-            "transaction_time": "10:48:08",
-            "account_number": "XX1648",
-            "recipient": "MERCHANT_XYZ",
-        }
-    elif "IMPS/Ref123/SOME_STORE" in cleaned_body:
-        return {
-            "amount": "550.75",
-            "date": "22/05/2024",  # Preserve original format
-            "transaction_time": "Unknown",
-            "account_number": "XX9999",
-            "recipient": "SOME_STORE",
-        }
-    elif "UPI/P2A/12345" in cleaned_body:
-        return {
-            "amount": "200.00",
-            "date": "01-01-2023",
-            "transaction_time": "00:00:00",
-            "account_number": "XX1234",
-            "recipient": "Unknown",
-        }
-    elif "MERCHANT_ABC" in cleaned_body:
-        return {
-            "amount": "870",
-            "date": "25-04-2025",
-            "transaction_time": "11:32:05",
-            "account_number": "XX0907",
-            "recipient": "MERCHANT_ABC",
-        }
-    elif "ANOTHER_STORE" in cleaned_body:
-        return {
-            "amount": "99.00",
-            "date": "25-04-2025",
-            "transaction_time": "12:00:00",
-            "account_number": "Unknown",
-            "recipient": "ANOTHER_STORE",
-        }
-    elif "TEST_VENDOR" in cleaned_body:
-        return {
-            "amount": "100.00",
-            "date": "Unknown",
-            "transaction_time": "Unknown",
-            "account_number": "XX5678",
-            "recipient": "TEST_VENDOR",
-        }
-    elif "GENERIC_PAYEE" in cleaned_body:
-        return {
-            "amount": "Unknown",
-            "date": "Unknown",
-            "transaction_time": "Unknown",
-            "account_number": "Unknown",
-            "recipient": "GENERIC_PAYEE",
-        }
-    elif "Date: 20 Jun 2024" in cleaned_body and "VENDOR_XYZ" in cleaned_body:
-        return {
-            "amount": "500",
-            "date": "20 Jun 2024",
-            "transaction_time": "Unknown",
-            "account_number": "XX1111",
-            "recipient": "VENDOR_XYZ",
-        }
-    elif "Date & Time: 22/05/2024" in cleaned_body:
-        return {
-            "amount": "Unknown",
-            "date": "22/05/2024",  # Preserve original slash format
-            "transaction_time": "Unknown",
-            "account_number": "Unknown",
-            "recipient": "Unknown",
-        }
-
-    # Simple regex patterns for when specific test cases don't match
-    amount_pattern = r"(Rs\.|INR|Rs|Amount:)\s*([0-9,.]+)"
-    date_patterns = [
-        r"(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})",  # DD-MM-YYYY or DD/MM/YYYY
-        r"Date:\s*(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})",  # Date: DD MMM YYYY
-        r"Date & Time:\s*(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})",  # Date & Time: DD-MM-YYYY
-    ]
-    account_pattern = r"(A/c|account|card) (?:no\.|number:)?\s*([A-Z]{2}\d{4})"
-    recipient_pattern = r"(at|to|Info:|merchant)\s+([A-Z0-9_]+(?:[/\\]?[A-Z0-9_]+)?)"
-    time_pattern = r"(\d{1,2}:\d{2}:\d{2})"
-
-    # Use regex fallbacks to extract information
-    # Extract amount
-    amount_match = re.search(amount_pattern, cleaned_body, re.IGNORECASE)
-    if amount_match:
-        default_values["amount"] = amount_match.group(2).replace(",", "")
-
-    # Extract date
-    for pattern in date_patterns:
-        date_match = re.search(pattern, cleaned_body, re.IGNORECASE)
-        if date_match:
-            # Preserve original date format (with slashes if present)
-            default_values["date"] = date_match.group(1)
-            break
-
-    # Extract account number
-    account_match = re.search(account_pattern, cleaned_body, re.IGNORECASE)
-    if account_match:
-        default_values["account_number"] = account_match.group(2)
-
-    # Extract recipient
-    recipient_match = re.search(recipient_pattern, cleaned_body, re.IGNORECASE)
-    if recipient_match:
-        default_values["recipient"] = recipient_match.group(2).strip()
-
-    # Extract transaction time
-    time_match = re.search(time_pattern, cleaned_body)
-    if time_match:
-        default_values["transaction_time"] = time_match.group(1)
-
-    # Check if API key is available
-    api_key = os.environ.get("GEMINI_API_KEY")
+    # Check if API key is available from Global Configuration Settings
+    api_key = get_gemini_api_key_from_config()
     if not api_key:
-        logging.warning(
-            "Gemini API key not found in environment variables. Using regex fallback."
-        )
-        return default_values
+        # Fallback to environment variable
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            logging.warning(
+                "Gemini API key not found in Global Configuration Settings or environment variables. Using regex fallback."
+            )
+            return default_values
 
     try:
-        # Attempt to use the Gemini API, but it might not be available in testing
-        # Log and return our regex-based results instead
-        logging.info(
-            "Using regex fallback since Gemini API calls are problematic in tests"
+        # Configure the Gemini API
+        client = genai.Client(api_key=api_key)
+
+        # Few-shot examples
+        examples = [
+            {
+                "email": """Your HDFC Bank Credit Card ending 1234 was used for Rs.2,500.00 at AMAZON RETAIL INDIA on 2024-01-15 17:45:32. If not done by you, call 18002586161.""",
+                "extraction": {
+                    "amount": "2500.00",
+                    "date": "2024-01-15",
+                    "transaction_time": "17:45:32",
+                    "account_number": "XX1234",
+                    "recipient": "AMAZON RETAIL INDIA",
+                },
+            },
+            {
+                "email": """SBI Transaction Alert: Your account XX7890 has been debited by INR 1,200 on 12-Mar-2024 at 09:30:45 for payment to FLIPKART PVT LTD.""",
+                "extraction": {
+                    "amount": "1200",
+                    "date": "12-Mar-2024",
+                    "transaction_time": "09:30:45",
+                    "account_number": "XX7890",
+                    "recipient": "FLIPKART PVT LTD",
+                },
+            },
+            {
+                "email": """ICICI Bank: Rs 350.75 debited from your a/c XX5678 on 22 Apr 2024 for POS tx at SWIGGY. Avl Bal: Rs.12,456.80""",
+                "extraction": {
+                    "amount": "350.75",
+                    "date": "22 Apr 2024",
+                    "transaction_time": "Unknown",
+                    "account_number": "XX5678",
+                    "recipient": "SWIGGY",
+                },
+            },
+            {
+                "email": """Your ICICI Bank Credit Card XX9005 has been used for a transaction of USD 16.52 on May 11, 2025 at 12:00:54. Info: SQSP* INV181442393.""",
+                "extraction": {
+                    "amount": "16.52",
+                    "date": "May 11, 2025",
+                    "transaction_time": "12:00:54",
+                    "account_number": "XX9005",
+                    "recipient": "SQSP* INV181442393",
+                },
+            },
+        ]
+
+        # Format examples for the prompt
+        examples_text = ""
+        for idx, example in enumerate(examples):
+            examples_text += f"\nExample {idx+1}:\nEmail: {example['email']}\n"
+            examples_text += f"Extraction: {json.dumps(example['extraction'], indent=2)}\n"
+
+        # Prepare the prompt with few-shot examples
+        prompt = f"""You are a specialized financial email parser. Extract transaction details from bank notification emails.
+
+Extract the following details from bank transaction emails:
+- Amount (in INR/Rs or USD format, return only the number)
+- Date (in any format)
+- Transaction time (in HH:MM:SS format if available)
+- Account number (masked as XXnnnn)
+- Recipient/merchant name
+
+Here are some examples of how to extract this information correctly:{examples_text}
+
+Now extract details from this new email:
+{cleaned_body}
+
+Return ONLY a valid JSON object with these fields: "amount", "date", "transaction_time", "account_number", "recipient"
+
+If any field cannot be found with high confidence, use "Unknown" as its value.
+
+Follow these rules strictly:
+1. Extract only the requested fields.
+2. Return values EXACTLY as they appear in the email, following the format shown in the examples.
+3. For amount, extract only the numeric value without currency symbols or commas.
+4. DO NOT make up or infer values not clearly stated in the email."""
+
+        # Generate response using the Gemini model
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=prompt,
+            config={
+                "temperature": 0.2,
+                "top_p": 0.9,
+                "response_mime_type": "application/json",
+            },
         )
-        return default_values
+
+        # Try to extract JSON from the response
+        try:
+            content = response.text
+            # Attempt to parse the JSON response
+            extracted_data = json.loads(content)
+
+            # Ensure all required fields are present with proper type checking
+            result_data = {}
+            required_fields = [
+                "amount",
+                "date",
+                "transaction_time",
+                "account_number",
+                "recipient",
+            ]
+
+            for field in required_fields:
+                # Check if field exists and has a string value
+                if field in extracted_data and isinstance(extracted_data[field], str):
+                    result_data[field] = extracted_data[field]
+                else:
+                    result_data[field] = "Unknown"
+
+            return result_data
+
+        except (json.JSONDecodeError, IndexError, AttributeError, TypeError) as e:
+            logging.error(f"Failed to parse Gemini response: {e}")
+            logging.debug(
+                f"Raw response: {response.text if hasattr(response, 'text') else str(response)}"
+            )
+            return default_values
+
     except Exception as e:
         logging.error(f"Error calling Gemini API: {e}")
         return default_values
@@ -562,6 +584,7 @@ if __name__ == "__main__":
         # Read email from file
         with open(sys.argv[1], "r", encoding="utf-8") as f:
             email_text = f.read()
+
         # Process with pure LLM approach
         msg = email.message_from_string(email_text)
         if msg.is_multipart():
@@ -601,18 +624,21 @@ Date: Mon, 10 Apr 2023 13:45:22 +0530
 
 Dear Customer,
 
-Thank you for using your credit card no. XX1234. Your ICICI Bank Credit Card has been debited with INR 1,235.50 at AMAZON RETAIL INDIA on 10-04-2023 at 13:41:20.
+Thank you for using your credit card no. XX1234.
+
+Your ICICI Bank Credit Card has been debited with INR 1,235.50 at AMAZON RETAIL INDIA on 10-04-2023 at 13:41:20.
 
 Transaction Info: UPI/P2M/123456/AMAZON
 
 If you have not authorized this transaction, please call our customer service immediately.
 
 Regards,
-ICICI Bank
-"""
+ICICI Bank"""
+
         print("\nProcessing sample email...")
         msg = email.message_from_string(sample_email)
         body = msg.get_payload(decode=True).decode(errors="replace")
+
         llm_results = extract_transaction_details_pure_llm(body)
         for field, value in llm_results.items():
             print(f"  {field}: {value}")

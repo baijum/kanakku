@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Email processor for automated email parsing and transaction creation.
+Adapted from the working main.py implementation.
 """
 
 import os
@@ -34,6 +35,13 @@ from sqlalchemy.orm import sessionmaker
 from cryptography.fernet import Fernet
 import base64
 
+# Import the working banktransactions modules
+from banktransactions.imap_client import get_bank_emails
+from banktransactions.email_parser import extract_transaction_details_pure_llm
+from banktransactions.transaction_data import construct_transaction_data
+from banktransactions.api_client import send_transaction_to_api
+from banktransactions.processed_ids import load_processed_gmail_msgids, save_processed_gmail_msgids
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,23 +49,29 @@ def get_encryption_key_standalone():
     """
     Get the encryption key from environment variables without Flask context.
     """
+    logger.debug("Getting encryption key from environment variables")
     key = os.environ.get("ENCRYPTION_KEY")
     if not key:
         logger.warning("No encryption key found in environment. Using temporary key.")
+        logger.debug("Generating temporary encryption key")
         key = Fernet.generate_key().decode()
 
     # Ensure the key is properly formatted for Fernet
     if not key.endswith("="):
+        logger.debug("Padding encryption key for proper formatting")
         # Pad the key if necessary
         key = key + "=" * (-len(key) % 4)
 
     try:
         # Attempt to decode and validate the key
+        logger.debug("Validating encryption key format")
         decoded_key = base64.urlsafe_b64decode(key)
         if len(decoded_key) != 32:
             raise ValueError("Invalid key length")
+        logger.debug("Encryption key validation successful")
     except Exception as e:
         logger.error(f"Invalid encryption key: {str(e)}")
+        logger.debug("Generating new temporary key due to validation failure")
         # Generate a temporary key for this session
         key = Fernet.generate_key().decode()
 
@@ -68,27 +82,35 @@ def decrypt_value_standalone(encrypted_value):
     """
     Decrypt an encrypted value without Flask context.
     """
+    logger.debug(f"Attempting to decrypt value (length: {len(encrypted_value) if encrypted_value else 0})")
     if not encrypted_value:
+        logger.debug("No encrypted value provided, returning None")
         return None
 
     key = get_encryption_key_standalone()
     f = Fernet(key.encode() if isinstance(key, str) else key)
     try:
+        logger.debug("Decrypting value using Fernet")
         decrypted_data = f.decrypt(encrypted_value.encode())
-        return decrypted_data.decode()
+        decrypted_result = decrypted_data.decode()
+        logger.debug("Value decryption successful")
+        return decrypted_result
     except Exception as e:
         logger.error(f"Failed to decrypt value: {str(e)}")
+        logger.debug(f"Decryption failed with encrypted_value type: {type(encrypted_value)}")
         return None
 
 
 def process_user_emails_standalone(user_id: int) -> Dict:
     """
-    Standalone function to process emails for a user.
+    Standalone function to process emails for a user using the proven working logic from main.py.
     This creates its own database session without Flask app context.
     """
+    logger.debug(f"Starting email processing for user_id: {user_id}")
     try:
         # Import models and utilities directly without Flask context
         # We need to set up the database models manually
+        logger.debug("Importing SQLAlchemy components and setting up models")
         from sqlalchemy.ext.declarative import declarative_base
         from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey
         
@@ -112,175 +134,114 @@ def process_user_emails_standalone(user_id: int) -> Dict:
             created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
             updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-        # Import other required modules
-        from banktransactions.imap_client import IMAPClient
-        from banktransactions.email_parser import (
-            extract_transaction_details_pure_llm,
-            detect_currency,
-            convert_currency,
-        )
-        from banktransactions.api_client import APIClient
-        
         # Create database session
+        logger.debug("Setting up database connection")
         db_url = os.getenv("DATABASE_URL")
         if not db_url:
+            logger.error("DATABASE_URL environment variable not set")
             raise ValueError("DATABASE_URL environment variable not set")
 
+        logger.debug(f"Creating database engine with URL: {db_url[:20]}...")
         engine = create_engine(db_url)
         Session = sessionmaker(bind=engine)
         db_session = Session()
+        logger.debug("Database session created successfully")
 
         try:
-            # Process emails directly here instead of using EmailProcessor
-            # Get the current job
+            # Get the current job (optional for manual testing)
             job = get_current_job()
-            if not job:
-                raise Exception("No job context found")
+            logger.debug(f"Current RQ job: {job.id if job else 'None (manual execution)'}")
 
             # Get user's email configuration
+            logger.debug(f"Fetching email configuration for user_id: {user_id}")
             config = (
                 db_session.query(EmailConfiguration).filter_by(user_id=user_id).first()
             )
             if not config or not config.is_enabled:
+                logger.debug(f"Email configuration not found or disabled for user_id: {user_id}")
                 return {
                     "status": "skipped",
                     "reason": "configuration_not_found_or_disabled",
                 }
 
+            logger.debug(f"Found email configuration: server={config.imap_server}, port={config.imap_port}, email={config.email_address}")
+            logger.debug(f"Last check time: {config.last_check_time}")
+
             # Decrypt the app password using standalone function
+            logger.debug("Decrypting app password")
             decrypted_password = decrypt_value_standalone(config.app_password)
             if not decrypted_password:
+                logger.error("Failed to decrypt app password")
                 return {
                     "status": "error",
                     "error": "Failed to decrypt app password",
                 }
+            logger.debug("App password decrypted successfully")
 
-            # Initialize clients
-            imap_client = IMAPClient(
-                server=config.imap_server,
-                port=config.imap_port,
+            # Load processed Gmail message IDs (using the working implementation)
+            logger.debug("Loading processed Gmail message IDs")
+            processed_gmail_msgids = load_processed_gmail_msgids()
+            initial_msgid_count = len(processed_gmail_msgids)
+            logger.debug(f"Loaded {initial_msgid_count} previously processed Gmail message IDs")
+
+            # Get bank email addresses from sample emails or use default
+            bank_emails = ["alerts@axisbank.com"]  # Default
+            if config.sample_emails:
+                try:
+                    sample_emails = json.loads(config.sample_emails)
+                    # Extract bank emails from sample emails if available
+                    bank_emails_from_samples = []
+                    for sample in sample_emails:
+                        if isinstance(sample, dict) and "from" in sample:
+                            bank_emails_from_samples.append(sample["from"])
+                    if bank_emails_from_samples:
+                        bank_emails = list(set(bank_emails_from_samples))  # Remove duplicates
+                        logger.debug(f"Using bank emails from samples: {bank_emails}")
+                except json.JSONDecodeError:
+                    logger.warning(f"Failed to parse sample emails for user {config.user_id}")
+                    logger.debug(f"Sample emails JSON parse error for: {config.sample_emails[:100]}...")
+
+            logger.debug(f"Processing emails from bank addresses: {bank_emails}")
+
+            # Use the proven working email processing logic from main.py
+            logger.debug("Calling get_bank_emails function with working implementation")
+            updated_msgids, newly_processed_count = get_bank_emails(
                 username=config.email_address,
                 password=decrypted_password,
+                bank_email_list=bank_emails,
+                processed_gmail_msgids=processed_gmail_msgids
             )
-            api_client = APIClient()
 
-            try:
-                # Connect to email server
-                imap_client.connect()
+            logger.debug(f"Email processing completed: {newly_processed_count} new transactions processed")
 
-                # Get unread emails since last check
-                last_check = config.last_check_time or datetime.min
-                emails = imap_client.get_unread_emails(since=last_check)
+            # Save updated Gmail Message IDs if any new ones were processed
+            if newly_processed_count > 0 or processed_gmail_msgids is not None:
+                logger.debug("Saving updated processed Gmail message IDs")
+                save_processed_gmail_msgids(updated_msgids)
 
-                processed_count = 0
-                errors = []
+            # Update last check time
+            logger.debug("Updating last check time in configuration")
+            config.last_check_time = datetime.now(timezone.utc)
+            db_session.commit()
+            logger.debug("Configuration updated and committed")
 
-                for email in emails:
-                    try:
-                        # Extract transaction details using the improved LLM-based parser
-                        transaction_data = _extract_transaction_data(email, config)
-
-                        if transaction_data and transaction_data.get("amount") != "Unknown":
-                            # Create transaction via API
-                            response = api_client.create_transaction(
-                                user_id=user_id, transaction_data=transaction_data
-                            )
-
-                            if response.get("success"):
-                                processed_count += 1
-                                # Mark email as processed
-                                imap_client.mark_as_processed(email["id"])
-                                logger.info(
-                                    f"Successfully processed email {email['id']} for user {user_id}"
-                                )
-                            else:
-                                error_msg = f"Failed to create transaction for email {email['id']}: {response.get('error', 'Unknown error')}"
-                                logger.error(error_msg)
-                                errors.append(error_msg)
-                        else:
-                            logger.info(
-                                f"Skipping email {email['id']} - no valid transaction data found"
-                            )
-
-                    except Exception as e:
-                        logger.error(f"Error processing email {email['id']}: {str(e)}")
-                        errors.append(f"Error processing email {email['id']}: {str(e)}")
-
-                # Update last check time
-                config.last_check_time = datetime.now(timezone.utc)
-                db_session.commit()
-
-                return {
-                    "status": "success",
-                    "processed_count": processed_count,
-                    "errors": errors,
-                }
-
-            finally:
-                if imap_client:
-                    imap_client.disconnect()
+            result = {
+                "status": "success",
+                "processed_count": newly_processed_count,
+                "errors": [],
+            }
+            logger.debug(f"Email processing completed successfully: {result}")
+            return result
 
         finally:
             if db_session:
+                logger.debug("Closing database session")
                 db_session.close()
 
     except Exception as e:
         logger.error(f"Error in process_user_emails_standalone: {str(e)}")
+        logger.debug(f"Exception details: {type(e).__name__}: {str(e)}")
         return {"status": "error", "error": str(e)}
 
 
-def _extract_transaction_data(email: Dict, config) -> Optional[Dict]:
-    """Extract transaction data from email using the improved LLM-based parser."""
-    try:
-        # Import here to ensure it's available
-        from banktransactions.email_parser import extract_transaction_details_pure_llm
-        
-        # Clean the email body
-        body = email["body"]
 
-        # Get sample emails for few-shot prompting
-        sample_emails = []
-        if config.sample_emails:
-            try:
-                sample_emails = json.loads(config.sample_emails)
-            except json.JSONDecodeError:
-                logger.warning(
-                    f"Failed to parse sample emails for user {config.user_id}"
-                )
-
-        # Use the improved LLM-based parser with few-shot examples
-        transaction_data = extract_transaction_details_pure_llm(
-            body, sample_emails=sample_emails
-        )
-
-        # Add additional metadata
-        transaction_data.update(
-            {
-                "email_id": email["id"],
-                "email_date": (
-                    email["date"].isoformat() if email.get("date") else None
-                ),
-                "email_subject": email.get("subject", ""),
-                "email_from": email.get("from", ""),
-            }
-        )
-
-        return transaction_data
-
-    except Exception as e:
-        logger.error(f"Error in _extract_transaction_data: {str(e)}")
-        return None
-
-
-# Legacy EmailProcessor class for backward compatibility with tests
-class EmailProcessor:
-    def __init__(self, db_session: Session):
-        self.db = db_session
-
-    def process_user_emails(self, user_id: int) -> Dict:
-        """Legacy method that delegates to the standalone function."""
-        return process_user_emails_standalone(user_id)
-
-    def _extract_transaction_data(self, email: Dict, config) -> Optional[Dict]:
-        """Legacy method that delegates to the standalone function."""
-        return _extract_transaction_data(email, config)

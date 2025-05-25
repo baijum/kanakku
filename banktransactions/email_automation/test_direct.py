@@ -50,7 +50,7 @@ def test_direct_email_processing():
         from sqlalchemy.orm import sessionmaker
         from app.models import EmailConfiguration
         from app.utils.encryption import decrypt_value
-        from banktransactions.imap_client import IMAPClient
+        from banktransactions.imap_client import CustomIMAPClient
         from banktransactions.email_parser import extract_transaction_details_pure_llm
         from banktransactions.api_client import APIClient
         
@@ -92,7 +92,7 @@ def test_direct_email_processing():
             print("✓ Successfully decrypted app password")
 
             # Initialize IMAP client
-            imap_client = IMAPClient(
+            imap_client = CustomIMAPClient(
                 server=config.imap_server,
                 port=config.imap_port,
                 username=config.email_address,
