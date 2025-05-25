@@ -2,7 +2,8 @@ import re
 
 from flask import current_app
 
-from ..models import GlobalConfiguration, db
+from ..extensions import db
+from ..models import GlobalConfiguration
 from .encryption import decrypt_value, encrypt_value
 
 

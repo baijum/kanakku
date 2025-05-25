@@ -1,6 +1,7 @@
 from datetime import date
 
-from app.models import Account, Book, Transaction, db
+from app.extensions import db
+from app.models import Account, Book, Transaction
 
 
 def test_get_accounts(authenticated_client, user, app):

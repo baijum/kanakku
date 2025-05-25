@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 from flask import Blueprint, g, jsonify, request
 
 from .auth import api_token_required
-from .models import EmailConfiguration, db
+from .extensions import db
+from .models import EmailConfiguration
 from .utils.encryption import encrypt_value
 
 email_automation = Blueprint("email_automation", __name__)

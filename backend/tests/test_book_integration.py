@@ -3,7 +3,8 @@ from datetime import date
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models import Account, Book, Transaction, User, db
+from app.extensions import db
+from app.models import Account, Book, Transaction, User
 
 
 @pytest.fixture

@@ -1,21 +1,26 @@
-# Import all models from the new modular structure
-from .models import (
-    Account,
+"""Models package - imports all models for easy access"""
+
+# Import base model
+from .account import Account
+from .base import BaseModel
+from .book import Book
+
+# Import other models
+from .other import (
     ApiToken,
     BankAccountMapping,
-    BaseModel,
-    Book,
     EmailConfiguration,
     ExpenseAccountMapping,
     GlobalConfiguration,
     Preamble,
     ProcessedGmailMessage,
-    SearchVectorType,
-    Transaction,
-    User,
 )
+from .transaction import SearchVectorType, Transaction
 
-# Re-export all models for backward compatibility
+# Import core models
+from .user import User
+
+# Export all models for easy importing
 __all__ = [
     "BaseModel",
     "User",

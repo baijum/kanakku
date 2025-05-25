@@ -3,8 +3,8 @@ import logging
 from flask import Blueprint, g, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
-from .extensions import api_token_required
-from .models import Preamble, db
+from .extensions import api_token_required, db
+from .models import Preamble
 
 preamble = Blueprint("preamble", __name__)
 

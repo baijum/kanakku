@@ -3,7 +3,8 @@ from datetime import date
 import pytest
 from flask import current_app
 
-from app.models import Account, Book, Transaction, db
+from app.extensions import db
+from app.models import Account, Book, Transaction
 
 
 class TestTransactionSearch:

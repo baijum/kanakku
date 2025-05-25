@@ -39,11 +39,14 @@ def test_wrapper():
         print(f"✓ Job enqueued: {job.id}")
         print(f"✓ Queue length: {len(queue)}")
 
-        return True
+        # Use assertions instead of returning values
+        assert job is not None, "Job should be created successfully"
+        assert job.id is not None, "Job should have an ID"
+        assert len(queue) > 0, "Queue should contain the enqueued job"
 
     except Exception as e:
         print(f"✗ Error: {e}")
-        return False
+        assert False, f"Test failed with error: {e}"
 
 
 if __name__ == "__main__":

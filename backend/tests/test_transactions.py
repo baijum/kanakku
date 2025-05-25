@@ -2,7 +2,8 @@ from datetime import date, datetime
 
 import pytest
 
-from app.models import Account, Book, Transaction, db
+from app.extensions import db
+from app.models import Account, Book, Transaction
 
 # Removed local app fixture
 

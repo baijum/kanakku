@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models import Account, Book, Transaction, db
+from app.extensions import db
+from app.models import Account, Book, Transaction
 
 
 def test_get_recent_transactions(authenticated_client, user):

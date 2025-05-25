@@ -26,8 +26,10 @@ from app.extensions import (
     csrf_exempt,
     limiter,
 )
-from app.models import User, db
+from app.models import User
 from app.utils.email_utils import send_password_reset_email
+
+from .extensions import db
 
 auth = Blueprint("auth", __name__)
 

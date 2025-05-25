@@ -6,7 +6,8 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from flask import g
 
-from app.models import EmailConfiguration, db
+from app.extensions import db
+from app.models import EmailConfiguration
 from app.utils.encryption import decrypt_value, encrypt_value
 
 

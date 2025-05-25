@@ -6,9 +6,9 @@ from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy import func, or_, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models import Account, Book, Transaction, db
+from app.models import Account, Book, Transaction
 
-from .extensions import api_token_required
+from .extensions import api_token_required, db
 
 transactions = Blueprint("transactions", __name__)
 

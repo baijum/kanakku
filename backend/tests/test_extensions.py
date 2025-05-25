@@ -52,7 +52,7 @@ def test_api_token_expiry_validation(client, user):
         - timedelta(hours=1),  # Expired 1 hour ago
     )
 
-    from app.models import db
+    from app.extensions import db
 
     db.session.add(expired_token)
     db.session.commit()

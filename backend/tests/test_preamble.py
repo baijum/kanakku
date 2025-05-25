@@ -2,7 +2,8 @@ from unittest.mock import patch
 
 from sqlalchemy.exc import IntegrityError
 
-from app.models import Preamble, db
+from app.extensions import db
+from app.models import Preamble
 
 
 def test_get_preambles(authenticated_client, user, app):

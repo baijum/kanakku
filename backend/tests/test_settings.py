@@ -1,6 +1,7 @@
 from cryptography.fernet import Fernet
 
-from app.models import GlobalConfiguration, User, db
+from app.extensions import db
+from app.models import GlobalConfiguration, User
 from app.utils.encryption import decrypt_value, encrypt_value
 
 

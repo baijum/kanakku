@@ -39,7 +39,7 @@ def test_job_deduplication():
         print("✅ Connected to Redis")
     except Exception as e:
         print(f"❌ Failed to connect to Redis: {e}")
-        return False
+        assert False, f"Failed to connect to Redis: {e}"
 
     # Test user ID
     test_user_id = 999
@@ -64,11 +64,10 @@ def test_job_deduplication():
     job_id_2 = generate_job_id(test_user_id, timestamp)
     print(f"   Job ID 1: {job_id_1}")
     print(f"   Job ID 2: {job_id_2}")
-    print(
-        f"   IDs match: {job_id_1 == job_id_2} ✅"
-        if job_id_1 == job_id_2
-        else "   IDs don't match: ❌"
-    )
+    assert (
+        job_id_1 == job_id_2
+    ), "Job IDs should be consistent for same user and timestamp"
+    print("   IDs match: ✅")
 
     # Test 3: Queue first job
     print(f"\n3. Queueing first job for user {test_user_id}...")
@@ -84,20 +83,16 @@ def test_job_deduplication():
     status = get_user_job_status(redis_conn, test_user_id)
     print(f"   Status after queueing: {status}")
 
-    if status["has_any_pending"]:
-        print("   ✅ Job correctly detected as pending")
-    else:
-        print("   ❌ Job not detected as pending")
+    assert status["has_any_pending"], "Job should be detected as pending"
+    print("   ✅ Job correctly detected as pending")
 
     # Test 5: Try to queue duplicate job
     print("\n5. Testing deduplication - trying to queue duplicate job...")
     has_pending = has_user_job_pending(redis_conn, test_user_id)
     print(f"   Has pending job: {has_pending}")
 
-    if has_pending:
-        print("   ✅ Deduplication working - would prevent duplicate job")
-    else:
-        print("   ❌ Deduplication not working - would allow duplicate job")
+    assert has_pending, "Deduplication should detect pending job"
+    print("   ✅ Deduplication working - would prevent duplicate job")
 
     # Test 6: Queue length should remain the same
     print("\n6. Verifying queue length hasn't increased...")
@@ -115,7 +110,6 @@ def test_job_deduplication():
         print(f"   ⚠️  Error cleaning up: {e}")
 
     print("\n✅ Job deduplication test completed!")
-    return True
 
 
 def test_individual_functions():

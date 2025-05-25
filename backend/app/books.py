@@ -1,8 +1,8 @@
 from flask import Blueprint, current_app, g, jsonify, request
 
-from app.models import Book, db
+from app.models import Book
 
-from .extensions import api_token_required
+from .extensions import api_token_required, db
 
 books = Blueprint("books", __name__)
 

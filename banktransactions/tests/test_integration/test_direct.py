@@ -78,20 +78,15 @@ def test_direct_email_processing():
                 db_session.query(EmailConfiguration).filter_by(user_id=user_id).first()
             )
             if not config or not config.is_enabled:
-                return {
-                    "status": "skipped",
-                    "reason": "configuration_not_found_or_disabled",
-                }
+                print("⚠ Email processing skipped: configuration not found or disabled")
+                return
 
             print(f"Found email config for {config.email_address}")
 
             # Decrypt the app password
             decrypted_password = decrypt_value(config.app_password)
             if not decrypted_password:
-                return {
-                    "status": "error",
-                    "error": "Failed to decrypt app password",
-                }
+                assert False, "Failed to decrypt app password"
 
             print("✓ Successfully decrypted app password")
 

@@ -2,7 +2,8 @@ from datetime import date, timedelta
 
 import pytest
 
-from app.models import Account, Book, Transaction, db
+from app.extensions import db
+from app.models import Account, Book, Transaction
 
 
 def test_get_balance(authenticated_client, setup_test_data):

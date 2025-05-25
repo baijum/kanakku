@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, g, jsonify, request
 
-from .extensions import api_token_required
-from .models import Account, Transaction, db
+from .extensions import api_token_required, db
+from .models import Account, Transaction
 
 reports = Blueprint("reports", __name__)
 
