@@ -269,6 +269,14 @@ def get_gemini_api_key_from_config():
         # Try to use Flask context first (if available)
         try:
             from flask import current_app
+            import sys
+            import os
+            
+            # Add backend directory to Python path
+            backend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'backend')
+            if backend_path not in sys.path:
+                sys.path.insert(0, backend_path)
+            
             from app.utils.config_manager import get_gemini_api_token
             
             # Check if we're in Flask context
