@@ -20,6 +20,7 @@ def get_encryption_key():
             "No encryption key found in environment. Using temporary key."
         )
         key = Fernet.generate_key().decode()
+        return key
 
     # Ensure the key is properly formatted for Fernet
     if not key.endswith("="):
@@ -31,12 +32,12 @@ def get_encryption_key():
         decoded_key = base64.urlsafe_b64decode(key)
         if len(decoded_key) != 32:
             raise ValueError("Invalid key length")
+        return key
     except Exception as e:
         current_app.logger.error(f"Invalid encryption key: {str(e)}")
         # Generate a temporary key for this session
         key = Fernet.generate_key().decode()
-
-    return key
+        return key
 
 
 def encrypt_value(value):

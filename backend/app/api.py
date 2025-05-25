@@ -21,19 +21,23 @@ def get_csrf_token():
 
     # Log data for debugging
     current_app.logger.info(f"Generating CSRF token: {token[:10]}...")
-    current_app.logger.info(f"Frontend URL: {current_app.config['FRONTEND_URL']}")
+    
+    # Get domain from frontend URL for cookie (if configured)
+    frontend_url = current_app.config.get("FRONTEND_URL")
+    if frontend_url:
+        current_app.logger.info(f"Frontend URL: {frontend_url}")
+        try:
+            parsed_url = urlparse(frontend_url)
+            domain = parsed_url.netloc
+            if ":" in domain:  # Remove port if present
+                domain = domain.split(":")[0]
 
-    # Get domain from frontend URL for cookie
-    try:
-        frontend_url = current_app.config.get("FRONTEND_URL", "")
-        parsed_url = urlparse(frontend_url)
-        domain = parsed_url.netloc
-        if ":" in domain:  # Remove port if present
-            domain = domain.split(":")[0]
-
-        current_app.logger.info(f"Setting cookie domain to: {domain}")
-    except Exception as e:
-        current_app.logger.error(f"Error parsing frontend URL: {e}")
+            current_app.logger.info(f"Setting cookie domain to: {domain}")
+        except Exception as e:
+            current_app.logger.error(f"Error parsing frontend URL: {e}")
+            domain = None
+    else:
+        current_app.logger.info("No frontend URL configured")
         domain = None
 
     # Set CSRF token in a cookie as well for better cross-domain support

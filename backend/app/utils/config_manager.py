@@ -157,7 +157,11 @@ def get_gemini_api_token():
     Helper function to retrieve the Google Gemini API token.
     Returns None if no token is configured.
     """
-    return get_configuration("GEMINI_API_TOKEN")
+    try:
+        return get_configuration("GEMINI_API_TOKEN")
+    except Exception as e:
+        current_app.logger.error(f"Error retrieving Gemini API token: {str(e)}")
+        return None
 
 
 def set_gemini_api_token(token, description=None):

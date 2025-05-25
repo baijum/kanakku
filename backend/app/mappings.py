@@ -1,21 +1,17 @@
-from flask import Blueprint, current_app, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask import Blueprint, current_app, g, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
-from .auth import get_current_user
-from .extensions import db
+from .extensions import api_token_required, db
 from .models import BankAccountMapping, Book, ExpenseAccountMapping
 
 mappings_bp = Blueprint("mappings", __name__)
 
 
 @mappings_bp.route("/api/v1/bank-account-mappings", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_bank_account_mappings():
     """Get all bank account mappings for the current user's active book"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
     book_id = request.args.get("book_id", current_user.active_book_id)
     if not book_id:
@@ -32,14 +28,16 @@ def get_bank_account_mappings():
 
 
 @mappings_bp.route("/api/v1/bank-account-mappings", methods=["POST"])
-@jwt_required()
+@api_token_required
 def create_bank_account_mapping():
     """Create a new bank account mapping"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({"error": "Invalid JSON data"}), 400
+    
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -75,12 +73,10 @@ def create_bank_account_mapping():
 
 
 @mappings_bp.route("/api/v1/bank-account-mappings/<int:mapping_id>", methods=["PUT"])
-@jwt_required()
+@api_token_required
 def update_bank_account_mapping(mapping_id):
     """Update an existing bank account mapping"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
     # Find mapping and check ownership
     mapping = BankAccountMapping.query.filter_by(
@@ -89,7 +85,11 @@ def update_bank_account_mapping(mapping_id):
     if not mapping:
         return jsonify({"error": "Mapping not found or unauthorized"}), 404
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({"error": "Invalid JSON data"}), 400
+    
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -111,12 +111,10 @@ def update_bank_account_mapping(mapping_id):
 
 
 @mappings_bp.route("/api/v1/bank-account-mappings/<int:mapping_id>", methods=["DELETE"])
-@jwt_required()
+@api_token_required
 def delete_bank_account_mapping(mapping_id):
     """Delete a bank account mapping"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
     mapping = BankAccountMapping.query.filter_by(
         id=mapping_id, user_id=current_user.id
@@ -135,12 +133,10 @@ def delete_bank_account_mapping(mapping_id):
 
 
 @mappings_bp.route("/api/v1/expense-account-mappings", methods=["GET"])
-@jwt_required()
+@api_token_required
 def get_expense_account_mappings():
     """Get all expense account mappings for the current user's active book"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
     book_id = request.args.get("book_id", current_user.active_book_id)
     if not book_id:
@@ -159,14 +155,16 @@ def get_expense_account_mappings():
 
 
 @mappings_bp.route("/api/v1/expense-account-mappings", methods=["POST"])
-@jwt_required()
+@api_token_required
 def create_expense_account_mapping():
     """Create a new expense account mapping"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({"error": "Invalid JSON data"}), 400
+    
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -202,12 +200,10 @@ def create_expense_account_mapping():
 
 
 @mappings_bp.route("/api/v1/expense-account-mappings/<int:mapping_id>", methods=["PUT"])
-@jwt_required()
+@api_token_required
 def update_expense_account_mapping(mapping_id):
     """Update an existing expense account mapping"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
     # Find mapping and check ownership
     mapping = ExpenseAccountMapping.query.filter_by(
@@ -216,7 +212,11 @@ def update_expense_account_mapping(mapping_id):
     if not mapping:
         return jsonify({"error": "Mapping not found or unauthorized"}), 404
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({"error": "Invalid JSON data"}), 400
+    
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -240,12 +240,10 @@ def update_expense_account_mapping(mapping_id):
 @mappings_bp.route(
     "/api/v1/expense-account-mappings/<int:mapping_id>", methods=["DELETE"]
 )
-@jwt_required()
+@api_token_required
 def delete_expense_account_mapping(mapping_id):
     """Delete an expense account mapping"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
     mapping = ExpenseAccountMapping.query.filter_by(
         id=mapping_id, user_id=current_user.id
@@ -267,14 +265,16 @@ def delete_expense_account_mapping(mapping_id):
 
 
 @mappings_bp.route("/api/v1/mappings/import", methods=["POST"])
-@jwt_required()
+@api_token_required
 def import_mappings():
     """Import mappings from TOML-like structure"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception:
+        return jsonify({"error": "Invalid JSON data"}), 400
+    
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -346,12 +346,10 @@ def import_mappings():
 
 
 @mappings_bp.route("/api/v1/mappings/export", methods=["GET"])
-@jwt_required()
+@api_token_required
 def export_mappings():
     """Export mappings to TOML-like structure"""
-    current_user = get_current_user()
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
+    current_user = g.current_user
 
     book_id = request.args.get("book_id", current_user.active_book_id)
     if not book_id:
