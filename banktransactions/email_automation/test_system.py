@@ -129,7 +129,7 @@ def test_banktransactions_imports():
     print("Testing banktransactions imports...")
     try:
         from banktransactions.imap_client import CustomIMAPClient
-        from banktransactions.email_parser import extract_transaction_details_pure_llm
+        from banktransactions.email_parser import extract_transaction_details
         from banktransactions.api_client import APIClient
 
         print("✅ Banktransactions modules imported successfully")

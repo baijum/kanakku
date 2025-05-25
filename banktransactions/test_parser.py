@@ -7,10 +7,10 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from banktransactions.email_parser import extract_transaction_details_pure_llm
+    from banktransactions.email_parser import extract_transaction_details
 except ImportError:
     # Fallback to relative import if running from within the directory
-    from email_parser import extract_transaction_details_pure_llm
+    from email_parser import extract_transaction_details
 
 # Test case for the problematic email format
 test_message = """
@@ -18,7 +18,7 @@ We wish to inform you that your A/c no. XX1648 has been debited with INR 2500.00
 """
 
 # Extract the details
-details = extract_transaction_details_pure_llm(test_message)
+details = extract_transaction_details(test_message)
 
 # Print the results
 print("Extracted Details:")

@@ -10,10 +10,7 @@ import ssl
 # Import from our other modules
 from banktransactions.email_parser import (
     decode_str,
-    extract_with_llm_few_shot,
-    detect_currency,
-    standardize_date_format,
-    convert_currency,
+    extract_transaction_details,
 )
 from banktransactions.api_client import send_transaction_to_api
 
@@ -293,48 +290,9 @@ def get_bank_emails(
                         # Extract transaction details using LLM few-shot approach
                         try:
                             logging.debug("Starting transaction extraction process...")
-                            # Clean the body first
-                            import re
-                            logging.debug("Cleaning email body...")
-                            cleaned_body = re.sub(r"=\s*\n", "", body)
-                            cleaned_body = cleaned_body.replace("=20", " ")
-                            cleaned_body = cleaned_body.replace("=A0", " ")
-                            cleaned_body = cleaned_body.replace("\r", "")
-                            logging.debug(f"Cleaned body length: {len(cleaned_body)} characters")
-                            logging.debug(f"Body preview (first 200 chars): {cleaned_body[:200]}...")
-
-                            # Use the few-shot LLM approach
-                            logging.debug("Calling extract_with_llm_few_shot...")
-                            llm_details = extract_with_llm_few_shot(cleaned_body)
-                            logging.debug(f"LLM extraction result: {llm_details}")
-
-                            # Detect currency
-                            logging.debug("Detecting currency...")
-                            currency = detect_currency(cleaned_body)
-                            logging.debug(f"Detected currency: {currency}")
-                            llm_details["currency"] = currency
-
-                            # Clean up amount field (remove commas)
-                            if llm_details["amount"] != "Unknown":
-                                original_amount = llm_details["amount"]
-                                llm_details["amount"] = llm_details["amount"].replace(",", "")
-                                logging.debug(f"Amount cleaned: {original_amount} -> {llm_details['amount']}")
-
-                            # Post-process date format
-                            if llm_details["date"] != "Unknown":
-                                original_date = llm_details["date"]
-                                llm_details["date"] = standardize_date_format(llm_details["date"])
-                                logging.debug(f"Date standardized: {original_date} -> {llm_details['date']}")
-
-                            # Convert USD to INR if needed
-                            if llm_details["currency"] == "USD" and llm_details["amount"] != "Unknown":
-                                original_amount = llm_details["amount"]
-                                logging.debug(f"Converting USD amount {original_amount} to INR...")
-                                llm_details["amount"] = convert_currency(llm_details["amount"], "USD", "INR")
-                                llm_details["currency"] = "INR"  # Update currency after conversion
-                                logging.debug(f"Currency conversion: {original_amount} USD -> {llm_details['amount']} INR")
-
-                            transaction_details = llm_details
+                            # Use the wrapper function that handles all cleanup and processing
+                            logging.debug("Calling extract_transaction_details_pure_llm...")
+                            transaction_details = extract_transaction_details(body)
                             logging.debug(f"Final transaction details: {transaction_details}")
                             
                             if not transaction_details:

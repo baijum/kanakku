@@ -51,7 +51,7 @@ def test_direct_email_processing():
         from app.models import EmailConfiguration
         from app.utils.encryption import decrypt_value
         from banktransactions.imap_client import CustomIMAPClient
-        from banktransactions.email_parser import extract_transaction_details_pure_llm
+        from banktransactions.email_parser import extract_transaction_details
         from banktransactions.api_client import APIClient
         
         # Test with user ID 1
@@ -135,7 +135,7 @@ def test_direct_email_processing():
                             print("  Warning: Failed to parse sample emails")
 
                     # Use the LLM-based parser
-                    transaction_data = extract_transaction_details_pure_llm(
+                    transaction_data = extract_transaction_details(
                         body, sample_emails=sample_emails
                     )
 

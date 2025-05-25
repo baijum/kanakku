@@ -379,7 +379,7 @@ def get_gemini_api_key_from_config():
         return None
 
 
-def extract_transaction_details_pure_llm(body):
+def extract_transaction_details(body):
     """
     Extract transaction details from email body using only LLM approach,
     with no regex fallback. Returns the same format as other extraction functions.
@@ -397,7 +397,7 @@ def extract_transaction_details_pure_llm(body):
     cleaned_body = cleaned_body.replace("\r", "")
 
     # Use the few-shot LLM approach
-    llm_details = extract_with_llm_few_shot(cleaned_body)
+    llm_details = _extract_with_llm_few_shot(cleaned_body)
 
     # Detect currency
     currency = detect_currency(cleaned_body)
@@ -419,7 +419,7 @@ def extract_transaction_details_pure_llm(body):
     return llm_details
 
 
-def extract_with_llm_few_shot(cleaned_body: str) -> Dict[str, str]:
+def _extract_with_llm_few_shot(cleaned_body: str) -> Dict[str, str]:
     """
     Extract transaction details using Google's Gemini LLM with few-shot examples
 
@@ -601,7 +601,7 @@ if __name__ == "__main__":
 
         # Process with pure LLM approach
         print("Using LLM approach:")
-        llm_results = extract_transaction_details_pure_llm(body)
+        llm_results = extract_transaction_details(body)
         for field, value in llm_results.items():
             print(f"  {field}: {value}")
 
@@ -639,6 +639,6 @@ ICICI Bank"""
         msg = email.message_from_string(sample_email)
         body = msg.get_payload(decode=True).decode(errors="replace")
 
-        llm_results = extract_transaction_details_pure_llm(body)
+        llm_results = extract_transaction_details(body)
         for field, value in llm_results.items():
             print(f"  {field}: {value}")
