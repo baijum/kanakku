@@ -33,12 +33,7 @@ try:
     
 except ImportError as e:
     logging.warning(f"Could not import Flask app or database service: {e}")
-    logging.warning("Falling back to file-based approach")
-    # Fall back to the original file-based approach
-    from processed_ids import (
-        load_processed_gmail_msgids as file_load_processed_gmail_msgids,
-        save_processed_gmail_msgids as file_save_processed_gmail_msgids,
-    )
+    logging.warning("Database service not available - processed IDs functionality will be limited")
     app = None
 
 
@@ -62,12 +57,9 @@ def load_processed_gmail_msgids(user_id: Optional[int] = None, filepath: Optiona
             logging.error(f"Error loading processed Gmail Message IDs from database for user {user_id}: {e}")
             logging.warning("Falling back to file-based approach")
     
-    # Fall back to file-based approach
-    if 'file_load_processed_gmail_msgids' in globals():
-        return file_load_processed_gmail_msgids(filepath)
-    else:
-        logging.error("Neither database nor file-based approach available")
-        return set()
+    # Database not available and no fallback
+    logging.error("Database service not available and no fallback method")
+    return set()
 
 
 def save_processed_gmail_msgids(msgids: Set[str], user_id: Optional[int] = None, filepath: Optional[str] = None) -> bool:
@@ -93,13 +85,9 @@ def save_processed_gmail_msgids(msgids: Set[str], user_id: Optional[int] = None,
             logging.error(f"Error saving processed Gmail Message IDs to database for user {user_id}: {e}")
             logging.warning("Falling back to file-based approach")
     
-    # Fall back to file-based approach
-    if 'file_save_processed_gmail_msgids' in globals():
-        file_save_processed_gmail_msgids(msgids, filepath)
-        return True
-    else:
-        logging.error("Neither database nor file-based approach available")
-        return False
+    # Database not available and no fallback
+    logging.error("Database service not available and no fallback method")
+    return False
 
 
 def save_processed_gmail_msgid(gmail_message_id: str, user_id: Optional[int] = None) -> bool:
