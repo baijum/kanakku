@@ -37,7 +37,7 @@ def create_bank_account_mapping():
         data = request.get_json()
     except Exception:
         return jsonify({"error": "Invalid JSON data"}), 400
-    
+
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -89,7 +89,7 @@ def update_bank_account_mapping(mapping_id):
         data = request.get_json()
     except Exception:
         return jsonify({"error": "Invalid JSON data"}), 400
-    
+
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -164,7 +164,7 @@ def create_expense_account_mapping():
         data = request.get_json()
     except Exception:
         return jsonify({"error": "Invalid JSON data"}), 400
-    
+
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -216,7 +216,7 @@ def update_expense_account_mapping(mapping_id):
         data = request.get_json()
     except Exception:
         return jsonify({"error": "Invalid JSON data"}), 400
-    
+
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
@@ -274,7 +274,7 @@ def import_mappings():
         data = request.get_json()
     except Exception:
         return jsonify({"error": "Invalid JSON data"}), 400
-    
+
     if not data:
         return jsonify({"error": "No data provided"}), 400
 

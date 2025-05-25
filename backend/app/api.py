@@ -21,7 +21,7 @@ def get_csrf_token():
 
     # Log data for debugging
     current_app.logger.info(f"Generating CSRF token: {token[:10]}...")
-    
+
     # Get domain from frontend URL for cookie (if configured)
     frontend_url = current_app.config.get("FRONTEND_URL")
     if frontend_url:

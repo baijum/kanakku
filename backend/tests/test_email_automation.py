@@ -15,7 +15,7 @@ def set_encryption_key(app):
     """Set a consistent encryption key for all tests"""
     with app.app_context():
         # Use a fixed valid Fernet key for testing consistency
-        app.config['ENCRYPTION_KEY'] = 'fF3jX8_L3uUBWh1cEiGqW-otnwYnP7c9mG0YH7TH5Hg='
+        app.config["ENCRYPTION_KEY"] = "fF3jX8_L3uUBWh1cEiGqW-otnwYnP7c9mG0YH7TH5Hg="
 
 
 class TestEmailAutomationConfig:
@@ -24,7 +24,7 @@ class TestEmailAutomationConfig:
     def test_get_email_config_not_found(self, authenticated_client, user):
         """Test getting email config when none exists"""
         response = authenticated_client.get("/api/v1/email-automation/config")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["config"] is None
@@ -46,7 +46,7 @@ class TestEmailAutomationConfig:
         db_session.commit()
 
         response = authenticated_client.get("/api/v1/email-automation/config")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["config"] is not None
@@ -67,14 +67,13 @@ class TestEmailAutomationConfig:
             "imap_server": "imap.gmail.com",
             "imap_port": 993,
             "polling_interval": "daily",
-            "sample_emails": [{"subject": "Test", "body": "Test email"}]
+            "sample_emails": [{"subject": "Test", "body": "Test email"}],
         }
 
         response = authenticated_client.post(
-            "/api/v1/email-automation/config",
-            json=config_data
+            "/api/v1/email-automation/config", json=config_data
         )
-        
+
         assert response.status_code == 201
         data = json.loads(response.data)
         assert data["message"] == "Email configuration saved successfully"
@@ -88,12 +87,13 @@ class TestEmailAutomationConfig:
         assert config.email_address == "test@example.com"
         assert decrypt_value(config.app_password) == "test_password"
 
-    def test_create_email_config_missing_required_fields(self, authenticated_client, user):
+    def test_create_email_config_missing_required_fields(
+        self, authenticated_client, user
+    ):
         """Test creating email config with missing required fields"""
         # Missing email_address
         response = authenticated_client.post(
-            "/api/v1/email-automation/config",
-            json={"app_password": "test_password"}
+            "/api/v1/email-automation/config", json={"app_password": "test_password"}
         )
         assert response.status_code == 400
         data = json.loads(response.data)
@@ -102,7 +102,7 @@ class TestEmailAutomationConfig:
         # Missing app_password
         response = authenticated_client.post(
             "/api/v1/email-automation/config",
-            json={"email_address": "test@example.com"}
+            json={"email_address": "test@example.com"},
         )
         assert response.status_code == 400
         data = json.loads(response.data)
@@ -112,14 +112,13 @@ class TestEmailAutomationConfig:
         """Test creating email config with minimal data uses defaults"""
         config_data = {
             "email_address": "test@example.com",
-            "app_password": "test_password"
+            "app_password": "test_password",
         }
 
         response = authenticated_client.post(
-            "/api/v1/email-automation/config",
-            json=config_data
+            "/api/v1/email-automation/config", json=config_data
         )
-        
+
         assert response.status_code == 201
         data = json.loads(response.data)
         assert data["config"]["is_enabled"] is False  # Default
@@ -127,7 +126,9 @@ class TestEmailAutomationConfig:
         assert data["config"]["imap_port"] == 993  # Default
         assert data["config"]["polling_interval"] == "hourly"  # Default
 
-    def test_update_existing_config_via_post(self, authenticated_client, user, db_session):
+    def test_update_existing_config_via_post(
+        self, authenticated_client, user, db_session
+    ):
         """Test updating existing configuration via POST endpoint"""
         # Create existing configuration
         config = EmailConfiguration(
@@ -143,14 +144,13 @@ class TestEmailAutomationConfig:
             "email_address": "new@example.com",
             "app_password": "new_password",
             "is_enabled": True,
-            "polling_interval": "daily"
+            "polling_interval": "daily",
         }
 
         response = authenticated_client.post(
-            "/api/v1/email-automation/config",
-            json=config_data
+            "/api/v1/email-automation/config", json=config_data
         )
-        
+
         assert response.status_code == 200  # Updated, not created
         data = json.loads(response.data)
         assert data["config"]["email_address"] == "new@example.com"
@@ -161,17 +161,16 @@ class TestEmailAutomationConfig:
         """Test handling database errors during config creation"""
         config_data = {
             "email_address": "test@example.com",
-            "app_password": "test_password"
+            "app_password": "test_password",
         }
 
-        with patch('app.email_automation.db.session.commit') as mock_commit:
+        with patch("app.email_automation.db.session.commit") as mock_commit:
             mock_commit.side_effect = Exception("Database error")
-            
+
             response = authenticated_client.post(
-                "/api/v1/email-automation/config",
-                json=config_data
+                "/api/v1/email-automation/config", json=config_data
             )
-            
+
             assert response.status_code == 500
             data = json.loads(response.data)
             assert "Failed to save configuration" in data["error"]
@@ -184,7 +183,7 @@ class TestEmailAutomationConfig:
             is_enabled=False,
             email_address="test@example.com",
             app_password=encrypt_value("old_password"),
-            polling_interval="hourly"
+            polling_interval="hourly",
         )
         db_session.add(config)
         db_session.commit()
@@ -192,14 +191,13 @@ class TestEmailAutomationConfig:
         update_data = {
             "is_enabled": True,
             "polling_interval": "daily",
-            "app_password": "new_password"
+            "app_password": "new_password",
         }
 
         response = authenticated_client.put(
-            "/api/v1/email-automation/config",
-            json=update_data
+            "/api/v1/email-automation/config", json=update_data
         )
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["message"] == "Email configuration updated successfully"
@@ -216,15 +214,16 @@ class TestEmailAutomationConfig:
         update_data = {"is_enabled": True}
 
         response = authenticated_client.put(
-            "/api/v1/email-automation/config",
-            json=update_data
+            "/api/v1/email-automation/config", json=update_data
         )
-        
+
         assert response.status_code == 404
         data = json.loads(response.data)
         assert data["error"] == "Email configuration not found"
 
-    def test_update_email_config_partial_update(self, authenticated_client, user, db_session):
+    def test_update_email_config_partial_update(
+        self, authenticated_client, user, db_session
+    ):
         """Test partial update of email configuration"""
         # Create existing configuration
         config = EmailConfiguration(
@@ -234,7 +233,7 @@ class TestEmailAutomationConfig:
             app_password=encrypt_value("password"),
             polling_interval="hourly",
             imap_server="imap.gmail.com",
-            imap_port=993
+            imap_port=993,
         )
         db_session.add(config)
         db_session.commit()
@@ -243,10 +242,9 @@ class TestEmailAutomationConfig:
         update_data = {"is_enabled": True}
 
         response = authenticated_client.put(
-            "/api/v1/email-automation/config",
-            json=update_data
+            "/api/v1/email-automation/config", json=update_data
         )
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["config"]["is_enabled"] is True
@@ -269,14 +267,13 @@ class TestEmailAutomationConfig:
 
         update_data = {"is_enabled": True}
 
-        with patch('app.email_automation.db.session.commit') as mock_commit:
+        with patch("app.email_automation.db.session.commit") as mock_commit:
             mock_commit.side_effect = Exception("Database error")
-            
+
             response = authenticated_client.put(
-                "/api/v1/email-automation/config",
-                json=update_data
+                "/api/v1/email-automation/config", json=update_data
             )
-            
+
             assert response.status_code == 500
             data = json.loads(response.data)
             assert "Failed to update configuration" in data["error"]
@@ -293,7 +290,7 @@ class TestEmailAutomationConfig:
         db_session.commit()
 
         response = authenticated_client.delete("/api/v1/email-automation/config")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["message"] == "Email configuration deleted successfully"
@@ -305,7 +302,7 @@ class TestEmailAutomationConfig:
     def test_delete_email_config_not_found(self, authenticated_client, user):
         """Test deleting email config when none exists"""
         response = authenticated_client.delete("/api/v1/email-automation/config")
-        
+
         assert response.status_code == 404
         data = json.loads(response.data)
         assert data["error"] == "Email configuration not found"
@@ -321,11 +318,11 @@ class TestEmailAutomationConfig:
         db_session.add(config)
         db_session.commit()
 
-        with patch('app.email_automation.db.session.commit') as mock_commit:
+        with patch("app.email_automation.db.session.commit") as mock_commit:
             mock_commit.side_effect = Exception("Database error")
-            
+
             response = authenticated_client.delete("/api/v1/email-automation/config")
-            
+
             assert response.status_code == 500
             data = json.loads(response.data)
             assert "Failed to delete configuration" in data["error"]
@@ -340,33 +337,40 @@ class TestEmailConnectionTesting:
             "email_address": "test@example.com",
             "app_password": "test_password",
             "imap_server": "imap.gmail.com",
-            "imap_port": 993
+            "imap_port": 993,
         }
 
         # Mock the CustomIMAPClient
         mock_client = MagicMock()
         mock_client.connect.return_value = None
         mock_client.disconnect.return_value = None
-        
-        with patch('sys.path'), \
-             patch.dict('sys.modules', {'banktransactions': MagicMock(), 'banktransactions.core': MagicMock(), 'banktransactions.core.imap_client': MagicMock()}), \
-             patch('banktransactions.core.imap_client.CustomIMAPClient', return_value=mock_client) as mock_client_class:
+
+        with patch("sys.path"), patch.dict(
+            "sys.modules",
+            {
+                "banktransactions": MagicMock(),
+                "banktransactions.core": MagicMock(),
+                "banktransactions.core.imap_client": MagicMock(),
+            },
+        ), patch(
+            "banktransactions.core.imap_client.CustomIMAPClient",
+            return_value=mock_client,
+        ) as mock_client_class:
             response = authenticated_client.post(
-                "/api/v1/email-automation/test-connection",
-                json=connection_data
+                "/api/v1/email-automation/test-connection", json=connection_data
             )
-            
+
             assert response.status_code == 200
             data = json.loads(response.data)
             assert data["success"] is True
             assert data["message"] == "Email connection test successful"
-            
+
             # Verify client was called with correct parameters
             mock_client_class.assert_called_once_with(
                 server="imap.gmail.com",
                 port=993,
                 username="test@example.com",
-                password="test_password"
+                password="test_password",
             )
             mock_client.connect.assert_called_once()
             mock_client.disconnect.assert_called_once()
@@ -375,30 +379,37 @@ class TestEmailConnectionTesting:
         """Test connection with default server settings"""
         connection_data = {
             "email_address": "test@example.com",
-            "app_password": "test_password"
+            "app_password": "test_password",
             # No server/port specified - should use defaults
         }
 
         mock_client = MagicMock()
-        
-        with patch('sys.path'), \
-             patch.dict('sys.modules', {'banktransactions': MagicMock(), 'banktransactions.core': MagicMock(), 'banktransactions.core.imap_client': MagicMock()}), \
-             patch('banktransactions.core.imap_client.CustomIMAPClient', return_value=mock_client) as mock_client_class:
+
+        with patch("sys.path"), patch.dict(
+            "sys.modules",
+            {
+                "banktransactions": MagicMock(),
+                "banktransactions.core": MagicMock(),
+                "banktransactions.core.imap_client": MagicMock(),
+            },
+        ), patch(
+            "banktransactions.core.imap_client.CustomIMAPClient",
+            return_value=mock_client,
+        ) as mock_client_class:
             response = authenticated_client.post(
-                "/api/v1/email-automation/test-connection",
-                json=connection_data
+                "/api/v1/email-automation/test-connection", json=connection_data
             )
-            
+
             assert response.status_code == 200
             data = json.loads(response.data)
             assert data["success"] is True
-            
+
             # Verify defaults were used
             mock_client_class.assert_called_once_with(
                 server="imap.gmail.com",  # Default
                 port=993,  # Default
                 username="test@example.com",
-                password="test_password"
+                password="test_password",
             )
 
     def test_test_connection_missing_required_fields(self, authenticated_client, user):
@@ -406,7 +417,7 @@ class TestEmailConnectionTesting:
         # Missing email_address
         response = authenticated_client.post(
             "/api/v1/email-automation/test-connection",
-            json={"app_password": "test_password"}
+            json={"app_password": "test_password"},
         )
         assert response.status_code == 400
         data = json.loads(response.data)
@@ -415,7 +426,7 @@ class TestEmailConnectionTesting:
         # Missing app_password
         response = authenticated_client.post(
             "/api/v1/email-automation/test-connection",
-            json={"email_address": "test@example.com"}
+            json={"email_address": "test@example.com"},
         )
         assert response.status_code == 400
         data = json.loads(response.data)
@@ -425,20 +436,27 @@ class TestEmailConnectionTesting:
         """Test connection failure"""
         connection_data = {
             "email_address": "test@example.com",
-            "app_password": "wrong_password"
+            "app_password": "wrong_password",
         }
 
         mock_client = MagicMock()
         mock_client.connect.side_effect = Exception("Authentication failed")
-        
-        with patch('sys.path'), \
-             patch.dict('sys.modules', {'banktransactions': MagicMock(), 'banktransactions.core': MagicMock(), 'banktransactions.core.imap_client': MagicMock()}), \
-             patch('banktransactions.core.imap_client.CustomIMAPClient', return_value=mock_client):
+
+        with patch("sys.path"), patch.dict(
+            "sys.modules",
+            {
+                "banktransactions": MagicMock(),
+                "banktransactions.core": MagicMock(),
+                "banktransactions.core.imap_client": MagicMock(),
+            },
+        ), patch(
+            "banktransactions.core.imap_client.CustomIMAPClient",
+            return_value=mock_client,
+        ):
             response = authenticated_client.post(
-                "/api/v1/email-automation/test-connection",
-                json=connection_data
+                "/api/v1/email-automation/test-connection", json=connection_data
             )
-            
+
             assert response.status_code == 400
             data = json.loads(response.data)
             assert data["success"] is False
@@ -449,17 +467,24 @@ class TestEmailConnectionTesting:
         """Test handling import errors"""
         connection_data = {
             "email_address": "test@example.com",
-            "app_password": "test_password"
+            "app_password": "test_password",
         }
 
-        with patch('sys.path'), \
-             patch.dict('sys.modules', {'banktransactions': MagicMock(), 'banktransactions.core': MagicMock(), 'banktransactions.core.imap_client': MagicMock()}), \
-             patch('banktransactions.core.imap_client.CustomIMAPClient', side_effect=ImportError("Module not found")):
+        with patch("sys.path"), patch.dict(
+            "sys.modules",
+            {
+                "banktransactions": MagicMock(),
+                "banktransactions.core": MagicMock(),
+                "banktransactions.core.imap_client": MagicMock(),
+            },
+        ), patch(
+            "banktransactions.core.imap_client.CustomIMAPClient",
+            side_effect=ImportError("Module not found"),
+        ):
             response = authenticated_client.post(
-                "/api/v1/email-automation/test-connection",
-                json=connection_data
+                "/api/v1/email-automation/test-connection", json=connection_data
             )
-            
+
             assert response.status_code == 400
             data = json.loads(response.data)
             assert data["success"] is False
@@ -472,7 +497,7 @@ class TestEmailAutomationStatus:
     def test_get_status_not_configured(self, authenticated_client, user):
         """Test status when email automation is not configured"""
         response = authenticated_client.get("/api/v1/email-automation/status")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["status"] == "not_configured"
@@ -487,13 +512,13 @@ class TestEmailAutomationStatus:
             app_password=encrypt_value("password"),
             polling_interval="hourly",
             last_check_time=datetime.now(timezone.utc),
-            last_processed_email_id="msg_123"
+            last_processed_email_id="msg_123",
         )
         db_session.add(config)
         db_session.commit()
 
         response = authenticated_client.get("/api/v1/email-automation/status")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["status"] == "disabled"
@@ -512,13 +537,13 @@ class TestEmailAutomationStatus:
             app_password=encrypt_value("password"),
             polling_interval="daily",
             last_check_time=last_check,
-            last_processed_email_id="msg_456"
+            last_processed_email_id="msg_456",
         )
         db_session.add(config)
         db_session.commit()
 
         response = authenticated_client.get("/api/v1/email-automation/status")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["status"] == "enabled"
@@ -529,9 +554,9 @@ class TestEmailAutomationStatus:
         expected_time = last_check.isoformat()
         actual_time = data["last_check"]
         # Remove timezone info for comparison if present
-        if expected_time.endswith('+00:00'):
+        if expected_time.endswith("+00:00"):
             expected_time = expected_time[:-6]
-        if actual_time.endswith('+00:00'):
+        if actual_time.endswith("+00:00"):
             actual_time = actual_time[:-6]
         assert actual_time == expected_time
 
@@ -549,7 +574,7 @@ class TestEmailAutomationStatus:
         db_session.commit()
 
         response = authenticated_client.get("/api/v1/email-automation/status")
-        
+
         assert response.status_code == 200
         data = json.loads(response.data)
         assert data["status"] == "enabled"
@@ -579,30 +604,38 @@ class TestEmailProcessingTrigger:
         mock_queue.enqueue.return_value = mock_job
 
         # Mock all the external dependencies
-        with patch('sys.path'), \
-             patch.dict('sys.modules', {
-                 'banktransactions': MagicMock(),
-                 'banktransactions.automation': MagicMock(),
-                 'banktransactions.automation.job_utils': MagicMock(),
-                 'banktransactions.automation.email_processor': MagicMock(),
-                 'redis': MagicMock(),
-                 'rq': MagicMock()
-             }), \
-             patch('redis.from_url', return_value=mock_redis_conn), \
-             patch('rq.Queue', return_value=mock_queue), \
-             patch('banktransactions.automation.job_utils.generate_job_id', return_value="job_123") as mock_generate_job_id, \
-             patch('banktransactions.automation.job_utils.get_user_job_status') as mock_get_status, \
-             patch('banktransactions.automation.job_utils.has_user_job_pending', return_value=False) as mock_has_pending, \
-             patch('banktransactions.automation.email_processor.process_user_emails_standalone') as mock_process_func:
-            
+        with patch("sys.path"), patch.dict(
+            "sys.modules",
+            {
+                "banktransactions": MagicMock(),
+                "banktransactions.automation": MagicMock(),
+                "banktransactions.automation.job_utils": MagicMock(),
+                "banktransactions.automation.email_processor": MagicMock(),
+                "redis": MagicMock(),
+                "rq": MagicMock(),
+            },
+        ), patch("redis.from_url", return_value=mock_redis_conn), patch(
+            "rq.Queue", return_value=mock_queue
+        ), patch(
+            "banktransactions.automation.job_utils.generate_job_id",
+            return_value="job_123",
+        ) as mock_generate_job_id, patch(
+            "banktransactions.automation.job_utils.get_user_job_status"
+        ), patch(
+            "banktransactions.automation.job_utils.has_user_job_pending",
+            return_value=False,
+        ) as mock_has_pending, patch(
+            "banktransactions.automation.email_processor.process_user_emails_standalone"
+        ):
+
             response = authenticated_client.post("/api/v1/email-automation/trigger")
-            
+
             assert response.status_code == 200
             data = json.loads(response.data)
             assert data["success"] is True
             assert data["message"] == "Email processing job queued successfully"
             assert data["job_id"] == "job_123"
-            
+
             # Verify function calls
             mock_has_pending.assert_called_once_with(mock_redis_conn, user.id)
             mock_generate_job_id.assert_called_once_with(user.id)
@@ -611,7 +644,7 @@ class TestEmailProcessingTrigger:
     def test_trigger_processing_not_configured(self, authenticated_client, user):
         """Test triggering when email automation is not configured"""
         response = authenticated_client.post("/api/v1/email-automation/trigger")
-        
+
         assert response.status_code == 400
         data = json.loads(response.data)
         assert data["error"] == "Email automation is not configured or disabled"
@@ -628,12 +661,14 @@ class TestEmailProcessingTrigger:
         db_session.commit()
 
         response = authenticated_client.post("/api/v1/email-automation/trigger")
-        
+
         assert response.status_code == 400
         data = json.loads(response.data)
         assert data["error"] == "Email automation is not configured or disabled"
 
-    def test_trigger_processing_job_already_pending(self, authenticated_client, user, db_session):
+    def test_trigger_processing_job_already_pending(
+        self, authenticated_client, user, db_session
+    ):
         """Test triggering when a job is already pending"""
         # Create enabled configuration
         config = EmailConfiguration(
@@ -646,38 +681,42 @@ class TestEmailProcessingTrigger:
         db_session.commit()
 
         mock_redis_conn = MagicMock()
-        
+
         # Create mock modules
         mock_redis_module = MagicMock()
         mock_redis_module.from_url.return_value = mock_redis_conn
-        
+
         mock_rq_module = MagicMock()
-        
+
         mock_job_utils = MagicMock()
         mock_job_utils.has_user_job_pending.return_value = True
         mock_job_utils.get_user_job_status.return_value = {"status": "pending"}
-        
+
         mock_banktransactions = MagicMock()
         mock_banktransactions.automation.job_utils = mock_job_utils
 
-        with patch('sys.path'), \
-             patch.dict('sys.modules', {
-                 'redis': mock_redis_module,
-                 'rq': mock_rq_module,
-                 'banktransactions': mock_banktransactions,
-                 'banktransactions.automation': MagicMock(),
-                 'banktransactions.automation.job_utils': mock_job_utils
-             }):
-            
+        with patch("sys.path"), patch.dict(
+            "sys.modules",
+            {
+                "redis": mock_redis_module,
+                "rq": mock_rq_module,
+                "banktransactions": mock_banktransactions,
+                "banktransactions.automation": MagicMock(),
+                "banktransactions.automation.job_utils": mock_job_utils,
+            },
+        ):
+
             response = authenticated_client.post("/api/v1/email-automation/trigger")
-            
+
             assert response.status_code == 409  # Conflict
             data = json.loads(response.data)
             assert data["success"] is False
             assert "already pending" in data["error"]
             assert data["job_status"]["status"] == "pending"
 
-    def test_trigger_processing_redis_error(self, authenticated_client, user, db_session):
+    def test_trigger_processing_redis_error(
+        self, authenticated_client, user, db_session
+    ):
         """Test handling Redis connection errors"""
         # Create enabled configuration
         config = EmailConfiguration(
@@ -690,18 +729,20 @@ class TestEmailProcessingTrigger:
         db_session.commit()
 
         # Mock Redis connection failure
-        with patch('sys.path'), \
-             patch.dict('sys.modules', {'redis': MagicMock()}), \
-             patch('redis.from_url', side_effect=Exception("Redis connection failed")):
+        with patch("sys.path"), patch.dict(
+            "sys.modules", {"redis": MagicMock()}
+        ), patch("redis.from_url", side_effect=Exception("Redis connection failed")):
 
             response = authenticated_client.post("/api/v1/email-automation/trigger")
-            
+
             assert response.status_code == 500
             data = json.loads(response.data)
             assert data["success"] is False
             assert "Failed to queue email processing job" in data["error"]
 
-    def test_trigger_processing_queue_error(self, authenticated_client, user, db_session):
+    def test_trigger_processing_queue_error(
+        self, authenticated_client, user, db_session
+    ):
         """Test handling queue errors"""
         # Create enabled configuration
         config = EmailConfiguration(
@@ -717,29 +758,38 @@ class TestEmailProcessingTrigger:
         mock_queue = MagicMock()
         mock_queue.enqueue.side_effect = Exception("Queue error")
 
-        with patch('sys.path'), \
-             patch.dict('sys.modules', {
-                 'banktransactions': MagicMock(),
-                 'banktransactions.automation': MagicMock(),
-                 'banktransactions.automation.job_utils': MagicMock(),
-                 'banktransactions.automation.email_processor': MagicMock(),
-                 'redis': MagicMock(),
-                 'rq': MagicMock()
-             }), \
-             patch('redis.from_url', return_value=mock_redis_conn), \
-             patch('rq.Queue', return_value=mock_queue), \
-             patch('banktransactions.automation.job_utils.has_user_job_pending', return_value=False), \
-             patch('banktransactions.automation.job_utils.generate_job_id', return_value="job_123"), \
-             patch('banktransactions.automation.email_processor.process_user_emails_standalone'):
-            
+        with patch("sys.path"), patch.dict(
+            "sys.modules",
+            {
+                "banktransactions": MagicMock(),
+                "banktransactions.automation": MagicMock(),
+                "banktransactions.automation.job_utils": MagicMock(),
+                "banktransactions.automation.email_processor": MagicMock(),
+                "redis": MagicMock(),
+                "rq": MagicMock(),
+            },
+        ), patch("redis.from_url", return_value=mock_redis_conn), patch(
+            "rq.Queue", return_value=mock_queue
+        ), patch(
+            "banktransactions.automation.job_utils.has_user_job_pending",
+            return_value=False,
+        ), patch(
+            "banktransactions.automation.job_utils.generate_job_id",
+            return_value="job_123",
+        ), patch(
+            "banktransactions.automation.email_processor.process_user_emails_standalone"
+        ):
+
             response = authenticated_client.post("/api/v1/email-automation/trigger")
-            
+
             assert response.status_code == 500
             data = json.loads(response.data)
             assert data["success"] is False
             assert "Failed to queue email processing job" in data["error"]
 
-    def test_trigger_processing_endpoint_functionality(self, authenticated_client, user, db_session):
+    def test_trigger_processing_endpoint_functionality(
+        self, authenticated_client, user, db_session
+    ):
         """Test that the trigger processing endpoint works correctly"""
         # Create enabled configuration
         config = EmailConfiguration(
@@ -753,15 +803,15 @@ class TestEmailProcessingTrigger:
 
         # This test verifies that the endpoint exists and handles various scenarios
         response = authenticated_client.post("/api/v1/email-automation/trigger")
-        
+
         data = json.loads(response.data)
-        
+
         # The response could be:
         # - 200: Success (job queued)
         # - 409: Conflict (job already pending)
         # - 500: Error (missing dependencies or other errors)
         assert response.status_code in [200, 409, 500]
-        
+
         if response.status_code == 200:
             # Success case
             assert data["success"] is True
@@ -800,8 +850,10 @@ class TestEmailAutomationAuth:
                 response = client.put(endpoint, json={})
             elif method == "DELETE":
                 response = client.delete(endpoint)
-            
-            assert response.status_code == 401, f"Endpoint {method} {endpoint} should require authentication"
+
+            assert (
+                response.status_code == 401
+            ), f"Endpoint {method} {endpoint} should require authentication"
 
     def test_user_isolation(self, authenticated_client, user, db_session, app):
         """Test that users can only access their own configurations"""
@@ -816,11 +868,12 @@ class TestEmailAutomationAuth:
 
         # Create another user and their configuration
         from app.models import User
+
         user2 = User(email="user2@example.com")
         user2.set_password("password")
         db_session.add(user2)
         db_session.commit()
-        
+
         # Store user2 ID before creating config
         user2_id = user2.id
 
@@ -840,8 +893,7 @@ class TestEmailAutomationAuth:
 
         # Authenticated user should only be able to update their own config
         response = authenticated_client.put(
-            "/api/v1/email-automation/config",
-            json={"is_enabled": True}
+            "/api/v1/email-automation/config", json={"is_enabled": True}
         )
         assert response.status_code == 200
 
@@ -861,17 +913,16 @@ class TestEmailAutomationEdgeCases:
             "app_password": "test_password",
             "sample_emails": [
                 {"subject": "Bank Alert", "body": "Your account was debited"},
-                {"subject": "Credit Card", "body": "Payment received"}
-            ]
+                {"subject": "Credit Card", "body": "Payment received"},
+            ],
         }
 
         response = authenticated_client.post(
-            "/api/v1/email-automation/config",
-            json=config_data
+            "/api/v1/email-automation/config", json=config_data
         )
-        
+
         assert response.status_code == 201
-        
+
         # Verify in database that JSON is properly stored
         config = EmailConfiguration.query.filter_by(user_id=user.id).first()
         sample_emails = json.loads(config.sample_emails)
@@ -883,24 +934,20 @@ class TestEmailAutomationEdgeCases:
         # Create config
         response = authenticated_client.post(
             "/api/v1/email-automation/config",
-            json={
-                "email_address": "test@example.com",
-                "app_password": "test_password"
-            }
+            json={"email_address": "test@example.com", "app_password": "test_password"},
         )
         assert response.status_code == 201
-        
+
         config = EmailConfiguration.query.filter_by(user_id=user.id).first()
         original_created_at = config.created_at
         original_updated_at = config.updated_at
-        
+
         # Update config
         response = authenticated_client.put(
-            "/api/v1/email-automation/config",
-            json={"is_enabled": True}
+            "/api/v1/email-automation/config", json={"is_enabled": True}
         )
         assert response.status_code == 200
-        
+
         # Verify timestamps
         updated_config = EmailConfiguration.query.filter_by(user_id=user.id).first()
         assert updated_config.created_at == original_created_at  # Should not change
@@ -908,11 +955,8 @@ class TestEmailAutomationEdgeCases:
 
     def test_empty_json_request(self, authenticated_client, user):
         """Test handling of empty JSON requests"""
-        response = authenticated_client.post(
-            "/api/v1/email-automation/config",
-            json={}
-        )
-        
+        response = authenticated_client.post("/api/v1/email-automation/config", json={})
+
         assert response.status_code == 400
         data = json.loads(response.data)
         assert "email_address is required" in data["error"]
@@ -922,9 +966,9 @@ class TestEmailAutomationEdgeCases:
         response = authenticated_client.post(
             "/api/v1/email-automation/config",
             data="invalid json",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
-        
+
         # This should be handled by Flask's JSON parsing
         assert response.status_code == 500  # Bad Request for invalid JSON
 
@@ -933,24 +977,25 @@ class TestEmailAutomationEdgeCases:
         # Create a large sample emails array
         large_sample_emails = []
         for i in range(100):
-            large_sample_emails.append({
-                "subject": f"Email {i}",
-                "body": f"This is email number {i} with some content" * 10
-            })
+            large_sample_emails.append(
+                {
+                    "subject": f"Email {i}",
+                    "body": f"This is email number {i} with some content" * 10,
+                }
+            )
 
         config_data = {
             "email_address": "test@example.com",
             "app_password": "test_password",
-            "sample_emails": large_sample_emails
+            "sample_emails": large_sample_emails,
         }
 
         response = authenticated_client.post(
-            "/api/v1/email-automation/config",
-            json=config_data
+            "/api/v1/email-automation/config", json=config_data
         )
-        
+
         assert response.status_code == 201
-        
+
         # Verify data was stored correctly
         config = EmailConfiguration.query.filter_by(user_id=user.id).first()
         stored_emails = json.loads(config.sample_emails)
@@ -959,20 +1004,19 @@ class TestEmailAutomationEdgeCases:
     def test_special_characters_in_password(self, authenticated_client, user):
         """Test handling of special characters in passwords"""
         special_password = "p@ssw0rd!#$%^&*()_+-=[]{}|;:,.<>?"
-        
+
         config_data = {
             "email_address": "test@example.com",
-            "app_password": special_password
+            "app_password": special_password,
         }
 
         response = authenticated_client.post(
-            "/api/v1/email-automation/config",
-            json=config_data
+            "/api/v1/email-automation/config", json=config_data
         )
-        
+
         assert response.status_code == 201
-        
+
         # Verify password was encrypted and can be decrypted correctly
         config = EmailConfiguration.query.filter_by(user_id=user.id).first()
         decrypted_password = decrypt_value(config.app_password)
-        assert decrypted_password == special_password 
+        assert decrypted_password == special_password
