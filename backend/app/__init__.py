@@ -194,10 +194,13 @@ def create_app(config_name="default"):
 
         return response
 
-    # Create database tables
+    # Create database tables (only if not running migrations)
     with app.app_context():
         try:
-            db.create_all()
+            # Skip db.create_all() if we're running migrations
+            # This prevents conflicts with Alembic migrations
+            if not os.environ.get("FLASK_SKIP_DB_CREATE"):
+                db.create_all()
         except Exception as e:
             app.logger.error(f"Error creating database: {str(e)}", exc_info=True)
 
