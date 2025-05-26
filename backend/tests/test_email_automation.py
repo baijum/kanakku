@@ -346,16 +346,8 @@ class TestEmailConnectionTesting:
         mock_client.connect.return_value = None
         mock_client.disconnect.return_value = None
 
-        with patch("sys.path"), patch.dict(
-            "sys.modules",
-            {
-                "banktransactions": MagicMock(),
-                "banktransactions.core": MagicMock(),
-                "banktransactions.core.imap_client": MagicMock(),
-            },
-        ), patch(
-            "banktransactions.core.imap_client.CustomIMAPClient",
-            return_value=mock_client,
+        with patch(
+            "shared.imports.CustomIMAPClient", return_value=mock_client
         ) as mock_client_class:
             response = authenticated_client.post(
                 "/api/v1/email-automation/test-connection", json=connection_data
@@ -386,16 +378,8 @@ class TestEmailConnectionTesting:
 
         mock_client = MagicMock()
 
-        with patch("sys.path"), patch.dict(
-            "sys.modules",
-            {
-                "banktransactions": MagicMock(),
-                "banktransactions.core": MagicMock(),
-                "banktransactions.core.imap_client": MagicMock(),
-            },
-        ), patch(
-            "banktransactions.core.imap_client.CustomIMAPClient",
-            return_value=mock_client,
+        with patch(
+            "shared.imports.CustomIMAPClient", return_value=mock_client
         ) as mock_client_class:
             response = authenticated_client.post(
                 "/api/v1/email-automation/test-connection", json=connection_data
@@ -443,17 +427,7 @@ class TestEmailConnectionTesting:
         mock_client = MagicMock()
         mock_client.connect.side_effect = Exception("Authentication failed")
 
-        with patch("sys.path"), patch.dict(
-            "sys.modules",
-            {
-                "banktransactions": MagicMock(),
-                "banktransactions.core": MagicMock(),
-                "banktransactions.core.imap_client": MagicMock(),
-            },
-        ), patch(
-            "banktransactions.core.imap_client.CustomIMAPClient",
-            return_value=mock_client,
-        ):
+        with patch("shared.imports.CustomIMAPClient", return_value=mock_client):
             response = authenticated_client.post(
                 "/api/v1/email-automation/test-connection", json=connection_data
             )
@@ -471,15 +445,8 @@ class TestEmailConnectionTesting:
             "app_password": "test_password",
         }
 
-        with patch("sys.path"), patch.dict(
-            "sys.modules",
-            {
-                "banktransactions": MagicMock(),
-                "banktransactions.core": MagicMock(),
-                "banktransactions.core.imap_client": MagicMock(),
-            },
-        ), patch(
-            "banktransactions.core.imap_client.CustomIMAPClient",
+        with patch(
+            "shared.imports.CustomIMAPClient",
             side_effect=ImportError("Module not found"),
         ):
             response = authenticated_client.post(
@@ -605,28 +572,18 @@ class TestEmailProcessingTrigger:
         mock_queue.enqueue.return_value = mock_job
 
         # Mock all the external dependencies
-        with patch("sys.path"), patch.dict(
-            "sys.modules",
-            {
-                "banktransactions": MagicMock(),
-                "banktransactions.automation": MagicMock(),
-                "banktransactions.automation.job_utils": MagicMock(),
-                "banktransactions.automation.email_processor": MagicMock(),
-                "redis": MagicMock(),
-                "rq": MagicMock(),
-            },
-        ), patch("redis.from_url", return_value=mock_redis_conn), patch(
+        with patch("redis.from_url", return_value=mock_redis_conn), patch(
             "rq.Queue", return_value=mock_queue
         ), patch(
-            "banktransactions.automation.job_utils.generate_job_id",
+            "shared.imports.generate_job_id",
             return_value="job_123",
         ) as mock_generate_job_id, patch(
-            "banktransactions.automation.job_utils.get_user_job_status"
+            "shared.imports.get_user_job_status"
         ), patch(
-            "banktransactions.automation.job_utils.has_user_job_pending",
+            "shared.imports.has_user_job_pending",
             return_value=False,
         ) as mock_has_pending, patch(
-            "banktransactions.automation.email_processor.process_user_emails_standalone"
+            "shared.imports.process_user_emails_standalone"
         ):
 
             response = authenticated_client.post("/api/v1/email-automation/trigger")
@@ -687,8 +644,6 @@ class TestEmailProcessingTrigger:
         mock_redis_module = MagicMock()
         mock_redis_module.from_url.return_value = mock_redis_conn
 
-        mock_rq_module = MagicMock()
-
         mock_job_utils = MagicMock()
         mock_job_utils.has_user_job_pending.return_value = True
         mock_job_utils.get_user_job_status.return_value = {"status": "pending"}
@@ -696,15 +651,10 @@ class TestEmailProcessingTrigger:
         mock_banktransactions = MagicMock()
         mock_banktransactions.automation.job_utils = mock_job_utils
 
-        with patch("sys.path"), patch.dict(
-            "sys.modules",
-            {
-                "redis": mock_redis_module,
-                "rq": mock_rq_module,
-                "banktransactions": mock_banktransactions,
-                "banktransactions.automation": MagicMock(),
-                "banktransactions.automation.job_utils": mock_job_utils,
-            },
+        with patch("redis.from_url", return_value=mock_redis_conn), patch(
+            "shared.imports.has_user_job_pending", return_value=True
+        ), patch(
+            "shared.imports.get_user_job_status", return_value={"status": "pending"}
         ):
 
             response = authenticated_client.post("/api/v1/email-automation/trigger")
@@ -730,9 +680,7 @@ class TestEmailProcessingTrigger:
         db_session.commit()
 
         # Mock Redis connection failure
-        with patch("sys.path"), patch.dict(
-            "sys.modules", {"redis": MagicMock()}
-        ), patch("redis.from_url", side_effect=Exception("Redis connection failed")):
+        with patch("redis.from_url", side_effect=Exception("Redis connection failed")):
 
             response = authenticated_client.post("/api/v1/email-automation/trigger")
 
@@ -759,26 +707,16 @@ class TestEmailProcessingTrigger:
         mock_queue = MagicMock()
         mock_queue.enqueue.side_effect = Exception("Queue error")
 
-        with patch("sys.path"), patch.dict(
-            "sys.modules",
-            {
-                "banktransactions": MagicMock(),
-                "banktransactions.automation": MagicMock(),
-                "banktransactions.automation.job_utils": MagicMock(),
-                "banktransactions.automation.email_processor": MagicMock(),
-                "redis": MagicMock(),
-                "rq": MagicMock(),
-            },
-        ), patch("redis.from_url", return_value=mock_redis_conn), patch(
+        with patch("redis.from_url", return_value=mock_redis_conn), patch(
             "rq.Queue", return_value=mock_queue
         ), patch(
-            "banktransactions.automation.job_utils.has_user_job_pending",
+            "shared.imports.has_user_job_pending",
             return_value=False,
         ), patch(
-            "banktransactions.automation.job_utils.generate_job_id",
+            "shared.imports.generate_job_id",
             return_value="job_123",
         ), patch(
-            "banktransactions.automation.email_processor.process_user_emails_standalone"
+            "shared.imports.process_user_emails_standalone"
         ):
 
             response = authenticated_client.post("/api/v1/email-automation/trigger")

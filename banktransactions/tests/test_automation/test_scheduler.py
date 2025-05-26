@@ -3,7 +3,7 @@
 import pytest
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, Mock
 from sqlalchemy.orm import Session
 
@@ -41,7 +41,7 @@ class TestEmailScheduler:
         config1.user_id = 1
         config1.is_enabled = True
         config1.polling_interval = "hourly"
-        config1.last_check_time = datetime.utcnow() - timedelta(hours=2)
+        config1.last_check_time = datetime.now(timezone.utc) - timedelta(hours=2)
         configs.append(config1)
 
         # Config 2: Daily polling, last checked 2 days ago
@@ -49,7 +49,7 @@ class TestEmailScheduler:
         config2.user_id = 2
         config2.is_enabled = True
         config2.polling_interval = "daily"
-        config2.last_check_time = datetime.utcnow() - timedelta(days=2)
+        config2.last_check_time = datetime.now(timezone.utc) - timedelta(days=2)
         configs.append(config2)
 
         # Config 3: Never checked before
@@ -128,10 +128,10 @@ class TestEmailScheduler:
         config = Mock()
         config.user_id = 1
         config.polling_interval = "hourly"
-        config.last_check_time = datetime.utcnow() - timedelta(hours=2)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(hours=2)
 
         with patch.object(email_scheduler, "_calculate_next_run") as mock_calc_next:
-            mock_calc_next.return_value = datetime.utcnow()
+            mock_calc_next.return_value = datetime.now(timezone.utc)
             email_scheduler._schedule_user_job(config)
 
         # Verify job was scheduled
@@ -152,10 +152,10 @@ class TestEmailScheduler:
         config = Mock()
         config.user_id = 2
         config.polling_interval = "daily"
-        config.last_check_time = datetime.utcnow() - timedelta(days=2)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(days=2)
 
         with patch.object(email_scheduler, "_calculate_next_run") as mock_calc_next:
-            mock_calc_next.return_value = datetime.utcnow()
+            mock_calc_next.return_value = datetime.now(timezone.utc)
             email_scheduler._schedule_user_job(config)
 
         # Verify job was scheduled
@@ -193,50 +193,54 @@ class TestEmailScheduler:
     def test_calculate_next_run_hourly_overdue(self, email_scheduler):
         """Test calculating next run time for overdue hourly polling."""
         config = Mock()
-        config.last_check_time = datetime.utcnow() - timedelta(hours=2)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(hours=2)
         config.polling_interval = "hourly"
 
         result = email_scheduler._calculate_next_run(config)
 
         # Should return current time since it's overdue
         assert result is not None
-        assert abs((result - datetime.utcnow()).total_seconds()) < 60  # Within 1 minute
+        assert (
+            abs((result - datetime.now(timezone.utc)).total_seconds()) < 60
+        )  # Within 1 minute
 
     def test_calculate_next_run_hourly_future(self, email_scheduler):
         """Test calculating next run time for hourly polling not yet due."""
         config = Mock()
-        config.last_check_time = datetime.utcnow() - timedelta(minutes=30)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(minutes=30)
         config.polling_interval = "hourly"
 
         result = email_scheduler._calculate_next_run(config)
 
         # Should return future time
         assert result is not None
-        assert result > datetime.utcnow()
+        assert result > datetime.now(timezone.utc)
 
     def test_calculate_next_run_daily_overdue(self, email_scheduler):
         """Test calculating next run time for overdue daily polling."""
         config = Mock()
-        config.last_check_time = datetime.utcnow() - timedelta(days=2)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(days=2)
         config.polling_interval = "daily"
 
         result = email_scheduler._calculate_next_run(config)
 
         # Should return current time since it's overdue
         assert result is not None
-        assert abs((result - datetime.utcnow()).total_seconds()) < 60  # Within 1 minute
+        assert (
+            abs((result - datetime.now(timezone.utc)).total_seconds()) < 60
+        )  # Within 1 minute
 
     def test_calculate_next_run_daily_future(self, email_scheduler):
         """Test calculating next run time for daily polling not yet due."""
         config = Mock()
-        config.last_check_time = datetime.utcnow() - timedelta(hours=12)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(hours=12)
         config.polling_interval = "daily"
 
         result = email_scheduler._calculate_next_run(config)
 
         # Should return future time
         assert result is not None
-        assert result > datetime.utcnow()
+        assert result > datetime.now(timezone.utc)
 
     def test_calculate_next_run_no_last_check(self, email_scheduler):
         """Test calculating next run time when last_check_time is None."""
@@ -248,24 +252,28 @@ class TestEmailScheduler:
 
         # Should return current time
         assert result is not None
-        assert abs((result - datetime.utcnow()).total_seconds()) < 60  # Within 1 minute
+        assert (
+            abs((result - datetime.now(timezone.utc)).total_seconds()) < 60
+        )  # Within 1 minute
 
     def test_calculate_next_run_unknown_interval(self, email_scheduler):
         """Test calculating next run time with unknown polling interval."""
         config = Mock()
-        config.last_check_time = datetime.utcnow() - timedelta(hours=2)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(hours=2)
         config.polling_interval = "unknown"
 
         result = email_scheduler._calculate_next_run(config)
 
         # Should default to hourly and return current time since overdue
         assert result is not None
-        assert abs((result - datetime.utcnow()).total_seconds()) < 60  # Within 1 minute
+        assert (
+            abs((result - datetime.now(timezone.utc)).total_seconds()) < 60
+        )  # Within 1 minute
 
     def test_calculate_next_run_case_insensitive(self, email_scheduler):
         """Test that polling interval comparison is case insensitive."""
         config = Mock()
-        config.last_check_time = datetime.utcnow() - timedelta(hours=2)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(hours=2)
         config.polling_interval = "HOURLY"
 
         result = email_scheduler._calculate_next_run(config)
@@ -283,7 +291,7 @@ class TestEmailScheduler:
         config = Mock()
         config.user_id = 123
 
-        next_run = datetime.utcnow()
+        next_run = datetime.now(timezone.utc)
         with patch.object(email_scheduler, "_calculate_next_run") as mock_calc_next:
             mock_calc_next.return_value = next_run
             email_scheduler._schedule_user_job(config)
@@ -307,7 +315,7 @@ class TestEmailScheduler:
         config.user_id = 1
 
         with patch.object(email_scheduler, "_calculate_next_run") as mock_calc_next:
-            mock_calc_next.return_value = datetime.utcnow()
+            mock_calc_next.return_value = datetime.now(timezone.utc)
             email_scheduler._schedule_user_job(config)
 
         # Verify the correct function and arguments are scheduled

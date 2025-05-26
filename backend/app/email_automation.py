@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime, timezone
 
 from flask import Blueprint, g, jsonify, request
@@ -176,6 +177,7 @@ def test_email_connection():
         # Set up project paths and import using shared package to avoid path manipulation
         import sys
         from pathlib import Path
+
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
@@ -251,10 +253,11 @@ def trigger_email_processing():
         # Set up project paths and import using shared package to avoid path manipulation
         import sys
         from pathlib import Path
+
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
-        
+
         import redis
         from rq import Queue
         from shared.imports import (

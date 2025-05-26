@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from rq_scheduler import Scheduler
 from sqlalchemy.orm import Session
@@ -107,7 +107,7 @@ class EmailScheduler:
 
     def _calculate_next_run(self, config: EmailConfiguration) -> datetime:
         """Calculate the next run time based on the polling interval."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if not config.last_check_time:
             return now

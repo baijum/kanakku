@@ -14,10 +14,11 @@ from typing import Set, Optional
 try:
     # Set up project paths and import Flask app context and database service using shared imports
     from pathlib import Path
+
     project_root = Path(__file__).parent.parent.parent
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
-    
+
     from shared.imports import (
         load_processed_gmail_msgids as db_load_processed_gmail_msgids,
         save_processed_gmail_msgids as db_save_processed_gmail_msgids,

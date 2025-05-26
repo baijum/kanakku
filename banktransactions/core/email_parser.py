@@ -269,9 +269,11 @@ def get_gemini_api_key_from_config():
         # Try to use Flask context first (if available)
         try:
             from flask import current_app
+
             # Set up project paths for shared imports
             import sys
             from pathlib import Path
+
             project_root = Path(__file__).parent.parent.parent
             if str(project_root) not in sys.path:
                 sys.path.insert(0, str(project_root))
@@ -291,6 +293,7 @@ def get_gemini_api_key_from_config():
         # Set up project paths and import utilities from shared package
         import sys
         from pathlib import Path
+
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))

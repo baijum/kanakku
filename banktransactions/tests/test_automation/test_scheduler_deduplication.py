@@ -6,7 +6,7 @@ Test script for scheduler deduplication functionality.
 import os
 import sys
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 # Add project root to Python path
@@ -48,7 +48,7 @@ class TestSchedulerDeduplication:
         config.email_address = "test@example.com"
         config.is_enabled = True
         config.polling_interval = "hourly"
-        config.last_check_time = datetime.utcnow() - timedelta(hours=2)
+        config.last_check_time = datetime.now(timezone.utc) - timedelta(hours=2)
         return config
 
     def test_scheduler_skips_when_job_pending(self, email_scheduler, mock_email_config):
@@ -74,7 +74,7 @@ class TestSchedulerDeduplication:
                 with patch.object(
                     email_scheduler, "_calculate_next_run"
                 ) as mock_calc_next:
-                    mock_calc_next.return_value = datetime.utcnow()
+                    mock_calc_next.return_value = datetime.now(timezone.utc)
 
                     # Call _schedule_user_job
                     email_scheduler._schedule_user_job(mock_email_config)
@@ -103,7 +103,7 @@ class TestSchedulerDeduplication:
                 mock_gen_id.return_value = "email_process_123_1234567890"
 
                 # Mock _calculate_next_run
-                next_run = datetime.utcnow() + timedelta(minutes=30)
+                next_run = datetime.now(timezone.utc) + timedelta(minutes=30)
                 with patch.object(
                     email_scheduler, "_calculate_next_run"
                 ) as mock_calc_next:
