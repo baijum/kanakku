@@ -26,6 +26,11 @@ if [ ! -d "banktransactions" ]; then
   exit 1
 fi
 
+if [ ! -d "shared" ]; then
+  echo -e "${RED}Error: shared directory not found${NC}"
+  exit 1
+fi
+
 # Frontend linting
 echo -e "\n${YELLOW}Running frontend linting...${NC}"
 cd frontend
@@ -65,5 +70,13 @@ ruff check banktransactions/ || { echo -e "${RED}Banktransactions linting failed
 
 echo "Running Black formatter check on banktransactions..."
 black --check banktransactions/ || { echo -e "${RED}Banktransactions Black formatting check failed${NC}"; exit 1; }
+
+# Shared linting
+echo -e "\n${YELLOW}Running shared linting...${NC}"
+echo "Running Ruff linter on shared..."
+ruff check shared/ || { echo -e "${RED}Shared linting failed${NC}"; exit 1; }
+
+echo "Running Black formatter check on shared..."
+black --check shared/ || { echo -e "${RED}Shared Black formatting check failed${NC}"; exit 1; }
 
 echo -e "\n${GREEN}All linting checks passed successfully!${NC}" 

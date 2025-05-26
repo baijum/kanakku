@@ -245,7 +245,6 @@ class TestTestDatabaseManagerClass:
         mock_engine = Mock(spec=Engine)
         mock_create_engine.return_value = mock_engine
 
-
         engine = TestDatabaseManager.create_test_engine()
         assert engine == mock_engine
 
@@ -271,7 +270,6 @@ class TestTestDatabaseManagerClass:
         mock_session_class.return_value = mock_session
         mock_sessionmaker.return_value = mock_session_class
 
-
         with TestDatabaseManager.test_session_scope() as session:
             assert session == mock_session
 
@@ -292,7 +290,6 @@ class TestTestDatabaseManagerClass:
         mock_session_class = Mock()
         mock_session_class.return_value = mock_session
         mock_sessionmaker.return_value = mock_session_class
-
 
         with pytest.raises(ValueError):
             with TestDatabaseManager.test_session_scope() as session:
