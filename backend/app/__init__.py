@@ -33,6 +33,13 @@ def setup_logging(app):
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
 
+    # Determine log level from environment variable or app debug setting
+    log_level_str = os.environ.get("LOG_LEVEL", "").upper()
+    if log_level_str in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+        log_level = getattr(logging, log_level_str)
+    else:
+        log_level = logging.DEBUG if app.debug else logging.INFO
+
     # Configure the log formatter with more information
     formatter = logging.Formatter(
         "[%(asctime)s] [%(levelname)s] [%(request_id)s] %(module)s: %(message)s",
@@ -60,10 +67,10 @@ def setup_logging(app):
     # Console handler for development
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
-    console_handler.setLevel(logging.DEBUG if app.debug else logging.INFO)
+    console_handler.setLevel(log_level)
 
     # Set the base logger level
-    app.logger.setLevel(logging.DEBUG if app.debug else logging.INFO)
+    app.logger.setLevel(log_level)
 
     # Clear existing handlers and add our custom handlers
     app.logger.handlers = []

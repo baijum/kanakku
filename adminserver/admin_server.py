@@ -231,6 +231,8 @@ ALLOWED_COMMANDS = {
     "sort",
     "uniq",
     "wc",
+    "echo",
+    "test",
     # System services
     "systemctl",
     "service",
@@ -310,9 +312,18 @@ def is_command_safe(command: str) -> tuple[bool, str]:
     if not command:
         return False, "Empty command"
 
-    # Check for dangerous patterns
+    # Check for dangerous patterns (with exceptions for debug.env operations)
     for pattern in DANGEROUS_PATTERNS:
         if re.search(pattern, command, re.IGNORECASE):
+            # Allow specific operations on debug.env file
+            if (
+                pattern == r">\s*[^|]"
+                and DEBUG_ENV_PATH in command
+                and ("echo" in command or "cat" in command)
+            ):
+                continue  # Allow writing to debug.env
+            if pattern == r"\brm\b" and DEBUG_ENV_PATH in command:
+                continue  # Allow removing debug.env
             return False, f"Command contains dangerous pattern: {pattern}"
 
     # Extract the base command (first word)
@@ -399,6 +410,10 @@ ALLOWED_SERVICE_OPERATIONS = [
     "is-enabled",
 ]
 
+# Debug logging configuration
+DEBUG_ENV_PATH = "/opt/kanakku/debug.env"
+ALLOWED_DEBUG_SERVICES = ["kanakku", "kanakku-worker", "kanakku-scheduler"]
+
 
 async def execute_service_operation(
     operation: str, service: Optional[str] = None, timeout: int = 60
@@ -457,6 +472,119 @@ async def execute_service_operation(
         safety_note += " (SUCCESS)"
 
     return stdout, stderr, returncode, safety_note
+
+
+async def check_debug_status() -> tuple[bool, str]:
+    """
+    Check if debug logging is currently enabled.
+
+    Returns:
+        tuple: (is_enabled, debug_info)
+    """
+    # Check if debug.env file exists
+    command = (
+        f"test -f {DEBUG_ENV_PATH} && cat {DEBUG_ENV_PATH} || echo 'DEBUG_NOT_ENABLED'"
+    )
+    stdout, stderr, returncode = await execute_remote_command(command)
+
+    if returncode == 0 and "DEBUG_NOT_ENABLED" not in stdout:
+        return True, stdout.strip()
+    else:
+        return False, "Debug logging is disabled"
+
+
+async def toggle_debug_logging(
+    enable: bool, services: List[str] = None, timeout: int = 120
+) -> tuple[str, str, int, str]:
+    """
+    Enable or disable debug logging for Kanakku services.
+
+    Args:
+        enable: True to enable debug logging, False to disable
+        services: List of services to restart (default: all Kanakku services)
+        timeout: Command timeout in seconds
+
+    Returns:
+        tuple: (stdout, stderr, returncode, safety_note)
+    """
+    if services is None:
+        services = ALLOWED_DEBUG_SERVICES
+
+    # Validate services
+    for service in services:
+        if service not in ALLOWED_DEBUG_SERVICES:
+            return (
+                "",
+                f"Service '{service}' not allowed for debug logging",
+                1,
+                f"🚫 BLOCKED: Service '{service}' not in allowed list",
+            )
+
+    output_lines = []
+    overall_success = True
+
+    if enable:
+        # Create debug.env file with debug settings
+        debug_content = "LOG_LEVEL=DEBUG\\nFLASK_DEBUG=1\\nSQL_ECHO=false"
+        command = f"echo -e '{debug_content}' > {DEBUG_ENV_PATH}"
+        safety_note = "🔧 DEBUG: Enabling debug logging"
+    else:
+        # Remove debug.env file
+        command = f"rm -f {DEBUG_ENV_PATH}"
+        safety_note = "🔧 DEBUG: Disabling debug logging"
+
+    # Execute the file operation
+    stdout, stderr, returncode = await execute_remote_command(command, timeout=30)
+
+    if returncode != 0:
+        return (
+            stdout,
+            stderr,
+            returncode,
+            f"❌ FAILED: Could not {'create' if enable else 'remove'} debug configuration",
+        )
+
+    output_lines.append(f"✅ Debug configuration {'enabled' if enable else 'disabled'}")
+
+    # Reload systemd daemon to pick up any service changes
+    stdout, stderr, returncode, daemon_note = await execute_service_operation(
+        "daemon-reload", timeout=60
+    )
+    output_lines.append(f"Daemon reload: {daemon_note}")
+
+    if returncode != 0:
+        overall_success = False
+
+    # Restart the specified services to pick up new environment
+    output_lines.append("\nRestarting services to apply debug settings:")
+
+    for service in services:
+        stdout, stderr, returncode, service_note = await execute_service_operation(
+            "restart", service, timeout
+        )
+        output_lines.append(f"  {service}: {service_note}")
+
+        if returncode != 0:
+            overall_success = False
+
+    # Check final status
+    output_lines.append("\nFinal service status:")
+    for service in services:
+        stdout, stderr, returncode, status_note = await execute_service_operation(
+            "is-active", service, timeout=30
+        )
+        status = stdout.strip() if stdout else "unknown"
+        output_lines.append(f"  {service}: {status}")
+
+    final_output = "\n".join(output_lines)
+    final_returncode = 0 if overall_success else 1
+
+    if overall_success:
+        safety_note += " (SUCCESS)"
+    else:
+        safety_note += " (PARTIAL SUCCESS - check individual service status)"
+
+    return final_output, "", final_returncode, safety_note
 
 
 @server.list_tools()
@@ -636,6 +764,41 @@ async def handle_list_tools() -> List[types.Tool]:
                         "default": True,
                     },
                 },
+            },
+        ),
+        types.Tool(
+            name="check_debug_status",
+            description="Check if debug logging is currently enabled for Kanakku services",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        types.Tool(
+            name="toggle_debug_logging",
+            description="Enable or disable debug logging for Kanakku services (temporarily for troubleshooting)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "enable": {
+                        "type": "boolean",
+                        "description": "Enable (true) or disable (false) debug logging",
+                    },
+                    "services": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": ["kanakku", "kanakku-worker", "kanakku-scheduler"],
+                        },
+                        "description": "List of services to restart (default: all Kanakku services)",
+                        "default": ["kanakku", "kanakku-worker", "kanakku-scheduler"],
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "description": "Command timeout in seconds (default: 120, max: 300)",
+                        "default": 120,
+                        "minimum": 60,
+                        "maximum": 300,
+                    },
+                },
+                "required": ["enable"],
             },
         ),
     ]
@@ -859,6 +1022,51 @@ async def handle_call_tool(
             )
             status = stdout.strip() if stdout else "unknown"
             output += f"  {service}: {status}\n"
+
+        return [types.TextContent(type="text", text=output)]
+
+    elif name == "check_debug_status":
+        is_enabled, debug_info = await check_debug_status()
+
+        output = "=== DEBUG LOGGING STATUS ===\n\n"
+        if is_enabled:
+            output += "🟢 Debug logging is ENABLED\n\n"
+            output += "Current debug configuration:\n"
+            output += debug_info
+        else:
+            output += "🔴 Debug logging is DISABLED\n\n"
+            output += debug_info
+
+        return [types.TextContent(type="text", text=output)]
+
+    elif name == "toggle_debug_logging":
+        enable = arguments["enable"]
+        services = arguments.get("services", ALLOWED_DEBUG_SERVICES)
+        timeout = arguments.get("timeout", 120)
+
+        # Validate timeout
+        timeout = max(60, min(300, timeout))
+
+        # Execute the debug logging toggle
+        stdout, stderr, returncode, safety_note = await toggle_debug_logging(
+            enable, services, timeout
+        )
+
+        # Format output
+        action = "ENABLE" if enable else "DISABLE"
+        output = f"=== {action} DEBUG LOGGING ===\n"
+        output += f"Services: {', '.join(services)}\n"
+        output += f"Safety Check: {safety_note}\n"
+        output += f"Exit Code: {returncode}\n\n"
+
+        if stdout:
+            output += f"--- RESULTS ---\n{stdout}\n"
+
+        if stderr:
+            output += f"--- ERRORS ---\n{stderr}\n"
+
+        if not stdout and not stderr and returncode == 0:
+            output += "Operation completed successfully with no output.\n"
 
         return [types.TextContent(type="text", text=output)]
 

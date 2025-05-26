@@ -7,6 +7,8 @@ User=kanakku
 Group=kanakku
 WorkingDirectory=/opt/kanakku/backend
 Environment="PATH=/opt/kanakku/backend/venv/bin"
+EnvironmentFile=-/opt/kanakku/.env
+EnvironmentFile=-/opt/kanakku/debug.env
 ExecStart=/opt/kanakku/backend/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 'app:create_app()'
 Restart=on-failure
 RestartSec=5s

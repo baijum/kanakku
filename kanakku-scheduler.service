@@ -10,7 +10,8 @@ Group=kanakku
 WorkingDirectory=/opt/kanakku
 Environment="PATH=/opt/kanakku/backend/venv/bin"
 Environment="PYTHONPATH=/opt/kanakku:/opt/kanakku/backend:/opt/kanakku/banktransactions:/opt/kanakku/shared"
-EnvironmentFile=/opt/kanakku/.env
+EnvironmentFile=-/opt/kanakku/.env
+EnvironmentFile=-/opt/kanakku/debug.env
 ExecStart=/opt/kanakku/backend/venv/bin/kanakku-scheduler --interval 300
 Restart=always
 RestartSec=30s

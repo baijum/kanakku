@@ -199,6 +199,26 @@ Execute safe system commands for debugging:
 "Execute 'netstat -tlnp' to check listening ports"
 ```
 
+### Service Management
+
+Manage Kanakku services:
+```
+"Restart the kanakku service"
+"Check the status of all services"
+"Stop the kanakku-worker service"
+"Restart all Kanakku services"
+```
+
+### Debug Logging
+
+Enable/disable debug logging for troubleshooting:
+```
+"Check if debug logging is enabled"
+"Enable debug logging for all services"
+"Enable debug logging only for the main kanakku service"
+"Disable debug logging"
+```
+
 ## Available Tools
 
 ### `read_log`
@@ -248,6 +268,40 @@ Execute a safe system command for debugging purposes.
 - Blocks file modification and network operations
 - Command length limited to 500 characters
 - Automatic timeout protection
+
+### `manage_service`
+Manage Kanakku services (start, stop, restart, reload).
+
+**Parameters:**
+- `operation` (required): Service operation (start, stop, restart, reload, daemon-reload, status, is-active, is-enabled)
+- `service` (optional): Service name (not required for daemon-reload)
+- `timeout` (optional): Command timeout in seconds (default: 60, max: 120)
+
+### `restart_all_kanakku_services`
+Restart all Kanakku application services in the correct order.
+
+**Parameters:**
+- `include_nginx` (optional): Whether to also restart nginx (default: false)
+- `daemon_reload` (optional): Whether to run daemon-reload first (default: true)
+
+### `check_debug_status`
+Check if debug logging is currently enabled for Kanakku services.
+
+**Parameters:** None
+
+### `toggle_debug_logging`
+Enable or disable debug logging for Kanakku services (temporarily for troubleshooting).
+
+**Parameters:**
+- `enable` (required): Enable (true) or disable (false) debug logging
+- `services` (optional): List of services to restart (default: all Kanakku services)
+- `timeout` (optional): Command timeout in seconds (default: 120, max: 300)
+
+**Debug Logging Features:**
+- Creates/removes `/opt/kanakku/debug.env` file with debug settings
+- Automatically restarts affected services to apply changes
+- Provides detailed logging for troubleshooting production issues
+- Safe operation with automatic cleanup when disabled
 
 ## Troubleshooting
 
