@@ -8,7 +8,7 @@ function Privacy() {
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Privacy Statement
         </Typography>
-        
+
         <Typography variant="body1" paragraph>
           Last updated: {new Date().toLocaleDateString()}
         </Typography>
@@ -80,4 +80,4 @@ function Privacy() {
   );
 }
 
-export default Privacy; 
+export default Privacy;

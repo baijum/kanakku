@@ -45,7 +45,7 @@ jest.mock('../../api/axiosInstance');
 describe('ResetPassword Component', () => {
   const mockUseParams = require('react-router-dom').useParams;
   const mockUseLocation = require('react-router-dom').useLocation;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -53,19 +53,19 @@ describe('ResetPassword Component', () => {
   test('renders reset password form when token and email are valid', () => {
     // Mock values for useParams and useLocation
     mockUseParams.mockReturnValue({ token: 'valid-token' });
-    mockUseLocation.mockReturnValue({ 
+    mockUseLocation.mockReturnValue({
       search: '?email=test@example.com',
       pathname: '/reset-password/valid-token'
     });
-    
+
     // Set the mock implementation for this test
     ResetPassword.mockImplementation(MockResetPassword);
-    
+
     render(<ResetPassword />);
-    
+
     // Check for heading
     expect(screen.getByRole('heading', { name: /Reset Password/i })).toBeInTheDocument();
-    
+
     // Check for form elements
     expect(screen.getByTestId('new-password-field')).toBeInTheDocument();
     expect(screen.getByTestId('confirm-password-field')).toBeInTheDocument();
@@ -76,16 +76,16 @@ describe('ResetPassword Component', () => {
   test('renders invalid link message when token or email is missing', () => {
     // Mock values for useParams and useLocation with invalid data
     mockUseParams.mockReturnValue({ token: null });
-    mockUseLocation.mockReturnValue({ 
+    mockUseLocation.mockReturnValue({
       search: '',
       pathname: '/reset-password'
     });
-    
+
     // Set the mock implementation for this test
     ResetPassword.mockImplementation(MockInvalidResetPassword);
-    
+
     render(<ResetPassword />);
-    
+
     // Check for invalid link heading and message
     expect(screen.getByRole('heading', { name: /Invalid Reset Link/i })).toBeInTheDocument();
     expect(screen.getByTestId('error-message')).toBeInTheDocument();

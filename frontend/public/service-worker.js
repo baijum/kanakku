@@ -31,13 +31,13 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
-  
+
   // For API requests, don't use cache - go straight to network
   if (event.request.url.includes('/api/')) {
     event.respondWith(fetch(event.request));
     return;
   }
-  
+
   // For all other requests, try cache first, then network
   event.respondWith(
     caches.match(event.request).then(response => {
@@ -52,4 +52,4 @@ self.addEventListener('fetch', event => {
       );
     })
   );
-}); 
+});

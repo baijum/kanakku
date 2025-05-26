@@ -33,7 +33,7 @@ const UpdatePassword = () => {
       ...formData,
       [name]: value,
     });
-    
+
     // Clear error for this field when user types
     if (errors[name]) {
       setErrors({
@@ -45,44 +45,44 @@ const UpdatePassword = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.currentPassword) {
       newErrors.currentPassword = 'Current password is required';
     }
-    
+
     if (!formData.newPassword) {
       newErrors.newPassword = 'New password is required';
     } else if (formData.newPassword.length < 8) {
       newErrors.newPassword = 'Password must be at least 8 characters';
     }
-    
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your new password';
     } else if (formData.newPassword !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsLoading(true);
     setSuccessMessage('');
     setErrorMessage('');
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('You must be logged in to update your password');
       }
-      
+
       // Convert fetch options to Axios config
       const config = {
         headers: {
@@ -90,24 +90,24 @@ const UpdatePassword = () => {
           'Authorization': `Bearer ${token}`,
         }
       };
-      
+
       const body = {
         current_password: formData.currentPassword,
         new_password: formData.newPassword,
       };
-      
+
       // Use axiosInstance.put
       const response = await axiosInstance.put('/api/v1/auth/password', body, config);
-      
+
       const data = response.data; // Axios puts response data in `data` property
-      
+
       // Reset form
       setFormData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
-      
+
       setSuccessMessage(data.message || 'Password updated successfully');
     } catch (error) {
       // Handle Axios error structure (error.response.data)
@@ -120,19 +120,19 @@ const UpdatePassword = () => {
   return (
     <Paper elevation={3} sx={{ p: 3 }}>
       <Typography variant="h6" mb={2}>Update Password</Typography>
-      
+
       {successMessage && (
         <Alert severity="success" sx={{ mb: 2 }}>
           {successMessage}
         </Alert>
       )}
-      
+
       {errorMessage && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {errorMessage}
         </Alert>
       )}
-      
+
       <form onSubmit={handleSubmit}>
         <Stack spacing={3}>
           <TextField
@@ -159,7 +159,7 @@ const UpdatePassword = () => {
               ),
             }}
           />
-          
+
           <TextField
             label="New Password"
             type={showNewPassword ? 'text' : 'password'}
@@ -184,7 +184,7 @@ const UpdatePassword = () => {
               ),
             }}
           />
-          
+
           <TextField
             label="Confirm New Password"
             type={showConfirmPassword ? 'text' : 'password'}
@@ -209,7 +209,7 @@ const UpdatePassword = () => {
               ),
             }}
           />
-          
+
           <Button
             type="submit"
             variant="contained"
@@ -225,4 +225,4 @@ const UpdatePassword = () => {
   );
 };
 
-export default UpdatePassword; 
+export default UpdatePassword;

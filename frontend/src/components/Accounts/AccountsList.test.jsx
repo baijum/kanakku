@@ -50,10 +50,10 @@ jest.mock('react-router-dom', () => ({
 
 // Mock axios
 jest.mock('../../api/axiosInstance', () => ({
-  get: jest.fn().mockImplementation(() => Promise.resolve({ 
-    data: { 
-      accounts: ['Assets:Checking', 'Expenses:Food'] 
-    } 
+  get: jest.fn().mockImplementation(() => Promise.resolve({
+    data: {
+      accounts: ['Assets:Checking', 'Expenses:Food']
+    }
   })),
   delete: jest.fn().mockResolvedValue({ data: {} })
 }));
@@ -77,22 +77,22 @@ describe('AccountsList Component', () => {
 
   test('renders accounts list elements', () => {
     render(<AccountsList />);
-    
+
     // Check for heading
     expect(screen.getByRole('heading', { name: /Accounts/i })).toBeInTheDocument();
-    
+
     // Check for create button
     expect(screen.getByTestId('create-account-button')).toBeInTheDocument();
-    
+
     // Check for table headers
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Description')).toBeInTheDocument();
     expect(screen.getByText('Actions')).toBeInTheDocument();
-    
+
     // Check for account rows
     expect(screen.getByText('Assets:Checking')).toBeInTheDocument();
     expect(screen.getByText('Expenses:Food')).toBeInTheDocument();
-    
+
     // Check for action buttons
     const editButtons = screen.getAllByRole('button', { name: /edit account/i });
     const deleteButtons = screen.getAllByRole('button', { name: /delete account/i });

@@ -4,4 +4,4 @@ module.exports = {
   webpack: {
     configure: webpackFallbacks
   }
-}; 
+};

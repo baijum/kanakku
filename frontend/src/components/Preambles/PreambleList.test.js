@@ -112,9 +112,9 @@ describe('PreambleList Component', () => {
   test('renders loading state initially', () => {
     // Set the mock implementation for loading state
     PreambleList.mockImplementation(MockPreambleListLoading);
-    
+
     render(<PreambleList />);
-    
+
     // Check for loading elements
     expect(screen.getByRole('heading', { name: /Preambles/i })).toBeInTheDocument();
     expect(screen.getByText(/Preambles are text that will appear/i)).toBeInTheDocument();
@@ -125,21 +125,21 @@ describe('PreambleList Component', () => {
   test('renders preamble list with preambles', () => {
     // Set the mock implementation for preambles state
     PreambleList.mockImplementation(MockPreambleListWithPreambles);
-    
+
     render(<PreambleList />);
-    
+
     // Check for table headers
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Content Preview')).toBeInTheDocument();
     expect(screen.getByText('Default')).toBeInTheDocument();
     expect(screen.getByText('Actions')).toBeInTheDocument();
-    
+
     // Check for preamble items
     expect(screen.getByText('Default Preamble')).toBeInTheDocument();
     expect(screen.getByText('Custom Preamble')).toBeInTheDocument();
     expect(screen.getByText('Yes')).toBeInTheDocument();
     expect(screen.getByText('No')).toBeInTheDocument();
-    
+
     // Check for action buttons
     const editButtons = screen.getAllByRole('button', { name: /edit/i });
     const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
@@ -150,9 +150,9 @@ describe('PreambleList Component', () => {
   test('renders empty state when no preambles exist', () => {
     // Set the mock implementation for empty state
     PreambleList.mockImplementation(MockPreambleListEmpty);
-    
+
     render(<PreambleList />);
-    
+
     // Check for empty state message
     expect(screen.getByText(/No preambles found/i)).toBeInTheDocument();
   });

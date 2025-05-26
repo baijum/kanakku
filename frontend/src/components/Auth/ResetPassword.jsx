@@ -63,16 +63,16 @@ function ResetPassword() {
 
       console.log('Reset password response:', response);
       setSuccess('Your password has been reset successfully.');
-      
+
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        navigate('/login', { 
-          state: { 
-            notification: { 
-              type: 'success', 
-              message: 'Password reset successful. You can now log in with your new password.' 
-            } 
-          } 
+        navigate('/login', {
+          state: {
+            notification: {
+              type: 'success',
+              message: 'Password reset successful. You can now log in with your new password.'
+            }
+          }
         });
       }, 3000);
     } catch (err) {
@@ -180,4 +180,4 @@ function ResetPassword() {
   );
 }
 
-export default ResetPassword; 
+export default ResetPassword;

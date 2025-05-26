@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
   TableRow,
   Switch,
   CircularProgress,
@@ -39,7 +39,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await axiosInstance.get('/api/v1/auth/users');
       setUsers(response.data.users);
@@ -62,24 +62,24 @@ const UserManagement = () => {
 
   const confirmStatusChange = async () => {
     if (!userToModify || newStatus === null) return;
-    
+
     setLoading(true);
     setError(null);
     setSuccess(null);
-    
+
     try {
       const response = await axiosInstance.post(
         `/api/v1/auth/users/${userToModify.id}/activate`,
         { is_active: newStatus }
       );
-      
+
       // Update the user in the state
-      setUsers(users.map(user => 
-        user.id === userToModify.id 
-          ? { ...user, is_active: newStatus } 
+      setUsers(users.map(user =>
+        user.id === userToModify.id
+          ? { ...user, is_active: newStatus }
           : user
       ));
-      
+
       setSuccess(response.data.message);
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Failed to update user status');
@@ -112,27 +112,27 @@ const UserManagement = () => {
       <Typography variant="h5" gutterBottom>
         User Management
       </Typography>
-      
+
       {error && (
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           sx={{ mb: 2 }}
           onClose={() => setError(null)}
         >
           {error}
         </Alert>
       )}
-      
+
       {success && (
-        <Alert 
-          severity="success" 
+        <Alert
+          severity="success"
           sx={{ mb: 2 }}
           onClose={() => setSuccess(null)}
         >
           {success}
         </Alert>
       )}
-      
+
       <Paper sx={{ width: '100%', overflow: 'hidden' }}>
         <TableContainer>
           <Table stickyHeader>
@@ -153,15 +153,15 @@ const UserManagement = () => {
                     {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={user.is_active ? "Active" : "Inactive"} 
+                    <Chip
+                      label={user.is_active ? "Active" : "Inactive"}
                       color={user.is_active ? "success" : "error"}
                       size="small"
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={user.is_admin ? "Admin" : "User"} 
+                    <Chip
+                      label={user.is_admin ? "Admin" : "User"}
                       color={user.is_admin ? "primary" : "default"}
                       size="small"
                     />
@@ -196,7 +196,7 @@ const UserManagement = () => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {newStatus 
+            {newStatus
               ? `Are you sure you want to activate the account for ${userToModify?.email}?`
               : `Are you sure you want to deactivate the account for ${userToModify?.email}? They will no longer be able to log in.`
             }
@@ -206,7 +206,7 @@ const UserManagement = () => {
           <Button onClick={() => setConfirmDialogOpen(false)}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={confirmStatusChange}
             color={newStatus ? "success" : "error"}
             variant="contained"
@@ -217,8 +217,8 @@ const UserManagement = () => {
       </Dialog>
 
       <Box sx={{ mt: 2 }}>
-        <Button 
-          variant="outlined" 
+        <Button
+          variant="outlined"
           onClick={fetchUsers}
           disabled={loading}
         >
@@ -230,4 +230,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement; 
+export default UserManagement;

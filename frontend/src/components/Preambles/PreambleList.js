@@ -271,16 +271,16 @@ function PreambleList() {
       )}
 
       {/* Dialog for adding/editing preamble */}
-      <Dialog 
-        open={openDialog} 
-        onClose={handleCloseDialog} 
-        fullWidth 
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        fullWidth
         maxWidth="md"
         disableEnforceFocus
         keepMounted={false}
         aria-labelledby="preamble-dialog-title"
         container={() => document.body}
-        BackdropProps={{ 
+        BackdropProps={{
           invisible: false,
           sx: { backdropFilter: 'none' }
         }}
@@ -336,7 +336,7 @@ function PreambleList() {
           />
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={handleCloseDialog}
             aria-label="cancel"
           >
@@ -354,13 +354,13 @@ function PreambleList() {
       </Dialog>
 
       {/* Dialog for confirming deletion */}
-      <Dialog 
-        open={openDeleteDialog} 
+      <Dialog
+        open={openDeleteDialog}
         onClose={handleCloseDeleteDialog}
         disableEnforceFocus
         aria-labelledby="delete-dialog-title"
         container={() => document.body}
-        BackdropProps={{ 
+        BackdropProps={{
           invisible: false,
           sx: { backdropFilter: 'none' }
         }}
@@ -384,7 +384,7 @@ function PreambleList() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button 
+          <Button
             onClick={handleCloseDeleteDialog}
             aria-label="cancel deletion"
           >
@@ -421,4 +421,4 @@ function PreambleList() {
   );
 }
 
-export default PreambleList; 
+export default PreambleList;

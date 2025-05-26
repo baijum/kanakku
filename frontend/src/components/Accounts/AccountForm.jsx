@@ -50,20 +50,20 @@ function AccountForm() {
       console.error("Error response:", err.response?.data);
       console.error("Error status:", err.response?.status);
       console.error("Error headers:", err.response?.headers);
-      
+
       setError(err.response?.data?.message || err.response?.data?.msg || err.response?.data?.error || 'An error occurred during account creation.');
     }
   };
 
   return (
-    <Box 
-      component="form" 
-      onSubmit={handleSubmit} 
-      sx={{ 
-        mt: 3, 
-        p: 3, 
-        display: 'flex', 
-        flexDirection: 'column', 
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        mt: 3,
+        p: 3,
+        display: 'flex',
+        flexDirection: 'column',
         gap: 2, // Spacing between elements
         maxWidth: '500px', // Limit form width
         margin: 'auto' // Center the form
@@ -115,4 +115,4 @@ function AccountForm() {
   );
 }
 
-export default AccountForm; 
+export default AccountForm;

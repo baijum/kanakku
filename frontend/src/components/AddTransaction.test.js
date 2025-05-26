@@ -29,7 +29,7 @@ describe('AddTransaction Component', () => {
   beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
-    
+
     // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
@@ -39,7 +39,7 @@ describe('AddTransaction Component', () => {
       },
       writable: true
     });
-    
+
     // Mock axiosInstance get response for accounts (intentionally unsorted)
     axiosInstance.get.mockImplementation(() => {
       return Promise.resolve({
@@ -48,7 +48,7 @@ describe('AddTransaction Component', () => {
         }
       });
     });
-    
+
     // Mock axiosInstance post for transaction creation
     axiosInstance.post.mockImplementation(() => {
       return Promise.resolve({
@@ -80,12 +80,12 @@ describe('AddTransaction Component', () => {
 
     // Select accounts using Autocomplete
     const accountInputs = screen.getAllByLabelText(/Account/i);
-    
+
     // --- Interaction with first Autocomplete ---
     await user.click(accountInputs[0]); // Open dropdown
     const option1 = await screen.findByRole('option', { name: sortedMockAccounts[0] }); // Assets:Bank
     await user.click(option1);
-    
+
     // --- Interaction with second Autocomplete ---
     await user.click(accountInputs[1]); // Open dropdown
     const option2 = await screen.findByRole('option', { name: sortedMockAccounts[1] }); // Assets:Cash
@@ -126,11 +126,11 @@ describe('AddTransaction Component', () => {
     // This test verifies the implementation detail that accounts are sorted
     // before being set in state
     expect(axiosInstance.get).toHaveBeenCalledTimes(1);
-    
+
     // Verify sorting implementation by checking the mock sorting logic in the component
     const sortAccounts = (accounts) => [...accounts].sort((a, b) => a.localeCompare(b));
     const sortedAccounts = sortAccounts(mockAccounts);
-    
+
     // Expected sorted order
     expect(sortedAccounts).toEqual(['Assets:Bank', 'Assets:Cash', 'Expenses:Food', 'Liabilities:Credit Card']);
   });
@@ -145,7 +145,7 @@ describe('AddTransaction Component', () => {
 
     // Fill form fields with unbalanced amounts
     await user.type(screen.getByLabelText(/Payee/i), 'Unbalanced Payee');
-    
+
     const accountInputs = screen.getAllByLabelText(/Account/i);
     await user.click(accountInputs[0]);
     const option1 = await screen.findByRole('option', { name: sortedMockAccounts[0] });
@@ -184,8 +184,8 @@ describe('AddTransaction Component', () => {
     // Remove the added posting (should be the last one)
     const removeButtons = screen.getAllByRole('button', { name: /delete posting/i });
     expect(removeButtons).toHaveLength(1);
-    await user.click(removeButtons[0]); 
-    
+    await user.click(removeButtons[0]);
+
     expect(screen.getAllByLabelText(/Account/i)).toHaveLength(2);
     expect(screen.getAllByLabelText(/Amount/i)).toHaveLength(2);
     expect(screen.queryByRole('button', { name: /delete posting/i })).not.toBeInTheDocument();

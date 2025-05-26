@@ -2,4 +2,4 @@
 # Development installation with all dependencies
 
 # Install the project in development mode with all optional dependencies
--e .[dev] 
+-e .[dev]

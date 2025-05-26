@@ -8,7 +8,7 @@ function Terms() {
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Terms of Service
         </Typography>
-        
+
         <Typography variant="body1" paragraph>
           Last updated: {new Date().toLocaleDateString()}
         </Typography>
@@ -73,4 +73,4 @@ function Terms() {
   );
 }
 
-export default Terms; 
+export default Terms;

@@ -26,13 +26,13 @@ module.exports = defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */
     baseURL: 'http://localhost:3000',
-    
+
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
-    
+
     /* Automatically take screenshots on failure */
     screenshot: 'only-on-failure',
-    
+
     /* Increase timeouts for slower page loads */
     navigationTimeout: 30000,
     actionTimeout: 15000,
@@ -63,4 +63,4 @@ module.exports = defineConfig({
     stdout: 'pipe',
     stderr: 'pipe',
   },
-}); 
+});

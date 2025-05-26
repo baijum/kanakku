@@ -79,4 +79,4 @@ ruff check shared/ || { echo -e "${RED}Shared linting failed${NC}"; exit 1; }
 echo "Running Black formatter check on shared..."
 black --check shared/ || { echo -e "${RED}Shared Black formatting check failed${NC}"; exit 1; }
 
-echo -e "\n${GREEN}All linting checks passed successfully!${NC}" 
+echo -e "\n${GREEN}All linting checks passed successfully!${NC}"

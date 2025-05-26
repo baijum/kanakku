@@ -8,9 +8,9 @@ const originalWarn = console.warn;
 // Filter out specific React Router warnings
 console.warn = (...args) => {
   if (
-    args[0] && 
-    typeof args[0] === 'string' && 
-    (args[0].includes('React Router Future Flag Warning') || 
+    args[0] &&
+    typeof args[0] === 'string' &&
+    (args[0].includes('React Router Future Flag Warning') ||
      args[0].includes('v7_startTransition') ||
      args[0].includes('v7_relativeSplatPath'))
   ) {
@@ -22,23 +22,23 @@ console.warn = (...args) => {
 // Filter out specific errors related to React Router
 console.error = (...args) => {
   if (
-    args[0] && 
-    typeof args[0] === 'string' && 
-    (args[0].includes('Router') || 
+    args[0] &&
+    typeof args[0] === 'string' &&
+    (args[0].includes('Router') ||
      args[0].includes('basename'))
   ) {
     return; // Suppress these specific errors
   }
-  
+
   // Suppress transaction update error messages in tests
   if (
-    args[0] && 
-    typeof args[0] === 'string' && 
+    args[0] &&
+    typeof args[0] === 'string' &&
     args[0].includes('Error updating transaction:')
   ) {
     return; // Suppress transaction update errors
   }
-  
+
   originalError.apply(console, args);
 };
 

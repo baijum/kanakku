@@ -10,7 +10,7 @@ const findFiles = () => {
       "grep -r --include='*.js' 'util\\._extend' node_modules || true",
       { encoding: 'utf8' }
     );
-    
+
     return result.split('\n')
       .filter(line => line.trim())
       .map(line => {
@@ -34,23 +34,23 @@ const patchFiles = (files) => {
   files.forEach(file => {
     try {
       let content = fs.readFileSync(file, 'utf8');
-      
+
       // Replace require('util') with a patched version
       if (content.includes("require('util')") || content.includes('require("util")')) {
         content = content.replace(
           /const\s+util\s*=\s*require\(['"]util['"]\)/g,
           `const util = require('util');\nutil._extend = Object.assign;`
         );
-        
+
         content = content.replace(
           /var\s+util\s*=\s*require\(['"]util['"]\)/g,
           `var util = require('util');\nutil._extend = Object.assign;`
         );
       }
-      
+
       // Direct replacement of util._extend with Object.assign
       content = content.replace(/util\._extend/g, 'Object.assign');
-      
+
       fs.writeFileSync(file, content, 'utf8');
       console.log(`Patched ${file}`);
     } catch (error) {
@@ -63,4 +63,4 @@ console.log('Searching for files using util._extend...');
 const files = findFiles();
 console.log(`Found ${files.length} files to patch`);
 patchFiles(files);
-console.log('Patching complete'); 
+console.log('Patching complete');

@@ -201,7 +201,7 @@ function App() {
       console.log('Auth check - Token found in localStorage:', !!token);
       console.log('Auth check - Current URL:', window.location.href);
       console.log('Auth check - Current pathname:', window.location.pathname);
-      
+
       // Check if we're on a Google callback URL that should be handled by the backend
       if (window.location.pathname.includes('/api/v1/auth/google/callback')) {
         console.log('Detected backend Google callback URL on frontend, redirecting to backend...');
@@ -212,7 +212,7 @@ function App() {
         window.location.href = `${backendUrl}${callbackPath}${window.location.search}`;
         return;
       }
-      
+
       // Skip validation if on Google auth callback page as it will handle its own authentication
       if (window.location.pathname === '/google-auth-callback') {
         console.log('On Google auth callback page, skipping token validation');
@@ -225,18 +225,18 @@ function App() {
           console.log('Validating token with /api/v1/auth/test...');
           console.log('Token length:', token.length);
           console.log('Token first 20 chars:', token.substring(0, 20) + '...');
-          
+
           const response = await axiosInstance.get('/api/v1/auth/test', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
           console.log('Token validation successful. Response:', response.data);
-          
+
           // Check if user is admin
           const userInfoResponse = await axiosInstance.get('/api/v1/auth/me');
           setIsAdmin(userInfoResponse.data?.is_admin || false);
-          
+
           setIsLoggedIn(true);
         } catch (error) {
           console.error('Token validation failed:', error);
@@ -335,12 +335,12 @@ function App() {
 
   if (authLoading) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh' 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh'
         }}
       >
         <CircularProgress />
@@ -374,16 +374,16 @@ function App() {
                 </IconButton>
               )}
               <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-                <img 
-                  src="/logo.svg" 
-                  alt="Kanakku Logo" 
-                  style={{ height: '32px', marginRight: '10px' }} 
+                <img
+                  src="/logo.svg"
+                  alt="Kanakku Logo"
+                  style={{ height: '32px', marginRight: '10px' }}
                 />
               </Box>
-              
+
               {isLoggedIn && (
                 <>
-                  <Box sx={{ 
+                  <Box sx={{
                     mr: 1,
                     maxWidth: { xs: '120px', sm: '200px' },
                     '& .MuiSelect-select': {
@@ -404,15 +404,15 @@ function App() {
                     onClick={handleUserMenuOpen}
                     aria-controls="user-menu"
                     aria-haspopup="true"
-                    sx={{ 
-                      padding: { xs: '4px', sm: '8px' } 
+                    sx={{
+                      padding: { xs: '4px', sm: '8px' }
                     }}
                   >
                     <AccountCircleIcon />
                   </IconButton>
                 </>
               )}
-              
+
               {isLoggedIn ? (
                 <Menu
                   id="user-menu"
@@ -427,7 +427,7 @@ function App() {
                     </ListItemIcon>
                     Profile Settings
                   </MenuItem>
-                  
+
                   {isAdmin && (
                     <MenuItem component={RouterLink} to="/admin" onClick={handleUserMenuClose}>
                       <ListItemIcon>
@@ -436,7 +436,7 @@ function App() {
                       Admin Panel
                     </MenuItem>
                   )}
-                  
+
                   <Divider />
                   <MenuItem onClick={handleLogout}>
                     <ListItemIcon>
@@ -486,7 +486,7 @@ function App() {
           )}
           <Box
             component="main"
-            sx={{ 
+            sx={{
               flexGrow: 1,
               p: { xs: 2, sm: 3 },
               width: isLoggedIn ? { sm: `calc(100% - ${drawerWidth}px)` } : '100%',
@@ -498,85 +498,85 @@ function App() {
             <Toolbar />
             <Box sx={{ flexGrow: 1, maxWidth: '100%', overflowX: 'hidden' }}>
               <Routes>
-                <Route 
-                  path="/" 
+                <Route
+                  path="/"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <Dashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/add" 
+                <Route
+                  path="/add"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <AddTransaction />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/transactions" 
+                <Route
+                  path="/transactions"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <ViewTransactions />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/transactions/edit/:id" 
+                <Route
+                  path="/transactions/edit/:id"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <EditTransaction />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/accounts" 
+                <Route
+                  path="/accounts"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <AccountsList />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/accounts/new" 
+                <Route
+                  path="/accounts/new"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <AccountForm />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/accounts/edit/:id" 
+                <Route
+                  path="/accounts/edit/:id"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <EditAccount />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/preambles" 
+                <Route
+                  path="/preambles"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <PreambleList />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/profile" 
+                <Route
+                  path="/profile"
                   element={
                     <ProtectedRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <ProfileSettings />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/admin" 
+                <Route
+                  path="/admin"
                   element={
                     <AdminRoute isLoggedIn={isLoggedIn} authLoading={authLoading}>
                       <AdminPanel />
                     </AdminRoute>
-                  } 
+                  }
                 />
                 <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
                 <Route path="/register" element={<Register setIsLoggedIn={setIsLoggedIn} />} />
@@ -585,11 +585,11 @@ function App() {
                 <Route path="/google-auth-callback" element={<GoogleAuthCallback setIsLoggedIn={setIsLoggedIn} />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
-                <Route 
-                  path="*" 
+                <Route
+                  path="*"
                   element={
                     isLoggedIn ? <Navigate to="/" replace /> : <Navigate to="/login" replace />
-                  } 
+                  }
                 />
               </Routes>
             </Box>
@@ -601,4 +601,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

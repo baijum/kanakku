@@ -29,23 +29,23 @@ html {
     padding-left: 12px !important;
     padding-right: 12px !important;
   }
-  
+
   .mui-typography-h4 {
     font-size: 1.5rem !important;
   }
-  
+
   .mui-typography-h5 {
     font-size: 1.25rem !important;
   }
-  
+
   .mui-typography-h6 {
     font-size: 1.1rem !important;
   }
-  
+
   .mui-button-root {
     padding: 6px 16px !important;
   }
-  
+
   .mui-table-cell-root {
     padding: 8px !important;
   }
@@ -58,24 +58,24 @@ html {
     padding-right: 8px !important;
     min-height: 56px !important;
   }
-  
+
   .mui-icon-button-root {
     padding: 6px !important;
   }
-  
+
   .mui-table-cell-root {
     padding: 4px !important;
   }
-  
+
   /* Fix for BookSelector to ensure it's visible but compact */
   .mui-select-select {
     padding: 6px 24px 6px 6px !important;
   }
-  
+
   .mui-select-icon {
     right: 4px !important;
   }
-  
+
   /* Ensure there's enough space in the app bar */
   .mui-app-bar-root .mui-box-root {
     margin-right: 4px !important;

@@ -27,7 +27,7 @@ jest.mock('../../api/axiosInstance');
 
 describe('Login Component', () => {
   const mockSetIsLoggedIn = jest.fn();
-  
+
   beforeEach(() => {
     // Mock implementation of Login
     Login.mockImplementation(MockLogin);
@@ -39,10 +39,10 @@ describe('Login Component', () => {
 
   test('renders login form elements', () => {
     render(<Login setIsLoggedIn={mockSetIsLoggedIn} />);
-    
+
     // Check for heading
     expect(screen.getByRole('heading', { name: /Sign in/i })).toBeInTheDocument();
-    
+
     // Check for form elements
     expect(screen.getByTestId('email-field')).toBeInTheDocument();
     expect(screen.getByTestId('password-field')).toBeInTheDocument();

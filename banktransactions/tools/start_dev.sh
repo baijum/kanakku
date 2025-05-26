@@ -83,4 +83,4 @@ echo "⏹️  To stop services, press Ctrl+C"
 trap 'echo ""; echo "🛑 Stopping services..."; kill $WORKER_PID 2>/dev/null; [ ! -z "$SCHEDULER_PID" ] && kill $SCHEDULER_PID 2>/dev/null; echo "✅ Services stopped"; exit 0' INT
 
 # Keep script running
-wait 
+wait

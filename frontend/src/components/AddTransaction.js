@@ -24,7 +24,7 @@ import axiosInstance from '../api/axiosInstance';
 
 /**
  * AddTransaction Component
- * 
+ *
  * This component provides a form interface for users to add new financial transactions.
  * It supports double-entry accounting by allowing users to add multiple postings
  * that must balance to zero. The component fetches available accounts from the API
@@ -283,7 +283,7 @@ function AddTransaction() {
                 </Grid>
                 <Grid item xs={12} sm={2}>
                   {index >= 2 && (
-                    <IconButton 
+                    <IconButton
                       onClick={() => handleRemovePosting(index)}
                       color="error"
                       sx={{ mt: 1 }}
@@ -295,7 +295,7 @@ function AddTransaction() {
                 </Grid>
               </React.Fragment>
             ))}
-            
+
             {/* Add posting button */}
             <Grid item xs={12}>
               <Button
@@ -306,7 +306,7 @@ function AddTransaction() {
                 Add Entry
               </Button>
             </Grid>
-            
+
             {/* Submit button */}
             <Grid item xs={12}>
               <Button
@@ -325,4 +325,4 @@ function AddTransaction() {
   );
 }
 
-export default AddTransaction; 
+export default AddTransaction;

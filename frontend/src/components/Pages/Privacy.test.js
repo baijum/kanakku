@@ -12,7 +12,7 @@ describe('Privacy Component', () => {
 
   test('renders all privacy policy sections', () => {
     render(<Privacy />);
-    
+
     // Check for section headings
     expect(screen.getByText(/1\. Introduction/i)).toBeInTheDocument();
     expect(screen.getByText(/2\. Information We Collect/i)).toBeInTheDocument();

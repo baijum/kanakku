@@ -7,4 +7,4 @@ if (originalUtil && typeof originalUtil._extend === 'function') {
   console.log('✅ Successfully patched util._extend with Object.assign');
 } else {
   console.log('❌ Could not patch util._extend (not found)');
-} 
+}

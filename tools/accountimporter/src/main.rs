@@ -166,18 +166,18 @@ struct Book {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
-    
-    // Configure the API client 
+
+    // Configure the API client
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
-    
+
     // Set up X-API-Key authentication
     headers.insert(
         "X-API-Key",
         HeaderValue::from_str(&args.token)
             .context("Failed to create X-API-Key header")?,
     );
-    
+
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
 
     if args.verbose {
@@ -227,7 +227,7 @@ async fn main() -> Result<()> {
     }
 
     println!("Found {} accounts in the file.", accounts.len());
-    
+
     if args.dry_run {
         println!("Dry run mode enabled. Not creating accounts in Kanakku.");
         return Ok(());
@@ -255,10 +255,10 @@ async fn get_book_id_by_name(
     book_name: &str,
 ) -> Result<i32> {
     let url = format!("{}/api/v1/books", api_url);
-    
+
     // Debugging information
     println!("Fetching books from: {}", url);
-    
+
     let response = client
         .get(&url)
         .headers(headers.clone())
@@ -269,9 +269,9 @@ async fn get_book_id_by_name(
     if !response.status().is_success() {
         let status = response.status();
         let body_text = response.text().await.unwrap_or_default();
-        anyhow::bail!("API error when fetching books ({} {}): {}", 
-                      status.as_u16(), 
-                      status.canonical_reason().unwrap_or("Unknown"), 
+        anyhow::bail!("API error when fetching books ({} {}): {}",
+                      status.as_u16(),
+                      status.canonical_reason().unwrap_or("Unknown"),
                       body_text)
     }
 
@@ -297,11 +297,11 @@ async fn create_account(
     account: &Account,
 ) -> Result<ApiResponse> {
     let url = format!("{}/api/v1/accounts", api_url);
-    
+
     // Debugging information
     println!("Creating account: {}", account.name);
     println!("API URL: {}", url);
-    
+
     let response = client
         .post(&url)
         .headers(headers.clone())
@@ -319,10 +319,10 @@ async fn create_account(
     } else {
         // Handle error response
         let status = response.status();
-        
+
         // Get the response body text
         let body_text = response.text().await.unwrap_or_default();
-        
+
         // Try to parse as JSON error if possible
         let error_text = if !body_text.is_empty() {
             if let Ok(error) = serde_json::from_str::<ErrorResponse>(&body_text) {
@@ -334,7 +334,7 @@ async fn create_account(
         } else {
             format!("HTTP Error: {} (no response body)", status)
         };
-        
+
         anyhow::bail!("API error ({} {}): {}", status.as_u16(), status.canonical_reason().unwrap_or("Unknown"), error_text)
     }
-} 
+}

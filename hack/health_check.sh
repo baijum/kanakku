@@ -56,4 +56,4 @@ else
 fi
 
 echo "========================================"
-echo "Health check completed at $(date)" 
+echo "Health check completed at $(date)"

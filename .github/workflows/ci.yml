@@ -316,30 +316,30 @@ jobs:
           echo "Backend tests: ${{ needs.backend-tests.result }}"
           echo "Frontend tests: ${{ needs.frontend-tests.result }}"
           echo "Build verification: ${{ needs.build-verification.result }}"
-          
+
           if [[ "${{ needs.quick-checks.result }}" == "failure" ]]; then
             echo "❌ Quick checks failed"
             exit 1
           fi
-          
+
           if [[ "${{ needs.security-checks.result }}" == "failure" ]]; then
             echo "❌ Security checks failed"
             exit 1
           fi
-          
+
           if [[ "${{ needs.backend-tests.result }}" == "failure" ]]; then
             echo "❌ Backend tests failed"
             exit 1
           fi
-          
+
           if [[ "${{ needs.frontend-tests.result }}" == "failure" ]]; then
             echo "❌ Frontend tests failed"
             exit 1
           fi
-          
+
           if [[ "${{ needs.build-verification.result }}" == "failure" ]]; then
             echo "❌ Build verification failed"
             exit 1
           fi
-          
-          echo "✅ All CI checks passed!" 
+
+          echo "✅ All CI checks passed!"

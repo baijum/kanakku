@@ -41,16 +41,16 @@ const BookManagement = () => {
       setLoading(true);
       const response = await axiosInstance.get('/api/v1/books');
       setBooks(response.data);
-      
+
       // Get active book
       const activeResponse = await axiosInstance.get('/api/v1/books/active');
       setActiveBook(activeResponse.data);
-      
+
       // Save the active book ID to localStorage if it exists
       if (activeResponse.data && activeResponse.data.id) {
         localStorage.setItem('active_book_id', activeResponse.data.id);
       }
-      
+
       setLoading(false);
     } catch (err) {
       console.error('Error fetching books:', err);
@@ -65,24 +65,24 @@ const BookManagement = () => {
 
   const handleCreateBook = async (e) => {
     e.preventDefault();
-    
+
     if (!newBookName.trim()) {
       setError('Book name cannot be empty');
       return;
     }
-    
+
     try {
-      await axiosInstance.post('/api/v1/books', { 
+      await axiosInstance.post('/api/v1/books', {
         name: newBookName.trim()
       });
-      
+
       setSuccessMessage('Book created successfully!');
       setNewBookName('');
       fetchBooks();
-      
+
       // Add a page reload to refresh the BookSelector in the header
       window.location.reload();
-      
+
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
@@ -99,12 +99,12 @@ const BookManagement = () => {
   };
 
   const handleDeleteClick = (book) => {
-    // Check if this is the active book 
+    // Check if this is the active book
     if (activeBook && book.id === activeBook.id) {
       setError("Cannot delete the active book. Please set another book as active first.");
       return;
     }
-    
+
     setBookToDelete(book);
     setConfirmDeleteName('');
     setIsDeleteDialogOpen(true);
@@ -116,15 +116,15 @@ const BookManagement = () => {
       setError("Book name doesn't match. Please enter the exact name to confirm deletion.");
       return;
     }
-    
+
     try {
       await axiosInstance.delete(`/api/v1/books/${bookToDelete.id}`);
-      
+
       setSuccessMessage('Book deleted successfully!');
       setIsDeleteDialogOpen(false);
       setConfirmDeleteName('');
       fetchBooks();
-      
+
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
@@ -140,14 +140,14 @@ const BookManagement = () => {
       setError('Book name cannot be empty');
       return;
     }
-    
+
     try {
       await axiosInstance.put(`/api/v1/books/${editBook.id}`, { name: editBookName.trim() });
-      
+
       setSuccessMessage('Book updated successfully!');
       setIsDialogOpen(false);
       fetchBooks();
-      
+
       // Check if we're editing the active book
       if (activeBook && editBook && activeBook.id === editBook.id) {
         // Reload the page to update the BookSelector in the header
@@ -155,7 +155,7 @@ const BookManagement = () => {
           window.location.reload();
         }, 500); // Small delay to ensure the API call completes
       }
-      
+
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
@@ -169,15 +169,15 @@ const BookManagement = () => {
     try {
       await axiosInstance.post(`/api/v1/books/${bookId}/set-active`);
       setSuccessMessage('Active book changed successfully!');
-      
+
       // Refresh book list and active book
       fetchBooks();
-      
+
       // Reload the page to update the BookSelector in the header
       setTimeout(() => {
         window.location.reload();
       }, 500);
-      
+
       setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
@@ -193,7 +193,7 @@ const BookManagement = () => {
         Book Management
       </Typography>
       <Divider sx={{ mb: 3 }} />
-      
+
       {/* Error and success messages */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -205,7 +205,7 @@ const BookManagement = () => {
           {successMessage}
         </Alert>
       )}
-      
+
       {/* Create new book form */}
       <Box component="form" onSubmit={handleCreateBook} sx={{ mb: 4 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>
@@ -220,9 +220,9 @@ const BookManagement = () => {
             fullWidth
             size="small"
           />
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             color="primary"
             disabled={loading}
           >
@@ -230,12 +230,12 @@ const BookManagement = () => {
           </Button>
         </Box>
       </Box>
-      
+
       {/* Books list */}
       <Typography variant="h6" sx={{ mb: 2 }}>
         Your Books
       </Typography>
-      
+
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
           <CircularProgress />
@@ -279,7 +279,7 @@ const BookManagement = () => {
                 </Box>
               }
             >
-              <ListItemText 
+              <ListItemText
                 primary={book.name}
                 // Visually highlight the active book
                 primaryTypographyProps={{
@@ -291,7 +291,7 @@ const BookManagement = () => {
           ))}
         </List>
       )}
-      
+
       {/* Edit dialog */}
       <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
         <DialogTitle>Edit Book</DialogTitle>
@@ -311,7 +311,7 @@ const BookManagement = () => {
           <Button onClick={handleEditSave} variant="contained">Save</Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Delete confirmation dialog */}
       <Dialog open={isDeleteDialogOpen} onClose={() => setIsDeleteDialogOpen(false)}>
         <DialogTitle>Delete Book</DialogTitle>
@@ -345,9 +345,9 @@ const BookManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleDeleteBook} 
-            variant="contained" 
+          <Button
+            onClick={handleDeleteBook}
+            variant="contained"
             color="error"
             disabled={confirmDeleteName !== bookToDelete?.name}
           >
@@ -359,4 +359,4 @@ const BookManagement = () => {
   );
 };
 
-export default BookManagement; 
+export default BookManagement;

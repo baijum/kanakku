@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Box, 
-  TextField, 
-  Button, 
-  Typography, 
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
   Paper,
   CircularProgress,
   Alert
@@ -17,7 +17,7 @@ const getToken = () => localStorage.getItem('token');
 function EditAccount() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [accountName, setAccountName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +29,7 @@ function EditAccount() {
     const fetchAccountDetails = async () => {
       setLoading(true);
       setError('');
-      
+
       try {
         const token = getToken();
         if (!token) {
@@ -43,9 +43,9 @@ function EditAccount() {
         try {
           // Directly fetch account information using the specific account endpoint
           const response = await axiosInstance.get(`/api/v1/accounts/${id}`, config);
-          
+
           console.log('Account API Response:', response.data);
-          
+
           if (response.data) {
             setAccountName(response.data.name || '');
             setDescription(response.data.description || '');
@@ -56,14 +56,14 @@ function EditAccount() {
           console.error('Error fetching account details:', detailError);
           // Continue with fallback
         }
-        
+
         // Fallback: try to get all accounts and find the one matching the ID
         try {
           // Get detailed account info
           const detailsResponse = await axiosInstance.get('/api/v1/accounts/details', config);
-          
+
           console.log('Accounts details response:', detailsResponse.data);
-          
+
           if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
             const accountInfo = detailsResponse.data.find(a => a.id === parseInt(id));
             if (accountInfo) {
@@ -77,12 +77,12 @@ function EditAccount() {
           console.error('Error fetching accounts details:', detailsError);
           // Continue with next fallback
         }
-        
+
         // Final fallback: Get just account names
         const accountsResponse = await axiosInstance.get('/api/v1/accounts', config);
-        
+
         console.log('Accounts list response:', accountsResponse.data);
-        
+
         if (accountsResponse.data && accountsResponse.data.accounts) {
           const accountIndex = parseInt(id) - 1;
           if (accountIndex >= 0 && accountIndex < accountsResponse.data.accounts.length) {
@@ -175,12 +175,12 @@ function EditAccount() {
         Edit Account
       </Typography>
       <Paper sx={{ p: 3 }}>
-        <Box 
-          component="form" 
-          onSubmit={handleSubmit} 
-          sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
             gap: 2,
             maxWidth: '500px',
             margin: 'auto'
@@ -217,8 +217,8 @@ function EditAccount() {
             rows={3}
           />
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               onClick={handleCancel}
             >
               Cancel
@@ -237,4 +237,4 @@ function EditAccount() {
   );
 }
 
-export default EditAccount; 
+export default EditAccount;

@@ -67,22 +67,22 @@ describe('ProfileSettings Component', () => {
 
   test('renders profile settings elements', () => {
     render(<ProfileSettings />);
-    
+
     // Check for heading
     expect(screen.getByRole('heading', { name: /Profile Settings/i })).toBeInTheDocument();
-    
+
     // Check for account info section
     expect(screen.getByTestId('account-info')).toBeInTheDocument();
     expect(screen.getByText(/Account Information/i)).toBeInTheDocument();
-    
+
     // Check for tabs
     expect(screen.getByTestId('tabs')).toBeInTheDocument();
     expect(screen.getByText(/Books/i)).toBeInTheDocument();
     expect(screen.getByText(/Update Password/i)).toBeInTheDocument();
-    
+
     // Fix: Use a more specific selector for "Account Status" button in tabs
     expect(screen.getByRole('button', { name: /Account Status/i })).toBeInTheDocument();
-    
+
     expect(screen.getByText(/API Tokens/i)).toBeInTheDocument();
   });
 });

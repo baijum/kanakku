@@ -15,7 +15,7 @@ async function login(page, { email = 'testuser@example.com', password = 'Passwor
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole('button', { name: /log in/i }).click();
-  
+
   if (verifyRedirect) {
     // Wait for redirect to dashboard
     await page.waitForURL(/.*dashboard/);
@@ -30,10 +30,10 @@ async function login(page, { email = 'testuser@example.com', password = 'Passwor
  * @param {string} options.password - Password for registration
  * @param {string} options.confirmPassword - Confirm password
  */
-async function registerUser(page, { 
-  email = `testuser${Date.now()}@example.com`, 
-  password = 'Password123!', 
-  confirmPassword = 'Password123!' 
+async function registerUser(page, {
+  email = `testuser${Date.now()}@example.com`,
+  password = 'Password123!',
+  confirmPassword = 'Password123!'
 } = {}) {
   await page.goto('/register');
   await page.getByLabel(/email address/i).fill(email);
@@ -75,4 +75,4 @@ module.exports = {
   registerUser,
   generateTestData,
   waitForNotification
-}; 
+};

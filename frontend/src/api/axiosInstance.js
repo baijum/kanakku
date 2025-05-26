@@ -21,18 +21,18 @@ let refreshQueue = [];
 // Function to fetch a CSRF token
 const fetchCsrfToken = async () => {
   if (csrfToken) return csrfToken;
-  
+
   try {
     // Use direct axios here (not axiosInstance) to avoid circular dependencies
     // Always ensure we're using the proper API prefix
     let csrfUrl;
-    
+
     if (process.env.REACT_APP_API_URL) {
       // For production with env variable
-      const baseUrl = process.env.REACT_APP_API_URL.endsWith('/') 
-        ? process.env.REACT_APP_API_URL 
+      const baseUrl = process.env.REACT_APP_API_URL.endsWith('/')
+        ? process.env.REACT_APP_API_URL
         : `${process.env.REACT_APP_API_URL}/`;
-      
+
       // Make sure we have /api/v1/ in the URL
       if (baseUrl.includes('/api/v1/')) {
         csrfUrl = `${baseUrl}csrf-token`;
@@ -43,23 +43,23 @@ const fetchCsrfToken = async () => {
       // For development with relative path
       csrfUrl = '/api/v1/csrf-token';
     }
-    
+
     console.log('Fetching CSRF token from URL:', csrfUrl);
-    
-    const response = await axios.get(csrfUrl, { 
+
+    const response = await axios.get(csrfUrl, {
       withCredentials: true,
       headers: {
         // Add Authorization header if token exists - we need this even for CSRF token fetching
         ...(localStorage.getItem('token') ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : {})
       }
     });
-    
+
     // Check for token in response body
     if (response.data && response.data.csrf_token) {
       csrfToken = response.data.csrf_token;
       console.log('CSRF token fetched from response JSON');
       return csrfToken;
-    } 
+    }
     // Check response headers for token
     else if (response.headers && response.headers['x-csrftoken']) {
       csrfToken = response.headers['x-csrftoken'];
@@ -89,18 +89,18 @@ const fetchCsrfToken = async () => {
 // Function to refresh the token
 const refreshAuthToken = async () => {
   if (isRefreshing) return;
-  
+
   isRefreshing = true;
   try {
     // Use same URL construction logic as fetchCsrfToken
     let refreshUrl;
-    
+
     if (process.env.REACT_APP_API_URL) {
       // For production with env variable
-      const baseUrl = process.env.REACT_APP_API_URL.endsWith('/') 
-        ? process.env.REACT_APP_API_URL 
+      const baseUrl = process.env.REACT_APP_API_URL.endsWith('/')
+        ? process.env.REACT_APP_API_URL
         : `${process.env.REACT_APP_API_URL}/`;
-      
+
       // Make sure we have /api/v1/ in the URL
       if (baseUrl.includes('/api/v1/')) {
         refreshUrl = `${baseUrl}auth/refresh`;
@@ -111,16 +111,16 @@ const refreshAuthToken = async () => {
       // For development with relative path
       refreshUrl = '/api/v1/auth/refresh';
     }
-    
+
     console.log('Refreshing token from URL:', refreshUrl);
-    
+
     const response = await axios.post(refreshUrl, {}, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       withCredentials: true
     });
-    
+
     if (response.data && response.data.token) {
       // Store the new token
       localStorage.setItem('token', response.data.token);
@@ -150,18 +150,18 @@ axiosInstance.interceptors.request.use(
   async (config) => {
     // Enhanced logging to debug request URLs
     console.log(`API Request: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
-    
+
     // Add JWT token if it exists
     const token = localStorage.getItem('token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     // Add CSRF token for non-GET methods if not already in an exempt route
     if (
-      ['POST', 'PUT', 'PATCH', 'DELETE'].includes(config.method.toUpperCase()) && 
-      !config.url.includes('/api/v1/auth/login') && 
-      !config.url.includes('/api/v1/auth/register') && 
+      ['POST', 'PUT', 'PATCH', 'DELETE'].includes(config.method.toUpperCase()) &&
+      !config.url.includes('/api/v1/auth/login') &&
+      !config.url.includes('/api/v1/auth/register') &&
       !config.url.includes('/api/v1/auth/google') &&
       !config.url.includes('/api/v1/auth/forgot-password') &&
       !config.url.includes('/api/v1/auth/reset-password')
@@ -169,7 +169,7 @@ axiosInstance.interceptors.request.use(
       if (!csrfToken) {
         csrfToken = await fetchCsrfToken();
       }
-      
+
       if (csrfToken) {
         config.headers['X-CSRFToken'] = csrfToken;
         console.log('Setting CSRF token in request header:', csrfToken);
@@ -179,7 +179,7 @@ axiosInstance.interceptors.request.use(
         console.error('No CSRF token available for request!');
       }
     }
-    
+
     return config;
   },
   (error) => {
@@ -210,35 +210,35 @@ axiosInstance.interceptors.response.use(
 
     // If we get a 400 with CSRF error, try to refresh the token and retry
     if (
-      error.response && 
-      error.response.status === 400 && 
-      error.response.data && 
-      error.response.data.error && 
+      error.response &&
+      error.response.status === 400 &&
+      error.response.data &&
+      error.response.data.error &&
       error.response.data.error.includes('CSRF')
     ) {
       console.log('CSRF validation failed, attempting to refresh token and retry');
-      
+
       // Clear the token and fetch a new one
       csrfToken = null;
       await fetchCsrfToken();
-      
+
       // Retry the original request if we have a config
       if (error.config) {
         // Add the new CSRF token
         if (csrfToken) {
           error.config.headers['X-CSRFToken'] = csrfToken;
         }
-        
+
         // Retry the request with axiosInstance to maintain consistency
         // Use a new instance of axios without interceptors to avoid infinite loops
         const retryConfig = {...error.config};
         delete retryConfig.headers['X-CSRFToken']; // Remove old token
-        
+
         // Add the fresh token
         if (csrfToken) {
           retryConfig.headers['X-CSRFToken'] = csrfToken;
         }
-        
+
         console.log('Retrying request with new CSRF token');
         return axios(retryConfig);
       }
@@ -246,16 +246,16 @@ axiosInstance.interceptors.response.use(
 
     // Handle expired JWT token
     if (
-      error.response && 
-      error.response.status === 401 && 
-      error.response.data && 
+      error.response &&
+      error.response.status === 401 &&
+      error.response.data &&
       error.response.data.code === 'token_expired' &&
-      error.config && 
+      error.config &&
       !error.config.__isRetryRequest &&
       localStorage.getItem('token')
     ) {
       console.log('Token expired, attempting to refresh...');
-      
+
       // Create a new Promise to handle the retry after token refresh
       return new Promise((resolve, reject) => {
         if (!isRefreshing) {
@@ -265,23 +265,23 @@ axiosInstance.interceptors.response.use(
               const retryConfig = { ...error.config };
               retryConfig.headers['Authorization'] = `Bearer ${newToken}`;
               retryConfig.__isRetryRequest = true;
-              
+
               // Process any pending requests in the queue
               processQueue(newToken);
-              
+
               resolve(axios(retryConfig));
             } else {
               // If token refresh failed, reject all requests and log out
               processQueue(null);
               localStorage.removeItem('token');
-              window.dispatchEvent(new Event('storage')); 
-              
+              window.dispatchEvent(new Event('storage'));
+
               // Only redirect if not already on an auth page
               const currentPath = window.location.pathname;
               if (currentPath !== '/login' && !currentPath.includes('/google-auth-callback') && !currentPath.includes('/reset-password/')) {
                 window.location.href = '/login';
               }
-              
+
               reject(error);
             }
           });
@@ -295,23 +295,23 @@ axiosInstance.interceptors.response.use(
     // Handle other 401 errors (not token expiration)
     if (error.response && error.response.status === 401) {
       console.log('Received 401 Unauthorized. Checking current route...');
-      
+
       // Don't redirect to login if already on login page or on Google callback page
       const currentPath = window.location.pathname;
       if (currentPath === '/login' || currentPath === '/google-auth-callback' || currentPath.includes('/reset-password/')) {
         console.log('On authentication page, not redirecting');
         return Promise.reject(error);
       }
-      
+
       console.log('Unauthorized access detected. Logging out.');
       // 1. Remove the token from local storage
       localStorage.removeItem('token');
-      
+
       // 2. Dispatch storage event to potentially update other tabs (though App.js handles this on load)
-      window.dispatchEvent(new Event('storage')); 
+      window.dispatchEvent(new Event('storage'));
 
       // 3. Redirect to the login page
-      // We use window.location.href to force a full page reload, 
+      // We use window.location.href to force a full page reload,
       // which ensures the App component re-evaluates the login state.
       window.location.href = '/login';
     }
@@ -322,4 +322,4 @@ axiosInstance.interceptors.response.use(
 );
 
 export { fetchCsrfToken, refreshAuthToken };
-export default axiosInstance; 
+export default axiosInstance;

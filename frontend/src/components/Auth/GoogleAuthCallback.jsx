@@ -13,20 +13,20 @@ function GoogleAuthCallback({ setIsLoggedIn }) {
       try {
         console.log('Google Auth Callback - Location:', location);
         console.log('Google Auth Callback - Full URL:', window.location.href);
-        
+
         // Parse the URL search params to get the token
         const params = new URLSearchParams(location.search);
         const token = params.get('token');
         const errorParam = params.get('error');
-        
-        // Check for error parameter 
+
+        // Check for error parameter
         if (errorParam) {
           console.log('Google Auth Callback - Error received:', errorParam);
           // Redirect to login page with the error parameter
           navigate(`/login?error=${errorParam}`);
           return;
         }
-        
+
         console.log('Google Auth Callback - Token present:', !!token);
         console.log('Google Auth Callback - Token length:', token ? token.length : 0);
 
@@ -40,20 +40,20 @@ function GoogleAuthCallback({ setIsLoggedIn }) {
         console.log('Storing token in localStorage');
         localStorage.removeItem('token'); // Clear any existing token
         localStorage.setItem('token', token);
-        
+
         // Verify token was properly stored
         const storedToken = localStorage.getItem('token');
         console.log('Token stored successfully:', !!storedToken);
         console.log('Stored token matches original:', storedToken === token);
-        
+
         // Update login state
         console.log('Setting isLoggedIn state to true');
         setIsLoggedIn(true);
-        
+
         // Dispatch storage event for other tabs
         console.log('Dispatching storage event');
         window.dispatchEvent(new Event('storage'));
-        
+
         // Small delay to ensure state is updated before redirect
         console.log('Preparing for redirect to dashboard...');
         setTimeout(() => {
@@ -113,4 +113,4 @@ function GoogleAuthCallback({ setIsLoggedIn }) {
   return null;
 }
 
-export default GoogleAuthCallback; 
+export default GoogleAuthCallback;

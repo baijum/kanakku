@@ -32,14 +32,14 @@ const UserActivation = ({ user, onUserUpdate }) => {
     setLoading(true);
     setError(null);
     setSuccess(null);
-    
+
     try {
       const response = await axiosInstance.post('/api/v1/auth/toggle-status', {
         is_active: pendingStatus
       });
-      
+
       setSuccess(response.data.message);
-      
+
       // Update the user in the parent component
       if (onUserUpdate && response.data.user) {
         onUserUpdate(response.data.user);
@@ -55,35 +55,35 @@ const UserActivation = ({ user, onUserUpdate }) => {
   return (
     <Box>
       {error && (
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           sx={{ mb: 2 }}
           onClose={() => setError(null)}
         >
           {error}
         </Alert>
       )}
-      
+
       {success && (
-        <Alert 
-          severity="success" 
+        <Alert
+          severity="success"
           sx={{ mb: 2 }}
           onClose={() => setSuccess(null)}
         >
           {success}
         </Alert>
       )}
-      
+
       <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, mb: 4, bgcolor: 'background.paper' }}>
         <Typography variant="h6" gutterBottom>
           Account Status
         </Typography>
-        
+
         <Box sx={{ mb: 3 }}>
           <Typography variant="body1" paragraph>
             Your account is currently <strong>{user?.is_active ? 'Active' : 'Inactive'}</strong>.
           </Typography>
-          
+
           {user?.is_active ? (
             <Typography variant="body2" color="text.secondary" paragraph>
               An active account gives you access to all features of the application.
@@ -97,7 +97,7 @@ const UserActivation = ({ user, onUserUpdate }) => {
             </Typography>
           )}
         </Box>
-        
+
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <FormControlLabel
             control={
@@ -110,11 +110,11 @@ const UserActivation = ({ user, onUserUpdate }) => {
             }
             label={user?.is_active ? "Active" : "Inactive"}
           />
-          
+
           {loading && <CircularProgress size={24} sx={{ ml: 2 }} />}
         </Box>
       </Paper>
-      
+
       {/* Confirmation Dialog */}
       <Dialog
         open={confirmDialogOpen}
@@ -125,7 +125,7 @@ const UserActivation = ({ user, onUserUpdate }) => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {pendingStatus 
+            {pendingStatus
               ? "Are you sure you want to activate your account? This will allow you to log in and use all features."
               : "Are you sure you want to deactivate your account? You won't be able to log in until you reactivate it."}
           </DialogContentText>
@@ -134,7 +134,7 @@ const UserActivation = ({ user, onUserUpdate }) => {
           <Button onClick={() => setConfirmDialogOpen(false)} color="primary">
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={confirmStatusChange}
             color={pendingStatus ? "success" : "error"}
             variant="contained"
@@ -147,4 +147,4 @@ const UserActivation = ({ user, onUserUpdate }) => {
   );
 };
 
-export default UserActivation; 
+export default UserActivation;

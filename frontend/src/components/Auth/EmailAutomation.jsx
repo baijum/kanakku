@@ -118,21 +118,21 @@ const EmailAutomation = () => {
       }
 
       const payload = { ...config };
-      
+
       // Only include app_password if it's been changed
       if (!config.app_password) {
         delete payload.app_password;
       }
 
       const response = await axiosInstance.post('/api/v1/email-automation/config', payload);
-      
+
       setSuccess('Email configuration saved successfully');
       setConfig(prev => ({
         ...prev,
         ...response.data.config,
         app_password: '' // Clear password field after save
       }));
-      
+
       // Refresh status
       fetchStatus();
     } catch (err) {
@@ -179,7 +179,7 @@ const EmailAutomation = () => {
       setSuccess(null);
 
       const response = await axiosInstance.post('/api/v1/email-automation/trigger');
-      
+
       if (response.data.success) {
         setSuccess(`Email processing job queued successfully. Job ID: ${response.data.job_id}`);
         // Refresh status after a short delay
@@ -192,18 +192,18 @@ const EmailAutomation = () => {
         // Conflict - job already pending
         const jobStatus = err.response.data.job_status;
         let statusMessage = 'An email processing job is already pending for your account.';
-        
+
         if (jobStatus) {
           const statusParts = [];
           if (jobStatus.has_running_job) statusParts.push('running');
           if (jobStatus.has_scheduled_job) statusParts.push('scheduled');
           if (jobStatus.has_queued_job) statusParts.push('queued');
-          
+
           if (statusParts.length > 0) {
             statusMessage += ` Status: ${statusParts.join(', ')}.`;
           }
         }
-        
+
         setError(statusMessage);
       } else {
         setError(err.response?.data?.error || 'Failed to trigger email processing');
@@ -253,13 +253,13 @@ const EmailAutomation = () => {
       <Typography variant="h6" gutterBottom>
         Email Automation Settings
       </Typography>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
-      
+
       {success && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
           {success}
@@ -273,8 +273,8 @@ const EmailAutomation = () => {
             Current Status
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Chip 
-              label={status.status || 'Unknown'} 
+            <Chip
+              label={status.status || 'Unknown'}
               color={getStatusColor(status)}
               size="small"
             />
@@ -325,7 +325,7 @@ const EmailAutomation = () => {
               helperText="Your Gmail address for bank transaction emails"
             />
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
@@ -383,10 +383,10 @@ const EmailAutomation = () => {
           </AccordionSummary>
           <AccordionDetails>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Add sample bank transaction emails to improve AI accuracy. These examples help the system 
+              Add sample bank transaction emails to improve AI accuracy. These examples help the system
               better understand your bank's email format.
             </Typography>
-            
+
             <Button
               startIcon={<AddIcon />}
               onClick={() => setSampleEmailDialog(true)}
@@ -471,8 +471,8 @@ const EmailAutomation = () => {
       </Paper>
 
       {/* Sample Email Dialog */}
-      <Dialog 
-        open={sampleEmailDialog} 
+      <Dialog
+        open={sampleEmailDialog}
         onClose={() => setSampleEmailDialog(false)}
         maxWidth="md"
         fullWidth
@@ -492,7 +492,7 @@ const EmailAutomation = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSampleEmailDialog(false)}>Cancel</Button>
-          <Button 
+          <Button
             onClick={handleAddSampleEmail}
             variant="contained"
             disabled={!newSampleEmail.trim()}
@@ -505,4 +505,4 @@ const EmailAutomation = () => {
   );
 };
 
-export default EmailAutomation; 
+export default EmailAutomation;

@@ -32,4 +32,4 @@ COPY --from=build /app/build /usr/share/nginx/html
 EXPOSE 80 443
 
 # Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+CMD ["nginx", "-g", "daemon off;"]

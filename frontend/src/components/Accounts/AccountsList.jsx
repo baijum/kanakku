@@ -57,7 +57,7 @@ function AccountsList() {
       ]);
 
       console.log('Names API Response:', accountsResponse.data);
-      
+
       if (accountsResponse.data && accountsResponse.data.accounts) {
         // Convert names to account objects
         const accountObjects = accountsResponse.data.accounts.map((name, idx) => ({
@@ -65,17 +65,17 @@ function AccountsList() {
           name: name,
           description: '' // Placeholder
         }));
-        
+
         // Sort accounts alphabetically by name
         accountObjects.sort((a, b) => a.name.localeCompare(b.name));
-        
+
         setAccounts(accountObjects);
         setTotalCount(accountObjects.length);
-        
+
         // After successfully getting names, try to get full details
         if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
           // If we get details successfully, update with the full account objects
-          const sortedDetails = [...detailsResponse.data].sort((a, b) => 
+          const sortedDetails = [...detailsResponse.data].sort((a, b) =>
             a.name.localeCompare(b.name)
           );
           setAccounts(sortedDetails);
@@ -126,7 +126,7 @@ function AccountsList() {
 
     console.log('Deleting account:', accountToDelete.id);
     const token = getToken();
-    
+
     try {
       await axiosInstance.delete(`/api/v1/accounts/${accountToDelete.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -153,7 +153,7 @@ function AccountsList() {
       <Typography variant="h4" gutterBottom>
         Accounts
       </Typography>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -165,11 +165,11 @@ function AccountsList() {
           {success}
         </Alert>
       )}
-      
+
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Button 
-          variant="contained" 
-          color="primary" 
+        <Button
+          variant="contained"
+          color="primary"
           onClick={() => navigate('/accounts/new')}
         >
           Create Account
@@ -193,15 +193,15 @@ function AccountsList() {
                   <TableCell>{account.name || ''}</TableCell>
                   <TableCell>{account.description || ''}</TableCell>
                   <TableCell>
-                    <IconButton 
-                      color="primary" 
+                    <IconButton
+                      color="primary"
                       onClick={() => handleEditAccount(account.id || index + 1)}
                       aria-label="edit account"
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton 
-                      color="error" 
+                    <IconButton
+                      color="error"
                       onClick={() => handleDeleteAccount(account)}
                       aria-label="delete account"
                     >
@@ -259,4 +259,4 @@ function AccountsList() {
   );
 }
 
-export default AccountsList; 
+export default AccountsList;

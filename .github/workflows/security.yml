@@ -71,7 +71,7 @@ jobs:
       - name: Check for critical vulnerabilities
         run: |
           echo "Checking for critical vulnerabilities..."
-          
+
           # Check pip-audit results
           if [ -f pip-audit-results.json ]; then
             CRITICAL_COUNT=$(jq '[.vulnerabilities[] | select(.aliases[]? | contains("CRITICAL"))] | length' pip-audit-results.json 2>/dev/null || echo "0")
@@ -81,7 +81,7 @@ jobs:
               exit 1
             fi
           fi
-          
+
           # Check bandit results for high severity issues
           if [ -f bandit-results.json ]; then
             HIGH_SEVERITY=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' bandit-results.json 2>/dev/null || echo "0")
@@ -90,7 +90,7 @@ jobs:
               # Don't fail on Bandit high severity for now, just warn
             fi
           fi
-          
+
           echo "✅ No critical vulnerabilities found"
 
   # Frontend dependency vulnerability scanning
@@ -123,7 +123,7 @@ jobs:
         run: |
           # Install security-focused ESLint plugins
           yarn add --dev eslint-plugin-security eslint-plugin-no-secrets
-          
+
           # Create temporary ESLint config for security scanning
           cat > .eslintrc.security.js << 'EOF'
           module.exports = {
@@ -146,7 +146,7 @@ jobs:
             }
           };
           EOF
-          
+
           # Run security-focused linting
           npx eslint src/ --config .eslintrc.security.js --format json --output-file eslint-security-results.json || true
 
@@ -164,23 +164,23 @@ jobs:
       - name: Check for critical frontend vulnerabilities
         run: |
           echo "Checking for critical frontend vulnerabilities..."
-          
+
           if [ -f npm-audit-high.json ]; then
             # Check if there are any high or critical vulnerabilities
             HIGH_VULNS=$(jq '.metadata.vulnerabilities.high // 0' npm-audit-high.json 2>/dev/null || echo "0")
             CRITICAL_VULNS=$(jq '.metadata.vulnerabilities.critical // 0' npm-audit-high.json 2>/dev/null || echo "0")
-            
+
             if [ "$CRITICAL_VULNS" -gt 0 ]; then
               echo "❌ Found $CRITICAL_VULNS critical vulnerabilities in frontend dependencies"
               exit 1
             fi
-            
+
             if [ "$HIGH_VULNS" -gt 0 ]; then
               echo "⚠️ Found $HIGH_VULNS high severity vulnerabilities in frontend dependencies"
               # Don't fail on high severity for now, just warn
             fi
           fi
-          
+
           echo "✅ No critical frontend vulnerabilities found"
 
   # Secret scanning
@@ -260,17 +260,17 @@ jobs:
           echo "- Secret Scanning: ${{ needs.secret-scanning.result }}" >> security-summary.md
           echo "- CodeQL Analysis: ${{ needs.codeql-analysis.result }}" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           if [ -d "security-results" ]; then
             echo "## Artifacts Generated" >> security-summary.md
             find security-results -name "*.json" -type f | while read file; do
               echo "- $(basename "$file")" >> security-summary.md
             done
           fi
-          
+
           echo "" >> security-summary.md
           echo "Generated on: $(date -u)" >> security-summary.md
-          
+
           cat security-summary.md
 
       - name: Upload security summary
@@ -278,4 +278,4 @@ jobs:
         with:
           name: security-summary
           path: security-summary.md
-          retention-days: 30 
+          retention-days: 30

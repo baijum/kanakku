@@ -127,30 +127,30 @@ describe('BookManagement Component', () => {
   test('renders loading state', () => {
     // Mock implementation for loading state
     BookManagement.mockImplementation(MockBookManagementLoading);
-    
+
     render(<BookManagement />);
-    
+
     // Check for loading elements
     expect(screen.getByRole('heading', { name: /Book Management/i })).toBeInTheDocument();
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
   });
-  
+
   test('renders book management with books', () => {
     // Mock implementation for when books are available
     BookManagement.mockImplementation(MockBookManagementWithBooks);
-    
+
     render(<BookManagement />);
-    
+
     // Check for main sections
     expect(screen.getByRole('heading', { name: /Book Management/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Create New Book/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Your Books/i })).toBeInTheDocument();
-    
+
     // Check for book list and items
     expect(screen.getByTestId('books-list')).toBeInTheDocument();
     expect(screen.getByTestId('book-item-1')).toBeInTheDocument();
     expect(screen.getByTestId('book-item-2')).toBeInTheDocument();
-    
+
     // Check for action buttons
     expect(screen.getByTestId('set-active-button-1')).toBeInTheDocument();
     expect(screen.getByTestId('edit-button-1')).toBeInTheDocument();
@@ -159,13 +159,13 @@ describe('BookManagement Component', () => {
     expect(screen.getByTestId('edit-button-2')).toBeInTheDocument();
     expect(screen.getByTestId('delete-button-2')).toBeInTheDocument();
   });
-  
+
   test('renders no books message when no books exist', () => {
     // Mock implementation for when no books exist
     BookManagement.mockImplementation(MockBookManagementNoBooks);
-    
+
     render(<BookManagement />);
-    
+
     // Check for no books message
     expect(screen.getByTestId('no-books-message')).toBeInTheDocument();
     expect(screen.getByText('No books found. Create your first book above.')).toBeInTheDocument();
@@ -174,9 +174,9 @@ describe('BookManagement Component', () => {
   test('renders error state when API call fails', () => {
     // Mock implementation for error state
     BookManagement.mockImplementation(MockBookManagementError);
-    
+
     render(<BookManagement />);
-    
+
     // Check for error message
     expect(screen.getByTestId('error-alert')).toBeInTheDocument();
     expect(screen.getByText('Failed to load books. Please try again later.')).toBeInTheDocument();
@@ -185,9 +185,9 @@ describe('BookManagement Component', () => {
   test('renders success message after book creation', () => {
     // Mock implementation for success message
     BookManagement.mockImplementation(MockBookManagementSuccess);
-    
+
     render(<BookManagement />);
-    
+
     // Check for success message
     expect(screen.getByTestId('success-alert')).toBeInTheDocument();
     expect(screen.getByText('Book created successfully!')).toBeInTheDocument();

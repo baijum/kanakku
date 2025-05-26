@@ -44,7 +44,7 @@ const ProfileSettings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tabValue, setTabValue] = useState(0);
-  
+
   // Token state
   const [tokens, setTokens] = useState([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
@@ -77,7 +77,7 @@ const ProfileSettings = () => {
 
     fetchUserData();
   }, []);
-  
+
   const fetchTokens = async () => {
     setLoadingTokens(true);
     try {
@@ -92,20 +92,20 @@ const ProfileSettings = () => {
         console.warn('Background token fetch failed:', err.message);
         return;
       }
-      
+
       // If it's a 404, it's not an error - the user just doesn't have tokens yet
       if (err.response?.status === 404) {
         setTokens([]);
         setTokenError(null);
         return;
       }
-      
+
       setTokenError(err.response?.data?.error || err.message);
     } finally {
       setLoadingTokens(false);
     }
   };
-  
+
   useEffect(() => {
     if (tabValue === 2) {
       fetchTokens();
@@ -128,11 +128,11 @@ const ProfileSettings = () => {
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
-  
+
   const handleExpiryOptionChange = (event) => {
     const value = event.target.value;
     setExpiryOption(value);
-    
+
     // Set expiry date based on option
     if (value === 'never') {
       setExpiryDate(null);
@@ -145,57 +145,57 @@ const ProfileSettings = () => {
     }
     // 'custom' option will use the date picker
   };
-  
+
   const handleCreateToken = async () => {
     try {
       if (!tokenName) {
         setTokenError('Token name is required');
         return;
       }
-      
+
       // Prepare payload
       const payload = {
         name: tokenName,
       };
-      
+
       // Add expiry date if set
       if (expiryDate) {
         payload.expires_at = expiryDate.toISOString();
       }
-      
+
       // Use axiosInstance instead of fetch
       const response = await axiosInstance.post('/api/v1/auth/tokens', payload);
-      
+
       // Show the newly created token value
       setNewTokenValue(response.data.token);
       setShowNewToken(true);
-      
+
       // Reset form
       setTokenName('');
       setExpiryDate(null);
       setExpiryOption('never');
-      
+
       // Refresh token list
       fetchTokens();
-      
+
     } catch (err) {
       setTokenError(err.response?.data?.error || err.message);
     }
   };
-  
+
   const handleDeleteToken = (tokenId) => {
     setTokenToDelete(tokenId);
     setDeleteDialogOpen(true);
   };
-  
+
   const confirmDeleteToken = async () => {
     try {
       // Use axiosInstance instead of fetch
       await axiosInstance.delete(`/api/v1/auth/tokens/${tokenToDelete}`);
-      
+
       // Remove the deleted token from state
       setTokens(tokens.filter(token => token.id !== tokenToDelete));
-      
+
     } catch (err) {
       setTokenError(err.response?.data?.error || err.message);
     } finally {
@@ -203,7 +203,7 @@ const ProfileSettings = () => {
       setTokenToDelete(null);
     }
   };
-  
+
   const copyTokenToClipboard = () => {
     if (newTokenValue) {
       navigator.clipboard.writeText(newTokenValue)
@@ -241,7 +241,7 @@ const ProfileSettings = () => {
       <Typography variant="h4" gutterBottom>
         Profile Settings
       </Typography>
-      
+
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress />
@@ -274,8 +274,8 @@ const ProfileSettings = () => {
 
           <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3, width: '100%', overflow: 'hidden' }}>
-              <Tabs 
-                value={tabValue} 
+              <Tabs
+                value={tabValue}
                 onChange={handleTabChange}
                 variant="scrollable"
                 scrollButtons="auto"
@@ -296,35 +296,35 @@ const ProfileSettings = () => {
                 <Tab label="Email Automation" />
               </Tabs>
             </Box>
-            
+
             {tabValue === 0 && (
               <BookManagement />
             )}
-            
+
             {tabValue === 1 && (
               <UpdatePassword />
             )}
-            
+
             {tabValue === 2 && (
               <UserActivation user={user} onUserUpdate={handleUserUpdate} />
             )}
-            
+
             {tabValue === 4 && (
               <EmailAutomation />
             )}
-            
+
             {tabValue === 3 && (
               <Box>
                 {tokenError && (
-                  <Alert 
-                    severity="error" 
+                  <Alert
+                    severity="error"
                     sx={{ mb: 2 }}
                     onClose={() => setTokenError(null)}
                   >
                     {tokenError}
                   </Alert>
                 )}
-                
+
                 {/* API Token Creation Form */}
                 <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, mb: 4, bgcolor: 'background.paper' }}>
                   <Typography variant="h6" gutterBottom>
@@ -340,7 +340,7 @@ const ProfileSettings = () => {
                       size="small"
                       helperText="Give your token a descriptive name for its intended use"
                     />
-                    
+
                     <FormControl fullWidth size="small">
                       <InputLabel>Expiration</InputLabel>
                       <Select
@@ -355,7 +355,7 @@ const ProfileSettings = () => {
                         <MenuItem value="custom">Custom Date</MenuItem>
                       </Select>
                     </FormControl>
-                    
+
                     {expiryOption === 'custom' && (
                       <LocalizationProvider dateAdapter={AdapterDateFns}>
                         <DatePicker
@@ -367,10 +367,10 @@ const ProfileSettings = () => {
                         />
                       </LocalizationProvider>
                     )}
-                    
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
+
+                    <Button
+                      variant="contained"
+                      color="primary"
                       onClick={handleCreateToken}
                       sx={{ alignSelf: 'flex-start' }}
                     >
@@ -378,7 +378,7 @@ const ProfileSettings = () => {
                     </Button>
                   </Box>
                 </Paper>
-                
+
                 {/* Display newly created token */}
                 {showNewToken && newTokenValue && (
                   <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, mb: 4, bgcolor: 'background.paper' }}>
@@ -395,7 +395,7 @@ const ProfileSettings = () => {
                           readOnly: true,
                         }}
                       />
-                      <IconButton 
+                      <IconButton
                         color="primary"
                         onClick={() => copyTokenToClipboard()}
                         sx={{ ml: 1 }}
@@ -403,8 +403,8 @@ const ProfileSettings = () => {
                         <ContentCopyIcon />
                       </IconButton>
                     </Box>
-                    <Button 
-                      variant="outlined" 
+                    <Button
+                      variant="outlined"
                       onClick={() => setShowNewToken(false)}
                       size="small"
                     >
@@ -412,12 +412,12 @@ const ProfileSettings = () => {
                     </Button>
                   </Paper>
                 )}
-                
+
                 {/* Token List */}
                 <Typography variant="h6" gutterBottom>
                   Your API Tokens
                 </Typography>
-                
+
                 {loadingTokens ? (
                   <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
                     <CircularProgress size={24} />
@@ -428,20 +428,20 @@ const ProfileSettings = () => {
                     programmatically without having to log in through the web interface.
                   </Typography>
                 ) : (
-                  <TableContainer 
-                    component={Paper} 
+                  <TableContainer
+                    component={Paper}
                     elevation={0}
-                    sx={{ 
-                      maxWidth: '100%', 
-                      overflowX: 'auto' 
+                    sx={{
+                      maxWidth: '100%',
+                      overflowX: 'auto'
                     }}
                   >
-                    <Table 
+                    <Table
                       size="small"
-                      sx={{ 
+                      sx={{
                         minWidth: { xs: 450, sm: 650 },
-                        "& .MuiTableCell-root": { 
-                          py: { xs: 1 }, 
+                        "& .MuiTableCell-root": {
+                          py: { xs: 1 },
                           px: { xs: 1, sm: 2 },
                           whiteSpace: { xs: 'nowrap' }
                         }
@@ -465,25 +465,25 @@ const ProfileSettings = () => {
                               {new Date(token.created_at).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                              {token.last_used_at 
+                              {token.last_used_at
                                 ? new Date(token.last_used_at).toLocaleDateString()
                                 : 'Never used'}
                             </TableCell>
                             <TableCell>
-                              {token.expires_at 
+                              {token.expires_at
                                 ? new Date(token.expires_at).toLocaleDateString()
                                 : 'Never'}
                             </TableCell>
                             <TableCell>
-                              {token.is_active 
-                                ? (token.expires_at && new Date(token.expires_at) < new Date() 
-                                  ? 'Expired' 
+                              {token.is_active
+                                ? (token.expires_at && new Date(token.expires_at) < new Date()
+                                  ? 'Expired'
                                   : 'Active')
                                 : 'Revoked'}
                             </TableCell>
                             <TableCell>
-                              <IconButton 
-                                color="error" 
+                              <IconButton
+                                color="error"
                                 onClick={() => handleDeleteToken(token.id)}
                                 size="small"
                               >
@@ -496,10 +496,10 @@ const ProfileSettings = () => {
                     </Table>
                   </TableContainer>
                 )}
-                
+
                 <Box sx={{ mt: 3 }}>
-                  <Button 
-                    variant="outlined" 
+                  <Button
+                    variant="outlined"
                     onClick={checkAuthStatus}
                     size="small"
                   >
@@ -514,7 +514,7 @@ const ProfileSettings = () => {
                     Refresh Token List
                   </Button>
                 </Box>
-                
+
                 {/* Delete Confirmation Dialog */}
                 <Dialog
                   open={deleteDialogOpen}
@@ -545,4 +545,4 @@ const ProfileSettings = () => {
   );
 };
 
-export default ProfileSettings; 
+export default ProfileSettings;

@@ -44,23 +44,23 @@ Object.defineProperty(window, 'localStorage', {
 describe('GoogleAuthCallback Component', () => {
   const mockUseLocation = require('react-router-dom').useLocation;
   const mockSetIsLoggedIn = jest.fn();
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   test('renders loading state when processing authentication', () => {
     // Mock location to simulate authentication in progress
-    mockUseLocation.mockReturnValue({ 
+    mockUseLocation.mockReturnValue({
       search: '?token=mockToken',
       pathname: '/auth/google/callback'
     });
-    
+
     // Set the mock implementation for loading state
     GoogleAuthCallback.mockImplementation(MockGoogleAuthCallbackLoading);
-    
+
     render(<GoogleAuthCallback setIsLoggedIn={mockSetIsLoggedIn} />);
-    
+
     // Check for loading elements
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
     expect(screen.getByText('Completing authentication...')).toBeInTheDocument();
@@ -68,16 +68,16 @@ describe('GoogleAuthCallback Component', () => {
 
   test('renders error state when token is missing', () => {
     // Mock location with no token
-    mockUseLocation.mockReturnValue({ 
+    mockUseLocation.mockReturnValue({
       search: '',
       pathname: '/auth/google/callback'
     });
-    
+
     // Set the mock implementation for error state
     GoogleAuthCallback.mockImplementation(MockGoogleAuthCallbackError);
-    
+
     render(<GoogleAuthCallback setIsLoggedIn={mockSetIsLoggedIn} />);
-    
+
     // Check for error elements
     expect(screen.getByTestId('error-alert')).toBeInTheDocument();
     expect(screen.getByText('Return to login')).toBeInTheDocument();

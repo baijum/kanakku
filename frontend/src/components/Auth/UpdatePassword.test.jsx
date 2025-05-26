@@ -44,10 +44,10 @@ describe('UpdatePassword Component', () => {
 
   test('renders update password form elements', () => {
     render(<UpdatePassword />);
-    
+
     // Check for heading
     expect(screen.getByRole('heading', { name: /Update Password/i })).toBeInTheDocument();
-    
+
     // Check for form elements
     expect(screen.getByTestId('current-password-field')).toBeInTheDocument();
     expect(screen.getByTestId('new-password-field')).toBeInTheDocument();

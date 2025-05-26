@@ -29,7 +29,7 @@ function EditTransaction() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [accounts, setAccounts] = useState([]);
-  
+
   // Transaction fields
   const [date, setDate] = useState(new Date());
   const [payee, setPayee] = useState('');
@@ -37,13 +37,13 @@ function EditTransaction() {
   const [postings, setPostings] = useState([
     { account: '', amount: '', currency: 'INR' },
   ]);
-  
+
   // Track the original transaction data for comparison
   const [originalTransaction, setOriginalTransaction] = useState(null);
 
   const fetchTransaction = useCallback(async () => {
     setLoading(true);
-    
+
     try {
       // Use the related transactions endpoint to get all postings
       const response = await axiosInstance.get(`/api/v1/transactions/${id}/related`);
@@ -53,20 +53,20 @@ function EditTransaction() {
 
       // Also fetch accounts to prepare for initializing postings
       const accountsResponse = await axiosInstance.get('/api/v1/accounts/details');
-      
+
       const accountsList = Array.isArray(accountsResponse.data) ? accountsResponse.data : [];
 
       // Set form values from transaction data
       if (response.data) {
         const transactionData = response.data;
-        
+
         setDate(new Date(transactionData.date));
         setPayee(transactionData.payee || '');
-        
+
         // Set status from the first transaction if available
         if (transactionData.transactions && transactionData.transactions.length > 0) {
           setStatus(transactionData.transactions[0].status || '');
-          
+
           const initialPostings = transactionData.transactions.map(tx => ({
             id: tx.id,
             account: tx.account_name || '',
@@ -74,26 +74,26 @@ function EditTransaction() {
             amount: tx.amount.toString(),
             currency: tx.currency || 'INR',
           }));
-          
+
           // Check if we need to add a balancing posting
           const totalAmount = initialPostings.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-          
+
           // If the total doesn't balance (within rounding error), add a balancing posting
           if (Math.abs(totalAmount) > 0.01) {
             // Try to find a suitable offsetting account
             let balancingAccountName = '';
-            
+
             // Try to find an account that's not already used in the postings
             const usedAccountNames = initialPostings.map(p => p.account);
             const unusedAccount = accountsList.find(a => !usedAccountNames.includes(a.name));
-            
+
             if (unusedAccount) {
               balancingAccountName = unusedAccount.name;
             } else if (accountsList.length > 0) {
               // Just use the first account if no unused account is found
               balancingAccountName = accountsList[0].name;
             }
-            
+
             const balancingPosting = {
               account: balancingAccountName,
               amount: (-totalAmount).toFixed(2), // Balance out the total
@@ -101,20 +101,20 @@ function EditTransaction() {
             };
             initialPostings.push(balancingPosting);
           }
-          
+
           setPostings(initialPostings);
         } else {
           // Fallback: if no transactions are provided, create default postings
           // Find two different accounts if possible for the default postings
           let account1 = accountsList.length > 0 ? accountsList[0].name : '';
           let account2 = '';
-          
+
           if (accountsList.length > 1) {
             account2 = accountsList[1].name;
           } else if (accountsList.length > 0) {
             account2 = accountsList[0].name;
           }
-          
+
           setPostings([
             { account: account1, amount: '100', currency: 'INR' },
             { account: account2, amount: '-100', currency: 'INR' }
@@ -147,7 +147,7 @@ function EditTransaction() {
     try {
       // Try to get the full account details first
       const detailsResponse = await axiosInstance.get('/api/v1/accounts/details');
-      
+
       if (detailsResponse.data && Array.isArray(detailsResponse.data)) {
         // Create account objects and sort them alphabetically by name
         const sortedAccounts = [...detailsResponse.data]
@@ -157,14 +157,14 @@ function EditTransaction() {
             name: account.name,
             fullName: account.name
           }));
-        
+
         setAccounts(sortedAccounts);
         return;
       }
-      
+
       // Fallback to the regular accounts endpoint
       const response = await axiosInstance.get('/api/v1/accounts');
-      
+
       if (response.data && Array.isArray(response.data.accounts)) {
         // Create account objects with just names and sort alphabetically
         const sortedAccounts = [...response.data.accounts]
@@ -173,7 +173,7 @@ function EditTransaction() {
             name: name,
             fullName: name
           }));
-        
+
         setAccounts(sortedAccounts);
       }
     } catch (err) {
@@ -197,43 +197,43 @@ function EditTransaction() {
     e.preventDefault();
     setError('');
     setSuccess('');
-    
+
     // Validate form
     if (!payee.trim()) {
       setError('Payee is required');
       return;
     }
-    
+
     // Validate postings
     for (const posting of postings) {
       if (!posting.account) {
         setError('All postings must have an account');
         return;
       }
-      
+
       if (!posting.amount || isNaN(Number(posting.amount))) {
         setError('All postings must have a valid amount');
         return;
       }
     }
-    
+
     // IMPORTANT: In this edit, we're swapping the validation order
     // The validation for same account debit/credit needs to run BEFORE the balance check
-    
+
     // Step 1: Check for same account being debited and credited
     // This is the validation that the test is explicitly checking for
     const accountDirections = {};
-    
+
     for (const posting of postings) {
       const accountName = posting.account;
       const amount = parseFloat(posting.amount || 0);
-      
+
       if (!accountName || isNaN(amount) || amount === 0) {
         continue; // Skip incomplete postings or zero amounts
       }
-      
+
       const direction = amount > 0 ? 'debit' : 'credit';
-      
+
       if (accountName in accountDirections) {
         if (accountDirections[accountName] !== direction) {
           // The exact error message format that the test is expecting
@@ -244,25 +244,25 @@ function EditTransaction() {
         accountDirections[accountName] = direction;
       }
     }
-    
+
     // Step 2: Only check balance after the debit/credit validation passes
     const total = postings.reduce((sum, posting) => sum + (parseFloat(posting.amount) || 0), 0);
-    
+
     if (Math.abs(total) > 0.01) {
       setError('Transaction does not balance (sum of all postings must be 0)');
       return;
     }
-    
+
     const formattedDate = date instanceof Date && !isNaN(date)
       ? date.toISOString().split('T')[0]
       : (typeof date === 'string' ? date : '');
-      
+
     // Get all existing transaction IDs that need to be replaced
-    const existingTransactionIds = originalTransaction && 
-      originalTransaction.transactions ? 
-      originalTransaction.transactions.map(tx => tx.id) : 
+    const existingTransactionIds = originalTransaction &&
+      originalTransaction.transactions ?
+      originalTransaction.transactions.map(tx => tx.id) :
       [id]; // Fallback to just the primary ID
-      
+
     // Prepare transaction data in the format expected by the API
     const transactionData = {
       date: formattedDate,
@@ -277,11 +277,11 @@ function EditTransaction() {
       original_transaction_ids: existingTransactionIds,
       primary_transaction_id: id
     };
-    
+
     try {
       // We'll use the update endpoint that handles multiple postings
       await axiosInstance.put(`/api/v1/transactions/${id}/update_with_postings`, transactionData);
-      
+
       setSuccess('Transaction updated successfully');
       setTimeout(() => {
         navigate('/transactions');
@@ -310,8 +310,8 @@ function EditTransaction() {
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           onClick={() => navigate('/transactions')}
           sx={{ mt: 2 }}
         >
@@ -376,7 +376,7 @@ function EditTransaction() {
                 required
               />
             </Grid>
-            
+
             {/* Postings */}
             {postings.map((posting, index) => {
               return (

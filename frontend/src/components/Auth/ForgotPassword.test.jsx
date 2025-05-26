@@ -34,10 +34,10 @@ describe('ForgotPassword Component', () => {
 
   test('renders forgot password form elements', () => {
     render(<ForgotPassword />);
-    
+
     // Check for heading
     expect(screen.getByRole('heading', { name: /Forgot Password/i })).toBeInTheDocument();
-    
+
     // Check for form elements
     expect(screen.getByTestId('email-field')).toBeInTheDocument();
     expect(screen.getByTestId('submit-button')).toBeInTheDocument();

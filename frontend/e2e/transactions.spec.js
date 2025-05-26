@@ -11,7 +11,7 @@ test.describe.skip('Transaction functionality tests', () => {
   test('should navigate to add transaction page', async ({ page }) => {
     // Navigate to add transaction from dashboard
     await page.getByRole('link', { name: /add transaction/i }).click();
-    
+
     // Verify we're on the add transaction page
     await expect(page).toHaveURL(/.*add/);
     await expect(page.getByRole('heading', { name: /add transaction/i })).toBeVisible();
@@ -20,10 +20,10 @@ test.describe.skip('Transaction functionality tests', () => {
   test('should display validation errors when submitting empty add transaction form', async ({ page }) => {
     // Navigate to add transaction page
     await page.goto('/add');
-    
+
     // Submit without filling the form
     await page.getByRole('button', { name: /submit/i }).click();
-    
+
     // Verify validation errors by checking for any alert
     await expect(page.getByRole('alert')).toBeVisible();
   });
@@ -31,7 +31,7 @@ test.describe.skip('Transaction functionality tests', () => {
   test('should navigate to view transactions page', async ({ page }) => {
     // Navigate to view transactions from dashboard
     await page.getByRole('link', { name: /transactions/i }).click();
-    
+
     // Verify we're on the view transactions page
     await expect(page).toHaveURL(/.*transactions/);
     await expect(page.getByRole('heading', { name: /transactions/i })).toBeVisible();
@@ -45,4 +45,4 @@ test.describe.skip('Transaction functionality tests', () => {
   test.skip('should filter transactions by date range', async ({ page }) => {
     // This test will be implemented when backend integration is available
   });
-}); 
+});

@@ -41,6 +41,7 @@ Requires-Dist: pytest-cov==4.1.0; extra == "dev"
 Requires-Dist: pytest-mock==3.12.0; extra == "dev"
 Requires-Dist: ruff>=0.1.0; extra == "dev"
 Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
 Dynamic: license-file
 
 # Kanakku
@@ -810,7 +811,7 @@ Kanakku includes a comprehensive email automation system that automatically proc
    ```bash
    # Start the email worker (processes jobs)
    kanakku-worker
-   
+
    # Start the scheduler (schedules periodic jobs) - in another terminal
    kanakku-scheduler --interval 300
    ```
@@ -818,10 +819,10 @@ Kanakku includes a comprehensive email automation system that automatically proc
    **Option B: Direct Python execution**:
    ```bash
    cd banktransactions/email_automation
-   
+
    # Start the email worker (processes jobs)
    python run_worker.py
-   
+
    # Start the scheduler (schedules periodic jobs) - in another terminal
    python run_scheduler.py --interval 300
    ```
@@ -1050,7 +1051,7 @@ For detailed information about specific development standards, refer to the indi
 "50.75"         → Find transactions with exact decimal amounts
 "INR"           → Find all INR transactions
 
-# Status searches  
+# Status searches
 "cleared"       → Find all cleared transactions (status = '*')
 "pending"       → Find all pending transactions (status = '!')
 "unmarked"      → Find all unmarked transactions (no status)

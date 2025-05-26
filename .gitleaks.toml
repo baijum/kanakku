@@ -60,7 +60,7 @@ regex = '''-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----'''
 tags = ["private", "key"]
 
 # Allowlist for false positives
-[[allowlist]]
+[allowlist]
 description = "Test files and examples"
 paths = [
     '''.*test.*\.py''',
@@ -68,27 +68,15 @@ paths = [
     '''.*sample.*\.py''',
     '''.*mock.*\.py''',
     '''.*fixture.*\.py''',
-]
-
-[[allowlist]]
-description = "Documentation files"
-paths = [
     '''.*\.md''',
     '''.*\.rst''',
     '''.*\.txt''',
     '''docs/.*''',
-]
-
-[[allowlist]]
-description = "Configuration templates"
-paths = [
     '''.*\.template''',
     '''.*\.example''',
     '''.*\.sample''',
 ]
 
-[[allowlist]]
-description = "Known safe patterns"
 regexes = [
     '''SECRET_KEY\s*=\s*['""]your-secret-key-here['""]''',
     '''JWT_SECRET_KEY\s*=\s*['""]your-jwt-secret['""]''',
@@ -96,20 +84,9 @@ regexes = [
     '''REDIS_URL\s*=\s*['""]redis://localhost:6379/0['""]''',
     '''MAIL_PASSWORD\s*=\s*['""]your-email-password['""]''',
     '''API_KEY\s*=\s*['""]your-api-key-here['""]''',
-]
-
-# Global allowlist for common false positives
-[[allowlist]]
-description = "Environment variable examples"
-regexes = [
     '''export\s+\w+=['""][^'""]*['""]''',
     '''os\.environ\.get\(['""][^'""]*['""].*\)''',
     '''getenv\(['""][^'""]*['""].*\)''',
-]
-
-[[allowlist]]
-description = "Placeholder values"
-regexes = [
     '''['""]<[^>]*>['""]''',
     '''['""]{{[^}]*}}['""]''',
     '''['""]%\([^)]*\)s['""]''',
@@ -119,4 +96,4 @@ regexes = [
     '''['""].*test.*['""]''',
     '''['""].*dummy.*['""]''',
     '''['""].*fake.*['""]''',
-] 
+]

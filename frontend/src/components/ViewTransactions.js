@@ -45,31 +45,31 @@ function ViewTransactions() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // UI state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-  
+
   // Dialog states
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
   const [openExportDialog, setOpenExportDialog] = useState(false);
-  
+
   // Export related states
   const [exportLoading, setExportLoading] = useState(false);
   const [preambles, setPreambles] = useState([]);
   const [selectedPreamble, setSelectedPreamble] = useState('');
-  
+
   const navigate = useNavigate();
 
   // Function to fetch transaction details with full posting information
   const fetchTransactionWithAllPostings = async (transaction) => {
     if (!transaction || !transaction.id) return transaction;
-    
+
     try {
       const response = await axiosInstance.get(`/api/v1/transactions/${transaction.id}/related`);
-      
+
       if (response.data && response.data.transactions && response.data.transactions.length > 0) {
         // Map the postings from the related endpoint
         const allPostings = response.data.transactions.map(tx => ({
@@ -78,14 +78,14 @@ function ViewTransactions() {
           amount: tx.amount.toString(),
           currency: tx.currency || 'INR'
         }));
-        
+
         // Return updated transaction with all postings
         return {
           ...transaction,
           postings: allPostings
         };
       }
-      
+
       return transaction;
     } catch (error) {
       console.error(`Error fetching postings for transaction ${transaction.id}:`, error);
@@ -99,7 +99,7 @@ function ViewTransactions() {
     if (!isRetry) {
       setError(''); // Clear error only on new requests, not retries
     }
-    
+
     try {
       const params = {
         limit: rowsPerPage,
@@ -111,10 +111,10 @@ function ViewTransactions() {
       if (searchTerm.trim()) params.search = searchTerm.trim();
 
       const response = await axiosInstance.get('/api/v1/transactions', { params });
-      
+
       if (response.data && Array.isArray(response.data.transactions)) {
         const basicTransactions = response.data.transactions;
-        
+
         // For each transaction that might have multiple postings,
         // fetch all the related transactions to get complete posting data
         const completeTransactions = await Promise.all(
@@ -126,12 +126,12 @@ function ViewTransactions() {
             return tx;
           })
         );
-        
+
         setTransactions(completeTransactions);
-        
+
         // Get total count from API - use 0 if not provided, don't default to 100
         setTotalCount(response.data.total ?? 0);
-        
+
         // Clear error on success
         setError('');
       } else {
@@ -143,11 +143,11 @@ function ViewTransactions() {
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setTransactions([]);
-      
+
       // Only show error state for network/server errors, not for empty results
       if (error.response?.status >= 500 || !error.response) {
         setError('network_error');
-        
+
         // Show a brief snackbar notification instead of persistent error
         setSnackbar({
           open: true,
@@ -168,10 +168,10 @@ function ViewTransactions() {
   const fetchPreambles = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/api/v1/preambles');
-      
+
       if (response.data && Array.isArray(response.data.preambles)) {
         setPreambles(response.data.preambles);
-        
+
         // Set first preamble if available
         if (response.data.preambles.length > 0) {
           setSelectedPreamble(response.data.preambles[0].id.toString());
@@ -244,16 +244,16 @@ function ViewTransactions() {
 
   const handleDeleteTransaction = async () => {
     if (!transactionToDelete) return;
-    
+
     try {
       setLoading(true);
       const endpoint = `/api/v1/transactions/${transactionToDelete}/related`;
 
       await axiosInstance.delete(endpoint);
-      
+
       // After successful deletion, refresh the transaction list
       fetchTransactions();
-      
+
       // Show success message
       setSnackbar({
         open: true,
@@ -291,59 +291,59 @@ function ViewTransactions() {
   const handleExportLedgerFormat = async () => {
     try {
       setExportLoading(true);
-      
+
       let url = '/api/v1/ledgertransactions';
       const params = [];
-      
+
       // Add preamble if selected
       if (selectedPreamble) {
         params.push(`preamble_id=${selectedPreamble}`);
       }
-      
+
       // Add date range parameters if provided
       if (startDate) {
         params.push(`start_date=${startDate}`);
       }
-      
+
       if (endDate) {
         params.push(`end_date=${endDate}`);
       }
-      
+
       // Append parameters if any
       if (params.length > 0) {
         url += `?${params.join('&')}`;
       }
-      
+
       // Set responseType to blob to handle file download
       const response = await axiosInstance.get(url, {
         responseType: 'blob' // Important for handling the response as a file
       });
-      
+
       // Create a download link and trigger the download
       const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       // Set the filename from the Content-Disposition header if available
       // or use a default name
       const contentDisposition = response.headers['content-disposition'];
       let filename = 'transactions.ledger';
-      
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch && filenameMatch[1]) {
           filename = filenameMatch[1];
         }
       }
-      
+
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      
+
       // Close the export dialog
       setOpenExportDialog(false);
-      
+
       // Show success message
       setSnackbar({
         open: true,
@@ -379,7 +379,7 @@ function ViewTransactions() {
         </Typography>
         {error === 'network_error' && transactions.length > 0 && (
           <Tooltip title="Refresh transactions">
-            <IconButton 
+            <IconButton
               onClick={handleRetry}
               disabled={loading}
               color="primary"
@@ -453,8 +453,8 @@ function ViewTransactions() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Please check your internet connection and try again.
                 </Typography>
-                <Button 
-                  variant="outlined" 
+                <Button
+                  variant="outlined"
                   onClick={handleRetry}
                   disabled={loading}
                 >
@@ -482,10 +482,10 @@ function ViewTransactions() {
               <TableBody>
                 {transactions.map((transaction, index) => {
                   // Try to get a valid ID for editing, first from transaction, then from first posting
-                  const editId = transaction.id || 
-                    (transaction.postings && transaction.postings.length > 0 ? 
+                  const editId = transaction.id ||
+                    (transaction.postings && transaction.postings.length > 0 ?
                       transaction.postings[0].id : undefined);
-                  
+
                   return (
                     <TableRow key={index}>
                       <TableCell sx={{ px: { xs: 1, sm: 2 } }}>{transaction.date}</TableCell>
@@ -494,12 +494,12 @@ function ViewTransactions() {
                       </TableCell>
                       <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
                         {transaction.postings && transaction.postings.map((posting, pIndex) => (
-                          <Box 
-                            key={pIndex} 
-                            sx={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between', 
-                              mb: 0.5, 
+                          <Box
+                            key={pIndex}
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              mb: 0.5,
                               borderBottom: pIndex < transaction.postings.length - 1 ? '1px solid #f0f0f0' : 'none',
                               py: 0.5
                             }}
@@ -514,8 +514,8 @@ function ViewTransactions() {
                         ))}
                       </TableCell>
                       <TableCell sx={{ px: { xs: 1, sm: 2 } }}>
-                        <IconButton 
-                          color="primary" 
+                        <IconButton
+                          color="primary"
                           onClick={() => handleEditTransaction(editId)}
                           aria-label="edit"
                           disabled={!editId}
@@ -523,7 +523,7 @@ function ViewTransactions() {
                         >
                           <EditIcon />
                         </IconButton>
-                        <IconButton 
+                        <IconButton
                           color="error"
                           onClick={() => handleDeleteConfirmOpen(editId)}
                           aria-label="delete"
@@ -578,7 +578,7 @@ function ViewTransactions() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseExportDialog}>Cancel</Button>
-          <Button 
+          <Button
             onClick={handleExportLedgerFormat}
             variant="contained"
             disabled={exportLoading}
@@ -609,14 +609,14 @@ function ViewTransactions() {
       </Dialog>
 
       {/* Feedback Snackbar */}
-      <Snackbar 
-        open={snackbar.open} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
         onClose={handleCloseSnackbar}
       >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbar.severity} 
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
           variant="filled"
           sx={{ width: '100%' }}
         >
@@ -627,4 +627,4 @@ function ViewTransactions() {
   );
 }
 
-export default ViewTransactions; 
+export default ViewTransactions;

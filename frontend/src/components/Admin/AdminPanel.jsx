@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  Paper, 
-  Tabs, 
-  Tab, 
+import {
+  Box,
+  Container,
+  Typography,
+  Paper,
+  Tabs,
+  Tab,
   Alert,
   CircularProgress,
 } from '@mui/material';
@@ -75,7 +75,7 @@ const AdminPanel = () => {
       <Typography variant="h4" gutterBottom>
         Admin Panel
       </Typography>
-      
+
       <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
@@ -89,19 +89,19 @@ const AdminPanel = () => {
             {/* Add more admin tabs here as needed */}
           </Tabs>
         </Box>
-        
+
         {tabValue === 0 && (
           <UserManagement />
         )}
-        
+
         {tabValue === 1 && (
           <GlobalSettings />
         )}
-        
+
         {/* Add more tab panels here as needed */}
       </Paper>
     </Container>
   );
 };
 
-export default AdminPanel; 
+export default AdminPanel;

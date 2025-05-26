@@ -12,7 +12,7 @@ describe('ViewTransactions Component', () => {
     const fs = require('fs');
     const viewTransactionsPath = require.resolve('./ViewTransactions');
     const source = fs.readFileSync(viewTransactionsPath, 'utf8');
-    
+
     // Check that the new endpoint is present and the old endpoint is not
     expect(source).toContain('/api/v1/ledgertransactions');
     expect(source).not.toContain('/api/v1/export/ledger');

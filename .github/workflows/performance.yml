@@ -127,28 +127,28 @@ jobs:
         run: |
           cat > performance-report.md << EOF
           # Backend Performance Report
-          
+
           **Generated on:** $(date -u)
           **Commit:** ${{ github.sha }}
           **Branch:** ${{ github.ref_name }}
-          
+
           ## Metrics
-          
+
           | Metric | Value |
           |--------|-------|
           | Dependency Install Time | ${DEPENDENCY_INSTALL_TIME}s |
           | Application Startup Time | ${STARTUP_TIME}ms |
           | Test Execution Time | ${TEST_EXECUTION_TIME}s |
-          
+
           ## System Information
-          
+
           - Python Version: ${{ env.PYTHON_VERSION }}
           - Runner: ubuntu-latest
           - PostgreSQL: 15
           - Redis: 7
-          
+
           EOF
-          
+
           cat performance-report.md
 
       - name: Upload performance report
@@ -202,15 +202,15 @@ jobs:
           if [ -d "build/static/js" ]; then
             echo "JavaScript bundle sizes:"
             ls -lh build/static/js/*.js | awk '{print $5, $9}'
-            
+
             echo "CSS bundle sizes:"
             ls -lh build/static/css/*.css | awk '{print $5, $9}' || echo "No CSS files found"
-            
+
             # Calculate total size
             TOTAL_JS_SIZE=$(find build/static/js -name "*.js" -exec stat -c%s {} + | awk '{sum+=$1} END {print sum}')
             TOTAL_CSS_SIZE=$(find build/static/css -name "*.css" -exec stat -c%s {} + 2>/dev/null | awk '{sum+=$1} END {print sum}' || echo "0")
             TOTAL_SIZE=$((TOTAL_JS_SIZE + TOTAL_CSS_SIZE))
-            
+
             echo "Total bundle size: $((TOTAL_SIZE / 1024)) KB"
             echo "BUNDLE_SIZE_KB=$((TOTAL_SIZE / 1024))" >> $GITHUB_ENV
           else
@@ -232,28 +232,28 @@ jobs:
         run: |
           cat > frontend-performance-report.md << EOF
           # Frontend Performance Report
-          
+
           **Generated on:** $(date -u)
           **Commit:** ${{ github.sha }}
           **Branch:** ${{ github.ref_name }}
-          
+
           ## Metrics
-          
+
           | Metric | Value |
           |--------|-------|
           | Dependency Install Time | ${FRONTEND_INSTALL_TIME}s |
           | Build Time | ${FRONTEND_BUILD_TIME}s |
           | Test Execution Time | ${FRONTEND_TEST_TIME}s |
           | Bundle Size | ${BUNDLE_SIZE_KB} KB |
-          
+
           ## System Information
-          
+
           - Node.js Version: ${{ env.NODE_VERSION }}
           - Package Manager: Yarn
           - Runner: ubuntu-latest
-          
+
           EOF
-          
+
           cat frontend-performance-report.md
 
       - name: Upload frontend performance report
@@ -283,29 +283,29 @@ jobs:
           echo "**Commit:** ${{ github.sha }}" >> performance-summary.md
           echo "**Branch:** ${{ github.ref_name }}" >> performance-summary.md
           echo "" >> performance-summary.md
-          
+
           echo "## Job Results" >> performance-summary.md
           echo "- Backend Performance: ${{ needs.backend-performance.result }}" >> performance-summary.md
           echo "- Frontend Performance: ${{ needs.frontend-performance.result }}" >> performance-summary.md
           echo "" >> performance-summary.md
-          
+
           if [ -d "performance-reports" ]; then
             echo "## Individual Reports" >> performance-summary.md
             echo "" >> performance-summary.md
-            
+
             if [ -f "performance-reports/backend-performance-report/performance-report.md" ]; then
               echo "### Backend Performance" >> performance-summary.md
               cat performance-reports/backend-performance-report/performance-report.md >> performance-summary.md
               echo "" >> performance-summary.md
             fi
-            
+
             if [ -f "performance-reports/frontend-performance-report/frontend-performance-report.md" ]; then
               echo "### Frontend Performance" >> performance-summary.md
               cat performance-reports/frontend-performance-report/frontend-performance-report.md >> performance-summary.md
               echo "" >> performance-summary.md
             fi
           fi
-          
+
           echo "## Performance Thresholds" >> performance-summary.md
           echo "" >> performance-summary.md
           echo "| Component | Metric | Threshold | Status |" >> performance-summary.md
@@ -314,7 +314,7 @@ jobs:
           echo "| Frontend | Build Time | < 120s | ⏳ |" >> performance-summary.md
           echo "| Frontend | Bundle Size | < 2MB | ⏳ |" >> performance-summary.md
           echo "" >> performance-summary.md
-          
+
           cat performance-summary.md
 
       - name: Upload combined performance summary
@@ -327,9 +327,9 @@ jobs:
       - name: Check performance thresholds
         run: |
           echo "Checking performance thresholds..."
-          
+
           # These are warning thresholds, not hard failures
           # Adjust as needed based on actual performance characteristics
-          
+
           echo "✅ Performance monitoring completed"
-          echo "📊 Check the performance-summary artifact for detailed metrics" 
+          echo "📊 Check the performance-summary artifact for detailed metrics"

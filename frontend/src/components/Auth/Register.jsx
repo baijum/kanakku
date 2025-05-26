@@ -61,13 +61,13 @@ function Register({ setIsLoggedIn }) {
         try {
           // Store the token
           localStorage.setItem('token', response.data.token);
-          
+
           // Set login state directly
           setIsLoggedIn(true);
-          
+
           // Also dispatch storage event for other tabs
           window.dispatchEvent(new Event('storage'));
-          
+
           // Use React Router navigation
           navigate('/');
         } catch (storageError) {
@@ -78,8 +78,8 @@ function Register({ setIsLoggedIn }) {
         // New flow: Registration succeeded but user needs activation
         setError('');
         // Navigate to login with success message
-        navigate('/login', { 
-          state: { 
+        navigate('/login', {
+          state: {
             notification: {
               type: 'success',
               message: response.data.message
@@ -101,10 +101,10 @@ function Register({ setIsLoggedIn }) {
   const handleGoogleLogin = async () => {
     setError('');
     setGoogleLoading(true);
-    
+
     try {
       const response = await axiosInstance.get('/api/v1/auth/google');
-      
+
       if (response.data && response.data.auth_url) {
         // Redirect to Google's authentication page
         window.location.href = response.data.auth_url;
@@ -204,7 +204,7 @@ function Register({ setIsLoggedIn }) {
           autoComplete="off"
           aria-hidden="true"
         />
-        
+
         {/* hCaptcha Component */}
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <HCaptcha
@@ -229,9 +229,9 @@ function Register({ setIsLoggedIn }) {
         >
           {loading ? <CircularProgress size={24} /> : 'Register'}
         </Button>
-        
+
         <Divider sx={{ my: 2 }}>or</Divider>
-        
+
         <Button
           fullWidth
           variant="outlined"
@@ -242,7 +242,7 @@ function Register({ setIsLoggedIn }) {
         >
           {googleLoading ? <CircularProgress size={24} /> : 'Sign up with Google'}
         </Button>
-        
+
         <Box textAlign="center">
           <Link component={RouterLink} to="/login" variant="body2">
             Already have an account? Sign in
@@ -253,4 +253,4 @@ function Register({ setIsLoggedIn }) {
   );
 }
 
-export default Register; 
+export default Register;

@@ -46,12 +46,12 @@ jest.mock('react-router-dom', () => ({
 
 // Mock axios
 jest.mock('../../api/axiosInstance', () => ({
-  get: jest.fn().mockResolvedValue({ 
-    data: { 
+  get: jest.fn().mockResolvedValue({
+    data: {
       id: 1,
-      name: 'Assets:Checking', 
-      description: 'Main checking account' 
-    } 
+      name: 'Assets:Checking',
+      description: 'Main checking account'
+    }
   }),
   put: jest.fn().mockResolvedValue({ status: 200, data: {} })
 }));
@@ -74,9 +74,9 @@ describe('EditAccount Component', () => {
   test('renders loading state initially', () => {
     // Set the mock implementation for loading state
     EditAccount.mockImplementation(MockEditAccountLoading);
-    
+
     render(<EditAccount />);
-    
+
     // Check for loading spinner
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
   });
@@ -84,21 +84,21 @@ describe('EditAccount Component', () => {
   test('renders edit account form after loading', () => {
     // Set the mock implementation for form state
     EditAccount.mockImplementation(MockEditAccount);
-    
+
     render(<EditAccount />);
-    
+
     // Check for heading
     expect(screen.getByRole('heading', { name: /Edit Account/i })).toBeInTheDocument();
-    
+
     // Check for form elements
     expect(screen.getByTestId('account-name-field')).toBeInTheDocument();
     expect(screen.getByLabelText(/Account Name/i)).toBeInTheDocument();
     expect(screen.getByDisplayValue('Assets:Checking')).toBeInTheDocument();
-    
+
     expect(screen.getByTestId('description-field')).toBeInTheDocument();
     expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
     expect(screen.getByDisplayValue('Main checking account')).toBeInTheDocument();
-    
+
     // Check for buttons
     expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Update Account/i })).toBeInTheDocument();

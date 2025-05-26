@@ -62,7 +62,7 @@ rules:
       - Require auth for all endpoints except health checks
       - Support JWT Bearer tokens and API keys
       - Return 401 for auth failures, 403 for permission issues
-      
+
       Reference security.yml for comprehensive standards
 
   - name: versioning

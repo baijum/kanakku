@@ -14,7 +14,7 @@ rules:
       - Applicability scope
       - Specific requirements
       - Examples of correct implementation
-      
+
       Example structure:
       ```yaml
       - name: example_rule
@@ -40,7 +40,7 @@ rules:
       ```typescript
       // ✅ DO: Good example
       const good = true;
-      
+
       // ❌ DON'T: Bad example
       const bad = false;
       ```

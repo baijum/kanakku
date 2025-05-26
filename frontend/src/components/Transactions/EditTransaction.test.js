@@ -21,10 +21,10 @@ jest.mock('@mui/x-date-pickers/DatePicker', () => ({
     DatePicker: ({ label, value, onChange }) => (
         <div data-testid="mock-date-picker">
             <label>{label}</label>
-            <input 
-                type="date" 
-                value={value instanceof Date && !isNaN(value) ? value.toISOString().split('T')[0] : ''} 
-                onChange={(e) => onChange(e.target.value ? new Date(e.target.value + 'T00:00:00') : null)} 
+            <input
+                type="date"
+                value={value instanceof Date && !isNaN(value) ? value.toISOString().split('T')[0] : ''}
+                onChange={(e) => onChange(e.target.value ? new Date(e.target.value + 'T00:00:00') : null)}
             />
         </div>
     )
@@ -123,7 +123,7 @@ describe('EditTransaction Component', () => {
     // Check date using Testing Library's recommended approach
     const datePicker = screen.getByTestId('mock-date-picker');
     expect(within(datePicker).getByDisplayValue('2023-10-26')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: /Status/i })).toHaveTextContent('Cleared'); 
+    expect(screen.getByRole('combobox', { name: /Status/i })).toHaveTextContent('Cleared');
 
     // Check postings (account and amount)
     const accountInputs = screen.getAllByLabelText(/Account/i);
@@ -163,15 +163,15 @@ describe('EditTransaction Component', () => {
         expect.objectContaining({
           payee: 'Updated Payee',
           postings: expect.arrayContaining([
-            expect.objectContaining({ 
+            expect.objectContaining({
               account: sortedMockAccountNames[2], // Income:Salary
               amount: mockRelatedTransactionData.transactions[0].amount,
-              id: mockRelatedTransactionData.transactions[0].id 
+              id: mockRelatedTransactionData.transactions[0].id
             }),
-            expect.objectContaining({ 
-              account: mockRelatedTransactionData.transactions[1].account_name, 
+            expect.objectContaining({
+              account: mockRelatedTransactionData.transactions[1].account_name,
               amount: mockRelatedTransactionData.transactions[1].amount,
-              id: mockRelatedTransactionData.transactions[1].id 
+              id: mockRelatedTransactionData.transactions[1].id
             }),
           ]),
           original_transaction_ids: [mockRelatedTransactionData.transactions[0].id, mockRelatedTransactionData.transactions[1].id],
@@ -185,7 +185,7 @@ describe('EditTransaction Component', () => {
     // Check for success message
     expect(await screen.findByText(/Transaction updated successfully/i)).toBeInTheDocument();
     // // console.log("TEST LOG: Success message found."); // Remove Log 11
-    
+
     // Uncomment navigation check and increase timeout
     await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/transactions');
@@ -215,7 +215,7 @@ describe('EditTransaction Component', () => {
     const user = userEvent.setup();
     const updateErrorMessage = 'Failed to update transaction';
     axiosInstance.put.mockRejectedValue({ response: { data: { error: updateErrorMessage } } });
-    
+
     render(<EditTransaction />);
 
     expect(await screen.findByRole('heading', { name: /Edit Transaction/i })).toBeInTheDocument();

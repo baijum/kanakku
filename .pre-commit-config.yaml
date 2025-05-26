@@ -1,0 +1,36 @@
+repos:
+  # Run the existing lint.sh script
+  - repo: local
+    hooks:
+      - id: kanakku-lint
+        name: Kanakku Linting (lint.sh)
+        entry: ./lint.sh
+        language: script
+        files: \.(py|js|jsx|ts|tsx)$
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        verbose: true
+
+  # Additional useful pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.md$
+      - id: end-of-file-fixer
+        exclude: \.md$
+      - id: check-yaml
+        exclude: \.github/
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Security scanning
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks

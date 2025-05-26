@@ -104,4 +104,4 @@
     "command": "workbench.action.toggleZenMode",
     "when": "!inQuickOpen"
   }
-] 
+]

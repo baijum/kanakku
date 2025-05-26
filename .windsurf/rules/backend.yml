@@ -14,7 +14,7 @@ rules:
       - Keep route handlers lean (business logic in services)
       - Use `/api/v1/` prefix for API endpoints
       - Register application-wide error handlers
-      
+
       Example blueprint structure:
       ```python
       # ✅ DO: Good structure
@@ -36,7 +36,7 @@ rules:
       - Use transactions for atomic operations
       - Prefer explicit column selection
       - Encapsulate all CRUD in service functions
-      
+
       Example model:
       ```python
       # ✅ DO: Good model example
@@ -52,7 +52,7 @@ rules:
       - Use Flask-JWT-Extended for JWT
       - Implement both JWT and API key auth
       - Use werkzeug.security for password hashing
-      
+
       Reference security.yml for comprehensive standards
 
   - name: configuration
@@ -81,7 +81,7 @@ rules:
       - Return proper HTTP status codes
       - Use JSON for all bodies
       - Implement pagination
-      
+
       Reference api_design.yml for comprehensive standards
 
   - name: code_quality
@@ -111,5 +111,5 @@ rules:
       - Environment variables for config
       - Log rotation/monitoring
       - DB backup procedures
-      
+
       Reference deployment.yml for comprehensive standards

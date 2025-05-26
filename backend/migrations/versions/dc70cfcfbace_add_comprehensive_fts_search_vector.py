@@ -50,20 +50,20 @@ def upgrade():
                     WHEN '!' THEN status_text := 'Pending';
                     ELSE status_text := 'Unmarked';
                 END CASE;
-                
+
                 -- Format amount as text (handle both integer and decimal amounts)
-                amount_text := CASE 
+                amount_text := CASE
                     WHEN NEW.amount = FLOOR(NEW.amount) THEN FLOOR(NEW.amount)::TEXT
                     ELSE NEW.amount::TEXT
                 END;
-                
+
                 -- Get account information
                 SELECT name, COALESCE(description, '') INTO account_name, account_desc
                 FROM account WHERE id = NEW.account_id;
-                
+
                 -- Build comprehensive search vector
-                NEW.search_vector = to_tsvector('english', 
-                    COALESCE(NEW.description, '') || ' ' || 
+                NEW.search_vector = to_tsvector('english',
+                    COALESCE(NEW.description, '') || ' ' ||
                     COALESCE(NEW.payee, '') || ' ' ||
                     COALESCE(amount_text, '') || ' ' ||
                     COALESCE(NEW.currency, '') || ' ' ||
@@ -73,14 +73,14 @@ def upgrade():
                 );
                 RETURN NEW;
             END IF;
-            
+
             -- Handle account table changes - update all related transactions
             IF TG_TABLE_NAME = 'account' THEN
-                UPDATE transaction 
-                SET search_vector = to_tsvector('english', 
-                    COALESCE(description, '') || ' ' || 
+                UPDATE transaction
+                SET search_vector = to_tsvector('english',
+                    COALESCE(description, '') || ' ' ||
                     COALESCE(payee, '') || ' ' ||
-                    CASE 
+                    CASE
                         WHEN amount = FLOOR(amount) THEN FLOOR(amount)::TEXT
                         ELSE amount::TEXT
                     END || ' ' ||
@@ -96,7 +96,7 @@ def upgrade():
                 WHERE account_id = NEW.id;
                 RETURN NEW;
             END IF;
-            
+
             RETURN NULL;
         END;
         $$ LANGUAGE plpgsql;
@@ -123,11 +123,11 @@ def upgrade():
     # Populate existing records with comprehensive search vectors
     op.execute(
         """
-        UPDATE transaction 
-        SET search_vector = to_tsvector('english', 
-            COALESCE(description, '') || ' ' || 
+        UPDATE transaction
+        SET search_vector = to_tsvector('english',
+            COALESCE(description, '') || ' ' ||
             COALESCE(payee, '') || ' ' ||
-            CASE 
+            CASE
                 WHEN amount = FLOOR(amount) THEN FLOOR(amount)::TEXT
                 ELSE amount::TEXT
             END || ' ' ||

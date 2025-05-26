@@ -50,17 +50,17 @@ describe('AccountForm Component', () => {
 
   test('renders account form elements', () => {
     render(<AccountForm />);
-    
+
     // Check for heading
     expect(screen.getByRole('heading', { name: /Create New Account/i })).toBeInTheDocument();
-    
+
     // Check for form elements
     expect(screen.getByTestId('account-name-field')).toBeInTheDocument();
     expect(screen.getByLabelText(/Account Name/i)).toBeInTheDocument();
-    
+
     expect(screen.getByTestId('description-field')).toBeInTheDocument();
     expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
-    
+
     // Check for submit button
     expect(screen.getByRole('button', { name: /Create Account/i })).toBeInTheDocument();
   });

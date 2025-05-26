@@ -27,10 +27,10 @@ function Dashboard() {
   // Function to fetch all postings for a transaction
   const fetchTransactionWithAllPostings = async (transaction) => {
     if (!transaction || !transaction.id) return transaction;
-    
+
     try {
       const response = await axiosInstance.get(`/api/v1/transactions/${transaction.id}/related`);
-      
+
       if (response.data && response.data.transactions && response.data.transactions.length > 0) {
         // Map the postings from the related endpoint
         const allPostings = response.data.transactions.map(tx => ({
@@ -39,35 +39,35 @@ function Dashboard() {
           amount: tx.amount.toString(),
           currency: tx.currency || 'INR'
         }));
-        
+
         // Return updated transaction with all postings and preserve status
         return {
           ...transaction,
           postings: allPostings
         };
       }
-      
+
       return transaction;
     } catch (error) {
       console.error(`Error fetching postings for transaction ${transaction.id}:`, error);
       return transaction;
     }
   };
-  
+
   // Main function to fetch recent transactions
   const fetchRecentTransactions = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get('/api/v1/transactions/recent', { 
-        params: { 
+      const response = await axiosInstance.get('/api/v1/transactions/recent', {
+        params: {
           limit: 7,
           book_id: localStorage.getItem('active_book_id') // Include active book ID
         }
       });
-      
+
       if (response.data && Array.isArray(response.data.transactions)) {
         const basicTransactions = response.data.transactions;
-        
+
         // Fetch complete postings for each transaction
         const completeTransactions = await Promise.all(
           basicTransactions.map(async (tx) => {
@@ -78,7 +78,7 @@ function Dashboard() {
             return tx;
           })
         );
-        
+
         setRecentTransactions(completeTransactions);
       } else {
         console.error('Unexpected response structure for recent transactions:', response.data);
@@ -100,12 +100,12 @@ function Dashboard() {
 
   const fetchBalanceReport = () => {
     setRefreshing(true);
-    axiosInstance.get('/api/v1/reports/balance', { 
+    axiosInstance.get('/api/v1/reports/balance', {
       // Add a cache-busting parameter and book_id
-      params: { 
+      params: {
         depth: 1,
         book_id: localStorage.getItem('active_book_id'), // Include active book ID
-        _t: new Date().getTime() 
+        _t: new Date().getTime()
       }
     })
       .then(response => {
@@ -137,8 +137,8 @@ function Dashboard() {
         <Typography variant="h4">
           Dashboard
         </Typography>
-        <IconButton 
-          onClick={handleRefresh} 
+        <IconButton
+          onClick={handleRefresh}
           disabled={refreshing}
           color="primary"
           aria-label="refresh dashboard"
@@ -153,7 +153,7 @@ function Dashboard() {
               <Typography variant="h6" gutterBottom>
                 Recent Transactions
               </Typography>
-              
+
               {loading ? (
                 <Typography variant="body2" color="text.secondary">Loading transactions...</Typography>
               ) : (
@@ -175,12 +175,12 @@ function Dashboard() {
                           </TableCell>
                           <TableCell>
                             {transaction.postings && transaction.postings.map((posting, pIndex) => (
-                              <Box 
-                                key={pIndex} 
-                                sx={{ 
-                                  display: 'flex', 
-                                  justifyContent: 'space-between', 
-                                  mb: 0.5, 
+                              <Box
+                                key={pIndex}
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  mb: 0.5,
                                   borderBottom: pIndex < transaction.postings.length - 1 ? '1px solid #f0f0f0' : 'none',
                                   py: 0.5
                                 }}
@@ -214,64 +214,64 @@ function Dashboard() {
                   {(() => {
                     // Process the balance report to group by account name
                     const balanceMap = new Map();
-                    
+
                     balanceReport.split('\n').forEach(line => {
                       if (!line.trim()) return;
-                      
+
                       // Split each line into account name and balance parts
                       const parts = line.trim().split(/\s+(?=[\d₹-])/);  // Note the added - to handle negative numbers
                       const accountName = parts[0];
                       const balanceStr = parts[1] || '';
-                      
+
                       // Extract numeric value from balance string
                       const numericValue = parseFloat(balanceStr.replace(/[^\d.-]/g, ''));
-                      
+
                       if (!isNaN(numericValue)) {
                         // Get currency symbol/code
                         const currencyMatch = balanceStr.match(/[^\d.\s-]+/);
                         const currency = currencyMatch ? currencyMatch[0] : '';
-                        
+
                         // Special handling for Expenses - they're normally negative but displayed positive
                         let adjustedValue = numericValue;
                         if (accountName === 'Expenses' || accountName.startsWith('Expenses:')) {
                           // For Expenses accounts, we want to display the absolute value
                           // but preserve the sign in the internal calculations
                         }
-                        
+
                         // Use account name as key, store currency and sum value
                         if (balanceMap.has(accountName)) {
                           const existing = balanceMap.get(accountName);
                           existing.value += adjustedValue;
                         } else {
-                          balanceMap.set(accountName, { 
-                            value: adjustedValue, 
-                            currency 
+                          balanceMap.set(accountName, {
+                            value: adjustedValue,
+                            currency
                           });
                         }
                       }
                     });
-                    
+
                     // Convert map back to array for rendering
                     return Array.from(balanceMap).map(([accountName, data], index) => {
                       const { value, currency } = data;
-                      
+
                       // Format the balance value
                       let displayValue = value;
-                      
+
                       // For Expenses accounts, we want to show the absolute value as a positive number
                       if (accountName === 'Expenses' || accountName.startsWith('Expenses:')) {
                         displayValue = Math.abs(value);
                       }
-                      
-                      const formattedBalance = currency === '₹' 
-                        ? `${currency}${displayValue.toFixed(2)}` 
+
+                      const formattedBalance = currency === '₹'
+                        ? `${currency}${displayValue.toFixed(2)}`
                         : `${displayValue.toFixed(2)} ${currency}`;
-                      
+
                       return (
-                        <Box 
-                          key={index} 
-                          sx={{ 
-                            display: 'flex', 
+                        <Box
+                          key={index}
+                          sx={{
+                            display: 'flex',
                             justifyContent: 'space-between',
                             mb: 0.5,
                             wordBreak: 'break-word'
@@ -300,4 +300,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard; 
+export default Dashboard;

@@ -59,11 +59,11 @@ alwaysApply: true
     - **Frontend (JavaScript/React):** `PascalCase` for React components (e.g., `UserProfile.jsx`), `camelCase` for utilities and services (e.g., `apiService.js`, `dateUtils.js`)
     - **Configuration files:** Use the conventional names (e.g., `requirements.txt`, `package.json`, `Dockerfile`, `docker-compose.yml`)
     - **Documentation:** Use `kebab-case` for markdown files (e.g., `user-guide.md`, `api-reference.md`)
-- **Dependency Management**: 
+- **Dependency Management**:
     - **Backend:** Keep `requirements.txt` up to date. When adding new Python packages, pin to specific versions (e.g., `flask==2.3.2`) for reproducibility. Use `pip freeze > requirements.txt` cautiously; prefer manually adding only the direct dependencies you need.
     - **Frontend:** Use `package-lock.json` (npm) or `yarn.lock` (Yarn) to lock dependency versions. Commit these lock files to ensure consistent installs across environments.
     - Regularly audit and update dependencies for security vulnerabilities using `pip-audit` (Python) and `npm audit` (JavaScript).
-- **Temporary Files and Cleanup**: 
+- **Temporary Files and Cleanup**:
     - Do not commit temporary files, debug outputs, or experimental code snippets to the repository.
     - If you create temporary files during development (e.g., test data files, debug logs), ensure they are either in `.gitignore` or manually cleaned up before committing.
     - Remove commented-out code blocks, unused imports, and dead code before committing.
@@ -82,7 +82,7 @@ alwaysApply: true
 - **Import Organization**: Maintain clean, organized imports in all files:
     - **Backend (Python):** Use `isort` to automatically organize imports. Group imports as: standard library, third-party packages, local application imports.
     - **Frontend (JavaScript/React):** Group imports as: React, external libraries, MUI components, internal components (using absolute imports with `@/` prefix), relative imports, style imports.
-- **Code Comments and Documentation**: 
+- **Code Comments and Documentation**:
     - Add comments for complex business logic, non-obvious code, or important architectural decisions.
     - Remove outdated comments when refactoring code.
     - Ensure docstrings (Python) and JSDoc comments (JavaScript) are accurate and up to date.

@@ -16,19 +16,19 @@ jest.mock('@hcaptcha/react-hcaptcha', () => {
   return function MockHCaptcha({ onVerify, onExpire, onError, sitekey }) {
     return (
       <div data-testid="hcaptcha-mock" data-sitekey={sitekey}>
-        <button 
+        <button
           onClick={() => onVerify('mock-token')}
           data-testid="hcaptcha-verify-button"
         >
           Verify hCaptcha
         </button>
-        <button 
+        <button
           onClick={() => onExpire()}
           data-testid="hcaptcha-expire-button"
         >
           Expire hCaptcha
         </button>
-        <button 
+        <button
           onClick={() => onError('mock-error')}
           data-testid="hcaptcha-error-button"
         >
@@ -98,14 +98,14 @@ describe('Register Component', () => {
     // Direct DOM access is necessary here because the honeypot field is intentionally hidden from users
     // eslint-disable-next-line testing-library/no-node-access
     const honeypotField = document.querySelector('input[name="website"]');
-    
+
     // Verify the honeypot field exists
     expect(honeypotField).toBeInTheDocument();
-    
+
     // Verify it has the correct attributes for hiding from users
     expect(honeypotField).toHaveAttribute('type', 'text');
     expect(honeypotField).toHaveAttribute('autoComplete', 'off');
-    
+
     // Check the container for the accessibility attributes
     // eslint-disable-next-line testing-library/no-node-access
     const honeypotContainer = honeypotField.closest('.MuiTextField-root');
@@ -128,7 +128,7 @@ describe('Register Component', () => {
     // eslint-disable-next-line testing-library/no-node-access
     const honeypotContainer = honeypotField.closest('.MuiTextField-root');
     expect(honeypotContainer).toHaveAttribute('aria-hidden', 'true');
-    
+
     // It should not be accessible via getByLabelText
     expect(() => screen.getByLabelText(/website/i)).toThrow();
   });
@@ -158,7 +158,7 @@ describe('Register Component', () => {
     const honeypotField = document.querySelector('input[name="website"]');
     // eslint-disable-next-line testing-library/no-node-access
     const honeypotContainer = honeypotField.closest('.MuiTextField-root');
-    
+
     // Check that the container has the CSS classes that make it invisible
     // The actual styling is applied via MUI's sx prop which creates CSS classes
     expect(honeypotContainer).toHaveClass('MuiTextField-root');
@@ -184,4 +184,4 @@ describe('Register Component', () => {
 
     expect(screen.getByText(/already have an account\? sign in/i)).toBeInTheDocument();
   });
-}); 
+});

@@ -11,7 +11,7 @@ describe('Terms Component', () => {
 
   test('renders all terms sections', () => {
     render(<Terms />);
-    
+
     // Check for section headings
     expect(screen.getByText(/1\. Acceptance of Terms/i)).toBeInTheDocument();
     expect(screen.getByText(/2\. Description of Service/i)).toBeInTheDocument();

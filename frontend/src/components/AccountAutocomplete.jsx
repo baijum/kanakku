@@ -17,7 +17,7 @@ const debounce = (func, delay) => {
 
 /**
  * AccountAutocomplete Component
- * 
+ *
  * Provides auto-completion for Ledger CLI-style account names.
  * Auto-completion activates when the user types at least one colon (:).
  * Supports hierarchical account name suggestions.
@@ -140,4 +140,4 @@ function AccountAutocomplete({
   );
 }
 
-export default AccountAutocomplete; 
+export default AccountAutocomplete;

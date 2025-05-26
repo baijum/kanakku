@@ -69,9 +69,9 @@ describe('BookSelector Component', () => {
   test('renders loading state initially', () => {
     // Set the mock implementation for loading state
     BookSelector.mockImplementation(MockBookSelectorLoading);
-    
+
     render(<BookSelector isLoggedIn={true} />);
-    
+
     // Check for loading elements
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
     expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -80,9 +80,9 @@ describe('BookSelector Component', () => {
   test('renders book selector with books', () => {
     // Set the mock implementation for books state
     BookSelector.mockImplementation(MockBookSelectorWithBooks);
-    
+
     render(<BookSelector isLoggedIn={true} />);
-    
+
     // Check for book selector elements
     expect(screen.getByTestId('book-selector')).toBeInTheDocument();
     expect(screen.getByText('Current Book')).toBeInTheDocument();
@@ -94,9 +94,9 @@ describe('BookSelector Component', () => {
   test('renders default book message when no books exist', () => {
     // Set the mock implementation for no books state
     BookSelector.mockImplementation(MockBookSelectorNoBooks);
-    
+
     render(<BookSelector isLoggedIn={true} />);
-    
+
     // Check for default book message
     expect(screen.getByTestId('default-book')).toBeInTheDocument();
     expect(screen.getByText('Default Book')).toBeInTheDocument();
@@ -105,9 +105,9 @@ describe('BookSelector Component', () => {
   test('renders error message when books fetch fails', () => {
     // Set the mock implementation for error state
     BookSelector.mockImplementation(MockBookSelectorError);
-    
+
     render(<BookSelector isLoggedIn={true} />);
-    
+
     // Check for error message
     expect(screen.getByTestId('error-message')).toBeInTheDocument();
     expect(screen.getByText('Failed to load books')).toBeInTheDocument();

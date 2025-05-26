@@ -24,11 +24,11 @@ function Login({ setIsLoggedIn }) {
       // Clear the location state after using it
       navigate(location.pathname, { replace: true, state: {} });
     }
-    
+
     // Check for account_inactive error in URL parameters
     const params = new URLSearchParams(location.search);
     const errorParam = params.get('error');
-    
+
     if (errorParam === 'account_inactive') {
       setError('Your account is inactive. Please use the Account Status tab in Profile Settings to reactivate it.');
       // Remove the error parameter from URL to prevent showing the error after page refresh
@@ -72,14 +72,14 @@ function Login({ setIsLoggedIn }) {
   const handleGoogleLogin = async () => {
     setError('');
     setGoogleLoading(true);
-    
+
     try {
       // Use the proxy configuration instead of direct backend URL
       console.log('Sending Google auth request via proxy...');
-      
+
       // Using axiosInstance instead of direct axios
       const response = await axiosInstance.get('/api/v1/auth/google');
-      
+
       if (response.data && response.data.auth_url) {
         // Redirect to Google's authentication page
         console.log(`Redirecting to Google auth URL: ${response.data.auth_url}`);
@@ -155,9 +155,9 @@ function Login({ setIsLoggedIn }) {
         >
           {loading ? <CircularProgress size={24} /> : 'Log In'}
         </Button>
-        
+
         <Divider sx={{ my: 2 }}>or</Divider>
-        
+
         <Button
           fullWidth
           variant="outlined"
@@ -168,7 +168,7 @@ function Login({ setIsLoggedIn }) {
         >
           {googleLoading ? <CircularProgress size={24} /> : 'Sign in with Google'}
         </Button>
-        
+
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Box sx={{ mb: 1 }}>
             <Link component={RouterLink} to="/forgot-password" variant="body2">
@@ -187,4 +187,4 @@ function Login({ setIsLoggedIn }) {
   );
 }
 
-export default Login; 
+export default Login;

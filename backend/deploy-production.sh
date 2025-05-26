@@ -44,4 +44,4 @@ flask db upgrade
 
 echo "Backend preparation complete."
 echo "To run in production, use a WSGI server like Gunicorn:"
-echo "gunicorn 'app:create_app()' --bind 0.0.0.0:8000" 
+echo "gunicorn 'app:create_app()' --bind 0.0.0.0:8000"

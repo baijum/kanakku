@@ -456,12 +456,12 @@ const GlobalSettings = () => {
             value={formData.value}
             onChange={handleInputChange}
             helperText={
-              formData.key === 'GEMINI_API_TOKEN' 
+              formData.key === 'GEMINI_API_TOKEN'
                 ? 'Enter your Google Gemini API token (starts with AIzaSy...)'
                 : 'The configuration value'
             }
             placeholder={
-              formData.key === 'GEMINI_API_TOKEN' 
+              formData.key === 'GEMINI_API_TOKEN'
                 ? 'AIzaSy...'
                 : ''
             }
@@ -492,7 +492,7 @@ const GlobalSettings = () => {
           {formData.key === 'GEMINI_API_TOKEN' && (
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="body2">
-                The Gemini API token is required for automated email processing features. 
+                The Gemini API token is required for automated email processing features.
                 Get your API key from{' '}
                 <Link href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">
                   Google AI Studio
@@ -546,7 +546,7 @@ const GlobalSettings = () => {
                 : 'Enter the new value. For security, the current value is not displayed.'
             }
             placeholder={
-              selectedConfig?.key === 'GEMINI_API_TOKEN' 
+              selectedConfig?.key === 'GEMINI_API_TOKEN'
                 ? 'AIzaSy...'
                 : ''
             }
@@ -681,4 +681,4 @@ const GlobalSettings = () => {
   );
 };
 
-export default GlobalSettings; 
+export default GlobalSettings;
