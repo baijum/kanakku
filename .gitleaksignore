@@ -6,3 +6,19 @@
 
 # Add any specific findings that are false positives here
 # You can get the fingerprint from the Gitleaks report output
+
+# Documentation examples in tools/ledgertransactions/README.md
+766cd228749b3a61ed6efcb1e139bcc34231629b:tools/ledgertransactions/README.md:kanakku-api-keys:40
+766cd228749b3a61ed6efcb1e139bcc34231629b:tools/ledgertransactions/README.md:kanakku-api-keys:63
+
+# Documentation examples in banktransactions/README.md (Google API key example)
+# These are placeholder values in documentation, not real secrets
+
+# Documentation examples in docs/redis-queue-debugging.md (Google API key example)
+# These are placeholder values in documentation, not real secrets
+
+# Test files with dummy passwords and tokens
+# These are test values, not real secrets
+
+# Frontend test files with example passwords
+# These are test values for E2E testing, not real secrets

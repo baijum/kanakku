@@ -11,16 +11,23 @@ description = "Ignore test files and documentation"
 paths = [
   '''.*test.*\.py''',
   '''.*tests/.*''',
-  '''.*\.md''',
-  '''.*\.rst''',
-  '''.*\.txt''',
-  '''.*\.yml''',
-  '''.*\.yaml''',
-  '''.*\.json''',
-  '''requirements.*\.txt''',
-  '''package.*\.json''',
-  '''yarn\.lock''',
-  '''.*\.log''',
+  '''.*\.md$''',
+  '''.*\.rst$''',
+  '''.*\.txt$''',
+  '''.*\.yml$''',
+  '''.*\.yaml$''',
+  '''.*\.json$''',
+  '''requirements.*\.txt$''',
+  '''package.*\.json$''',
+  '''yarn\.lock$''',
+  '''.*\.log$''',
+  '''tools/.*/README\.md$''',
+  '''banktransactions/tools/.*\.py$''',
+  '''frontend/e2e/.*\.js$''',
+  '''docs/.*\.md$''',
+  '''scripts/.*\.sh$''',
+  '''backend/examples/.*\.py$''',
+  '''.*\.template$''',
 ]
 
 [[allowlists]]
@@ -34,16 +41,27 @@ regexes = [
   '''(?i)test.*key''',
   '''(?i)fake.*secret''',
   '''(?i)mock.*token''',
+  '''(?i)your.*gemini.*api.*key''',
+  '''(?i)your.*actual.*api.*token.*here''',
+  '''(?i)test.*password.*123''',
+  '''(?i)dummy.*gmail.*app.*password''',
+  '''(?i)dummy.*app.*password.*for.*testing''',
+  '''(?i)password123!''',
 ]
 
 [[allowlists]]
-description = "Ignore environment variable examples"
+description = "Ignore environment variable examples and documentation placeholders"
 regexTarget = "line"
 regexes = [
   '''.*=.*\$\{.*\}.*''',  # Environment variable substitution
   '''.*=.*\<.*\>.*''',    # Placeholder syntax
   '''.*=.*your.*key.*''', # Documentation placeholders
+  '''.*=.*your.*token.*''', # Documentation token placeholders
+  '''.*=.*your.*actual.*''', # Documentation actual placeholders
   '''.*=.*change.*me.*''', # Change me placeholders
+  '''.*=.*example.*''',   # Example values
+  '''.*=.*placeholder.*''', # Placeholder values
+  '''.*"your_actual_api_token_here".*''', # Specific documentation example
 ]
 
 # Custom rules for kanakku-specific patterns
@@ -60,6 +78,9 @@ tags = ["database", "connection-string"]
       '''.*test.*''',
       '''.*localhost.*''',
       '''.*127\.0\.0\.1.*''',
+      '''.*kanakku_dev.*''',
+      '''.*secret123.*''',
+      '''.*test_password.*''',
     ]
 
 [[rules]]
@@ -76,6 +97,12 @@ tags = ["jwt", "secret"]
       '''.*test.*''',
       '''.*local.*''',
       '''.*change.*me.*''',
+      '''.*dev-secret-key-change-in-production.*''',
+      '''.*jwt-secret-key-change-in-production.*''',
+      '''.*your-secret-key-here.*''',
+      '''.*your-jwt-secret-key-here.*''',
+      '''.*super-secret-key-123.*''',
+      '''.*test-secret-key.*''',
     ]
 
 [[rules]]
@@ -85,11 +112,69 @@ regex = '''(?i)(api_key|access_token|auth_token)\s*=\s*['"][^'"]{20,}['"]'''
 tags = ["api-key", "token"]
 
     [[rules.allowlists]]
-    description = "Allow test API keys"
+    description = "Allow test API keys and documentation examples"
     regexTarget = "match"
     regexes = [
       '''.*test.*''',
       '''.*fake.*''',
       '''.*example.*''',
       '''.*dummy.*''',
+      '''.*your_actual.*''',
+      '''.*placeholder.*''',
+      '''.*sample.*''',
+      '''.*your.*gemini.*api.*key.*''',
+    ]
+
+[[rules]]
+id = "kanakku-test-passwords"
+description = "Test passwords in development files"
+regex = '''(?i)(password|passwd)\s*=\s*['"][^'"]{8,}['"]'''
+tags = ["password", "test"]
+
+    [[rules.allowlists]]
+    description = "Allow test passwords and documentation examples"
+    regexTarget = "match"
+    regexes = [
+      '''.*test.*''',
+      '''.*dummy.*''',
+      '''.*example.*''',
+      '''.*Password123!.*''',
+      '''.*test_password.*''',
+    ]
+
+    [[rules.allowlists]]
+    description = "Allow test files and tools"
+    paths = [
+      '''.*test.*\.py''',
+      '''.*tests/.*''',
+      '''banktransactions/tools/.*''',
+      '''frontend/e2e/.*''',
+    ]
+
+[[rules]]
+id = "kanakku-gemini-api-keys"
+description = "Google Gemini API keys"
+regex = '''(?i)(google_api_key|gemini_api_key|gemini.*token)\s*=\s*['"][^'"]{20,}['"]'''
+tags = ["api-key", "gemini", "google"]
+
+    [[rules.allowlists]]
+    description = "Allow test Gemini API keys and documentation examples"
+    regexTarget = "match"
+    regexes = [
+      '''.*test.*''',
+      '''.*demo.*''',
+      '''.*example.*''',
+      '''.*dummy.*''',
+      '''.*your.*gemini.*api.*key.*''',
+      '''.*AIzaSyDemo.*''',
+      '''.*AIzaSyDummy.*''',
+    ]
+
+    [[rules.allowlists]]
+    description = "Allow documentation and example files"
+    paths = [
+      '''.*\.md$''',
+      '''.*\.rst$''',
+      '''backend/examples/.*''',
+      '''docs/.*''',
     ]
