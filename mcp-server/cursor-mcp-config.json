@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "kanakku-logs": {
+      "command": "python",
+      "args": ["mcp-server/kanakku_logs_server.py"],
+      "env": {
+        "KANAKKU_DEPLOY_HOST": "your-production-server-ip",
+        "KANAKKU_DEPLOY_USER": "root",
+        "KANAKKU_SSH_KEY_PATH": "~/.ssh/kanakku_deploy",
+        "KANAKKU_SSH_PORT": "22"
+      }
+    }
+  }
+}
