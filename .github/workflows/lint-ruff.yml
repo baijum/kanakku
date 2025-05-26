@@ -1,14 +1,18 @@
-name: Lint with Ruff
+name: "[LEGACY] Lint with Ruff"
 
+# This workflow is being replaced by the new CI pipeline (.github/workflows/ci.yml)
+# It will be removed in a future update
 on:
-  push:
-    paths:
-      - 'backend/**.py'
-      - '.github/workflows/lint-ruff.yml'
-  pull_request:
-    paths:
-      - 'backend/**.py'
-      - '.github/workflows/lint-ruff.yml'
+  workflow_dispatch:  # Manual trigger only
+  # Disabled automatic triggers - use ci.yml instead
+  # push:
+  #   paths:
+  #     - 'backend/**.py'
+  #     - '.github/workflows/lint-ruff.yml'
+  # pull_request:
+  #   paths:
+  #     - 'backend/**.py'
+  #     - '.github/workflows/lint-ruff.yml'
 
 jobs:
   ruff-lint:

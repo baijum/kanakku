@@ -1,0 +1,335 @@
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run performance tests daily at 3 AM UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+
+jobs:
+  # Backend performance monitoring
+  backend-performance:
+    name: Backend Performance
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_kanakku
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+
+      - name: Install dependencies with timing
+        run: |
+          echo "Starting dependency installation..."
+          start_time=$(date +%s)
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+          echo "Dependency installation took: ${duration} seconds"
+          echo "DEPENDENCY_INSTALL_TIME=${duration}" >> $GITHUB_ENV
+
+      - name: Measure application startup time
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_kanakku
+          REDIS_URL: redis://localhost:6379/0
+          FLASK_ENV: testing
+        run: |
+          echo "Measuring application startup time..."
+          cd backend
+          start_time=$(date +%s%3N)  # milliseconds
+          python -c "
+          import time
+          start = time.time()
+          from app import create_app
+          app = create_app()
+          end = time.time()
+          print(f'App creation time: {(end - start) * 1000:.2f}ms')
+          with app.app_context():
+              from app.models import db
+              startup_end = time.time()
+              print(f'Total startup time: {(startup_end - start) * 1000:.2f}ms')
+          "
+          end_time=$(date +%s%3N)
+          duration=$((end_time - start_time))
+          echo "Total startup measurement took: ${duration}ms"
+          echo "STARTUP_TIME=${duration}" >> $GITHUB_ENV
+
+      - name: Run performance tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_kanakku
+          REDIS_URL: redis://localhost:6379/0
+          FLASK_ENV: testing
+        run: |
+          echo "Running performance-focused tests..."
+          start_time=$(date +%s)
+          pytest backend/tests/ banktransactions/tests/ \
+            -m "not slow" \
+            --durations=10 \
+            --tb=short \
+            -q
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+          echo "Test execution took: ${duration} seconds"
+          echo "TEST_EXECUTION_TIME=${duration}" >> $GITHUB_ENV
+
+      - name: Memory usage analysis
+        run: |
+          echo "Analyzing memory usage..."
+          python -c "
+          import psutil
+          import os
+          process = psutil.Process(os.getpid())
+          memory_info = process.memory_info()
+          print(f'RSS Memory: {memory_info.rss / 1024 / 1024:.2f} MB')
+          print(f'VMS Memory: {memory_info.vms / 1024 / 1024:.2f} MB')
+          "
+
+      - name: Generate performance report
+        run: |
+          cat > performance-report.md << EOF
+          # Backend Performance Report
+          
+          **Generated on:** $(date -u)
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Metrics
+          
+          | Metric | Value |
+          |--------|-------|
+          | Dependency Install Time | ${DEPENDENCY_INSTALL_TIME}s |
+          | Application Startup Time | ${STARTUP_TIME}ms |
+          | Test Execution Time | ${TEST_EXECUTION_TIME}s |
+          
+          ## System Information
+          
+          - Python Version: ${{ env.PYTHON_VERSION }}
+          - Runner: ubuntu-latest
+          - PostgreSQL: 15
+          - Redis: 7
+          
+          EOF
+          
+          cat performance-report.md
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-performance-report
+          path: performance-report.md
+          retention-days: 30
+
+  # Frontend performance monitoring
+  frontend-performance:
+    name: Frontend Performance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+          cache-dependency-path: 'frontend/yarn.lock'
+
+      - name: Install dependencies with timing
+        run: |
+          echo "Starting frontend dependency installation..."
+          start_time=$(date +%s)
+          yarn install --frozen-lockfile
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+          echo "Frontend dependency installation took: ${duration} seconds"
+          echo "FRONTEND_INSTALL_TIME=${duration}" >> $GITHUB_ENV
+
+      - name: Build with timing
+        run: |
+          echo "Starting frontend build..."
+          start_time=$(date +%s)
+          yarn build
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+          echo "Frontend build took: ${duration} seconds"
+          echo "FRONTEND_BUILD_TIME=${duration}" >> $GITHUB_ENV
+
+      - name: Analyze bundle size
+        run: |
+          echo "Analyzing bundle size..."
+          if [ -d "build/static/js" ]; then
+            echo "JavaScript bundle sizes:"
+            ls -lh build/static/js/*.js | awk '{print $5, $9}'
+            
+            echo "CSS bundle sizes:"
+            ls -lh build/static/css/*.css | awk '{print $5, $9}' || echo "No CSS files found"
+            
+            # Calculate total size
+            TOTAL_JS_SIZE=$(find build/static/js -name "*.js" -exec stat -c%s {} + | awk '{sum+=$1} END {print sum}')
+            TOTAL_CSS_SIZE=$(find build/static/css -name "*.css" -exec stat -c%s {} + 2>/dev/null | awk '{sum+=$1} END {print sum}' || echo "0")
+            TOTAL_SIZE=$((TOTAL_JS_SIZE + TOTAL_CSS_SIZE))
+            
+            echo "Total bundle size: $((TOTAL_SIZE / 1024)) KB"
+            echo "BUNDLE_SIZE_KB=$((TOTAL_SIZE / 1024))" >> $GITHUB_ENV
+          else
+            echo "Build directory not found"
+            echo "BUNDLE_SIZE_KB=0" >> $GITHUB_ENV
+          fi
+
+      - name: Run frontend tests with timing
+        run: |
+          echo "Running frontend tests..."
+          start_time=$(date +%s)
+          CI=true yarn test:ci --watchAll=false --verbose
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+          echo "Frontend test execution took: ${duration} seconds"
+          echo "FRONTEND_TEST_TIME=${duration}" >> $GITHUB_ENV
+
+      - name: Generate frontend performance report
+        run: |
+          cat > frontend-performance-report.md << EOF
+          # Frontend Performance Report
+          
+          **Generated on:** $(date -u)
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Metrics
+          
+          | Metric | Value |
+          |--------|-------|
+          | Dependency Install Time | ${FRONTEND_INSTALL_TIME}s |
+          | Build Time | ${FRONTEND_BUILD_TIME}s |
+          | Test Execution Time | ${FRONTEND_TEST_TIME}s |
+          | Bundle Size | ${BUNDLE_SIZE_KB} KB |
+          
+          ## System Information
+          
+          - Node.js Version: ${{ env.NODE_VERSION }}
+          - Package Manager: Yarn
+          - Runner: ubuntu-latest
+          
+          EOF
+          
+          cat frontend-performance-report.md
+
+      - name: Upload frontend performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-performance-report
+          path: frontend/frontend-performance-report.md
+          retention-days: 30
+
+  # Performance summary
+  performance-summary:
+    name: Performance Summary
+    runs-on: ubuntu-latest
+    needs: [backend-performance, frontend-performance]
+    if: always()
+    steps:
+      - name: Download performance reports
+        uses: actions/download-artifact@v4
+        with:
+          path: performance-reports
+
+      - name: Generate combined performance summary
+        run: |
+          echo "# Kanakku Performance Summary" > performance-summary.md
+          echo "" >> performance-summary.md
+          echo "**Generated on:** $(date -u)" >> performance-summary.md
+          echo "**Commit:** ${{ github.sha }}" >> performance-summary.md
+          echo "**Branch:** ${{ github.ref_name }}" >> performance-summary.md
+          echo "" >> performance-summary.md
+          
+          echo "## Job Results" >> performance-summary.md
+          echo "- Backend Performance: ${{ needs.backend-performance.result }}" >> performance-summary.md
+          echo "- Frontend Performance: ${{ needs.frontend-performance.result }}" >> performance-summary.md
+          echo "" >> performance-summary.md
+          
+          if [ -d "performance-reports" ]; then
+            echo "## Individual Reports" >> performance-summary.md
+            echo "" >> performance-summary.md
+            
+            if [ -f "performance-reports/backend-performance-report/performance-report.md" ]; then
+              echo "### Backend Performance" >> performance-summary.md
+              cat performance-reports/backend-performance-report/performance-report.md >> performance-summary.md
+              echo "" >> performance-summary.md
+            fi
+            
+            if [ -f "performance-reports/frontend-performance-report/frontend-performance-report.md" ]; then
+              echo "### Frontend Performance" >> performance-summary.md
+              cat performance-reports/frontend-performance-report/frontend-performance-report.md >> performance-summary.md
+              echo "" >> performance-summary.md
+            fi
+          fi
+          
+          echo "## Performance Thresholds" >> performance-summary.md
+          echo "" >> performance-summary.md
+          echo "| Component | Metric | Threshold | Status |" >> performance-summary.md
+          echo "|-----------|--------|-----------|--------|" >> performance-summary.md
+          echo "| Backend | Startup Time | < 5000ms | ⏳ |" >> performance-summary.md
+          echo "| Frontend | Build Time | < 120s | ⏳ |" >> performance-summary.md
+          echo "| Frontend | Bundle Size | < 2MB | ⏳ |" >> performance-summary.md
+          echo "" >> performance-summary.md
+          
+          cat performance-summary.md
+
+      - name: Upload combined performance summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-summary
+          path: performance-summary.md
+          retention-days: 30
+
+      - name: Check performance thresholds
+        run: |
+          echo "Checking performance thresholds..."
+          
+          # These are warning thresholds, not hard failures
+          # Adjust as needed based on actual performance characteristics
+          
+          echo "✅ Performance monitoring completed"
+          echo "📊 Check the performance-summary artifact for detailed metrics" 

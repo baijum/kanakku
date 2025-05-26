@@ -1,0 +1,122 @@
+# GitLeaks configuration for Kanakku project
+title = "Kanakku GitLeaks Configuration"
+
+[extend]
+# Use the default GitLeaks rules as a base
+useDefault = true
+
+[[rules]]
+id = "flask-secret-key"
+description = "Flask SECRET_KEY"
+regex = '''(?i)(secret_key|flask_secret)\s*=\s*['""][^'""]{16,}['""]'''
+tags = ["flask", "secret"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT Secret Key"
+regex = '''(?i)(jwt_secret|jwt_secret_key)\s*=\s*['""][^'""]{16,}['""]'''
+tags = ["jwt", "secret"]
+
+[[rules]]
+id = "database-url"
+description = "Database URL with credentials"
+regex = '''(?i)(database_url|db_url)\s*=\s*['""](?:postgresql|mysql|sqlite)://[^'""]*['""]'''
+tags = ["database", "credentials"]
+
+[[rules]]
+id = "redis-url"
+description = "Redis URL with credentials"
+regex = '''(?i)(redis_url)\s*=\s*['""]redis://[^'""]*['""]'''
+tags = ["redis", "credentials"]
+
+[[rules]]
+id = "email-password"
+description = "Email password"
+regex = '''(?i)(mail_password|email_password|smtp_password)\s*=\s*['""][^'""]{8,}['""]'''
+tags = ["email", "password"]
+
+[[rules]]
+id = "api-key-generic"
+description = "Generic API Key"
+regex = '''(?i)(api_key|apikey|api_secret)\s*=\s*['""][a-zA-Z0-9]{20,}['""]'''
+tags = ["api", "key"]
+
+[[rules]]
+id = "google-api-key"
+description = "Google API Key"
+regex = '''AIza[0-9A-Za-z\\-_]{35}'''
+tags = ["google", "api", "key"]
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key"
+regex = '''AKIA[0-9A-Z]{16}'''
+tags = ["aws", "access", "key"]
+
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----'''
+tags = ["private", "key"]
+
+# Allowlist for false positives
+[[allowlist]]
+description = "Test files and examples"
+paths = [
+    '''.*test.*\.py''',
+    '''.*example.*\.py''',
+    '''.*sample.*\.py''',
+    '''.*mock.*\.py''',
+    '''.*fixture.*\.py''',
+]
+
+[[allowlist]]
+description = "Documentation files"
+paths = [
+    '''.*\.md''',
+    '''.*\.rst''',
+    '''.*\.txt''',
+    '''docs/.*''',
+]
+
+[[allowlist]]
+description = "Configuration templates"
+paths = [
+    '''.*\.template''',
+    '''.*\.example''',
+    '''.*\.sample''',
+]
+
+[[allowlist]]
+description = "Known safe patterns"
+regexes = [
+    '''SECRET_KEY\s*=\s*['""]your-secret-key-here['""]''',
+    '''JWT_SECRET_KEY\s*=\s*['""]your-jwt-secret['""]''',
+    '''DATABASE_URL\s*=\s*['""]postgresql://user:password@localhost/dbname['""]''',
+    '''REDIS_URL\s*=\s*['""]redis://localhost:6379/0['""]''',
+    '''MAIL_PASSWORD\s*=\s*['""]your-email-password['""]''',
+    '''API_KEY\s*=\s*['""]your-api-key-here['""]''',
+]
+
+# Global allowlist for common false positives
+[[allowlist]]
+description = "Environment variable examples"
+regexes = [
+    '''export\s+\w+=['""][^'""]*['""]''',
+    '''os\.environ\.get\(['""][^'""]*['""].*\)''',
+    '''getenv\(['""][^'""]*['""].*\)''',
+]
+
+[[allowlist]]
+description = "Placeholder values"
+regexes = [
+    '''['""]<[^>]*>['""]''',
+    '''['""]{{[^}]*}}['""]''',
+    '''['""]%\([^)]*\)s['""]''',
+    '''['""].*placeholder.*['""]''',
+    '''['""].*example.*['""]''',
+    '''['""].*sample.*['""]''',
+    '''['""].*test.*['""]''',
+    '''['""].*dummy.*['""]''',
+    '''['""].*fake.*['""]''',
+] 

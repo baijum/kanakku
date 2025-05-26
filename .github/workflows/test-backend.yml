@@ -1,14 +1,18 @@
-name: Run Backend Tests
+name: "[LEGACY] Run Backend Tests"
 
+# This workflow is being replaced by the new CI pipeline (.github/workflows/ci.yml)
+# It will be removed in a future update
 on:
-  push:
-    paths:
-      - 'backend/**'
-      - '.github/workflows/test-backend.yml'
-  pull_request:
-    paths:
-      - 'backend/**'
-      - '.github/workflows/test-backend.yml'
+  workflow_dispatch:  # Manual trigger only
+  # Disabled automatic triggers - use ci.yml instead
+  # push:
+  #   paths:
+  #     - 'backend/**'
+  #     - '.github/workflows/test-backend.yml'
+  # pull_request:
+  #   paths:
+  #     - 'backend/**'
+  #     - '.github/workflows/test-backend.yml'
 
 jobs:
   test-backend:

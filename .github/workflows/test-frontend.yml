@@ -1,14 +1,18 @@
-name: Run Frontend Tests
+name: "[LEGACY] Run Frontend Tests"
 
+# This workflow is being replaced by the new CI pipeline (.github/workflows/ci.yml)
+# It will be removed in a future update
 on:
-  push:
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/test-frontend.yml'
-  pull_request:
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/test-frontend.yml'
+  workflow_dispatch:  # Manual trigger only
+  # Disabled automatic triggers - use ci.yml instead
+  # push:
+  #   paths:
+  #     - 'frontend/**'
+  #     - '.github/workflows/test-frontend.yml'
+  # pull_request:
+  #   paths:
+  #     - 'frontend/**'
+  #     - '.github/workflows/test-frontend.yml'
 
 jobs:
   test-frontend:

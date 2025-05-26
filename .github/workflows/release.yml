@@ -24,14 +24,22 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            pyproject.toml
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
       
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm ci
+        run: yarn install --frozen-lockfile
       
       - name: Build frontend
         working-directory: frontend
-        run: npm run build
+        run: yarn build
       
       - name: Create frontend artifact
         run: tar -czf frontend-build.tar.gz -C frontend/build .

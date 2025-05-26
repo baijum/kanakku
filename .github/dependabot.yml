@@ -1,0 +1,115 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@kanakku-team"  # Replace with actual team/maintainer
+    assignees:
+      - "@kanakku-team"  # Replace with actual team/maintainer
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    groups:
+      flask-ecosystem:
+        patterns:
+          - "flask*"
+          - "werkzeug"
+          - "jinja2"
+          - "itsdangerous"
+          - "markupsafe"
+      testing-tools:
+        patterns:
+          - "pytest*"
+          - "coverage"
+          - "*test*"
+      security-updates:
+        patterns:
+          - "cryptography"
+          - "authlib"
+          - "python-jose"
+        update-types:
+          - "security"
+      development-tools:
+        patterns:
+          - "ruff"
+          - "black"
+          - "mypy"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Frontend dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "@kanakku-team"  # Replace with actual team/maintainer
+    assignees:
+      - "@kanakku-team"  # Replace with actual team/maintainer
+    commit-message:
+      prefix: "deps(frontend)"
+      prefix-development: "deps-dev(frontend)"
+      include: "scope"
+    groups:
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "@testing-library/*"
+        update-types:
+          - "minor"
+          - "patch"
+      mui-ecosystem:
+        patterns:
+          - "@mui/*"
+          - "@emotion/*"
+        update-types:
+          - "minor"
+          - "patch"
+      build-tools:
+        patterns:
+          - "*craco*"
+          - "react-scripts"
+          - "@craco/*"
+        update-types:
+          - "minor"
+          - "patch"
+      security-updates:
+        update-types:
+          - "security"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "first-monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "@kanakku-team"  # Replace with actual team/maintainer
+    assignees:
+      - "@kanakku-team"  # Replace with actual team/maintainer
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      actions-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch" 

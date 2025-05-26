@@ -1,14 +1,18 @@
-name: Check formatting with Black
+name: "[LEGACY] Check formatting with Black"
 
+# This workflow is being replaced by the new CI pipeline (.github/workflows/ci.yml)
+# It will be removed in a future update
 on:
-  push:
-    paths:
-      - 'backend/**.py'
-      - '.github/workflows/lint-black.yml'
-  pull_request:
-    paths:
-      - 'backend/**.py'
-      - '.github/workflows/lint-black.yml'
+  workflow_dispatch:  # Manual trigger only
+  # Disabled automatic triggers - use ci.yml instead
+  # push:
+  #   paths:
+  #     - 'backend/**.py'
+  #     - '.github/workflows/lint-black.yml'
+  # pull_request:
+  #   paths:
+  #     - 'backend/**.py'
+  #     - '.github/workflows/lint-black.yml'
 
 jobs:
   black-format:
