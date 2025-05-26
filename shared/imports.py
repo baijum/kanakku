@@ -132,6 +132,44 @@ except ImportError as e:
     get_flask_or_standalone_session = None
     TestDatabaseManager = None
 
+# Unified service layer imports
+try:
+    from .services import (
+        BaseService,
+        StatelessService,
+        ServiceResult,
+        ServiceError,
+        ValidationError,
+        NotFoundError,
+        PermissionError,
+        require_user_context,
+        log_service_call,
+    )
+    from .services.configuration import ConfigurationService, UserConfigurationService
+    from .services.encryption import EncryptionService
+    from .services.email import EmailProcessingService, EmailParsingService
+    from .services.transaction import TransactionService
+    from .services.auth import AuthService, UserManagementService
+except ImportError as e:
+    print(f"Warning: Could not import unified services: {e}")
+    BaseService = None
+    StatelessService = None
+    ServiceResult = None
+    ServiceError = None
+    ValidationError = None
+    NotFoundError = None
+    PermissionError = None
+    require_user_context = None
+    log_service_call = None
+    ConfigurationService = None
+    UserConfigurationService = None
+    EncryptionService = None
+    EmailProcessingService = None
+    EmailParsingService = None
+    TransactionService = None
+    AuthService = None
+    UserManagementService = None
+
 # Export all available imports
 __all__ = [
     # Models
@@ -179,4 +217,22 @@ __all__ = [
     "database_session",
     "get_flask_or_standalone_session",
     "TestDatabaseManager",
+    # Unified services
+    "BaseService",
+    "StatelessService",
+    "ServiceResult",
+    "ServiceError",
+    "ValidationError",
+    "NotFoundError",
+    "PermissionError",
+    "require_user_context",
+    "log_service_call",
+    "ConfigurationService",
+    "UserConfigurationService",
+    "EncryptionService",
+    "EmailProcessingService",
+    "EmailParsingService",
+    "TransactionService",
+    "AuthService",
+    "UserManagementService",
 ]
