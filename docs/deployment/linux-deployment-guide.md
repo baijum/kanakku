@@ -340,7 +340,7 @@ Group=kanakku
 WorkingDirectory=/home/kanakku/kanakku/banktransactions/email_automation
 Environment=PATH=/home/kanakku/kanakku/venv/bin
 EnvironmentFile=/home/kanakku/kanakku/.env.production
-ExecStart=/home/kanakku/kanakku/venv/bin/python run_scheduler.py --interval 300
+ExecStart=/home/kanakku/kanakku/venv/bin/kanakku-scheduler --interval 300
 Restart=always
 RestartSec=30
 
@@ -367,7 +367,7 @@ Group=kanakku
 WorkingDirectory=/home/kanakku/kanakku/banktransactions/email_automation
 Environment=PATH=/home/kanakku/kanakku/venv/bin
 EnvironmentFile=/home/kanakku/kanakku/.env.production
-ExecStart=/home/kanakku/kanakku/venv/bin/python run_worker.py --queue-name email_processing --worker-name production_worker
+ExecStart=/home/kanakku/kanakku/venv/bin/kanakku-worker --queue-name email_processing --worker-name production_worker
 Restart=always
 RestartSec=30
 

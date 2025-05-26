@@ -153,6 +153,17 @@ For bank transaction processing via email:
    ```
 
 2. **Start email workers:**
+   
+   **Option A: Using executable scripts (recommended):**
+   ```bash
+   # Start worker (in one terminal)
+   kanakku-worker
+   
+   # Start scheduler (in another terminal)
+   kanakku-scheduler --interval 300
+   ```
+   
+   **Option B: Direct Python execution:**
    ```bash
    cd banktransactions/email_automation
    

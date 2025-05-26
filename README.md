@@ -762,6 +762,16 @@ Kanakku includes a comprehensive email automation system that automatically proc
 
 3. **Start Email Workers and Scheduler**:
 
+   **Option A: Using executable scripts (recommended)**:
+   ```bash
+   # Start the email worker (processes jobs)
+   kanakku-worker
+   
+   # Start the scheduler (schedules periodic jobs) - in another terminal
+   kanakku-scheduler --interval 300
+   ```
+
+   **Option B: Direct Python execution**:
    ```bash
    cd banktransactions/email_automation
    
@@ -805,23 +815,42 @@ The email automation system consists of:
 
 ### Components
 
-#### Email Worker (`run_worker.py`)
+#### Email Worker (`kanakku-worker`)
 Processes email automation jobs from the Redis queue:
 - Connects to Gmail via IMAP
 - Extracts transaction data using AI
 - Creates transactions in the ledger
 - Handles errors and retries
 
-#### Scheduler (`run_scheduler.py`)
+**Usage:**
+```bash
+# Basic usage
+kanakku-worker
+
+# With custom options
+kanakku-worker --queue-name email_processing --redis-url redis://localhost:6379/0 --worker-name my_worker
+```
+
+#### Scheduler (`kanakku-scheduler`)
 Manages periodic email processing:
 - Schedules jobs based on user polling intervals (hourly/daily)
 - Monitors enabled email configurations
 - Enqueues jobs at appropriate times
 - Runs continuously in the background
 
-**Important**: Always run from the `banktransactions/email_automation` directory:
+**Usage:**
+```bash
+# Basic usage (5-minute interval)
+kanakku-scheduler
+
+# Custom interval (10 minutes)
+kanakku-scheduler --interval 600 --redis-url redis://localhost:6379/0
+```
+
+**Legacy Direct Execution**: You can still run the scripts directly if needed:
 ```bash
 cd banktransactions/email_automation
+python run_worker.py
 python run_scheduler.py --interval 300
 ```
 
@@ -848,6 +877,7 @@ python -c "from cryptography.fernet import Fernet; print('ENCRYPTION_KEY=' + Fer
 ```
 
 **Documentation:**
+- [Executable Scripts Guide](docs/executable-scripts.md) - Complete guide to using kanakku-worker and kanakku-scheduler commands
 - [Email Automation README](banktransactions/email_automation/README.md) - Complete setup guide
 - [Scheduler Documentation](banktransactions/email_automation/SCHEDULER.md) - Detailed scheduler usage and troubleshooting
 

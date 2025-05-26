@@ -80,7 +80,10 @@ systemctl start redis
 # Check active workers
 redis-cli KEYS "rq:worker:*"
 
-# Start worker
+# Start worker (using executable script)
+kanakku-worker --redis-url redis://localhost:6379/0
+
+# Or start worker (direct Python execution)
 cd banktransactions/email_automation
 python run_worker.py --redis-url redis://localhost:6379/0
 ```

@@ -66,6 +66,10 @@ dev = [
     "mypy>=1.0.0",
 ]
 
+[project.scripts]
+kanakku-worker = "banktransactions.automation.run_worker:main"
+kanakku-scheduler = "banktransactions.automation.run_scheduler:main"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["backend*", "banktransactions*", "shared*"]
