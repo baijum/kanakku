@@ -43,6 +43,9 @@ dependencies = [
     "passlib>=1.7.4",  # htpasswd authentication for admin dashboard
     "bcrypt==4.0.1",  # Password hashing for htpasswd (pinned due to passlib compatibility)
 
+    # Data validation and serialization
+    "marshmallow>=3.20.0,<4.0.0",
+
     # API documentation
     "flask-swagger-ui==4.11.1",
     "PyYAML==6.0.1",
