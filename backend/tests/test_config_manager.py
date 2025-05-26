@@ -254,22 +254,26 @@ class TestConfigurationFunctions:
         assert "should start with 'AIzaSy'" in error
 
     def test_validate_gemini_api_token_too_short(self, app):
-        """Test validating token that's too short"""
+        """Test validating Gemini API token that is too short"""
         with app.app_context():
-            is_valid, error = validate_gemini_api_token(self.SHORT_TEST_GEMINI_TOKEN)
+            is_valid, error_message = validate_gemini_api_token(
+                self.SHORT_TEST_GEMINI_TOKEN
+            )
 
-        assert is_valid is False
-        assert "be 39 characters long" in error
+        assert not is_valid
+        assert (
+            "API token appears to be too short" in error_message
+        )  # Check for specific message
 
     def test_validate_gemini_api_token_invalid_characters(self, app):
-        """Test validating token with invalid characters"""
+        """Test validating Gemini API token with invalid characters"""
         with app.app_context():
-            is_valid, error = validate_gemini_api_token(
+            is_valid, error_message = validate_gemini_api_token(
                 self.INVALID_CHARS_TEST_GEMINI_TOKEN
             )
 
-        assert is_valid is False
-        assert "contain only alphanumeric characters" in error
+        assert not is_valid
+        assert "API token contains invalid characters" in error_message
 
     def test_validate_gemini_api_token_empty(self, app):
         """Test validating empty token"""
@@ -301,7 +305,18 @@ class TestConfigurationFunctions:
             success, message = set_gemini_api_token(self.VALID_TEST_GEMINI_TOKEN)
 
         assert success is True
-        assert message == "Gemini API token set successfully."
+        assert message is None
+
+        # Verify token is stored and encrypted
+        token_config = (
+            db_session.query(GlobalConfiguration)
+            .filter_by(key="GEMINI_API_TOKEN")
+            .first()
+        )
+        assert token_config is not None
+        assert token_config.is_encrypted is True
+        # Ensure the stored value is not the original token, implying encryption
+        assert token_config.value != self.VALID_TEST_GEMINI_TOKEN
 
     def test_set_gemini_api_token_invalid(self, app, db_session):
         """Test setting invalid Gemini API token"""
