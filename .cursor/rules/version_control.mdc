@@ -7,6 +7,7 @@ alwaysApply: true
 
 ## Git Best Practices
 
+- **NEVER automatically push changes** - Always ask user for explicit approval before pushing to remote repository
 - Never leave unstaged/untracked files after committing to git
 - Don't create new branches unless explicitly requested
 - Commit changes in logical, focused units
@@ -26,6 +27,14 @@ alwaysApply: true
     3.  Linting passes (`flake8` or `pylint` for Python, `eslint` for JavaScript/React).
     4.  No sensitive information (API keys, passwords, personal data) is included in the commit.
 - **Branching Strategy**: `kanakku` follows [specify: Git Flow, GitHub Flow, or a custom strategy]. The main development branch is `[main/develop]`. Feature branches should be named descriptively (e.g., `feature/user-authentication`, `bugfix/jwt-expiration-issue`). Always create pull requests for code review before merging into the main branch.
+- **Push Workflow**: The standard workflow is:
+    1. Make code changes
+    2. Stage files with `git add`
+    3. Commit locally with `git commit`
+    4. **STOP and ASK USER** before pushing
+    5. Summarize what will be pushed
+    6. Wait for explicit user approval
+    7. Only then execute `git push`
 
 ## Environment & Security
 

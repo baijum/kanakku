@@ -1,0 +1,78 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Git Workflow Standards
+
+## Push Restrictions
+Git push restrictions and workflow standards
+- **NEVER automatically push changes** without explicit user approval
+- Always stage and commit changes locally first
+- Ask user before pushing to remote repository
+- Provide clear summary of what will be pushed
+- Allow user to review commits before pushing
+**Applies to:** All git operations
+
+## Commit Standards
+Commit message and staging standards
+- Use conventional commit format (feat:, fix:, docs:, etc.)
+- Stage only relevant files for each logical change
+- Write clear, descriptive commit messages
+- Separate unrelated changes into different commits
+- Always run pre-commit hooks before committing
+
+## Branch Management
+Branch management standards
+- Work on main branch unless explicitly told to create/switch branches
+- Never create new branches without user request
+- Clearly communicate current branch status
+- Warn if working on non-main branches
+
+## User Confirmation Required
+Operations requiring explicit user approval
+- `git push` to any remote repository
+- Creating new branches
+- Merging branches
+- Force pushing or rewriting history
+- Deleting branches or tags
+
+## Safe Operations
+Operations that can be performed automatically
+- `git add` for staging files
+- `git commit` for local commits
+- `git status` for checking repository state
+- `git log` for viewing history
+- `git diff` for viewing changes
+
+## Workflow Process
+Recommended git workflow process
+1. Make code changes
+2. Stage relevant files (`git add`)
+3. Commit with descriptive message (`git commit`)
+4. **ASK USER** before pushing (`git push`)
+5. Provide summary of what will be pushed
+6. Wait for explicit user approval
+
+## Communication Standards
+How to communicate git operations to users
+- Always explain what git operations will be performed
+- Summarize changes before pushing
+- Mention which branch changes will be pushed to
+- Highlight any potential impacts or considerations
+- Use clear, non-technical language when possible
+
+## Error Handling
+Git error handling standards
+- If git operations fail, explain the error clearly
+- Suggest specific remediation steps
+- Never force operations that fail
+- Ask user how to proceed with conflicts or errors
+
+## Security Considerations
+Security-related git workflow standards
+- Never commit sensitive information
+- Verify `.gitignore` is working properly
+- Check for accidentally staged sensitive files
+- Warn if large files are being committed
+- Ensure pre-commit hooks are running properly
