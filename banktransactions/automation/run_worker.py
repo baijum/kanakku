@@ -61,15 +61,29 @@ logger.debug("Project paths setup completed")
 # Configure logging
 log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
 logger.debug(f"Setting log level to: {log_level}")
+
+log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
+log_file = os.path.join(log_dir, "worker.log")
+
+# Create logs directory if it doesn't exist
+os.makedirs(log_dir, exist_ok=True)
+
+# Set up logging handlers
+handlers = [logging.StreamHandler(sys.stdout)]
+
+# Try to add file handler, but don't fail if we can't
+try:
+    handlers.append(logging.FileHandler(log_file))
+except (OSError, PermissionError) as e:
+    # If we can't create the log file (e.g., in CI environments), just use console logging only.
+    print(
+        f"Warning: Could not create log file {log_file}: {e}. Using console logging only."
+    )
+
 logging.basicConfig(
     level=getattr(logging, log_level, logging.DEBUG),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(
-            os.path.join(os.path.dirname(__file__), "..", "logs", "worker.log")
-        ),
-    ],
+    handlers=handlers,
 )
 logger = logging.getLogger(__name__)
 
