@@ -7,6 +7,7 @@ This script helps debug encryption issues with the email configuration.
 
 import os
 import sys
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -21,7 +22,7 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from shared.imports import setup_project_paths, database_session, EmailConfiguration
+from shared.imports import EmailConfiguration, database_session, setup_project_paths
 
 setup_project_paths()
 
@@ -51,8 +52,8 @@ def debug_encryption():
 
     with app.app_context():
         from app.utils.encryption import (
-            encrypt_value,
             decrypt_value,
+            encrypt_value,
             get_encryption_key,
         )
 

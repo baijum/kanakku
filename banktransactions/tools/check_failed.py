@@ -4,9 +4,10 @@ Check failed jobs in Redis queue
 """
 
 import os
+
 import redis
-from rq.registry import FailedJobRegistry
 from rq.job import Job
+from rq.registry import FailedJobRegistry
 
 
 def check_failed_jobs():

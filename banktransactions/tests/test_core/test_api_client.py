@@ -2,17 +2,17 @@
 
 import os
 import sys
-from datetime import datetime, date
-from unittest.mock import patch, Mock
+from datetime import date, datetime
+from unittest.mock import Mock, patch
 
 # Add banktransactions directory to Python path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from banktransactions.core.api_client import send_transaction_to_api, APIClient
+    from banktransactions.core.api_client import APIClient, send_transaction_to_api
 except ImportError:
     # Fallback to relative import if running from within the directory
-    from api_client import send_transaction_to_api, APIClient
+    from api_client import APIClient, send_transaction_to_api
 
 
 class TestSendTransactionToApi:
@@ -331,6 +331,7 @@ class TestSendTransactionToApi:
     def test_send_transaction_to_api_http_error(self, mock_post, caplog):
         """Test handling of HTTP errors."""
         import logging
+
         import requests
 
         mock_response = Mock()
@@ -366,6 +367,7 @@ class TestSendTransactionToApi:
     def test_send_transaction_to_api_timeout(self, mock_post, caplog):
         """Test handling of timeout errors."""
         import logging
+
         import requests
 
         mock_post.side_effect = requests.exceptions.Timeout()
@@ -394,6 +396,7 @@ class TestSendTransactionToApi:
     def test_send_transaction_to_api_connection_error(self, mock_post, caplog):
         """Test handling of connection errors."""
         import logging
+
         import requests
 
         mock_post.side_effect = requests.exceptions.ConnectionError()

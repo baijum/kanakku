@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import pytest
+import json
 import os
 import sys
-import json
-from unittest.mock import patch, Mock, mock_open
 from datetime import datetime, timezone
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
 
 # Add banktransactions directory to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))

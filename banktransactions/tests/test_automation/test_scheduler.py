@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import pytest
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
+import pytest
 from sqlalchemy.orm import Session
 
 # Add banktransactions directory to Python path for imports

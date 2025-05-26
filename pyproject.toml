@@ -1,0 +1,265 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kanakku"
+version = "1.0.0"
+description = "Kanakku - Personal Finance Management System"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # Core Flask dependencies (latest versions)
+    "Flask==3.0.2",
+    "Flask-CORS==4.0.0",
+    "Flask-SQLAlchemy==3.1.1",
+    "Flask-Login==0.6.3",
+    "Flask-JWT-Extended==4.6.0",
+    "Flask-Mail==0.9.1",
+    "Flask-Migrate==4.0.5",
+    "Flask-Limiter==3.5.0",
+    "Flask-WTF==1.2.1",
+    "Flask-Session==0.5.0",
+    
+    # Database and caching
+    "psycopg2-binary==2.9.9",
+    "redis==5.0.1",
+    
+    # Core utilities
+    "python-dotenv==1.0.1",
+    "Werkzeug==3.0.1",
+    "click==8.1.7",
+    "itsdangerous==2.1.2",
+    "Jinja2==3.1.3",
+    "MarkupSafe==2.1.5",
+    "requests==2.31.0",
+    "certifi==2024.2.2",
+    
+    # Authentication and security
+    "authlib==1.2.1",
+    "flask-dance==7.0.0",
+    "cryptography==42.0.2",  # Using latest version from banktransactions
+    "python-jose==3.3.0",
+    
+    # API documentation
+    "flask-swagger-ui==4.11.1",
+    "PyYAML==6.0.1",
+    
+    # AI and automation
+    "google-genai>=1.14.0",
+    
+    # Background processing
+    "rq==2.3.3",
+    "rq-scheduler==0.14",
+    
+    # Production server
+    "gunicorn==21.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.0.2",
+    "pytest-cov==4.1.0",
+    "pytest-mock==3.12.0",
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*", "banktransactions*", "shared*"]
+exclude = ["tests*", "frontend*", "hack*", "logs*", "fixes*", "docs*", "tools*"]
+
+[tool.ruff]
+# Exclude certain directories from linting
+exclude = [
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    "htmlcov",
+    "instance",
+    "logs",
+    "logs_old",
+    "data",
+    "venv",
+    "migrations",  # Database migrations are auto-generated
+]
+
+# Set line length to match Black
+line-length = 88
+target-version = "py38"
+
+[tool.ruff.lint]
+# Select the rules to check
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "PIE",  # flake8-pie
+]
+
+# Ignore specific error codes
+ignore = [
+    "E501",  # Line too long (handled by Black)
+    "B008",  # Do not perform function calls in argument defaults (common in Flask)
+    "N806",  # Variable in function should be lowercase (allow SQLAlchemy column names)
+    "N803",  # Argument name should be lowercase (allow SQLAlchemy patterns)
+    "SIM102", # Use a single if statement instead of nested if statements (sometimes nested is clearer)
+    "SIM105", # Use contextlib.suppress instead of try-except-pass (sometimes explicit is better)
+    "SIM117", # Use a single with statement with multiple contexts (sometimes nested is clearer)
+    "B904",  # Within an except clause, raise exceptions with raise ... from err (sometimes we want to hide the original error)
+    "B018",  # Found useless expression (sometimes used intentionally in tests)
+    "N818",  # Exception name should be named with an Error suffix (sometimes used for test exceptions)
+    "B017",  # Do not assert blind exception (sometimes used intentionally in tests)
+    "E402",  # Module level import not at top of file (common in banktransactions due to path manipulation)
+    "F841",  # Local variable assigned but never used (some are intentional for debugging)
+    "E722",  # Do not use bare except (some are intentional for cleanup)
+    "F401",  # Imported but unused (some imports are conditional or for future use)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow additional flexibility in specific files
+"tests/**/*.py" = [
+    "F401",  # Allow unused imports in tests
+    "F811",  # Allow redefined names in tests (fixtures)
+    "S101",  # Allow assert statements in tests
+    "F841",  # Allow unused variables in tests
+]
+"backend/app/models.py" = [
+    "N815",  # Allow mixed case variable names in models (SQLAlchemy columns)
+]
+"backend/migrations/**/*.py" = [
+    "F401",  # Allow unused imports in migrations
+    "E402",  # Allow module level imports not at top in migrations
+]
+"banktransactions/tools/**/*.py" = [
+    "F401",  # Allow unused imports in tools
+    "F841",  # Allow unused variables in tools
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "backend", "banktransactions", "shared"]
+known-third-party = ["flask", "sqlalchemy", "werkzeug"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+  | \.venv
+  | venv
+  | migrations
+  | htmlcov
+  | logs
+  | logs_old
+  | data
+)/
+'''
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+strict_optional = true
+
+# Exclude patterns
+exclude = [
+    "^migrations/",
+    "^venv/",
+    "^htmlcov/",
+    "^logs/",
+    "^logs_old/",
+    "^data/",
+]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "flask_login",
+    "flask_mail",
+    "flask_migrate",
+    "flask_cors",
+    "sqlalchemy.*",
+    "flask_dance.*",
+    "authlib.*",
+    "rq.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests", "banktransactions/tests", "shared"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = ["backend"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+addopts = [
+    "--verbose",
+    "--color=yes",
+    "--durations=10",
+    "--showlocals",
+    "--tb=native",
+    "--cov=backend/app",
+    "--cov=banktransactions",
+    "--cov=shared",
+    "--cov-report=term-missing",
+    "--no-cov-on-fail",
+]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["backend/app", "banktransactions", "shared"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/venv/*",
+    "*/htmlcov/*",
+    "*/logs/*",
+    "*/logs_old/*",
+    "*/data/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+] 

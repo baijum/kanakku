@@ -1,21 +1,40 @@
-# Kanakku Refactoring Plans
+# Kanakku Implementation Plans
 
-This directory contains detailed implementation plans for the final two major refactoring recommendations identified during the code analysis phase.
+This directory contains detailed implementation plans for major refactoring and infrastructure improvements for the Kanakku project.
 
 ## Overview
 
-The Kanakku project has successfully completed **3 out of 5** major refactoring initiatives:
+The Kanakku project has successfully completed **3 out of 6** major improvement initiatives:
 
-### ✅ Completed Refactoring (Phases 1-3)
+### ✅ Completed Improvements (Phases 1-3)
 1. **Remove duplicate model definitions** - Eliminated duplicate `EmailConfiguration` and `GlobalConfiguration` models
 2. **Consolidate encryption utilities** - Enhanced backend encryption utilities with standalone functions
 3. **Improve import strategy** - Created shared package with centralized import management
 
-### 🔄 Remaining Refactoring (Phases 4-5)
-4. **Create shared database utilities** - Consolidate database session creation patterns
-5. **Create unified service layer** - Establish consistent service layer across all modules
+### 🔄 Planned Improvements (Phases 4-6)
+4. **Monorepo Build Consolidation** - Unify Python build configurations and dependency management
+5. **Create shared database utilities** - Consolidate database session creation patterns
+6. **Create unified service layer** - Establish consistent service layer across all modules
 
 ## Plan Documents
+
+### [Monorepo Build Consolidation Plan](./monorepo-build-consolidation-plan.md)
+**Estimated Time**: 2 weeks  
+**Priority**: High  
+**Dependencies**: None (can be implemented immediately)
+
+**Objective**: Consolidate duplicate build configurations (`requirements.txt` and `pyproject.toml`) from `backend/` and `banktransactions/` into a unified top-level monorepo structure.
+
+**Key Benefits**:
+- Eliminate dependency duplication and version inconsistencies
+- Single source of truth for all Python dependencies
+- Unified tool configurations (ruff, black, pytest, mypy)
+- Simplified development setup and maintenance
+- Future-proof architecture for adding new Python modules
+
+**Implementation Phases**:
+1. **Week 1**: Analysis, design, and configuration creation
+2. **Week 2**: Implementation, testing, and infrastructure updates
 
 ### [Shared Database Utilities Plan](./shared-database-utilities-plan.md)
 **Estimated Time**: 4 weeks  
@@ -39,7 +58,7 @@ The Kanakku project has successfully completed **3 out of 5** major refactoring 
 ### [Unified Service Layer Plan](./unified-service-layer-plan.md)
 **Estimated Time**: 4 weeks  
 **Priority**: Medium  
-**Dependencies**: Shared database utilities (Phase 4)
+**Dependencies**: Shared database utilities (Phase 5)
 
 **Objective**: Create a consistent service layer pattern across backend and banktransactions modules.
 
@@ -61,22 +80,25 @@ The Kanakku project has successfully completed **3 out of 5** major refactoring 
 The plans are designed to be implemented sequentially:
 
 ```
-Phase 4: Shared Database Utilities (4 weeks)
+Phase 4: Monorepo Build Consolidation (2 weeks)
     ↓
-Phase 5: Unified Service Layer (4 weeks)
+Phase 5: Shared Database Utilities (4 weeks)
+    ↓
+Phase 6: Unified Service Layer (4 weeks)
 ```
 
-**Total Estimated Time**: 8 weeks
+**Total Estimated Time**: 10 weeks
 
 ### Parallel Implementation (Alternative)
 For faster completion, some phases can be parallelized:
 
 ```
-Phase 4: Database Utilities (Weeks 1-4)
-Phase 5: Service Framework (Weeks 3-6)
+Phase 4: Build Consolidation (Weeks 1-2)
+Phase 5: Database Utilities (Weeks 2-5)
+Phase 6: Service Framework (Weeks 5-8)
 ```
 
-**Total Estimated Time**: 6 weeks (with 2-week overlap)
+**Total Estimated Time**: 8 weeks (with overlapping phases)
 
 ## Risk Assessment
 
@@ -100,6 +122,7 @@ Phase 5: Service Framework (Weeks 3-6)
 ## Success Metrics
 
 ### Quantitative Goals
+- [ ] **Build Consolidation**: Eliminate duplicate dependencies (target: 15+ duplicates removed)
 - [ ] **Database Utilities**: Reduce database setup duplication by 90%
 - [ ] **Service Layer**: Consolidate 8+ service patterns into unified framework
 - [ ] **Performance**: Zero performance regression (< 5ms overhead per operation)
@@ -117,13 +140,15 @@ Phase 5: Service Framework (Weeks 3-6)
 - Completion of import strategy improvements ✅
 - Access to development and test environments
 - Coordination with ongoing development work
+- Git access and backup capabilities for build configuration files
 
 ### Implementation Order
-1. **Read both detailed plans** to understand the full scope
-2. **Start with Phase 4** (Shared Database Utilities)
-3. **Complete Phase 5** (Unified Service Layer) after Phase 4
-4. **Update documentation** and create migration guides
-5. **Conduct final testing** and performance validation
+1. **Read all detailed plans** to understand the full scope
+2. **Start with Phase 4** (Monorepo Build Consolidation) - highest priority, no dependencies
+3. **Continue with Phase 5** (Shared Database Utilities) after Phase 4
+4. **Complete Phase 6** (Unified Service Layer) after Phase 5
+5. **Update documentation** and create migration guides
+6. **Conduct final testing** and performance validation
 
 ### Team Coordination
 - **Backend Team**: Focus on Flask integration and API compatibility

@@ -2,19 +2,19 @@
 
 import os
 import sys
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 # Add banktransactions directory to Python path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
     from banktransactions.core.transaction_data import (
-        get_mappings_from_api,
         construct_transaction_data,
+        get_mappings_from_api,
     )
 except ImportError:
     # Fallback to relative import if running from within the directory
-    from transaction_data import get_mappings_from_api, construct_transaction_data
+    from transaction_data import construct_transaction_data, get_mappings_from_api
 
 
 class TestGetMappingsFromApi:
@@ -176,6 +176,7 @@ class TestGetMappingsFromApi:
     def test_get_mappings_from_api_request_exception(self, mock_get, caplog):
         """Test handling of request exceptions."""
         import logging
+
         import requests
 
         mock_get.side_effect = requests.RequestException("Connection error")

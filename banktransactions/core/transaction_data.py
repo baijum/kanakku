@@ -1,7 +1,8 @@
-import os
-import requests
 import logging
+import os
 from urllib.parse import urljoin
+
+import requests
 
 
 def get_mappings_from_api():

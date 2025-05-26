@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 
-import logging
 import email
+import logging
+import ssl
+from datetime import datetime, timedelta
+
 from imapclient import IMAPClient as RealIMAPClient
 from imapclient.exceptions import LoginError
-from datetime import datetime, timedelta
-import ssl
+
+from banktransactions.core.api_client import send_transaction_to_api
 
 # Import from our other modules
 from banktransactions.core.email_parser import (
     decode_str,
     extract_transaction_details,
 )
-from banktransactions.core.api_client import send_transaction_to_api
-
 from banktransactions.core.transaction_data import construct_transaction_data
 
 
@@ -155,7 +156,7 @@ def get_bank_emails(
                                 f"Empty body fetched (checked BODY.PEEK[] and BODY[]) for message Gmail Message ID {gmail_msgid}. Skipping."
                             )
                             logging.debug(
-                                f"Available body keys: {[k for k in msg_data.keys() if b'BODY' in k]}"
+                                f"Available body keys: {[k for k in msg_data if b'BODY' in k]}"
                             )
                             continue
 
@@ -508,7 +509,6 @@ class CustomIMAPClient:
                     logging.debug("Logout successful")
                 except:
                     logging.debug("Logout failed or connection already closed")
-                    pass
                 self._client = None
             raise e
 
@@ -523,7 +523,6 @@ class CustomIMAPClient:
                 logging.debug("IMAP logout successful")
             except:
                 logging.debug("IMAP logout failed or connection already closed")
-                pass
             finally:
                 self._client = None
                 logging.debug("IMAP client reference cleared")
@@ -680,7 +679,7 @@ class CustomIMAPClient:
             logging.debug(
                 "Email marking as processed (currently no-op - using BODY.PEEK[])"
             )
-            pass  # Gmail automatically marks emails as read when we fetch them with BODY.PEEK[]
+            # Gmail automatically marks emails as read when we fetch them with BODY.PEEK[]
 
         except Exception as e:
             logging.warning(f"Error marking email {email_id} as processed: {e}")
@@ -734,7 +733,6 @@ class CustomIMAPClient:
                         logging.debug(
                             f"Part {part_count}: Error decoding text/plain: {e}"
                         )
-                        pass
 
                 elif ctype == "text/html" and not html_body:
                     logging.debug(f"Part {part_count}: Processing text/html")
@@ -751,7 +749,6 @@ class CustomIMAPClient:
                         logging.debug(
                             f"Part {part_count}: Error decoding text/html: {e}"
                         )
-                        pass
 
             logging.debug(f"Processed {part_count} email parts")
         else:
@@ -769,7 +766,6 @@ class CustomIMAPClient:
                         body = ""
             except Exception as e:
                 logging.debug(f"Error decoding single-part message: {e}")
-                pass
 
         # Use HTML body if plain text is not available
         if not body.strip() and html_body:

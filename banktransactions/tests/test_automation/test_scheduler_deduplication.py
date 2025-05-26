@@ -5,20 +5,21 @@ Test script for scheduler deduplication functionality.
 
 import os
 import sys
-import pytest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
+
+import pytest
 
 # Add project root to Python path
 project_root = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, project_root)
 
-from banktransactions.automation.scheduler import EmailScheduler
 from banktransactions.automation.job_utils import (
     generate_job_id,
-    has_user_job_pending,
     get_user_job_status,
+    has_user_job_pending,
 )
+from banktransactions.automation.scheduler import EmailScheduler
 
 
 class TestSchedulerDeduplication:

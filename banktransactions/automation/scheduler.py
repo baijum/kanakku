@@ -18,8 +18,8 @@ try:
     from app.models import EmailConfiguration
 except ImportError:
     # Fallback: define a minimal EmailConfiguration class for standalone operation
+    from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
     from sqlalchemy.ext.declarative import declarative_base
-    from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 
     Base = declarative_base()
 
@@ -44,8 +44,8 @@ from banktransactions.automation.email_processor import (
 )
 from banktransactions.automation.job_utils import (
     generate_job_id,
-    has_user_job_pending,
     get_user_job_status,
+    has_user_job_pending,
 )
 
 logger = logging.getLogger(__name__)

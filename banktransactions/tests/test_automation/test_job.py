@@ -5,6 +5,7 @@ Test script to manually enqueue an email processing job
 
 import os
 import sys
+
 import redis
 from rq import Queue
 

@@ -12,7 +12,7 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from shared.imports import setup_project_paths, database_session, EmailConfiguration
+from shared.imports import EmailConfiguration, database_session, setup_project_paths
 
 setup_project_paths()
 

@@ -4,6 +4,7 @@ Temporary script to move email processing jobs from default queue to email_proce
 """
 
 import os
+
 import redis
 from rq import Queue
 from rq.job import Job

@@ -1,8 +1,9 @@
 import pytest
+
 from banktransactions.core.email_parser import (
-    standardize_date_format,
-    detect_currency,
     convert_currency,
+    detect_currency,
+    standardize_date_format,
 )
 
 

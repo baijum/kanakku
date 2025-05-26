@@ -9,11 +9,12 @@ Usage:
     python run_scheduler.py [--redis-url redis://localhost:6379/0] [--interval 300]
 """
 
+import argparse
+import logging
 import os
 import sys
-import logging
-import argparse
 import time
+
 import redis
 from dotenv import load_dotenv
 
@@ -36,7 +37,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
-from shared.imports import setup_project_paths, get_database_session
+from shared.imports import get_database_session, setup_project_paths
 
 setup_project_paths()
 

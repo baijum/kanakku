@@ -10,7 +10,7 @@ This package contains the automation system for:
 
 # Export main functions for easy access
 from .email_processor import process_user_emails_standalone
-from .job_utils import generate_job_id, has_user_job_pending, get_user_job_status
+from .job_utils import generate_job_id, get_user_job_status, has_user_job_pending
 from .job_wrapper import process_user_emails_standalone as process_emails_wrapper
 
 # Import EmailScheduler conditionally since it depends on Flask models

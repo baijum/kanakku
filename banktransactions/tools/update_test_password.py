@@ -7,6 +7,7 @@ This script updates the email configuration with a test password for testing pur
 
 import os
 import sys
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -45,7 +46,7 @@ def update_test_password():
 
     with app.app_context():
         from app.models import EmailConfiguration
-        from app.utils.encryption import encrypt_value, decrypt_value
+        from app.utils.encryption import decrypt_value, encrypt_value
 
         # Test password for Gmail (this would normally be a real app password)
         test_password = "dummy_gmail_app_password_for_testing"
@@ -75,8 +76,10 @@ def update_test_password():
 
         # Update database using shared utilities
         from shared.imports import (
-            database_session,
             EmailConfiguration as SharedEmailConfiguration,
+        )
+        from shared.imports import (
+            database_session,
         )
 
         try:

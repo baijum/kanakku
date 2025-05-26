@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
-import re
 import email
-from email.header import decode_header
-import logging
-from datetime import datetime, timedelta
 import json
+import logging
 import os
-import requests
+import re
+from datetime import datetime, timedelta
+from email.header import decode_header
 from typing import Dict, Optional, Tuple
+
+import requests
 from google import genai
 
 # Configure logging
@@ -268,11 +269,11 @@ def get_gemini_api_key_from_config():
     try:
         # Try to use Flask context first (if available)
         try:
-            from flask import current_app
-
             # Set up project paths for shared imports
             import sys
             from pathlib import Path
+
+            from flask import current_app
 
             project_root = Path(__file__).parent.parent.parent
             if str(project_root) not in sys.path:
@@ -298,9 +299,9 @@ def get_gemini_api_key_from_config():
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
         from shared.imports import (
-            decrypt_value_standalone,
             GlobalConfiguration,
             database_session,
+            decrypt_value_standalone,
         )
 
         # Use shared database session utilities
@@ -535,7 +536,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         # Read email from file
-        with open(sys.argv[1], "r", encoding="utf-8") as f:
+        with open(sys.argv[1], encoding="utf-8") as f:
             email_text = f.read()
 
         # Process with pure LLM approach

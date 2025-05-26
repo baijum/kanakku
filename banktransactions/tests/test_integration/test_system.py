@@ -11,6 +11,7 @@ Usage:
 
 import os
 import sys
+
 import redis
 from dotenv import load_dotenv
 
@@ -48,8 +49,9 @@ def test_database_connection():
     """Test database connection."""
     print("Testing database connection...")
     try:
-        from shared.imports import database_session
         from sqlalchemy import text
+
+        from shared.imports import database_session
 
         with database_session() as session:
             # Test query
@@ -78,7 +80,7 @@ def test_encryption_utilities():
     """Test encryption utilities."""
     print("Testing encryption utilities...")
     try:
-        from app.utils.encryption import encrypt_value, decrypt_value
+        from app.utils.encryption import decrypt_value, encrypt_value
 
         # Test encryption/decryption
         test_value = "test_password_123"

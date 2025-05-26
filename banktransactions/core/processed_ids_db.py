@@ -9,7 +9,7 @@ database storage instead of file-based storage for better scalability and user i
 import logging
 import os
 import sys
-from typing import Set, Optional
+from typing import Optional, Set
 
 try:
     # Set up project paths and import Flask app context and database service using shared imports
@@ -19,16 +19,26 @@ try:
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
 
-    from shared.imports import (
-        load_processed_gmail_msgids as db_load_processed_gmail_msgids,
-        save_processed_gmail_msgids as db_save_processed_gmail_msgids,
-        save_processed_gmail_msgid as db_save_processed_gmail_msgid,
-        is_gmail_message_processed as db_is_gmail_message_processed,
-        get_processed_message_count as db_get_processed_message_count,
-        clear_processed_gmail_msgids as db_clear_processed_gmail_msgids,
-    )
     from app import create_app
     from app.extensions import db
+    from shared.imports import (
+        clear_processed_gmail_msgids as db_clear_processed_gmail_msgids,
+    )
+    from shared.imports import (
+        get_processed_message_count as db_get_processed_message_count,
+    )
+    from shared.imports import (
+        is_gmail_message_processed as db_is_gmail_message_processed,
+    )
+    from shared.imports import (
+        load_processed_gmail_msgids as db_load_processed_gmail_msgids,
+    )
+    from shared.imports import (
+        save_processed_gmail_msgid as db_save_processed_gmail_msgid,
+    )
+    from shared.imports import (
+        save_processed_gmail_msgids as db_save_processed_gmail_msgids,
+    )
 
     # Create Flask app context for database operations
     app = create_app()

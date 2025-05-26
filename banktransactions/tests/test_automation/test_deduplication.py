@@ -5,24 +5,25 @@ Test script to verify job deduplication functionality.
 
 import os
 import sys
-import redis
 from datetime import datetime, timezone
+
+import redis
 from rq import Queue
 
 # Add the project root to the Python path
 project_root = os.path.join(os.path.dirname(__file__), "..", "..")
 sys.path.insert(0, project_root)
 
-from banktransactions.automation.job_utils import (
-    generate_job_id,
-    has_user_job_pending,
-    get_user_job_status,
-    is_user_job_running,
-    is_user_job_scheduled,
-    is_user_job_queued,
-)
 from banktransactions.automation.email_processor import (
     process_user_emails_standalone,
+)
+from banktransactions.automation.job_utils import (
+    generate_job_id,
+    get_user_job_status,
+    has_user_job_pending,
+    is_user_job_queued,
+    is_user_job_running,
+    is_user_job_scheduled,
 )
 
 
@@ -39,7 +40,7 @@ def test_job_deduplication():
         print("✅ Connected to Redis")
     except Exception as e:
         print(f"❌ Failed to connect to Redis: {e}")
-        assert False, f"Failed to connect to Redis: {e}"
+        raise AssertionError(f"Failed to connect to Redis: {e}")
 
     # Test user ID
     test_user_id = 999

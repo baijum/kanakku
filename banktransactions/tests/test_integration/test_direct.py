@@ -6,10 +6,11 @@ This script tests the email processing functionality directly without using RQ,
 bypassing the macOS forking issues.
 """
 
+import json
 import os
 import sys
-import json
 from datetime import datetime, timezone
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -50,9 +51,9 @@ def test_direct_email_processing():
         # Import required modules (inside app context)
         from app.models import EmailConfiguration
         from app.utils.encryption import decrypt_value
-        from banktransactions.core.imap_client import CustomIMAPClient
-        from banktransactions.core.email_parser import extract_transaction_details
         from banktransactions.core.api_client import APIClient
+        from banktransactions.core.email_parser import extract_transaction_details
+        from banktransactions.core.imap_client import CustomIMAPClient
 
         # Test with user ID 1
         user_id = 1
@@ -82,7 +83,7 @@ def test_direct_email_processing():
             # Decrypt the app password
             decrypted_password = decrypt_value(config.app_password)
             if not decrypted_password:
-                assert False, "Failed to decrypt app password"
+                raise AssertionError("Failed to decrypt app password")
 
             print("✓ Successfully decrypted app password")
 
@@ -215,7 +216,7 @@ def check_email_config():
     """Check the email configuration in the database."""
     print("Checking email configuration...")
 
-    from shared.imports import database_session, EmailConfiguration
+    from shared.imports import EmailConfiguration, database_session
 
     try:
         with database_session() as session:

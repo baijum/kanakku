@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import os
-import requests
 import json
 import logging
+import os
 from datetime import datetime  # Added for date formatting
+
+import requests
 
 
 def send_transaction_to_api(transaction_data):
@@ -171,7 +172,6 @@ class APIClient:
 
     def __init__(self):
         """Initialize the API client."""
-        pass
 
     def create_transaction(self, user_id: int, transaction_data: dict) -> dict:
         """

@@ -6,6 +6,7 @@ This tests that the wrapper can be imported and enqueued correctly.
 
 import os
 import sys
+
 import redis
 from rq import Queue
 
@@ -46,7 +47,7 @@ def test_wrapper():
 
     except Exception as e:
         print(f"✗ Error: {e}")
-        assert False, f"Test failed with error: {e}"
+        raise AssertionError(f"Test failed with error: {e}")
 
 
 if __name__ == "__main__":

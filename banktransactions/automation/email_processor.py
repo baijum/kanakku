@@ -5,6 +5,7 @@ Adapted from the working main.py implementation.
 """
 
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env files
@@ -21,15 +22,6 @@ project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from shared.imports import (
-    EmailConfiguration,
-    decrypt_value_standalone,
-    get_bank_emails,
-    load_processed_gmail_msgids,
-    save_processed_gmail_msgid,
-    database_session,
-)
-
 # Standard library imports
 import json
 import logging
@@ -37,6 +29,15 @@ from datetime import datetime, timezone
 from typing import Dict
 
 from rq import get_current_job
+
+from shared.imports import (
+    EmailConfiguration,
+    database_session,
+    decrypt_value_standalone,
+    get_bank_emails,
+    load_processed_gmail_msgids,
+    save_processed_gmail_msgid,
+)
 
 logger = logging.getLogger(__name__)
 

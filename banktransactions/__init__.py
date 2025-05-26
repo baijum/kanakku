@@ -17,17 +17,17 @@ __version__ = "2.0.0"
 
 # Import key functions for easy access
 from .core import (
-    extract_transaction_details,
-    get_bank_emails,
+    APIClient,
     CustomIMAPClient,
     construct_transaction_data,
+    extract_transaction_details,
+    get_bank_emails,
     send_transaction_to_api,
-    APIClient,
 )
 
 # Conditionally import automation functions (requires Flask context)
 try:
-    from .automation import process_user_emails_standalone, EmailScheduler
+    from .automation import EmailScheduler, process_user_emails_standalone
 
     _automation_available = True
 except ImportError:

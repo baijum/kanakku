@@ -10,18 +10,19 @@ Usage:
 """
 
 import os
-import sys
 import platform
+import sys
 
 # Fix for macOS forking issue - set this before any other imports
 if platform.system() == "Darwin":  # macOS
     os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
 
-import logging
 import argparse
+import logging
+
 import redis
-from rq import Queue, Worker, SimpleWorker
 from dotenv import load_dotenv
+from rq import Queue, SimpleWorker, Worker
 
 # Load environment variables from .env file
 # This will look for .env files in the following order:
@@ -42,7 +43,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
-from shared.imports import setup_project_paths, get_database_session
+from shared.imports import get_database_session, setup_project_paths
 
 setup_project_paths()
 

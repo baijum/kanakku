@@ -7,9 +7,10 @@ Provides deduplication and status checking for email processing jobs.
 import logging
 from datetime import datetime, timezone
 from typing import Optional
+
 from rq import Queue
 from rq.job import Job
-from rq.registry import StartedJobRegistry, ScheduledJobRegistry
+from rq.registry import ScheduledJobRegistry, StartedJobRegistry
 
 logger = logging.getLogger(__name__)
 

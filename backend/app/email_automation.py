@@ -355,6 +355,7 @@ def trigger_email_processing():
 
             import redis
             from rq import Queue
+
             from shared.imports import (
                 generate_job_id,
                 get_user_job_status,

@@ -40,56 +40,30 @@ cd ..
 
 # Backend linting
 echo -e "\n${YELLOW}Running backend linting...${NC}"
-cd backend
-if [ -f "requirements.txt" ]; then
-  # Check if ruff is installed
-  if ! python -c "import ruff" 2>/dev/null; then
-    echo "Installing ruff..."
-    pip install ruff
-  fi
-  
-  # Check if black is installed
-  if ! python -c "import black" 2>/dev/null; then
-    echo "Installing black..."
-    pip install black
-  fi
-  
-  echo "Running Ruff linter..."
-  ruff check . || { echo -e "${RED}Backend linting failed${NC}"; exit 1; }
-  
-  echo "Running Black formatter check..."
-  black --check . || { echo -e "${RED}Black formatting check failed${NC}"; exit 1; }
-else
-  echo -e "${RED}Error: requirements.txt not found in backend directory${NC}"
-  exit 1
+# Check if ruff is installed
+if ! python -c "import ruff" 2>/dev/null; then
+  echo "Installing ruff..."
+  pip install ruff
 fi
-cd ..
+
+# Check if black is installed
+if ! python -c "import black" 2>/dev/null; then
+  echo "Installing black..."
+  pip install black
+fi
+
+echo "Running Ruff linter on backend..."
+ruff check backend/ || { echo -e "${RED}Backend linting failed${NC}"; exit 1; }
+
+echo "Running Black formatter check on backend..."
+black --check backend/ || { echo -e "${RED}Backend Black formatting check failed${NC}"; exit 1; }
 
 # Banktransactions linting
 echo -e "\n${YELLOW}Running banktransactions linting...${NC}"
-cd banktransactions
-if [ -f "requirements.txt" ]; then
-  # Check if ruff is installed
-  if ! python -c "import ruff" 2>/dev/null; then
-    echo "Installing ruff..."
-    pip install ruff
-  fi
-  
-  # Check if black is installed
-  if ! python -c "import black" 2>/dev/null; then
-    echo "Installing black..."
-    pip install black
-  fi
-  
-  echo "Running Ruff linter..."
-  ruff check . || { echo -e "${RED}Banktransactions linting failed${NC}"; exit 1; }
-  
-  echo "Running Black formatter check..."
-  black --check . || { echo -e "${RED}Black formatting check failed${NC}"; exit 1; }
-else
-  echo -e "${RED}Error: requirements.txt not found in banktransactions directory${NC}"
-  exit 1
-fi
-cd ..
+echo "Running Ruff linter on banktransactions..."
+ruff check banktransactions/ || { echo -e "${RED}Banktransactions linting failed${NC}"; exit 1; }
+
+echo "Running Black formatter check on banktransactions..."
+black --check banktransactions/ || { echo -e "${RED}Banktransactions Black formatting check failed${NC}"; exit 1; }
 
 echo -e "\n${GREEN}All linting checks passed successfully!${NC}" 
