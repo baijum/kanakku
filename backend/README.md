@@ -62,6 +62,7 @@ backend/
    JWT_SECRET_KEY=your-jwt-secret
    DATABASE_URL=postgresql://user:password@host:port/database # Example: postgresql://postgres:postgres@localhost:5432/kanakku
    FLASK_ENV=development
+   LOG_LEVEL=DEBUG  # Set to DEBUG to see detailed debug logs
    GOOGLE_CLIENT_ID=your-google-client-id
    GOOGLE_CLIENT_SECRET=your-google-client-secret
    ```
@@ -77,6 +78,61 @@ backend/
    ```
    
    The API will be available at `http://localhost:8000`.
+
+## Debug Logging
+
+The application includes comprehensive debug logging that can be enabled by setting the `LOG_LEVEL` environment variable to `DEBUG`. When enabled, you'll see detailed logs for:
+
+### Logging Features
+
+- **Service Layer Logging**: Entry/exit logging for all service methods with parameters and results
+- **Database Operations**: Detailed logging of all database queries, commits, and errors
+- **API Calls**: Request/response logging with user context and timing information
+- **Business Logic**: Key business operations and decision points
+- **Authentication**: User login, token generation, and security events
+- **Error Tracking**: Comprehensive error logging with context and stack traces
+
+### Log Levels
+
+- **DEBUG**: Detailed operational information (only visible when LOG_LEVEL=DEBUG)
+- **INFO**: General application flow information
+- **WARNING**: Warning messages for potential issues
+- **ERROR**: Error conditions that don't stop the application
+- **CRITICAL**: Serious errors that may cause the application to stop
+
+### Log Format
+
+Logs include structured information:
+```
+[2024-01-15 10:30:45] [DEBUG] [req-12345] AccountService: ENTER get_accounts | Data: {"include_details": true, "user_id": 1}
+[2024-01-15 10:30:45] [DEBUG] [req-12345] AccountService: Querying accounts for user and active book | Data: {"user_id": 1, "active_book_id": 1, "include_details": true}
+[2024-01-15 10:30:45] [DEBUG] [req-12345] AccountService: EXIT get_accounts | Result: returned 5 detailed accounts
+```
+
+### Enabling Debug Logging
+
+1. **Environment Variable**: Set `LOG_LEVEL=DEBUG` in your `.env` file or environment
+2. **Development**: Debug logging is automatically enabled when `FLASK_ENV=development`
+3. **Production**: Only set to DEBUG temporarily for troubleshooting
+
+### Log Files
+
+Logs are written to:
+- `logs/kanakku.log`: All application logs (INFO and above)
+- `logs/error.log`: Error logs only (ERROR and above)
+- Console output: Respects the LOG_LEVEL setting
+
+### Debugging Specific Components
+
+The enhanced logging covers:
+
+- **User Operations**: Password changes, account activation, token generation
+- **Account Management**: CRUD operations, validation, autocomplete
+- **Transaction Processing**: Creation, updates, validation
+- **Email Automation**: Configuration management, processing
+- **Settings Management**: Global configuration operations
+- **Gmail Integration**: Message processing and tracking
+- **Authentication**: Login attempts, token validation, OAuth flows
 
 ## API Documentation
 
@@ -157,6 +213,7 @@ When adding new endpoints:
 2. Update the Swagger documentation in `swagger.yaml`
 3. Write tests in the `tests/` directory
 4. Update error handlers if needed
+5. Add appropriate debug logging using the utilities in `app/utils/logging_utils.py`
 
 ## Activating a User
 

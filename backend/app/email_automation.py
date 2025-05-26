@@ -7,6 +7,7 @@ from flask import Blueprint, g, jsonify, request
 from .extensions import api_token_required, db
 from .models import EmailConfiguration
 from .utils.encryption import encrypt_value
+from .utils.logging_utils import log_api_call, log_business_logic, log_debug, log_error
 
 # Import unified services
 try:
@@ -23,21 +24,57 @@ def get_email_config():
     """Get the current user's email automation configuration"""
     user_id = g.current_user.id
 
+    log_api_call(
+        "/api/v1/email-automation/config",
+        "GET",
+        user_id=user_id,
+        extra_data={"operation": "get_email_config"},
+    )
+
     # Use service layer if available, otherwise fallback to direct DB access
     if EmailProcessingService:
+        log_debug(
+            "Using EmailProcessingService for configuration retrieval",
+            extra_data={"user_id": user_id},
+            module_name="EmailAutomation",
+        )
+
         service = EmailProcessingService(user_id=user_id)
         result = service.get_email_configuration()
 
         if result.success:
+            log_debug(
+                "Email configuration retrieved successfully via service",
+                extra_data={"user_id": user_id, "has_config": result.data is not None},
+                module_name="EmailAutomation",
+            )
             return jsonify({"config": result.data}), 200
         else:
+            log_error(Exception(result.error), module_name="EmailAutomation")
             return jsonify({"error": result.error}), 500
     else:
+        log_debug(
+            "Using fallback direct DB access for configuration retrieval",
+            extra_data={"user_id": user_id},
+            module_name="EmailAutomation",
+        )
+
         # Fallback to original implementation
         config = EmailConfiguration.query.filter_by(user_id=user_id).first()
 
         if not config:
+            log_debug(
+                "No email configuration found for user",
+                extra_data={"user_id": user_id},
+                module_name="EmailAutomation",
+            )
             return jsonify({"config": None}), 200
+
+        log_debug(
+            "Email configuration found and returning sanitized data",
+            extra_data={"user_id": user_id, "config_id": config.id},
+            module_name="EmailAutomation",
+        )
 
         # Return config without sensitive data
         config_dict = config.to_dict()
@@ -54,14 +91,34 @@ def create_email_config():
     user_id = g.current_user.id
     data = request.get_json()
 
+    log_api_call(
+        "/api/v1/email-automation/config",
+        "POST",
+        user_id=user_id,
+        extra_data={"operation": "create_email_config", "has_data": data is not None},
+    )
+
     # Use service layer if available, otherwise fallback to direct DB access
     if EmailProcessingService:
+        log_debug(
+            "Using EmailProcessingService for configuration creation/update",
+            extra_data={"user_id": user_id},
+            module_name="EmailAutomation",
+        )
+
         service = EmailProcessingService(user_id=user_id)
         result = service.update_email_configuration(data)
 
         if result.success:
             operation = result.metadata.get("operation", "updated")
             status_code = 201 if operation == "created" else 200
+
+            log_business_logic(
+                f"Email configuration {operation} successfully",
+                extra_data={"user_id": user_id, "operation": operation},
+                module_name="EmailAutomation",
+            )
+
             return (
                 jsonify(
                     {
@@ -72,17 +129,41 @@ def create_email_config():
                 status_code,
             )
         else:
+            log_error(Exception(result.error), module_name="EmailAutomation")
             return jsonify({"error": result.error}), 400
     else:
+        log_debug(
+            "Using fallback direct DB access for configuration creation/update",
+            extra_data={"user_id": user_id},
+            module_name="EmailAutomation",
+        )
+
         # Fallback to original implementation
         # Validate required fields
         required_fields = ["email_address", "app_password"]
         for field in required_fields:
             if not data.get(field):
+                log_debug(
+                    f"Validation failed: missing required field {field}",
+                    extra_data={"user_id": user_id, "field": field},
+                    module_name="EmailAutomation",
+                )
                 return jsonify({"error": f"{field} is required"}), 400
 
         # Check if configuration already exists
         existing_config = EmailConfiguration.query.filter_by(user_id=user_id).first()
+        is_update = existing_config is not None
+
+        log_debug(
+            f"Email configuration {'update' if is_update else 'creation'} operation",
+            extra_data={
+                "user_id": user_id,
+                "is_update": is_update,
+                "email_address": data.get("email_address"),
+                "imap_server": data.get("imap_server", "imap.gmail.com"),
+            },
+            module_name="EmailAutomation",
+        )
 
         if existing_config:
             # Update existing configuration
@@ -113,6 +194,12 @@ def create_email_config():
         try:
             db.session.commit()
 
+            log_business_logic(
+                f"Email configuration {'updated' if is_update else 'created'} successfully",
+                extra_data={"user_id": user_id, "config_id": config.id},
+                module_name="EmailAutomation",
+            )
+
             # Return config without sensitive data
             config_dict = config.to_dict()
             config_dict.pop("app_password", None)
@@ -126,6 +213,7 @@ def create_email_config():
 
         except Exception as e:
             db.session.rollback()
+            log_error(e, module_name="EmailAutomation")
             return jsonify({"error": f"Failed to save configuration: {str(e)}"}), 500
 
 
@@ -136,10 +224,35 @@ def update_email_config():
     user_id = g.current_user.id
     data = request.get_json()
 
+    log_api_call(
+        "/api/v1/email-automation/config",
+        "PUT",
+        user_id=user_id,
+        extra_data={
+            "operation": "update_email_config",
+            "fields_to_update": list(data.keys()) if data else [],
+        },
+    )
+
     config = EmailConfiguration.query.filter_by(user_id=user_id).first()
 
     if not config:
+        log_debug(
+            "Email configuration not found for update",
+            extra_data={"user_id": user_id},
+            module_name="EmailAutomation",
+        )
         return jsonify({"error": "Email configuration not found"}), 404
+
+    log_debug(
+        "Updating email configuration fields",
+        extra_data={
+            "user_id": user_id,
+            "config_id": config.id,
+            "fields_to_update": list(data.keys()) if data else [],
+        },
+        module_name="EmailAutomation",
+    )
 
     # Update fields if provided
     if "is_enabled" in data:
@@ -162,6 +275,12 @@ def update_email_config():
     try:
         db.session.commit()
 
+        log_business_logic(
+            "Email configuration updated successfully",
+            extra_data={"user_id": user_id, "config_id": config.id},
+            module_name="EmailAutomation",
+        )
+
         # Return config without sensitive data
         config_dict = config.to_dict()
         config_dict.pop("app_password", None)
@@ -178,6 +297,7 @@ def update_email_config():
 
     except Exception as e:
         db.session.rollback()
+        log_error(e, module_name="EmailAutomation")
         return jsonify({"error": f"Failed to update configuration: {str(e)}"}), 500
 
 
@@ -187,19 +307,44 @@ def delete_email_config():
     """Delete the current user's email automation configuration"""
     user_id = g.current_user.id
 
+    log_api_call(
+        "/api/v1/email-automation/config",
+        "DELETE",
+        user_id=user_id,
+        extra_data={"operation": "delete_email_config"},
+    )
+
     config = EmailConfiguration.query.filter_by(user_id=user_id).first()
 
     if not config:
+        log_debug(
+            "Email configuration not found for deletion",
+            extra_data={"user_id": user_id},
+            module_name="EmailAutomation",
+        )
         return jsonify({"error": "Email configuration not found"}), 404
+
+    log_debug(
+        "Deleting email configuration",
+        extra_data={"user_id": user_id, "config_id": config.id},
+        module_name="EmailAutomation",
+    )
 
     try:
         db.session.delete(config)
         db.session.commit()
 
+        log_business_logic(
+            "Email configuration deleted successfully",
+            extra_data={"user_id": user_id, "config_id": config.id},
+            module_name="EmailAutomation",
+        )
+
         return jsonify({"message": "Email configuration deleted successfully"}), 200
 
     except Exception as e:
         db.session.rollback()
+        log_error(e, module_name="EmailAutomation")
         return jsonify({"error": f"Failed to delete configuration: {str(e)}"}), 500
 
 
