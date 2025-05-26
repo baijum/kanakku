@@ -5,7 +5,6 @@ Adapted from the working main.py implementation.
 """
 
 import os
-import sys
 from dotenv import load_dotenv
 
 # Load environment variables from .env files
@@ -14,13 +13,22 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", "backend", ".env"))
 
-# Add the project root to the Python path so we can import banktransactions module
-project_root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
-sys.path.insert(0, project_root)
-# Also add the backend app to the Python path
-sys.path.append(os.path.join(project_root, "backend"))
+# Set up project paths and clean imports using shared package
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
-# Now import everything else
+from shared.imports import (
+    EmailConfiguration,
+    decrypt_value_standalone,
+    get_bank_emails,
+    load_processed_gmail_msgids,
+    save_processed_gmail_msgid,
+)
+
+# Standard library imports
 import json
 import logging
 from datetime import datetime, timezone
@@ -29,17 +37,6 @@ from typing import Dict
 from rq import get_current_job
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-# Import from backend instead of duplicating
-from app.models import EmailConfiguration
-from app.utils.encryption import decrypt_value_standalone
-
-# Import the working banktransactions modules
-from banktransactions.core.imap_client import get_bank_emails
-from banktransactions.core.processed_ids_db import (
-    load_processed_gmail_msgids,
-    save_processed_gmail_msgid,
-)
 
 logger = logging.getLogger(__name__)
 

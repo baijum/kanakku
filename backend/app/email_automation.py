@@ -173,18 +173,13 @@ def test_email_connection():
             return jsonify({"error": f"{field} is required"}), 400
 
     try:
-        # Add banktransactions module to Python path
-        import os
+        # Set up project paths and import using shared package to avoid path manipulation
         import sys
-
-        banktransactions_path = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        if banktransactions_path not in sys.path:
-            sys.path.append(banktransactions_path)
-
-        # Import here to avoid circular imports
-        from banktransactions.core.imap_client import CustomIMAPClient
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent.parent
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
+        from shared.imports import CustomIMAPClient
 
         imap_client = CustomIMAPClient(
             server=data.get("imap_server", "imap.gmail.com"),
@@ -253,30 +248,25 @@ def trigger_email_processing():
         return jsonify({"error": "Email automation is not configured or disabled"}), 400
 
     try:
-        # Add banktransactions module to Python path
-        import os
+        # Set up project paths and import using shared package to avoid path manipulation
         import sys
-
-        banktransactions_path = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        if banktransactions_path not in sys.path:
-            sys.path.append(banktransactions_path)
-
-        # Import here to avoid circular imports
+        from pathlib import Path
+        project_root = Path(__file__).parent.parent.parent
+        if str(project_root) not in sys.path:
+            sys.path.insert(0, str(project_root))
+        
         import redis
         from rq import Queue
+        from shared.imports import (
+            generate_job_id,
+            get_user_job_status,
+            has_user_job_pending,
+            process_user_emails_standalone,
+        )
 
         # Connect to Redis
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         redis_conn = redis.from_url(redis_url)
-
-        # Import job utilities
-        from banktransactions.automation.job_utils import (
-            generate_job_id,
-            get_user_job_status,
-            has_user_job_pending,
-        )
 
         # Check if user already has a pending job
         if has_user_job_pending(redis_conn, user_id):
@@ -294,11 +284,6 @@ def trigger_email_processing():
 
         # Create queue
         queue = Queue("email_processing", connection=redis_conn)
-
-        # Import the function directly from the automation module
-        from banktransactions.automation.email_processor import (
-            process_user_emails_standalone,
-        )
 
         # Generate consistent job ID
         job_id = generate_job_id(user_id)

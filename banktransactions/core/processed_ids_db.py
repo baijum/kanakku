@@ -11,14 +11,14 @@ import os
 import sys
 from typing import Set, Optional
 
-# Add the backend app to the Python path for imports
-backend_path = os.path.join(os.path.dirname(__file__), "..", "backend")
-sys.path.append(backend_path)
-
 try:
-    # Try to import Flask app context and database service
-    from app import create_app
-    from app.services.gmail_message_service import (
+    # Set up project paths and import Flask app context and database service using shared imports
+    from pathlib import Path
+    project_root = Path(__file__).parent.parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    
+    from shared.imports import (
         load_processed_gmail_msgids as db_load_processed_gmail_msgids,
         save_processed_gmail_msgids as db_save_processed_gmail_msgids,
         save_processed_gmail_msgid as db_save_processed_gmail_msgid,
@@ -26,6 +26,7 @@ try:
         get_processed_message_count as db_get_processed_message_count,
         clear_processed_gmail_msgids as db_clear_processed_gmail_msgids,
     )
+    from app import create_app
     from app.extensions import db
 
     # Create Flask app context for database operations
