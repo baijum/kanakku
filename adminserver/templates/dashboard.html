@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Kanakku Monitoring Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Services Status Section -->
+    <section class="dashboard-section services-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="section-icon">🔧</span>
+                Service Status
+            </h2>
+            <div class="section-summary" id="services-summary">
+                <span class="summary-item">
+                    <span class="summary-label">Total:</span>
+                    <span class="summary-value" id="total-services">--</span>
+                </span>
+                <span class="summary-item">
+                    <span class="summary-label">Active:</span>
+                    <span class="summary-value" id="active-services">--</span>
+                </span>
+            </div>
+        </div>
+        <div class="services-grid" id="services-grid">
+            <!-- Service cards will be populated by JavaScript -->
+            <div class="loading-placeholder">Loading services...</div>
+        </div>
+    </section>
+
+    <!-- System Metrics Section -->
+    <section class="dashboard-section metrics-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="section-icon">📈</span>
+                System Metrics
+            </h2>
+            <div class="section-actions">
+                <button class="btn btn-secondary" id="refresh-metrics">Refresh</button>
+            </div>
+        </div>
+        <div class="metrics-grid">
+            <!-- CPU Metrics -->
+            <div class="metric-card" id="cpu-metrics">
+                <div class="metric-header">
+                    <h3 class="metric-title">CPU Usage</h3>
+                    <div class="metric-value" id="cpu-value">--</div>
+                </div>
+                <div class="metric-chart-container">
+                    <canvas id="cpu-chart" width="200" height="100"></canvas>
+                </div>
+                <div class="metric-details">
+                    <span class="metric-detail">Load: <span id="load-average">--</span></span>
+                </div>
+            </div>
+
+            <!-- Memory Metrics -->
+            <div class="metric-card" id="memory-metrics">
+                <div class="metric-header">
+                    <h3 class="metric-title">Memory Usage</h3>
+                    <div class="metric-value" id="memory-value">--</div>
+                </div>
+                <div class="metric-chart-container">
+                    <canvas id="memory-chart" width="200" height="100"></canvas>
+                </div>
+                <div class="metric-details">
+                    <span class="metric-detail">Used: <span id="memory-used">--</span></span>
+                    <span class="metric-detail">Total: <span id="memory-total">--</span></span>
+                </div>
+            </div>
+
+            <!-- Disk Metrics -->
+            <div class="metric-card" id="disk-metrics">
+                <div class="metric-header">
+                    <h3 class="metric-title">Disk Usage</h3>
+                    <div class="metric-value" id="disk-value">--</div>
+                </div>
+                <div class="metric-chart-container">
+                    <canvas id="disk-chart" width="200" height="100"></canvas>
+                </div>
+                <div class="metric-details">
+                    <span class="metric-detail">Root partition</span>
+                </div>
+            </div>
+
+            <!-- Uptime Metrics -->
+            <div class="metric-card" id="uptime-metrics">
+                <div class="metric-header">
+                    <h3 class="metric-title">System Uptime</h3>
+                    <div class="metric-value" id="uptime-value">--</div>
+                </div>
+                <div class="metric-details">
+                    <span class="metric-detail">Processes: <span id="process-count">--</span></span>
+                    <span class="metric-detail">Boot: <span id="boot-time">--</span></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Logs Section -->
+    <section class="dashboard-section logs-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <span class="section-icon">📋</span>
+                Recent Logs
+            </h2>
+            <div class="section-actions">
+                <select id="log-selector" class="log-selector">
+                    <option value="">Select a log file...</option>
+                    <option value="kanakku_app">Application Logs</option>
+                    <option value="kanakku_error">Error Logs</option>
+                    <option value="kanakku_worker">Worker Logs</option>
+                    <option value="kanakku_scheduler">Scheduler Logs</option>
+                    <option value="nginx_access">Nginx Access</option>
+                    <option value="nginx_error">Nginx Error</option>
+                    <option value="systemd_kanakku">Systemd Kanakku</option>
+                    <option value="systemd_nginx">Systemd Nginx</option>
+                    <option value="systemd_postgresql">Systemd PostgreSQL</option>
+                    <option value="systemd_redis">Systemd Redis</option>
+                </select>
+                <div class="log-controls">
+                    <input type="number" id="log-lines" value="100" min="10" max="1000" placeholder="Lines">
+                    <button class="btn btn-primary" id="load-logs">Load</button>
+                    <button class="btn btn-secondary" id="refresh-logs">Refresh</button>
+                </div>
+            </div>
+        </div>
+        <div class="log-viewer">
+            <div class="log-search">
+                <input type="text" id="log-search-input" placeholder="Search logs..." class="search-input">
+                <button class="btn btn-secondary" id="search-logs">Search</button>
+                <button class="btn btn-secondary" id="clear-search">Clear</button>
+            </div>
+            <div class="log-content" id="log-content">
+                <div class="log-placeholder">
+                    Select a log file from the dropdown above to view its contents.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Error Display -->
+    <div class="error-banner" id="error-banner" style="display: none;">
+        <div class="error-content">
+            <span class="error-icon">⚠️</span>
+            <span class="error-message" id="error-message"></span>
+            <button class="error-close" id="error-close">&times;</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize dashboard when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Dashboard !== 'undefined') {
+            Dashboard.init();
+        }
+    });
+</script>
+{% endblock %}

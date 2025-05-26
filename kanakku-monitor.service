@@ -1,0 +1,38 @@
+[Unit]
+Description=Kanakku Monitoring Dashboard
+After=network.target kanakku.service redis.service
+Wants=kanakku.service
+
+[Service]
+Type=notify
+User=kanakku
+Group=kanakku
+WorkingDirectory=/opt/kanakku/adminserver
+Environment="PATH=/opt/kanakku/backend/venv/bin"
+Environment="PYTHONPATH=/opt/kanakku:/opt/kanakku/backend:/opt/kanakku/adminserver"
+EnvironmentFile=-/opt/kanakku/.env
+EnvironmentFile=-/opt/kanakku/debug.env
+ExecStart=/opt/kanakku/backend/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:5001 --timeout 60 'web_dashboard:app'
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+# Security enhancements
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/kanakku/logs /var/log/kanakku
+NoNewPrivileges=true
+PrivateDevices=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

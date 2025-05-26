@@ -1,2 +1,0 @@
-mcp>=1.0.0
-asyncio-subprocess>=0.1.0
