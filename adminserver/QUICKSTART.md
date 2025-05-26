@@ -11,8 +11,8 @@ Get up and running with the Kanakku Admin MCP Server in 5 minutes.
 ## 1. Setup
 
 ```bash
-# Navigate to the MCP server directory
-cd mcp-server
+# Navigate to the admin server directory
+cd adminserver
 
 # Run the automated setup
 ./setup.sh
@@ -44,7 +44,7 @@ Add this to your Cursor settings (Cmd/Ctrl + , → search "MCP"):
   "mcpServers": {
     "kanakku-admin": {
       "command": "python",
-      "args": ["/absolute/path/to/mcp-server/admin_server.py"],
+      "args": ["/absolute/path/to/adminserver/admin_server.py"],
       "env": {
         "KANAKKU_DEPLOY_HOST": "your-production-server-ip",
         "KANAKKU_DEPLOY_USER": "root",

@@ -3,7 +3,7 @@
 Test script for Kanakku Admin MCP Server
 
 This script tests the SSH connection and basic log access functionality
-without running the full MCP server.
+without running the full Admin server.
 """
 
 import asyncio
@@ -235,14 +235,16 @@ async def main():
     print(f"Log Access: {accessible_logs}/{total_logs} logs accessible")
 
     if accessible_logs == total_logs:
-        print("\n🎉 All tests passed! The MCP server should work correctly.")
+        print("\n🎉 All tests passed! The Admin server should work correctly.")
     elif accessible_logs > 0:
-        print("\n⚠️  Some logs are not accessible. The MCP server will work partially.")
+        print(
+            "\n⚠️  Some logs are not accessible. The Admin server will work partially."
+        )
         print("   Check server permissions and log file locations.")
     else:
         print("\n❌ No logs accessible. Check server configuration and permissions.")
 
-    print("\nTo start the MCP server:")
+    print("\nTo start the Admin server:")
     print("   python admin_server.py")
 
 

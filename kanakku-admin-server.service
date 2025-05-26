@@ -1,5 +1,5 @@
 [Unit]
-Description=Kanakku MCP Server for Log Access
+Description=Kanakku Admin Server for System Administration
 After=network.target
 Wants=kanakku.service
 
@@ -7,11 +7,11 @@ Wants=kanakku.service
 Type=simple
 User=kanakku
 Group=kanakku
-WorkingDirectory=/opt/kanakku/mcp-server
-Environment="PATH=/opt/kanakku/mcp-server/venv/bin"
-Environment="PYTHONPATH=/opt/kanakku/mcp-server"
+WorkingDirectory=/opt/kanakku/adminserver
+Environment="PATH=/opt/kanakku/adminserver/venv/bin"
+Environment="PYTHONPATH=/opt/kanakku/adminserver"
 EnvironmentFile=/opt/kanakku/.env
-ExecStart=/opt/kanakku/mcp-server/venv/bin/python kanakku_logs_server.py
+ExecStart=/opt/kanakku/adminserver/venv/bin/python admin_server.py
 Restart=always
 RestartSec=10s
 StandardOutput=journal
@@ -20,7 +20,7 @@ StandardError=journal
 # Security enhancements
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=/opt/kanakku/logs /var/log/kanakku /opt/kanakku/mcp-server/logs
+ReadWritePaths=/opt/kanakku/logs /var/log/kanakku /opt/kanakku/adminserver/logs
 NoNewPrivileges=true
 PrivateDevices=true
 ProtectHome=true

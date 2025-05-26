@@ -31,8 +31,8 @@ if [ ! -d "shared" ]; then
   exit 1
 fi
 
-if [ ! -d "mcp-server" ]; then
-  echo -e "${RED}Error: mcp-server directory not found${NC}"
+if [ ! -d "adminserver" ]; then
+  echo -e "${RED}Error: adminserver directory not found${NC}"
   exit 1
 fi
 
@@ -84,12 +84,12 @@ ruff check shared/ || { echo -e "${RED}Shared linting failed${NC}"; exit 1; }
 echo "Running Black formatter check on shared..."
 black --check shared/ || { echo -e "${RED}Shared Black formatting check failed${NC}"; exit 1; }
 
-# MCP Server linting
-echo -e "\n${YELLOW}Running mcp-server linting...${NC}"
-echo "Running Ruff linter on mcp-server..."
-ruff check mcp-server/ || { echo -e "${RED}MCP Server linting failed${NC}"; exit 1; }
+# Admin Server linting
+echo -e "\n${YELLOW}Running adminserver linting...${NC}"
+echo "Running Ruff linter on adminserver..."
+ruff check adminserver/ || { echo -e "${RED}Admin Server linting failed${NC}"; exit 1; }
 
-echo "Running Black formatter check on mcp-server..."
-black --check mcp-server/ || { echo -e "${RED}MCP Server Black formatting check failed${NC}"; exit 1; }
+echo "Running Black formatter check on adminserver..."
+black --check adminserver/ || { echo -e "${RED}Admin Server Black formatting check failed${NC}"; exit 1; }
 
 echo -e "\n${GREEN}All linting checks passed successfully!${NC}"

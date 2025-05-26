@@ -55,10 +55,10 @@ A Model Context Protocol (MCP) server that provides administrative access to Kan
 1. **Clone or download the MCP server files**:
    ```bash
    # If part of Kanakku repository
-   cd mcp-server
+   cd adminserver
    
    # Or download files individually
-   mkdir kanakku-mcp-server && cd kanakku-mcp-server
+   mkdir kanakku-admin-server && cd kanakku-admin-server
    # Download the files from the repository
    ```
 
@@ -135,7 +135,7 @@ export KANAKKU_SSH_PORT="22"
      "mcpServers": {
        "kanakku-admin": {
          "command": "python",
-                   "args": ["/path/to/mcp-server/admin_server.py"],
+                   "args": ["/path/to/adminserver/admin_server.py"],
          "env": {
            "KANAKKU_DEPLOY_HOST": "your-production-server-ip",
            "KANAKKU_DEPLOY_USER": "root",

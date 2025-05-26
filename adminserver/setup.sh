@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Kanakku Admin MCP Server Setup Script
-# This script sets up the MCP server for accessing Kanakku production systems from Cursor
+# This script sets up the Admin server for accessing Kanakku production systems from Cursor
 
 set -e
 
@@ -102,7 +102,7 @@ EOF
 echo "Example environment file created: .env.example"
 echo ""
 echo "=== Testing the Server ==="
-echo "To test the MCP server manually:"
+echo "To test the Admin server manually:"
 echo "  source venv/bin/activate"
 echo "  export KANAKKU_DEPLOY_HOST=your-server-ip"
 echo "  python admin_server.py"

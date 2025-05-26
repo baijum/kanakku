@@ -9,7 +9,7 @@ The deployment consists of:
 - **Backend**: Flask application running with Gunicorn
 - **Email Worker**: Background email processing service
 - **Email Scheduler**: Periodic email automation scheduler
-- **MCP Server**: Model Context Protocol server for log access and debugging
+- **Admin Server**: Administrative server for system management and log access
 - **Database**: Self-hosted PostgreSQL
 - **Cache**: Self-hosted Redis
 - **Reverse Proxy**: Nginx with SSL termination
@@ -120,21 +120,21 @@ API_RATE_LIMIT=1000 per hour
 GOOGLE_API_KEY=your-gemini-api-key
 ENCRYPTION_KEY=your-32-byte-base64-encryption-key
 
-# MCP Server Configuration
+# Admin Server Configuration
 KANAKKU_DEPLOY_HOST=localhost
 KANAKKU_DEPLOY_USER=kanakku
 KANAKKU_SSH_KEY_PATH=/opt/kanakku/.ssh/id_rsa
 KANAKKU_SSH_PORT=22
 ```
 
-### 3. MCP Server Setup
+### 3. Admin Server Setup
 
-The MCP (Model Context Protocol) server provides direct access to production logs for debugging purposes. It runs as a systemd service and allows secure log access via SSH.
+The Admin Server provides administrative access to production logs and system management. It runs as a systemd service and allows secure log access via SSH.
 
-#### SSH Key Configuration for MCP Server
+#### SSH Key Configuration for Admin Server
 
 ```bash
-# Generate SSH key for MCP server (if not already done)
+# Generate SSH key for Admin Server (if not already done)
 sudo -u kanakku ssh-keygen -t rsa -b 4096 -f /opt/kanakku/.ssh/id_rsa -N ""
 
 # Set proper permissions
@@ -148,23 +148,23 @@ sudo chmod 600 /opt/kanakku/.ssh/authorized_keys
 sudo chown kanakku:kanakku /opt/kanakku/.ssh/authorized_keys
 ```
 
-#### MCP Server Environment Configuration
+#### Admin Server Environment Configuration
 
 Add the following to `/opt/kanakku/.env`:
 
 ```env
-# MCP Server Configuration
+# Admin Server Configuration
 KANAKKU_DEPLOY_HOST=localhost
 KANAKKU_DEPLOY_USER=kanakku
 KANAKKU_SSH_KEY_PATH=/opt/kanakku/.ssh/id_rsa
 KANAKKU_SSH_PORT=22
 ```
 
-#### Test MCP Server Configuration
+#### Test Admin Server Configuration
 
 ```bash
-# Test the MCP server setup
-cd /opt/kanakku/mcp-server
+# Test the Admin Server setup
+cd /opt/kanakku/adminserver
 sudo -u kanakku ./deploy-production.sh
 ```
 
@@ -280,14 +280,14 @@ The application runs as systemd services:
 - `kanakku`: Main Flask application
 - `kanakku-worker`: Email automation worker
 - `kanakku-scheduler`: Email automation scheduler
-- `kanakku-mcp-server`: MCP server for log access and debugging
+- `kanakku-admin-server`: Admin server for system management and log access
 
 ```bash
 # Check service status
 sudo systemctl status kanakku
 sudo systemctl status kanakku-worker
 sudo systemctl status kanakku-scheduler
-sudo systemctl status kanakku-mcp-server
+sudo systemctl status kanakku-admin-server
 sudo systemctl status nginx
 
 # Start/stop services
@@ -299,7 +299,7 @@ sudo systemctl restart kanakku
 sudo journalctl -u kanakku -f
 sudo journalctl -u kanakku-worker -f
 sudo journalctl -u kanakku-scheduler -f
-sudo journalctl -u kanakku-mcp-server -f
+sudo journalctl -u kanakku-admin-server -f
 ```
 
 ### Application Logs
@@ -339,32 +339,32 @@ sudo /opt/kanakku/deploy-helper.sh logs
 # Run health check
 sudo /opt/kanakku/health-check.sh
 
-# MCP server management
-sudo /opt/kanakku/scripts/mcp-server-helper.sh status
-sudo /opt/kanakku/scripts/mcp-server-helper.sh logs
+# Admin server management
+sudo /opt/kanakku/scripts/admin-server-helper.sh status
+sudo /opt/kanakku/scripts/admin-server-helper.sh logs
 ```
 
-### MCP Server Management
+### Admin Server Management
 
-The MCP server has its own dedicated helper script for management:
+The Admin Server has its own dedicated helper script for management:
 
 ```bash
-# Check MCP server status
-sudo /opt/kanakku/scripts/mcp-server-helper.sh status
+# Check Admin Server status
+sudo /opt/kanakku/scripts/admin-server-helper.sh status
 
-# Start/stop/restart MCP server
-sudo /opt/kanakku/scripts/mcp-server-helper.sh start
-sudo /opt/kanakku/scripts/mcp-server-helper.sh stop
-sudo /opt/kanakku/scripts/mcp-server-helper.sh restart
+# Start/stop/restart Admin Server
+sudo /opt/kanakku/scripts/admin-server-helper.sh start
+sudo /opt/kanakku/scripts/admin-server-helper.sh stop
+sudo /opt/kanakku/scripts/admin-server-helper.sh restart
 
-# View MCP server logs
-sudo /opt/kanakku/scripts/mcp-server-helper.sh logs
+# View Admin Server logs
+sudo /opt/kanakku/scripts/admin-server-helper.sh logs
 
-# Test MCP server connection
-sudo /opt/kanakku/scripts/mcp-server-helper.sh test
+# Test Admin Server connection
+sudo /opt/kanakku/scripts/admin-server-helper.sh test
 
-# Deploy/update MCP server
-sudo /opt/kanakku/scripts/mcp-server-helper.sh deploy
+# Deploy/update Admin Server
+sudo /opt/kanakku/scripts/admin-server-helper.sh deploy
 ```
 
 ## Monitoring and Maintenance
@@ -452,7 +452,7 @@ sudo /opt/kanakku/deploy-helper.sh restore /opt/kanakku/backups/BACKUP_DIRECTORY
 
 ```bash
 # Stop all services
-sudo systemctl stop kanakku kanakku-worker kanakku-scheduler kanakku-mcp-server
+sudo systemctl stop kanakku kanakku-worker kanakku-scheduler kanakku-admin-server
 
 # Restore from latest backup
 LATEST_BACKUP=$(ls -t /opt/kanakku/backups/ | head -n1)
@@ -460,7 +460,7 @@ sudo cp -r "/opt/kanakku/backups/$LATEST_BACKUP"/* /opt/kanakku/
 sudo chown -R kanakku:kanakku /opt/kanakku
 
 # Start services
-sudo systemctl start kanakku kanakku-worker kanakku-scheduler kanakku-mcp-server
+sudo systemctl start kanakku kanakku-worker kanakku-scheduler kanakku-admin-server
 ```
 
 ## Performance Optimization

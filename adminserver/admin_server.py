@@ -900,7 +900,7 @@ async def handle_read_resource(uri: str) -> str:
 
 
 async def main():
-    """Main entry point for the MCP server."""
+    """Main entry point for the Admin server."""
     # Validate configuration
     if not validate_ssh_config():
         logger.error("Invalid SSH configuration. Please set environment variables:")
@@ -922,7 +922,7 @@ async def main():
         logger.error(f"Failed to connect to server: {stderr}")
         sys.exit(1)
 
-    logger.info("Connection successful. Starting MCP server...")
+    logger.info("Connection successful. Starting Admin server...")
 
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(

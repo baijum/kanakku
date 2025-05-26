@@ -3,7 +3,7 @@
 # Exit on any error
 set -e
 
-echo "Preparing Kanakku MCP Server for production deployment..."
+echo "Preparing Kanakku Admin Server for production deployment..."
 
 # Ensure virtual environment exists
 if [ ! -d "venv" ]; then
@@ -26,7 +26,7 @@ mkdir -p logs
 if [ ! -f ".env.example" ]; then
     echo "Creating environment template..."
     cat > .env.example << 'EOF'
-# MCP Server Configuration
+# Admin Server Configuration
 KANAKKU_DEPLOY_HOST=your-production-server-ip
 KANAKKU_DEPLOY_USER=root
 KANAKKU_SSH_KEY_PATH=/opt/kanakku/.ssh/id_rsa
@@ -34,13 +34,13 @@ KANAKKU_SSH_PORT=22
 
 # Optional: Logging configuration
 MCP_LOG_LEVEL=INFO
-MCP_LOG_FILE=/opt/kanakku/mcp-server/logs/mcp-server.log
+MCP_LOG_FILE=/opt/kanakku/adminserver/logs/admin-server.log
 EOF
 fi
 
 # Test the server configuration (if environment is set up)
 if [ -f ".env" ]; then
-    echo "Testing MCP server configuration..."
+    echo "Testing Admin server configuration..."
     source .env
     if [ -n "$KANAKKU_DEPLOY_HOST" ]; then
         echo "Running connection test..."
@@ -53,14 +53,14 @@ else
     echo "Copy .env.example to .env and update with your server details."
 fi
 
-echo "MCP Server preparation complete."
+echo "Admin Server preparation complete."
 echo ""
 echo "To deploy as a systemd service:"
-echo "1. Copy files to /opt/kanakku/mcp-server/"
-echo "2. Copy ../kanakku-mcp-server.service to /etc/systemd/system/"
+echo "1. Copy files to /opt/kanakku/adminserver/"
+echo "2. Copy ../kanakku-admin-server.service to /etc/systemd/system/"
 echo "3. Run: sudo systemctl daemon-reload"
-echo "4. Run: sudo systemctl enable kanakku-mcp-server"
-echo "5. Run: sudo systemctl start kanakku-mcp-server"
+echo "4. Run: sudo systemctl enable kanakku-admin-server"
+echo "5. Run: sudo systemctl start kanakku-admin-server"
 echo ""
-echo "To check status: sudo systemctl status kanakku-mcp-server"
-echo "To view logs: sudo journalctl -u kanakku-mcp-server -f"
+echo "To check status: sudo systemctl status kanakku-admin-server"
+echo "To view logs: sudo journalctl -u kanakku-admin-server -f"
