@@ -35,12 +35,19 @@ b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:kana
 b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:generic-api-key:61
 b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:generic-api-key:93
 
-# Frontend test passwords in UpdatePassword.jsx
+# Frontend test passwords in UpdatePassword.jsx (older commit)
 b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:50
 b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:54
 b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:56
 b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:60
 b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:62
+
+# Frontend test passwords in UpdatePassword.jsx (newer commit)
+972ba5e52296722d8ea49082ff6c9a76b92d9d78:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:50
+972ba5e52296722d8ea49082ff6c9a76b92d9d78:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:54
+972ba5e52296722d8ea49082ff6c9a76b92d9d78:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:56
+972ba5e52296722d8ea49082ff6c9a76b92d9d78:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:60
+972ba5e52296722d8ea49082ff6c9a76b92d9d78:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:62
 
 # Documentation examples in docs/api_documentation.md
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:jwt:111
