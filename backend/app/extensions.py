@@ -89,7 +89,7 @@ def setup_csrf(app):
 def get_limiter_storage_uri():
     redis_url = os.environ.get("REDIS_URL")
     if redis_url and not os.environ.get("TESTING"):
-        return f"redis://{redis_url}"
+        return redis_url
     return "memory://"
 
 
