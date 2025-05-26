@@ -103,11 +103,8 @@ pip install --upgrade pip
 ### 3. Install Python Dependencies
 
 ```bash
-# Install backend dependencies
-pip install -r backend/requirements.txt
-
-# Install email automation dependencies
-pip install -r banktransactions/requirements.txt
+# Install all dependencies using unified setup
+pip install -e ".[dev]"
 ```
 
 ### 4. Set Up Directory Structure
@@ -832,8 +829,7 @@ git pull origin main
 
 # 3. Update dependencies
 source venv/bin/activate
-pip install -r backend/requirements.txt
-pip install -r banktransactions/requirements.txt
+pip install -e ".[dev]"
 
 # 4. Run migrations
 cd backend

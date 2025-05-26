@@ -209,13 +209,9 @@ If you prefer individual module setup:
 cd backend
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
 
-# Bank transactions only
-cd banktransactions
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Note: Bank transactions dependencies are now included in the unified install
 ```
 
 6. Submit a Pull Request

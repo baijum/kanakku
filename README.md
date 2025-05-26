@@ -614,7 +614,7 @@ If you prefer to set up modules individually (not recommended for new developmen
 3. Install dependencies:
 
    ```bash
-   pip install -r requirements.txt
+   pip install -e ".[dev]"
    ```
 
 4. Configure environment variables and run as described above.

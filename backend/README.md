@@ -37,7 +37,7 @@ backend/
 ├── instance/          # Instance-specific data
 │   └── app.db         # SQLite database
 ├── swagger.yaml       # OpenAPI specification
-├── requirements.txt   # Dependencies
+├── pyproject.toml     # Dependencies and configuration
 ├── run-backend.sh     # Startup script
 └── ...
 ```
@@ -52,7 +52,7 @@ backend/
 
 2. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install -e ".[dev]"
    ```
 
 3. Set up environment variables (optional):

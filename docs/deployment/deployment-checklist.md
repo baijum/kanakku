@@ -52,8 +52,7 @@ This checklist ensures a complete and secure deployment of the Kanakku email aut
 ### Code Deployment
 - [ ] Repository cloned to production server
 - [ ] Python virtual environment created
-- [ ] Backend dependencies installed (`pip install -r backend/requirements.txt`)
-- [ ] Email automation dependencies installed (`pip install -r banktransactions/requirements.txt`)
+- [ ] All dependencies installed (`pip install -e ".[dev]"`)
 - [ ] Directory structure created (logs, data, backups)
 - [ ] File permissions set correctly
 

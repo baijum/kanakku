@@ -96,7 +96,7 @@ Configuration files and environment settings:
 
 ### 1. Install Dependencies
 ```bash
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 ### 2. Set Environment Variables
