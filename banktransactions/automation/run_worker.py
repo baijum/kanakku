@@ -21,8 +21,6 @@ import logging
 import argparse
 import redis
 from rq import Queue, Worker, SimpleWorker
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -44,7 +42,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
-from shared.imports import setup_project_paths
+from shared.imports import setup_project_paths, get_database_session
 
 setup_project_paths()
 
@@ -65,13 +63,7 @@ logger = logging.getLogger(__name__)
 
 def create_db_session():
     """Create a database session for the worker."""
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        raise ValueError("DATABASE_URL environment variable not set")
-
-    engine = create_engine(db_url)
-    Session = sessionmaker(bind=engine)
-    return Session()
+    return get_database_session()
 
 
 def get_worker_class():

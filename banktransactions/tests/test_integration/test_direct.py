@@ -48,8 +48,6 @@ def test_direct_email_processing():
 
     with app.app_context():
         # Import required modules (inside app context)
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
         from app.models import EmailConfiguration
         from app.utils.encryption import decrypt_value
         from banktransactions.core.imap_client import CustomIMAPClient
@@ -64,14 +62,12 @@ def test_direct_email_processing():
         imap_client = None
 
         try:
-            # Create database session
-            db_url = os.getenv("DATABASE_URL")
-            if not db_url:
-                raise ValueError("DATABASE_URL environment variable not set")
+            # Import shared database utilities
+            from shared.imports import database_session
 
-            engine = create_engine(db_url)
-            Session = sessionmaker(bind=engine)
-            db_session = Session()
+            # Use shared database session utilities
+            db_session_context = database_session()
+            db_session = db_session_context.__enter__()
 
             # Get user's email configuration
             config = (
@@ -183,8 +179,7 @@ def test_direct_email_processing():
 
             # Update last check time
             config.last_check_time = datetime.now(timezone.utc)
-            db_session.commit()
-            print(f"\n✓ Updated last check time to {config.last_check_time}")
+            # Note: commit is handled automatically by the context manager
 
             result = {
                 "status": "success",
@@ -209,38 +204,29 @@ def test_direct_email_processing():
                     print("✓ Disconnected from email server")
                 except:
                     pass
-            if db_session:
-                db_session.close()
+            if "db_session_context" in locals():
+                try:
+                    db_session_context.__exit__(None, None, None)
+                except:
+                    pass
 
 
 def check_email_config():
     """Check the email configuration in the database."""
     print("Checking email configuration...")
 
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    from app.models import EmailConfiguration
-
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        print("ERROR: DATABASE_URL not set")
-        return
-
-    engine = create_engine(db_url)
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    from shared.imports import database_session, EmailConfiguration
 
     try:
-        configs = session.query(EmailConfiguration).all()
-        print(f"Found {len(configs)} email configurations:")
-        for config in configs:
-            print(
-                f"  User {config.user_id}: enabled={config.is_enabled}, email={config.email_address}, last_check={config.last_check_time}"
-            )
+        with database_session() as session:
+            configs = session.query(EmailConfiguration).all()
+            print(f"Found {len(configs)} email configurations:")
+            for config in configs:
+                print(
+                    f"  User {config.user_id}: enabled={config.is_enabled}, email={config.email_address}, last_check={config.last_check_time}"
+                )
     except Exception as e:
         print(f"Error checking config: {e}")
-    finally:
-        session.close()
 
 
 def main():

@@ -27,6 +27,7 @@ from shared.imports import (
     get_bank_emails,
     load_processed_gmail_msgids,
     save_processed_gmail_msgid,
+    database_session,
 )
 
 # Standard library imports
@@ -36,8 +37,6 @@ from datetime import datetime, timezone
 from typing import Dict
 
 from rq import get_current_job
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 logger = logging.getLogger(__name__)
 
@@ -49,20 +48,11 @@ def process_user_emails_standalone(user_id: int) -> Dict:
     """
     logger.debug(f"Starting email processing for user_id: {user_id}")
     try:
-        # Create database session
+        # Use database session context manager for automatic cleanup
         logger.debug("Setting up database connection")
-        db_url = os.getenv("DATABASE_URL")
-        if not db_url:
-            logger.error("DATABASE_URL environment variable not set")
-            raise ValueError("DATABASE_URL environment variable not set")
+        with database_session() as db_session:
+            logger.debug("Database session created successfully")
 
-        logger.debug(f"Creating database engine with URL: {db_url[:20]}...")
-        engine = create_engine(db_url)
-        Session = sessionmaker(bind=engine)
-        db_session = Session()
-        logger.debug("Database session created successfully")
-
-        try:
             # Get the current job (optional for manual testing)
             job = get_current_job()
             logger.debug(
@@ -171,8 +161,8 @@ def process_user_emails_standalone(user_id: int) -> Dict:
             # Update last check time
             logger.debug("Updating last check time in configuration")
             config.last_check_time = datetime.now(timezone.utc)
-            db_session.commit()
-            logger.debug("Configuration updated and committed")
+            # Note: db_session.commit() is handled automatically by the context manager
+            logger.debug("Configuration updated and will be committed automatically")
 
             result = {
                 "status": "success",
@@ -181,11 +171,6 @@ def process_user_emails_standalone(user_id: int) -> Dict:
             }
             logger.debug(f"Email processing completed successfully: {result}")
             return result
-
-        finally:
-            if db_session:
-                logger.debug("Closing database session")
-                db_session.close()
 
     except Exception as e:
         logger.error(f"Error in process_user_emails_standalone: {str(e)}")

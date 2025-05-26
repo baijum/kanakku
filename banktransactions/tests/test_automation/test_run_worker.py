@@ -14,42 +14,22 @@ from banktransactions.automation.run_worker import create_db_session, main
 class TestRunWorker:
     """Test cases for the run_worker.py script."""
 
-    @patch("banktransactions.automation.run_worker.create_engine")
-    @patch("banktransactions.automation.run_worker.sessionmaker")
-    @patch.dict(os.environ, {"DATABASE_URL": "postgresql://test:test@localhost/test"})
-    def test_create_db_session_success(self, mock_sessionmaker, mock_create_engine):
+    @patch("banktransactions.automation.run_worker.get_database_session")
+    def test_create_db_session_success(self, mock_get_database_session):
         """Test successful database session creation."""
-        mock_engine = Mock()
-        mock_create_engine.return_value = mock_engine
-
-        mock_session_class = Mock()
         mock_session_instance = Mock()
-        mock_session_class.return_value = mock_session_instance
-        mock_sessionmaker.return_value = mock_session_class
+        mock_get_database_session.return_value = mock_session_instance
 
         result = create_db_session()
 
         # Should return the session instance
         assert result == mock_session_instance
-        mock_create_engine.assert_called_once_with(
-            "postgresql://test:test@localhost/test"
-        )
-        mock_sessionmaker.assert_called_once_with(bind=mock_engine)
-        mock_session_class.assert_called_once()
+        mock_get_database_session.assert_called_once()
 
-    @patch.dict(os.environ, {}, clear=True)
-    def test_create_db_session_no_url(self):
-        """Test database session creation when DATABASE_URL is not set."""
-        with pytest.raises(
-            ValueError, match="DATABASE_URL environment variable not set"
-        ):
-            create_db_session()
-
-    @patch("banktransactions.automation.run_worker.create_engine")
-    @patch.dict(os.environ, {"DATABASE_URL": "postgresql://test:test@localhost/test"})
-    def test_create_db_session_engine_error(self, mock_create_engine):
-        """Test handling of database engine creation errors."""
-        mock_create_engine.side_effect = Exception("Database connection failed")
+    @patch("banktransactions.automation.run_worker.get_database_session")
+    def test_create_db_session_error(self, mock_get_database_session):
+        """Test handling of database session creation errors."""
+        mock_get_database_session.side_effect = Exception("Database connection failed")
 
         with pytest.raises(Exception, match="Database connection failed"):
             create_db_session()

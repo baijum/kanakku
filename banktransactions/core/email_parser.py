@@ -297,24 +297,14 @@ def get_gemini_api_key_from_config():
         project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
-        from shared.imports import decrypt_value_standalone, GlobalConfiguration
+        from shared.imports import (
+            decrypt_value_standalone,
+            GlobalConfiguration,
+            database_session,
+        )
 
-        # Access database directly
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
-
-        # Get database URL
-        db_url = os.getenv("DATABASE_URL")
-        if not db_url:
-            logging.error("DATABASE_URL environment variable not set")
-            return None
-
-        # Create database session
-        engine = create_engine(db_url)
-        Session = sessionmaker(bind=engine)
-        session = Session()
-
-        try:
+        # Use shared database session utilities
+        with database_session() as session:
             # Query for GEMINI_API_TOKEN
             config = (
                 session.query(GlobalConfiguration)
@@ -334,9 +324,6 @@ def get_gemini_api_key_from_config():
                 return decrypted_value
             else:
                 return config.value
-
-        finally:
-            session.close()
 
     except Exception as e:
         logging.error(f"Error retrieving Gemini API key from config: {str(e)}")

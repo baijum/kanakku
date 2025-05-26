@@ -14,6 +14,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.absolute()
 BACKEND_PATH = PROJECT_ROOT / "backend"
 BANKTRANSACTIONS_PATH = PROJECT_ROOT / "banktransactions"
 
+
 def setup_project_paths():
     """
     Set up Python paths for cross-module imports.
@@ -25,14 +26,15 @@ def setup_project_paths():
         str(BACKEND_PATH),
         str(BANKTRANSACTIONS_PATH),
     ]
-    
+
     for path in paths_to_add:
         if path not in sys.path:
             sys.path.insert(0, path)
+
 
 # Automatically set up paths when this module is imported
 setup_project_paths()
 
 # Version information
 __version__ = "1.0.0"
-__author__ = "Kanakku Team" 
+__author__ = "Kanakku Team"

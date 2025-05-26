@@ -7,6 +7,7 @@ that can be used across the project without complex path manipulation.
 
 # Ensure paths are set up
 from . import setup_project_paths
+
 setup_project_paths()
 
 # Backend model imports
@@ -97,7 +98,9 @@ try:
         get_user_job_status,
         has_user_job_pending,
     )
-    from banktransactions.automation.email_processor import process_user_emails_standalone
+    from banktransactions.automation.email_processor import (
+        process_user_emails_standalone,
+    )
 except ImportError as e:
     print(f"Warning: Could not import banktransactions automation modules: {e}")
     generate_job_id = None
@@ -112,45 +115,68 @@ except ImportError as e:
     print(f"Warning: Could not import backend config manager: {e}")
     get_gemini_api_token = None
 
+# Database utilities
+try:
+    from .database import (
+        DatabaseManager,
+        get_database_session,
+        database_session,
+        get_flask_or_standalone_session,
+        TestDatabaseManager,
+    )
+except ImportError as e:
+    print(f"Warning: Could not import database utilities: {e}")
+    DatabaseManager = None
+    get_database_session = None
+    database_session = None
+    get_flask_or_standalone_session = None
+    TestDatabaseManager = None
+
 # Export all available imports
 __all__ = [
     # Models
-    'EmailConfiguration',
-    'GlobalConfiguration', 
-    'ProcessedGmailMessage',
-    'User',
-    'Account',
-    'Transaction',
-    'Book',
-    'BankAccountMapping',
-    'ExpenseAccountMapping',
-    'ApiToken',
-    'Preamble',
+    "EmailConfiguration",
+    "GlobalConfiguration",
+    "ProcessedGmailMessage",
+    "User",
+    "Account",
+    "Transaction",
+    "Book",
+    "BankAccountMapping",
+    "ExpenseAccountMapping",
+    "ApiToken",
+    "Preamble",
     # Encryption utilities
-    'encrypt_value',
-    'decrypt_value',
-    'decrypt_value_standalone',
-    'get_encryption_key',
-    'get_encryption_key_standalone',
+    "encrypt_value",
+    "decrypt_value",
+    "decrypt_value_standalone",
+    "get_encryption_key",
+    "get_encryption_key_standalone",
     # Services
-    'load_processed_gmail_msgids',
-    'save_processed_gmail_msgid',
-    'save_processed_gmail_msgids',
-    'is_gmail_message_processed',
-    'get_processed_message_count',
-    'clear_processed_gmail_msgids',
+    "load_processed_gmail_msgids",
+    "save_processed_gmail_msgid",
+    "save_processed_gmail_msgids",
+    "is_gmail_message_processed",
+    "get_processed_message_count",
+    "clear_processed_gmail_msgids",
     # Core functions
-    'extract_transaction_details',
-    'get_bank_emails',
-    'CustomIMAPClient',
-    'construct_transaction_data',
-    'send_transaction_to_api',
-    'APIClient',
+    "extract_transaction_details",
+    "get_bank_emails",
+    "CustomIMAPClient",
+    "construct_transaction_data",
+    "send_transaction_to_api",
+    "APIClient",
     # Automation functions
-    'generate_job_id',
-    'get_user_job_status',
-    'has_user_job_pending',
-    'process_user_emails_standalone',
+    "generate_job_id",
+    "get_user_job_status",
+    "has_user_job_pending",
+    "process_user_emails_standalone",
     # Config functions
-    'get_gemini_api_token',
-] 
+    "get_gemini_api_token",
+    # Database utilities
+    "DatabaseManager",
+    "get_database_session",
+    "database_session",
+    "get_flask_or_standalone_session",
+    "TestDatabaseManager",
+]

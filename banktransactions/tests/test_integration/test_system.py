@@ -48,23 +48,13 @@ def test_database_connection():
     """Test database connection."""
     print("Testing database connection...")
     try:
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
-
-        db_url = os.getenv("DATABASE_URL")
-        if not db_url:
-            print("❌ DATABASE_URL environment variable not set")
-            return False
-
-        engine = create_engine(db_url)
-        Session = sessionmaker(bind=engine)
-        session = Session()
-
-        # Test query
+        from shared.imports import database_session
         from sqlalchemy import text
 
-        result = session.execute(text("SELECT 1"))
-        session.close()
+        with database_session() as session:
+            # Test query
+            result = session.execute(text("SELECT 1"))
+
         print("✅ Database connection successful")
         return True
     except Exception as e:

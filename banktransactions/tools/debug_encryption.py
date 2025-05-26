@@ -14,10 +14,16 @@ load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
 
-# Add the project root to the Python path
-project_root = os.path.join(os.path.dirname(__file__), "..", "..")
-sys.path.insert(0, project_root)
-sys.path.append(os.path.join(project_root, "backend"))
+# Set up project paths
+from pathlib import Path
+
+project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from shared.imports import setup_project_paths, database_session, EmailConfiguration
+
+setup_project_paths()
 
 
 def create_flask_app():
@@ -44,9 +50,6 @@ def debug_encryption():
     app = create_flask_app()
 
     with app.app_context():
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
-        from app.models import EmailConfiguration
         from app.utils.encryption import (
             encrypt_value,
             decrypt_value,
@@ -80,71 +83,65 @@ def debug_encryption():
 
         print()
 
-        # Check database configuration
-        db_url = os.getenv("DATABASE_URL")
-        engine = create_engine(db_url)
-        Session = sessionmaker(bind=engine)
-        session = Session()
-
+        # Check database configuration using shared utilities
         try:
-            config = session.query(EmailConfiguration).filter_by(user_id=1).first()
-            if config:
-                print(f"Email config found for user {config.user_id}:")
-                print(f"  Email: {config.email_address}")
-                print(f"  IMAP Server: {config.imap_server}")
-                print(f"  IMAP Port: {config.imap_port}")
-                print(f"  Enabled: {config.is_enabled}")
-                print(f"  App password (encrypted): {config.app_password}")
-                print(
-                    f"  App password length: {len(config.app_password) if config.app_password else 'None'}"
-                )
-                print()
+            with database_session() as session:
+                config = session.query(EmailConfiguration).filter_by(user_id=1).first()
+                if config:
+                    print(f"Email config found for user {config.user_id}:")
+                    print(f"  Email: {config.email_address}")
+                    print(f"  IMAP Server: {config.imap_server}")
+                    print(f"  IMAP Port: {config.imap_port}")
+                    print(f"  Enabled: {config.is_enabled}")
+                    print(f"  App password (encrypted): {config.app_password}")
+                    print(
+                        f"  App password length: {len(config.app_password) if config.app_password else 'None'}"
+                    )
+                    print()
 
-                # Try to decrypt the stored password
-                print("Attempting to decrypt stored password...")
-                try:
-                    decrypted_password = decrypt_value(config.app_password)
-                    if decrypted_password:
+                    # Try to decrypt the stored password
+                    print("Attempting to decrypt stored password...")
+                    try:
+                        decrypted_password = decrypt_value(config.app_password)
+                        if decrypted_password:
+                            print(
+                                f"✓ Successfully decrypted password (length: {len(decrypted_password)})"
+                            )
+                            # Don't print the actual password for security
+                        else:
+                            print("✗ Decryption returned None/empty")
+                    except Exception as e:
+                        print(f"✗ Decryption failed: {e}")
+
+                    print()
+
+                    # Test re-encryption with a dummy password
+                    print("Testing re-encryption with dummy password...")
+                    dummy_password = "dummy_app_password_for_testing"
+                    try:
+                        new_encrypted = encrypt_value(dummy_password)
+                        print(f"New encrypted value: {new_encrypted}")
+
+                        # Test decryption of new value
+                        new_decrypted = decrypt_value(new_encrypted)
                         print(
-                            f"✓ Successfully decrypted password (length: {len(decrypted_password)})"
+                            f"Re-encryption test: {'✓ PASSED' if new_decrypted == dummy_password else '✗ FAILED'}"
                         )
-                        # Don't print the actual password for security
-                    else:
-                        print("✗ Decryption returned None/empty")
-                except Exception as e:
-                    print(f"✗ Decryption failed: {e}")
 
-                print()
+                        # Optionally update the database with the test password
+                        print(
+                            "\nWould you like to update the database with the test password? (This is for testing only)"
+                        )
+                        print("The test password is: 'dummy_app_password_for_testing'")
 
-                # Test re-encryption with a dummy password
-                print("Testing re-encryption with dummy password...")
-                dummy_password = "dummy_app_password_for_testing"
-                try:
-                    new_encrypted = encrypt_value(dummy_password)
-                    print(f"New encrypted value: {new_encrypted}")
+                    except Exception as e:
+                        print(f"Re-encryption test failed: {e}")
 
-                    # Test decryption of new value
-                    new_decrypted = decrypt_value(new_encrypted)
-                    print(
-                        f"Re-encryption test: {'✓ PASSED' if new_decrypted == dummy_password else '✗ FAILED'}"
-                    )
-
-                    # Optionally update the database with the test password
-                    print(
-                        "\nWould you like to update the database with the test password? (This is for testing only)"
-                    )
-                    print("The test password is: 'dummy_app_password_for_testing'")
-
-                except Exception as e:
-                    print(f"Re-encryption test failed: {e}")
-
-            else:
-                print("No email configuration found for user 1")
+                else:
+                    print("No email configuration found for user 1")
 
         except Exception as e:
             print(f"Database error: {e}")
-        finally:
-            session.close()
 
 
 def main():

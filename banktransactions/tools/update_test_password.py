@@ -44,8 +44,6 @@ def update_test_password():
     app = create_flask_app()
 
     with app.app_context():
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
         from app.models import EmailConfiguration
         from app.utils.encryption import encrypt_value, decrypt_value
 
@@ -75,61 +73,63 @@ def update_test_password():
             print(f"Encryption failed: {e}")
             return
 
-        # Update database
-        db_url = os.getenv("DATABASE_URL")
-        engine = create_engine(db_url)
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        # Update database using shared utilities
+        from shared.imports import (
+            database_session,
+            EmailConfiguration as SharedEmailConfiguration,
+        )
 
         try:
-            config = session.query(EmailConfiguration).filter_by(user_id=1).first()
-            if config:
-                print(
-                    f"\nUpdating email config for user {config.user_id} ({config.email_address})"
+            with database_session() as session:
+                config = (
+                    session.query(SharedEmailConfiguration).filter_by(user_id=1).first()
                 )
+                if config:
+                    print(
+                        f"\nUpdating email config for user {config.user_id} ({config.email_address})"
+                    )
 
-                # Store old password for reference
-                old_password = config.app_password
+                    # Store old password for reference
+                    old_password = config.app_password
 
-                # Update with new encrypted password
-                config.app_password = encrypted_password
-                session.commit()
+                    # Update with new encrypted password
+                    config.app_password = encrypted_password
+                    # Note: session.commit() is handled automatically by the context manager
 
-                print("✓ Database updated successfully")
-                print(f"Old encrypted password: {old_password}")
-                print(f"New encrypted password: {encrypted_password}")
+                    print("✓ Database updated successfully")
+                    print(f"Old encrypted password: {old_password}")
+                    print(f"New encrypted password: {encrypted_password}")
 
-                # Verify the update
-                print("\nVerifying database update...")
-                updated_config = (
-                    session.query(EmailConfiguration).filter_by(user_id=1).first()
-                )
-                try:
-                    verified_password = decrypt_value(updated_config.app_password)
-                    if verified_password == test_password:
-                        print("✓ Database verification passed")
-                        print(
-                            "The email automation can now be tested with this dummy password."
-                        )
-                        print(
-                            "\nNOTE: This will fail when trying to connect to Gmail since it's not a real app password."
-                        )
-                        print(
-                            "But it will test the encryption/decryption and connection logic."
-                        )
-                    else:
-                        print("✗ Database verification failed")
-                except Exception as e:
-                    print(f"✗ Database verification failed: {e}")
+                    # Verify the update
+                    print("\nVerifying database update...")
+                    updated_config = (
+                        session.query(SharedEmailConfiguration)
+                        .filter_by(user_id=1)
+                        .first()
+                    )
+                    try:
+                        verified_password = decrypt_value(updated_config.app_password)
+                        if verified_password == test_password:
+                            print("✓ Database verification passed")
+                            print(
+                                "The email automation can now be tested with this dummy password."
+                            )
+                            print(
+                                "\nNOTE: This will fail when trying to connect to Gmail since it's not a real app password."
+                            )
+                            print(
+                                "But it will test the encryption/decryption and connection logic."
+                            )
+                        else:
+                            print("✗ Database verification failed")
+                    except Exception as e:
+                        print(f"✗ Database verification failed: {e}")
 
-            else:
-                print("No email configuration found for user 1")
+                else:
+                    print("No email configuration found for user 1")
 
         except Exception as e:
             print(f"Database error: {e}")
-            session.rollback()
-        finally:
-            session.close()
 
 
 def main():
