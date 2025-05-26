@@ -11,9 +11,11 @@ Kanakku is a full-stack expense tracking application built with a Flask backend 
 ```mermaid
 flowchart TD
     User[User] --> |uses| Frontend
+    Developer[Developer] --> |monitors via| AdminServer
     Frontend[React Frontend] --> |HTTP/REST API| Backend
     Backend[Flask Backend] --> |SQL/ORM| Database[(Database)]
     Backend --> |optional| Ledger[Ledger CLI]
+    AdminServer[Admin MCP Server] --> |SSH| ProductionServer[Production Server]
     
     subgraph "Frontend (React)"
         FrontComponents[Components]
@@ -29,17 +31,25 @@ flowchart TD
         BackServices[Business Logic]
     end
     
+    subgraph "Admin & Monitoring"
+        AdminServer
+        CursorIDE[Cursor IDE]
+        AdminServer --> |MCP Protocol| CursorIDE
+    end
+    
     classDef frontend fill:#61dafb,stroke:#333,stroke-width:2px;
     classDef backend fill:#4a4a4a,stroke:#333,stroke-width:2px,color:white;
     classDef database fill:#f5b042,stroke:#333,stroke-width:2px;
     classDef external fill:#9c9c9c,stroke:#333,stroke-width:2px;
     classDef user fill:#b8e986,stroke:#333,stroke-width:2px;
+    classDef admin fill:#e74c3c,stroke:#333,stroke-width:2px,color:white;
     
     class Frontend,FrontComponents,FrontAPI,FrontRouter,FrontState frontend;
     class Backend,BackAPI,BackAuth,BackModels,BackServices backend;
     class Database database;
     class Ledger external;
     class User user;
+    class AdminServer,CursorIDE,ProductionServer,Developer admin;
 ```
 
 ### Backend Architecture (Flask)
@@ -485,6 +495,133 @@ flowchart TD
 5. **API Documentation**:
    - Enhanced Swagger documentation
    - Interactive API explorer
+
+## Admin Server (MCP Server)
+
+The Admin Server is a Model Context Protocol (MCP) server that provides production monitoring and debugging capabilities directly from Cursor IDE. This enables efficient remote administration without requiring manual SSH access to production servers.
+
+### Architecture
+
+```mermaid
+flowchart TD
+    CursorIDE[Cursor IDE] --> |MCP Protocol| AdminServer[Admin MCP Server]
+    AdminServer --> |SSH Connection| ProductionServer[Production Server]
+    
+    subgraph "Admin Server Components"
+        MCPServer[MCP Server Implementation]
+        SSHClient[SSH Client]
+        LogReader[Log Reader]
+        CommandExecutor[Safe Command Executor]
+        ServiceMonitor[Service Monitor]
+    end
+    
+    subgraph "Production Server Resources"
+        AppLogs[Application Logs]
+        SystemLogs[System Logs]
+        NginxLogs[Nginx Logs]
+        Services[System Services]
+        SystemMetrics[System Metrics]
+    end
+    
+    AdminServer --> MCPServer
+    MCPServer --> SSHClient
+    MCPServer --> LogReader
+    MCPServer --> CommandExecutor
+    MCPServer --> ServiceMonitor
+    
+    SSHClient --> AppLogs
+    SSHClient --> SystemLogs
+    SSHClient --> NginxLogs
+    SSHClient --> Services
+    SSHClient --> SystemMetrics
+    
+    classDef ide fill:#61dafb,stroke:#333,stroke-width:2px;
+    classDef admin fill:#e74c3c,stroke:#333,stroke-width:2px,color:white;
+    classDef server fill:#4a4a4a,stroke:#333,stroke-width:2px,color:white;
+    classDef resources fill:#f5b042,stroke:#333,stroke-width:2px;
+    
+    class CursorIDE ide;
+    class AdminServer,MCPServer,SSHClient,LogReader,CommandExecutor,ServiceMonitor admin;
+    class ProductionServer server;
+    class AppLogs,SystemLogs,NginxLogs,Services,SystemMetrics resources;
+```
+
+### Key Components
+
+1. **MCP Server Implementation** (`adminserver/admin_server.py`):
+   - Implements Model Context Protocol for Cursor IDE integration
+   - Provides tools for log reading, searching, and system monitoring
+   - Handles secure command execution with safety restrictions
+
+2. **SSH Client**:
+   - Establishes secure SSH connections to production servers
+   - Uses SSH key authentication for security
+   - Manages connection timeouts and error handling
+
+3. **Log Management**:
+   - **Application Logs**: Kanakku app, worker, scheduler, and error logs
+   - **System Service Logs**: systemd journal logs for all services
+   - **Infrastructure Logs**: Nginx, PostgreSQL, Redis logs
+   - **Security Logs**: Authentication, fail2ban, and system logs
+
+4. **Service Monitoring**:
+   - Real-time status checking for all Kanakku services
+   - System resource monitoring (CPU, memory, disk)
+   - Health check validation
+
+5. **Safe Command Execution**:
+   - Whitelist-based command filtering for security
+   - Read-only operations only (no destructive commands)
+   - Timeout protection and error handling
+
+### Security Features
+
+1. **SSH Key Authentication**:
+   - Uses SSH keys instead of passwords
+   - Configurable SSH connection parameters
+   - Connection timeout and retry logic
+
+2. **Command Restrictions**:
+   - Predefined whitelist of safe commands
+   - No write operations or system modifications
+   - Automatic command validation and sanitization
+
+3. **Access Control**:
+   - Environment-based configuration
+   - Secure credential management
+   - Audit logging of all operations
+
+### Integration with Development Workflow
+
+The Admin Server integrates seamlessly with the development workflow:
+
+1. **Real-time Debugging**: Access production logs instantly from Cursor
+2. **Issue Investigation**: Search across all log sources simultaneously
+3. **Performance Monitoring**: Check system metrics without SSH access
+4. **Service Management**: Monitor service health and status
+5. **Error Tracking**: Quickly identify and investigate production issues
+
+### Configuration
+
+The Admin Server requires minimal configuration:
+
+```bash
+# Environment variables
+KANAKKU_DEPLOY_HOST=production-server-ip
+KANAKKU_DEPLOY_USER=deployment-user
+KANAKKU_SSH_KEY_PATH=~/.ssh/kanakku_deploy
+KANAKKU_SSH_PORT=22
+```
+
+### Usage Patterns
+
+Common usage patterns include:
+
+- **Error Investigation**: "Search for 'error' in all logs from the last hour"
+- **Performance Monitoring**: "Check memory usage and running processes"
+- **Service Health**: "What's the status of all Kanakku services?"
+- **Log Analysis**: "Show recent entries from the application log"
+- **Security Monitoring**: "Check authentication logs for failed logins"
 
 ## Bank Transaction Processing System
 

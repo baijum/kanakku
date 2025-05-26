@@ -32,6 +32,9 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - **Real-time Search**: Debounced search with 300ms delay for responsive UX
 - **Prefix Matching**: Supports partial word matching as you type
 - **Database Compatibility**: Full PostgreSQL FTS with SQLite fallback for development
+- **Admin MCP Server**: Model Context Protocol server for production monitoring and debugging
+- **Remote Administration**: Secure SSH-based access to production logs and system metrics
+- **Cursor IDE Integration**: Direct access to production diagnostics from development environment
 
 ## Prerequisites
 
@@ -40,6 +43,7 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - PostgreSQL database
 - Redis (for job queue)
 - Gmail account with App Password (for bank transaction processing)
+- SSH access to production server (for admin MCP server)
 
 ## Dependency Management
 
@@ -167,6 +171,16 @@ kanakku/
 │   ├── api_client.py  # API integration
 │   ├── main.py        # Main processing pipeline
 │   └── tests/         # Test suite
+├── adminserver/       # Admin MCP Server for production monitoring
+│   ├── admin_server.py # Main MCP server implementation
+│   ├── setup.sh       # Automated setup script
+│   ├── deploy-production.sh # Production deployment script
+│   ├── cursor-mcp-config.json # Cursor IDE configuration
+│   ├── README.md      # Admin server documentation
+│   ├── QUICKSTART.md  # Quick setup guide
+│   ├── SECURITY.md    # Security guidelines
+│   ├── SERVICE_MANAGEMENT.md # Service management guide
+│   └── requirements.txt # Python dependencies
 ├── fixes/             # Documentation for major bug fixes
 │   └── transaction_update_with_postings_fix.md
 ├── docs/              # Project documentation
@@ -242,6 +256,12 @@ Kanakku is built using modern technologies and follows established architectural
 - **Black**: Code formatting
 - **Pytest**: Testing framework with fixtures
 
+### Administration & Monitoring
+- **Model Context Protocol (MCP)**: Server protocol for IDE integration
+- **SSH**: Secure remote server access
+- **systemd**: Service management and monitoring
+- **journalctl**: System log access and analysis
+
 ### Architectural Patterns
 
 #### Backend Patterns
@@ -276,6 +296,99 @@ Kanakku follows a modern, layered architecture with a clear separation between f
 For a detailed architectural overview, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 For visual architecture diagrams using Mermaid, see [architecture_diagrams.md](docs/architecture_diagrams.md).
+
+## Admin Server (MCP Server)
+
+Kanakku includes a **Model Context Protocol (MCP) server** for production monitoring and debugging directly from Cursor IDE. This enables efficient remote administration without manual SSH access.
+
+### Features
+
+- **Real-time Log Access**: Read application, system, and Nginx logs directly from Cursor
+- **Log Search**: Search across multiple log files with time filtering
+- **Service Monitoring**: Check status of all Kanakku services (app, worker, scheduler, nginx, postgresql, redis)
+- **System Information**: Get server resource usage and performance metrics
+- **Safe Command Execution**: Execute read-only system commands with security restrictions
+- **Secure SSH Connection**: Uses SSH key authentication for secure remote access
+
+### Available Log Sources
+
+The Admin Server provides access to comprehensive logging across the entire Kanakku stack:
+
+#### Application Logs
+- `kanakku_app` - Main Flask application logs
+- `kanakku_error` - Application error logs
+- `kanakku_worker` - Email automation worker logs
+- `kanakku_scheduler` - Email scheduler logs
+
+#### System Service Logs
+- `systemd_kanakku` - Kanakku service logs
+- `systemd_kanakku_worker` - Worker service logs
+- `systemd_kanakku_scheduler` - Scheduler service logs
+- `systemd_nginx` - Nginx service logs
+- `systemd_postgresql` - PostgreSQL service logs
+- `systemd_redis` - Redis service logs
+
+#### Infrastructure Logs
+- `nginx_access` / `nginx_error` - Nginx access and error logs
+- `syslog` - System messages
+- `auth` - Authentication logs
+- `fail2ban` - Security logs
+- `health_check` - Application health check logs
+- `deployment` - Deployment logs
+
+### Quick Setup
+
+1. **Configure environment variables**:
+   ```bash
+   export KANAKKU_DEPLOY_HOST="your-production-server-ip"
+   export KANAKKU_DEPLOY_USER="root"
+   export KANAKKU_SSH_KEY_PATH="~/.ssh/kanakku_deploy"
+   export KANAKKU_SSH_PORT="22"
+   ```
+
+2. **Run setup script**:
+   ```bash
+   cd adminserver
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+
+3. **Configure Cursor IDE**:
+   Add to Cursor settings:
+   ```json
+   {
+     "mcpServers": {
+       "kanakku-admin": {
+         "command": "python",
+         "args": ["/path/to/adminserver/admin_server.py"],
+         "env": {
+           "KANAKKU_DEPLOY_HOST": "your-production-server-ip",
+           "KANAKKU_DEPLOY_USER": "root",
+           "KANAKKU_SSH_KEY_PATH": "~/.ssh/kanakku_deploy",
+           "KANAKKU_SSH_PORT": "22"
+         }
+       }
+     }
+   }
+   ```
+
+### Usage Examples
+
+Once configured, you can use natural language commands in Cursor:
+
+- **"Show me the last 100 lines of the Kanakku application log"**
+- **"Search for 'error' in all application logs from the last hour"**
+- **"What's the status of all Kanakku services?"**
+- **"Check memory usage on the server"**
+- **"Find any 500 errors in Nginx logs since yesterday"**
+
+### Documentation
+
+For detailed setup and usage instructions, see:
+- [Admin Server README](adminserver/README.md) - Complete setup guide
+- [Quick Start Guide](adminserver/QUICKSTART.md) - Fast setup for immediate use
+- [Security Guidelines](adminserver/SECURITY.md) - Security best practices
+- [Service Management](adminserver/SERVICE_MANAGEMENT.md) - Managing production services
 
 ### Development Standards
 

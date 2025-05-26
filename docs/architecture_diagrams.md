@@ -7,9 +7,11 @@ This document contains architectural diagrams for the Kanakku application using 
 ```mermaid
 flowchart TD
     User[User] --> |uses| Frontend
+    Developer[Developer] --> |monitors via| AdminServer
     Frontend[React Frontend] --> |HTTP/REST API| Backend
     Backend[Flask Backend] --> |SQL/ORM| Database[(Database)]
     Backend --> |optional| Ledger[Ledger CLI]
+    AdminServer[Admin MCP Server] --> |SSH| ProductionServer[Production Server]
     
     subgraph "Frontend (React)"
         FrontComponents[Components]
@@ -25,17 +27,25 @@ flowchart TD
         BackServices[Business Logic]
     end
     
+    subgraph "Admin & Monitoring"
+        AdminServer
+        CursorIDE[Cursor IDE]
+        AdminServer --> |MCP Protocol| CursorIDE
+    end
+    
     classDef frontend fill:#61dafb,stroke:#333,stroke-width:2px;
     classDef backend fill:#4a4a4a,stroke:#333,stroke-width:2px,color:white;
     classDef database fill:#f5b042,stroke:#333,stroke-width:2px;
     classDef external fill:#9c9c9c,stroke:#333,stroke-width:2px;
     classDef user fill:#b8e986,stroke:#333,stroke-width:2px;
+    classDef admin fill:#e74c3c,stroke:#333,stroke-width:2px,color:white;
     
     class Frontend,FrontComponents,FrontAPI,FrontRouter,FrontState frontend;
     class Backend,BackAPI,BackAuth,BackModels,BackServices backend;
     class Database database;
     class Ledger external;
     class User user;
+    class AdminServer,CursorIDE,ProductionServer,Developer admin;
 ```
 
 ## 2. Backend Component Architecture
@@ -346,4 +356,81 @@ flowchart TD
     class Flask,StaticFiles app;
     class PostgreSQL,SQLiteDev database;
     class FlaskDev,ReactDev development;
+```
+
+## 9. Admin Server (MCP Server) Architecture
+
+```mermaid
+flowchart TD
+    CursorIDE[Cursor IDE] --> |MCP Protocol| AdminServer[Admin MCP Server]
+    AdminServer --> |SSH Connection| ProductionServer[Production Server]
+    
+    subgraph "Admin Server Components"
+        MCPServer[MCP Server Implementation]
+        SSHClient[SSH Client]
+        LogReader[Log Reader]
+        CommandExecutor[Safe Command Executor]
+        ServiceMonitor[Service Monitor]
+    end
+    
+    subgraph "Production Server Resources"
+        AppLogs[Application Logs]
+        SystemLogs[System Logs]
+        NginxLogs[Nginx Logs]
+        Services[System Services]
+        SystemMetrics[System Metrics]
+    end
+    
+    AdminServer --> MCPServer
+    MCPServer --> SSHClient
+    MCPServer --> LogReader
+    MCPServer --> CommandExecutor
+    MCPServer --> ServiceMonitor
+    
+    SSHClient --> AppLogs
+    SSHClient --> SystemLogs
+    SSHClient --> NginxLogs
+    SSHClient --> Services
+    SSHClient --> SystemMetrics
+    
+    classDef ide fill:#61dafb,stroke:#333,stroke-width:2px;
+    classDef admin fill:#e74c3c,stroke:#333,stroke-width:2px,color:white;
+    classDef server fill:#4a4a4a,stroke:#333,stroke-width:2px,color:white;
+    classDef resources fill:#f5b042,stroke:#333,stroke-width:2px;
+    
+    class CursorIDE ide;
+    class AdminServer,MCPServer,SSHClient,LogReader,CommandExecutor,ServiceMonitor admin;
+    class ProductionServer server;
+    class AppLogs,SystemLogs,NginxLogs,Services,SystemMetrics resources;
+```
+
+## 10. Admin Server Usage Flow
+
+```mermaid
+sequenceDiagram
+    participant Developer
+    participant CursorIDE as Cursor IDE
+    participant AdminServer as Admin MCP Server
+    participant ProductionServer as Production Server
+    
+    Developer->>CursorIDE: "Show me application logs"
+    CursorIDE->>AdminServer: MCP Tool Call: read_log
+    AdminServer->>ProductionServer: SSH: tail -n 100 /opt/kanakku/logs/kanakku.log
+    ProductionServer-->>AdminServer: Log Content
+    AdminServer-->>CursorIDE: Formatted Log Response
+    CursorIDE-->>Developer: Display Logs
+    
+    Developer->>CursorIDE: "Search for errors in last hour"
+    CursorIDE->>AdminServer: MCP Tool Call: search_logs
+    AdminServer->>ProductionServer: SSH: grep "error" logs --since "1 hour ago"
+    ProductionServer-->>AdminServer: Search Results
+    AdminServer-->>CursorIDE: Formatted Search Results
+    CursorIDE-->>Developer: Display Error Matches
+    
+    Developer->>CursorIDE: "Check service status"
+    CursorIDE->>AdminServer: MCP Tool Call: service_status
+    AdminServer->>ProductionServer: SSH: systemctl status kanakku
+    ProductionServer-->>AdminServer: Service Status
+    AdminServer-->>CursorIDE: Formatted Status Response
+    CursorIDE-->>Developer: Display Service Health
 ``` 
