@@ -127,7 +127,7 @@ def test_transaction_create_validation_errors(client, authenticated_client, user
 
 def test_handle_errors_decorator(client, authenticated_client, monkeypatch):
     """Test the handle_errors decorator with database errors"""
-    from app.transactions import handle_errors
+    from app.transactions_bp.routes import handle_errors
 
     # Create a mock function that will be decorated
     @handle_errors

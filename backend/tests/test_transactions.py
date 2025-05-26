@@ -1029,7 +1029,7 @@ def test_error_handling_decorator(authenticated_client, user, app):
     # Instead of trying to mock a route, test the decorator directly
     from sqlalchemy.exc import SQLAlchemyError
 
-    from app.transactions import handle_errors
+    from app.transactions_bp.routes import handle_errors
 
     # Create test functions that will be wrapped by the decorator
     def func_value_error():

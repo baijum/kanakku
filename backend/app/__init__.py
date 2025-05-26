@@ -9,7 +9,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .accounts import accounts as accounts_bp
+from .accounts_bp import accounts_bp
 from .api import api as api_bp
 from .auth_bp import auth_bp
 from .books import books as books_bp
@@ -23,7 +23,7 @@ from .preamble import preamble as preamble_bp
 from .reports import reports as reports_bp
 from .settings import settings as settings_bp
 from .swagger import swagger as swagger_bp
-from .transactions import transactions as transactions_bp
+from .transactions_bp import transactions_bp
 
 
 def setup_logging(app):

@@ -43,13 +43,13 @@ echo -e "\n${YELLOW}Running backend linting...${NC}"
 cd backend
 if [ -f "requirements.txt" ]; then
   # Check if ruff is installed
-  if ! pip freeze | grep -q "^ruff==" 2>/dev/null; then
+  if ! python -c "import ruff" 2>/dev/null; then
     echo "Installing ruff..."
     pip install ruff
   fi
   
   # Check if black is installed
-  if ! pip freeze | grep -q "^black==" 2>/dev/null; then
+  if ! python -c "import black" 2>/dev/null; then
     echo "Installing black..."
     pip install black
   fi
@@ -70,13 +70,13 @@ echo -e "\n${YELLOW}Running banktransactions linting...${NC}"
 cd banktransactions
 if [ -f "requirements.txt" ]; then
   # Check if ruff is installed
-  if ! pip freeze | grep -q "^ruff==" 2>/dev/null; then
+  if ! python -c "import ruff" 2>/dev/null; then
     echo "Installing ruff..."
     pip install ruff
   fi
   
   # Check if black is installed
-  if ! pip freeze | grep -q "^black==" 2>/dev/null; then
+  if ! python -c "import black" 2>/dev/null; then
     echo "Installing black..."
     pip install black
   fi
