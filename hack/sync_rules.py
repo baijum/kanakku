@@ -127,7 +127,10 @@ def convert_to_mdc(yaml_path, output_dir):
     # Write to output file
     output_path = output_dir / f"{yaml_path.stem}.mdc"
     with open(output_path, "w") as f:
-        f.write("\n".join(mdc_content))
+        content = "\n".join(mdc_content)
+        # Ensure the file ends with exactly one newline
+        content = content.rstrip() + "\n"
+        f.write(content)
     print(f"Generated: {output_path}")
 
 
