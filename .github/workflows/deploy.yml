@@ -83,6 +83,10 @@ jobs:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_kanakku
           FLASK_ENV: testing
         run: |
+          # Drop and recreate the test database to ensure clean state
+          PGPASSWORD=test_password psql -h localhost -U test_user -d postgres -c "DROP DATABASE IF EXISTS test_kanakku;"
+          PGPASSWORD=test_password psql -h localhost -U test_user -d postgres -c "CREATE DATABASE test_kanakku;"
+
           cd backend
           # Run database migrations to create all tables
           python -m flask db upgrade
