@@ -292,66 +292,19 @@ def get_gemini_api_key_from_config():
         # Fallback to standalone database access
         logging.debug("Using standalone database access to get Gemini API key")
 
-        # Import encryption utilities
-        from cryptography.fernet import Fernet
-        import base64
+        # Import encryption utilities from backend
+        import sys
 
-        def get_encryption_key_standalone():
-            """Get encryption key without Flask context."""
-            key = os.environ.get("ENCRYPTION_KEY")
-            if not key:
-                logging.warning("No encryption key found in environment")
-                return None
+        backend_path = os.path.join(os.path.dirname(__file__), "..", "..", "backend")
+        if backend_path not in sys.path:
+            sys.path.append(backend_path)
 
-            # Ensure the key is properly formatted for Fernet
-            if not key.endswith("="):
-                key = key + "=" * (-len(key) % 4)
-
-            try:
-                decoded_key = base64.urlsafe_b64decode(key)
-                if len(decoded_key) != 32:
-                    raise ValueError("Invalid key length")
-                return key
-            except Exception as e:
-                logging.error(f"Invalid encryption key: {str(e)}")
-                return None
-
-        def decrypt_value_standalone(encrypted_value):
-            """Decrypt value without Flask context."""
-            if not encrypted_value:
-                return None
-
-            key = get_encryption_key_standalone()
-            if not key:
-                return None
-
-            f = Fernet(key.encode() if isinstance(key, str) else key)
-            try:
-                decrypted_data = f.decrypt(encrypted_value.encode())
-                return decrypted_data.decode()
-            except Exception as e:
-                logging.error(f"Failed to decrypt value: {str(e)}")
-                return None
+        from app.utils.encryption import decrypt_value_standalone
 
         # Access database directly
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        from sqlalchemy.ext.declarative import declarative_base
-        from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
-
-        # Create standalone model
-        Base = declarative_base()
-
-        class GlobalConfiguration(Base):
-            __tablename__ = "global_configurations"
-
-            id = Column(Integer, primary_key=True)
-            key = Column(String(100), unique=True, nullable=False)
-            value = Column(Text, nullable=False)
-            description = Column(String(255), nullable=True)
-            is_encrypted = Column(Boolean, default=True)
-            created_at = Column(DateTime)
-            updated_at = Column(DateTime)
+        from app.models import GlobalConfiguration
 
         # Get database URL
         db_url = os.getenv("DATABASE_URL")

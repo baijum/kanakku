@@ -30,9 +30,9 @@ from rq import get_current_job
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# Import encryption utilities directly
-from cryptography.fernet import Fernet
-import base64
+# Import from backend instead of duplicating
+from app.models import EmailConfiguration
+from app.utils.encryption import decrypt_value_standalone
 
 # Import the working banktransactions modules
 from banktransactions.core.imap_client import get_bank_emails
@@ -44,66 +44,6 @@ from banktransactions.core.processed_ids_db import (
 logger = logging.getLogger(__name__)
 
 
-def get_encryption_key_standalone():
-    """
-    Get the encryption key from environment variables without Flask context.
-    """
-    logger.debug("Getting encryption key from environment variables")
-    key = os.environ.get("ENCRYPTION_KEY")
-    if not key:
-        logger.warning("No encryption key found in environment. Using temporary key.")
-        logger.debug("Generating temporary encryption key")
-        key = Fernet.generate_key().decode()
-
-    # Ensure the key is properly formatted for Fernet
-    if not key.endswith("="):
-        logger.debug("Padding encryption key for proper formatting")
-        # Pad the key if necessary
-        key = key + "=" * (-len(key) % 4)
-
-    try:
-        # Attempt to decode and validate the key
-        logger.debug("Validating encryption key format")
-        decoded_key = base64.urlsafe_b64decode(key)
-        if len(decoded_key) != 32:
-            raise ValueError("Invalid key length")
-        logger.debug("Encryption key validation successful")
-    except Exception as e:
-        logger.error(f"Invalid encryption key: {str(e)}")
-        logger.debug("Generating new temporary key due to validation failure")
-        # Generate a temporary key for this session
-        key = Fernet.generate_key().decode()
-
-    return key
-
-
-def decrypt_value_standalone(encrypted_value):
-    """
-    Decrypt an encrypted value without Flask context.
-    """
-    logger.debug(
-        f"Attempting to decrypt value (length: {len(encrypted_value) if encrypted_value else 0})"
-    )
-    if not encrypted_value:
-        logger.debug("No encrypted value provided, returning None")
-        return None
-
-    key = get_encryption_key_standalone()
-    f = Fernet(key.encode() if isinstance(key, str) else key)
-    try:
-        logger.debug("Decrypting value using Fernet")
-        decrypted_data = f.decrypt(encrypted_value.encode())
-        decrypted_result = decrypted_data.decode()
-        logger.debug("Value decryption successful")
-        return decrypted_result
-    except Exception as e:
-        logger.error(f"Failed to decrypt value: {str(e)}")
-        logger.debug(
-            f"Decryption failed with encrypted_value type: {type(encrypted_value)}"
-        )
-        return None
-
-
 def process_user_emails_standalone(user_id: int) -> Dict:
     """
     Standalone function to process emails for a user using the proven working logic from main.py.
@@ -111,32 +51,6 @@ def process_user_emails_standalone(user_id: int) -> Dict:
     """
     logger.debug(f"Starting email processing for user_id: {user_id}")
     try:
-        # Import models and utilities directly without Flask context
-        # We need to set up the database models manually
-        logger.debug("Importing SQLAlchemy components and setting up models")
-        from sqlalchemy.ext.declarative import declarative_base
-        from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
-
-        # Create a standalone model definition
-        Base = declarative_base()
-
-        class EmailConfiguration(Base):
-            __tablename__ = "user_email_configurations"
-
-            id = Column(Integer, primary_key=True)
-            user_id = Column(Integer, nullable=False)
-            is_enabled = Column(Boolean, default=False)
-            imap_server = Column(String(255), default="imap.gmail.com")
-            imap_port = Column(Integer, default=993)
-            email_address = Column(String(255), nullable=False)
-            app_password = Column(String(255), nullable=False)
-            polling_interval = Column(String(50), default="hourly")
-            last_check_time = Column(DateTime, nullable=True)
-            sample_emails = Column(Text, nullable=True)
-            last_processed_email_id = Column(String(255), nullable=True)
-            created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-            updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
         # Create database session
         logger.debug("Setting up database connection")
         db_url = os.getenv("DATABASE_URL")
@@ -176,7 +90,7 @@ def process_user_emails_standalone(user_id: int) -> Dict:
             )
             logger.debug(f"Last check time: {config.last_check_time}")
 
-            # Decrypt the app password using standalone function
+            # Decrypt the app password using backend's encryption utility
             logger.debug("Decrypting app password")
             decrypted_password = decrypt_value_standalone(config.app_password)
             if not decrypted_password:
