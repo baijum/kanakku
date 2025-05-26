@@ -1,10 +1,17 @@
 from functools import wraps
 
 from flask import Blueprint, current_app, jsonify, request
+from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import api_token_required, db
 
+from .schemas import (
+    AccountCreateSchema,
+    AccountQuerySchema,
+    AccountUpdateSchema,
+    AutocompleteQuerySchema,
+)
 from .services import AccountService
 
 accounts_bp = Blueprint("accounts", __name__)
@@ -17,6 +24,11 @@ def handle_errors(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
+        except ValidationError as e:
+            current_app.logger.warning(
+                f"Validation error in {func.__name__}: {e.messages}"
+            )
+            return jsonify({"error": "Validation failed", "details": e.messages}), 400
         except ValueError as e:
             current_app.logger.warning(f"Validation error in {func.__name__}: {str(e)}")
             return jsonify({"error": str(e)}), 400
@@ -42,8 +54,14 @@ def get_accounts():
     """Get all accounts for the current user and active book."""
     current_app.logger.debug("Entered get_accounts route")
 
+    # Validate query parameters
+    query_schema = AccountQuerySchema()
+    query_params = query_schema.load(request.args)
+
     # Use service layer to get accounts
-    account_names = AccountService.get_accounts(include_details=False)
+    account_names = AccountService.get_accounts(
+        include_details=query_params.get("include_details", False)
+    )
 
     # Return in format expected by AddTransaction.js
     return jsonify({"accounts": account_names})
@@ -73,8 +91,15 @@ def create_account():
     if data is None:
         return jsonify({"error": "Request must be valid JSON"}), 400
 
+    # Validate input using schema
+    schema = AccountCreateSchema()
+    validated_data = schema.load(data)
+
+    # Remove book_id if present (service layer handles this)
+    validated_data.pop("book_id", None)
+
     # Use service layer to create account
-    success, message, account = AccountService.create_account(data)
+    success, message, account = AccountService.create_account(validated_data)
 
     if not success:
         return jsonify({"error": message}), 400
@@ -109,8 +134,14 @@ def update_account(account_id):
     if data is None:
         return jsonify({"error": "Request must be valid JSON"}), 400
 
+    # Validate input using schema
+    schema = AccountUpdateSchema()
+    validated_data = schema.load(data)
+
     # Use service layer to update account
-    success, message, account = AccountService.update_account(account_id, data)
+    success, message, account = AccountService.update_account(
+        account_id, validated_data
+    )
 
     if not success:
         if "not found" in message.lower():
@@ -145,8 +176,12 @@ def autocomplete_accounts():
     """Get account names for auto-completion based on a prefix."""
     current_app.logger.debug("Entered autocomplete_accounts route")
 
-    prefix = request.args.get("prefix", "").strip()
-    limit = request.args.get("limit", 20, type=int)
+    # Validate query parameters
+    query_schema = AutocompleteQuerySchema()
+    query_params = query_schema.load(request.args)
+
+    prefix = query_params.get("prefix", "").strip()
+    limit = query_params.get("limit", 20)
 
     # Use service layer to get autocomplete suggestions
     suggestions, prefix = AccountService.autocomplete_accounts(prefix, limit)

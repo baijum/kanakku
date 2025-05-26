@@ -8,6 +8,8 @@ class AccountCreateSchema(Schema):
     description = fields.Str(missing="", validate=validate.Length(max=500))
     currency = fields.Str(missing="INR", validate=validate.Length(min=3, max=3))
     balance = fields.Float(missing=0.0)
+    # Allow book_id but ignore it (service layer handles this)
+    book_id = fields.Int(load_only=True, dump_only=False, allow_none=True)
 
     @validates_schema
     def validate_balance(self, data, **kwargs):
@@ -42,5 +44,5 @@ class AccountQuerySchema(Schema):
 class AutocompleteQuerySchema(Schema):
     """Schema for autocomplete query parameter validation."""
 
-    prefix = fields.Str(required=True, validate=validate.Length(min=1, max=255))
+    prefix = fields.Str(missing="", validate=validate.Length(max=255))
     limit = fields.Int(missing=20, validate=validate.Range(min=1, max=100))
