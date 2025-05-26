@@ -20,7 +20,7 @@ from .extensions import db, jwt, limiter, login_manager, mail, setup_csrf
 from .ledger import ledger as ledger_bp
 from .mappings import mappings_bp
 from .preamble import preamble as preamble_bp
-from .reports import reports as reports_bp
+from .reports_bp import reports_bp
 from .settings import settings as settings_bp
 from .swagger import swagger as swagger_bp
 from .transactions_bp import transactions_bp
