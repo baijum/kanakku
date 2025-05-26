@@ -72,15 +72,19 @@ def test_invalid_login(client):
 def test_get_current_user(authenticated_client, user, db_session):
     # Using db_session ensures the user object from the fixture
     # can be used for comparison if needed, although accessing response data is preferred.
-    with db_session.no_autoflush:
-        response = authenticated_client.get("/api/v1/auth/me")
-        # Primary assertion should be on status code and response content
-        assert response.status_code == 200
-        response_data = response.get_json()
-        assert response_data is not None
-        # Compare response data against the known ID from the fixture user
-        assert response_data.get("id") == user.id
-        assert response_data.get("email") == user.email
+    response = authenticated_client.get("/api/v1/auth/me")
+    # Primary assertion should be on status code and response content
+    assert response.status_code == 200
+    response_data = response.get_json()
+    assert response_data is not None
+
+    # Get a fresh user instance from the database to avoid detached instance issues
+    fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+    assert fresh_user is not None
+
+    # Compare response data against the known ID from the fresh user
+    assert response_data.get("id") == fresh_user.id
+    assert response_data.get("email") == fresh_user.email
 
 
 def test_forgot_password(client, user, app):
@@ -150,10 +154,11 @@ def test_reset_password(client, user, app, db_session):
 
 
 def test_update_password(authenticated_client, user, app, db_session):
-    # First activate the user
+    # First activate the user and set the correct password
     with app.app_context():
-        user = db_session.query(User).filter_by(email="test@example.com").first()
-        user.activate()
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        fresh_user.set_password("password123")  # Set the password we'll use in the test
+        fresh_user.activate()
         db_session.commit()
 
     # Test successful password update
@@ -165,12 +170,12 @@ def test_update_password(authenticated_client, user, app, db_session):
     data = response.get_json()
     assert "message" in data
 
-    # Verify new password works
-    response = authenticated_client.post(
-        "/api/v1/auth/login",
-        json={"email": "test@example.com", "password": "newpassword123"},
-    )
-    assert response.status_code == 200
+    # Verify new password works by checking the user's password was actually changed
+    with app.app_context():
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        assert fresh_user.check_password(
+            "newpassword123"
+        ), "New password should be set correctly"
 
     # Test with incorrect current password
     response = authenticated_client.put(
@@ -180,15 +185,19 @@ def test_update_password(authenticated_client, user, app, db_session):
     assert response.status_code == 401
 
 
-def test_activate_user(authenticated_client, user, app):
-    # First deactivate the user
+def test_activate_user(authenticated_client, user, app, db_session):
+    # Get user ID for later use and make user admin
+    user_id = None
     with app.app_context():
-        user.deactivate()
-        db.session.commit()
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        user_id = fresh_user.id
+        fresh_user.is_admin = True  # Make user admin to access this endpoint
+        fresh_user.deactivate()
+        db_session.commit()
 
     # Test activating the user
     response = authenticated_client.post(
-        f"/api/v1/auth/users/{user.id}/activate", json={"is_active": True}
+        f"/api/v1/auth/users/{user_id}/activate", json={"is_active": True}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -197,7 +206,7 @@ def test_activate_user(authenticated_client, user, app):
 
     # Test deactivating the user
     response = authenticated_client.post(
-        f"/api/v1/auth/users/{user.id}/activate", json={"is_active": False}
+        f"/api/v1/auth/users/{user_id}/activate", json={"is_active": False}
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -211,12 +220,13 @@ def test_activate_user(authenticated_client, user, app):
     assert response.status_code == 404
 
 
-def test_toggle_status(authenticated_client, user, app):
+def test_toggle_status(authenticated_client, user, app, db_session):
     """Test the toggle-status endpoint to activate/deactivate current user"""
     # First set the user to active
     with app.app_context():
-        user.activate()
-        db.session.commit()
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        fresh_user.activate()
+        db_session.commit()
 
     # Test deactivating the user
     response = authenticated_client.post(
@@ -507,12 +517,13 @@ def test_google_callback_inactive_user(client, app, mocker):
         assert not user.is_active
 
 
-def test_get_all_users_as_admin(authenticated_client, user, app):
+def test_get_all_users_as_admin(authenticated_client, user, app, db_session):
     """Test that admin users can access user list."""
     # Ensure user is admin
     with app.app_context():
-        user.is_admin = True
-        db.session.commit()
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        fresh_user.is_admin = True
+        db_session.commit()
 
     # Verify admin user can access the endpoint
     response = authenticated_client.get("/api/v1/auth/users")

@@ -58,14 +58,19 @@ def account(app, db_session):
 def preamble(app, db_session, user):
     """Create a test preamble for the user."""
     with app.app_context():
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
+
         existing_preamble = Preamble.query.filter_by(
-            user_id=user.id, is_default=True
+            user_id=fresh_user.id, is_default=True
         ).first()
         if existing_preamble:
             return existing_preamble
 
         preamble = Preamble(
-            user_id=user.id,
+            user_id=fresh_user.id,
             name="Default Preamble",
             content="account Assets:Cash INR\naccount Expenses:Food INR",
             is_default=True,
@@ -79,14 +84,19 @@ def preamble(app, db_session, user):
 def non_default_preamble(app, db_session, user):
     """Create a non-default test preamble for the user."""
     with app.app_context():
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
+
         existing_preamble = Preamble.query.filter_by(
-            user_id=user.id, name="Non-Default Preamble"
+            user_id=fresh_user.id, name="Non-Default Preamble"
         ).first()
         if existing_preamble:
             return existing_preamble
 
         preamble = Preamble(
-            user_id=user.id,
+            user_id=fresh_user.id,
             name="Non-Default Preamble",
             content="account Assets:Bank INR\naccount Expenses:Entertainment INR",
             is_default=False,
@@ -100,11 +110,16 @@ def non_default_preamble(app, db_session, user):
 def book(app, db_session, user):
     """Create a test book for the user"""
     with app.app_context():
-        book = Book.query.filter_by(user_id=user.id).first()
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
+
+        book = Book.query.filter_by(user_id=fresh_user.id).first()
         if book:
             return book
 
-        book = Book(user_id=user.id, name="Test Book")
+        book = Book(user_id=fresh_user.id, name="Test Book")
         db_session.add(book)
         db_session.commit()
         return book
@@ -114,21 +129,26 @@ def book(app, db_session, user):
 def sample_transactions(app, db_session, user, book):
     """Create sample transactions for testing date filtering."""
     with app.app_context():
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
+
         # Use the book from the fixture
-        book = Book.query.filter_by(user_id=user.id).first()
+        book = Book.query.filter_by(user_id=fresh_user.id).first()
 
         # Set as active book if not already
-        if not user.active_book_id:
-            user.active_book_id = book.id
-            db.session.commit()
+        if not fresh_user.active_book_id:
+            fresh_user.active_book_id = book.id
+            db_session.commit()
 
         # Check for account
         test_account = Account.query.filter_by(
-            user_id=user.id, name="Test Account"
+            user_id=fresh_user.id, name="Test Account"
         ).first()
         if not test_account:
             test_account = Account(
-                user_id=user.id,
+                user_id=fresh_user.id,
                 book_id=book.id,
                 name="Test Account",
                 balance=1000.0,
@@ -138,7 +158,7 @@ def sample_transactions(app, db_session, user, book):
             db_session.commit()
             # Refresh
             test_account = Account.query.filter_by(
-                user_id=user.id, name="Test Account"
+                user_id=fresh_user.id, name="Test Account"
             ).first()
 
         # Create transactions with different dates
@@ -146,12 +166,12 @@ def sample_transactions(app, db_session, user, book):
 
         # Check if transactions already exist for this test
         existing_tx = Transaction.query.filter_by(
-            user_id=user.id, description="Past Transaction"
+            user_id=fresh_user.id, description="Past Transaction"
         ).first()
         if existing_tx:
             # If transactions for this test already exist, return them
             return Transaction.query.filter(
-                Transaction.user_id == user.id,
+                Transaction.user_id == fresh_user.id,
                 Transaction.description.in_(
                     [
                         "Past Transaction",
@@ -165,7 +185,7 @@ def sample_transactions(app, db_session, user, book):
 
         # Past transaction
         past_tx = Transaction(
-            user_id=user.id,
+            user_id=fresh_user.id,
             book_id=book.id,
             account_id=test_account.id,
             date=date.today() - timedelta(days=30),
@@ -179,7 +199,7 @@ def sample_transactions(app, db_session, user, book):
 
         # Recent transaction
         recent_tx = Transaction(
-            user_id=user.id,
+            user_id=fresh_user.id,
             book_id=book.id,
             account_id=test_account.id,
             date=date.today() - timedelta(days=5),
@@ -193,7 +213,7 @@ def sample_transactions(app, db_session, user, book):
 
         # Today's transaction
         today_tx = Transaction(
-            user_id=user.id,
+            user_id=fresh_user.id,
             book_id=book.id,
             account_id=test_account.id,
             date=date.today(),
@@ -207,7 +227,7 @@ def sample_transactions(app, db_session, user, book):
 
         # Transaction with USD currency
         usd_tx = Transaction(
-            user_id=user.id,
+            user_id=fresh_user.id,
             book_id=book.id,
             account_id=test_account.id,
             date=date.today() - timedelta(days=2),
@@ -221,7 +241,7 @@ def sample_transactions(app, db_session, user, book):
 
         # Transaction with pending status
         pending_tx = Transaction(
-            user_id=user.id,
+            user_id=fresh_user.id,
             book_id=book.id,
             account_id=test_account.id,
             date=date.today() - timedelta(days=1),
@@ -241,29 +261,34 @@ def sample_transactions(app, db_session, user, book):
 def test_get_transactions(authenticated_client, app, db_session, user):
     """Test getting transactions for a user."""
     with db_session.no_autoflush:
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
+
         # First, ensure user has an active book
-        book = Book.query.filter_by(user_id=user.id).first()
+        book = Book.query.filter_by(user_id=fresh_user.id).first()
         if not book:
             # Create a book if it doesn't exist
-            book = Book(user_id=user.id, name="Test Book")
+            book = Book(user_id=fresh_user.id, name="Test Book")
             db_session.add(book)
             db_session.commit()
 
         # Set as active book if not already
-        if not user.active_book_id:
-            user.active_book_id = book.id
+        if not fresh_user.active_book_id:
+            fresh_user.active_book_id = book.id
             db_session.commit()
 
         # Fetch the known test account within this session using the user
         test_account = (
             db_session.query(Account)
-            .filter_by(user_id=user.id, name="Test Account")
+            .filter_by(user_id=fresh_user.id, name="Test Account")
             .first()
         )
         if not test_account:
             # If it doesn't exist for some reason (e.g., fixture failed), create it
             test_account = Account(
-                user_id=user.id,
+                user_id=fresh_user.id,
                 book_id=book.id,  # Set the book_id here
                 name="Test Account",
                 balance=1000.0,
@@ -274,7 +299,7 @@ def test_get_transactions(authenticated_client, app, db_session, user):
             # Need to re-fetch after commit if created here
             test_account = (
                 db_session.query(Account)
-                .filter_by(user_id=user.id, name="Test Account")
+                .filter_by(user_id=fresh_user.id, name="Test Account")
                 .first()
             )
             if not test_account:
@@ -331,13 +356,13 @@ def test_create_account(authenticated_client, user, db_session):
 
     # AND the account should exist in the database
     with db_session.no_autoflush:
-        # Fetch user within this session context
-        attached_user = db_session.get(User, user.id)
-        if not attached_user:
-            pytest.fail("User fixture could not be re-fetched in session")
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
         new_account = (
             db_session.query(Account)
-            .filter_by(user_id=attached_user.id, name="Assets:Savings")
+            .filter_by(user_id=fresh_user.id, name="Assets:Savings")
             .first()
         )
         assert new_account is not None
@@ -353,35 +378,35 @@ def test_health_check(client):
 def test_get_transactions_ledger_format(authenticated_client, app, db_session, user):
     """Test getting transactions in ledger format."""
     with app.app_context():
-        # Fetch user and the specific test account within this session context
-        attached_user = db_session.get(User, user.id)
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
 
         # First, ensure user has an active book
-        book = Book.query.filter_by(user_id=user.id).first()
+        book = Book.query.filter_by(user_id=fresh_user.id).first()
         if not book:
             # Create a book if it doesn't exist
-            book = Book(user_id=user.id, name="Test Book")
+            book = Book(user_id=fresh_user.id, name="Test Book")
             db_session.add(book)
             db_session.commit()
 
         # Set as active book if not already
-        if not user.active_book_id:
-            user.active_book_id = book.id
+        if not fresh_user.active_book_id:
+            fresh_user.active_book_id = book.id
             db_session.commit()
 
         # Fetch account by name and user ID
         test_account = (
             db_session.query(Account)
-            .filter_by(user_id=user.id, name="Test Account")
+            .filter_by(user_id=fresh_user.id, name="Test Account")
             .first()
         )
 
-        if not attached_user:
-            pytest.fail("User fixture could not be re-fetched in session")
         if not test_account:
             # If the account doesn't exist (e.g., fixture setup issue), create it here
             test_account = Account(
-                user_id=user.id,
+                user_id=fresh_user.id,
                 book_id=book.id,  # Set the book_id here
                 name="Test Account",
                 balance=1000.0,
@@ -392,14 +417,14 @@ def test_get_transactions_ledger_format(authenticated_client, app, db_session, u
             # Re-fetch after commit
             test_account = (
                 db_session.query(Account)
-                .filter_by(user_id=user.id, name="Test Account")
+                .filter_by(user_id=fresh_user.id, name="Test Account")
                 .first()
             )
             if not test_account:
                 pytest.fail("Failed to create or find Test Account within test")
 
         transaction = Transaction(
-            user_id=attached_user.id,
+            user_id=fresh_user.id,
             book_id=book.id,  # Set the book_id here for the transaction
             account_id=test_account.id,  # Use ID from fetched account
             date=date(2024, 7, 27),
@@ -478,9 +503,14 @@ def test_get_transactions_ledger_format_with_specific_preamble(
 ):
     """Test getting transactions with a specific preamble."""
     with app.app_context():
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
+
         # Get the preamble ID within the app context
         specific_preamble = Preamble.query.filter_by(
-            user_id=user.id, name="Non-Default Preamble"
+            user_id=fresh_user.id, name="Non-Default Preamble"
         ).first()
 
         if not specific_preamble:
@@ -527,8 +557,13 @@ def test_get_transactions_ledger_format_empty(
     """Test getting transactions when there are no transactions."""
     # Delete any existing transactions for the user
     with app.app_context():
-        Transaction.query.filter_by(user_id=user.id).delete()
-        db.session.commit()
+        # Get a fresh user instance from the database to avoid detached instance errors
+        fresh_user = db_session.query(User).filter_by(email="test@example.com").first()
+        if not fresh_user:
+            pytest.fail("Could not find test user in database")
+
+        Transaction.query.filter_by(user_id=fresh_user.id).delete()
+        db_session.commit()
 
     response = authenticated_client.get("/api/v1/ledgertransactions")
 

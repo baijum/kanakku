@@ -90,40 +90,40 @@ def user(app, db_session):
     attached_user = db_session.get(User, user_id)
     if not attached_user:
         pytest.fail("Failed to fetch created user from session in user fixture")
+
+    # Ensure the user object stays attached by accessing its attributes
+    # This forces SQLAlchemy to load all the data into the object
+    _ = attached_user.id
+    _ = attached_user.email
+    _ = attached_user.is_admin
+    _ = attached_user.is_active
+
     return attached_user
 
 
 @pytest.fixture(scope="function")
-def authenticated_client(client, app, db_session):
-    """Ensure test user exists and create an authenticated client for them."""
+def authenticated_client(client, app, user, db_session):
+    """Create an authenticated client using the user fixture."""
 
-    user_id = None
-    # Use app_context to ensure db operations and token creation work
+    # Use app_context to ensure token creation works
     with app.app_context():
-        # Ensure the standard test user exists within this session
-        test_user = db_session.query(User).filter_by(email="test@example.com").first()
-        if not test_user:
-            # Create if doesn't exist (should usually exist due to fixture order)
-            test_user = User(email="test@example.com")
-            test_user.set_password("password123")  # Use consistent password
-            test_user.is_admin = True  # Ensure admin flag is set here too
-            test_user.is_active = True  # Ensure active flag is set here too
-            db_session.add(test_user)
-            db_session.commit()
-            user_id = test_user.id
-        else:
-            # If user exists, make sure it's attached to this session
-            test_user = db_session.merge(test_user)
-            user_id = test_user.id
-
-        if not user_id:
+        if not user:
             pytest.fail(
-                "Could not get user ID for token creation in authenticated_client"
+                "User fixture did not provide a valid user for authenticated_client"
+            )
+
+        # Ensure the user is attached to the current session
+        if user not in db_session:
+            user = db_session.merge(user)
+
+        if not user.id:
+            pytest.fail(
+                "User fixture did not provide a valid user ID for authenticated_client"
             )
 
         # Create a JWT access token for this user using Flask-JWT-Extended
         # Convert user_id to string to avoid "Subject must be a string" error
-        token = create_access_token(identity=str(user_id))
+        token = create_access_token(identity=str(user.id))
 
     auth_headers = {"Authorization": f"Bearer {token}"}
 
