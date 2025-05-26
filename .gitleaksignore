@@ -22,3 +22,69 @@
 
 # Frontend test files with example passwords
 # These are test values for E2E testing, not real secrets
+
+# Documentation examples in banktransactions/docs/TEST_README.md
+b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/TEST_README.md:generic-api-key:52
+
+# Documentation examples in docs/GEMINI_API_SETUP.md
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/GEMINI_API_SETUP.md:curl-auth-header:58
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/GEMINI_API_SETUP.md:curl-auth-header:92
+
+# Documentation examples in banktransactions/docs/SCHEDULER.md
+b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:kanakku-database-url:74
+b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:generic-api-key:61
+b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:generic-api-key:93
+
+# Frontend test passwords in UpdatePassword.jsx
+b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:50
+b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:54
+b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:56
+b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:60
+b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:62
+
+# Documentation examples in docs/api_documentation.md
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:jwt:111
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:122
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:140
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:162
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:229
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:254
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:282
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:310
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:330
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:352
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:385
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:417
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:440
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:472
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:496
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:532
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:574
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:633
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:659
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:696
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:757
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:775
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:803
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:827
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:849
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:867
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:885
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:910
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:938
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:975
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1008
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1032
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1065
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1084
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1110
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1143
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1173
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1196
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1226
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1244
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1270
+
+# Documentation examples in docs/deployment/linux-deployment-guide.md
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/deployment/linux-deployment-guide.md:kanakku-jwt-secret:272
+b48ea9585ad6585f964a59b24fa3016506747d9e:docs/deployment/linux-deployment-guide.md:kanakku-jwt-secret:275
