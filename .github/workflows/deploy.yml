@@ -150,7 +150,6 @@ jobs:
           cp -r banktransactions deploy/
           cp -r shared deploy/
           cp -r adminserver deploy/
-          cp requirements.txt deploy/
           cp pyproject.toml deploy/
 
           # Copy frontend build
@@ -198,7 +197,6 @@ jobs:
           sudo cp -r banktransactions "$DEPLOY_PATH/"
           sudo cp -r shared "$DEPLOY_PATH/"
           sudo cp -r adminserver "$DEPLOY_PATH/"
-          sudo cp requirements.txt "$DEPLOY_PATH/"
           sudo cp pyproject.toml "$DEPLOY_PATH/"
 
           # Copy frontend build
@@ -217,7 +215,7 @@ jobs:
           echo "Setting up Admin Server environment..."
           sudo -u "$SERVICE_USER" python3 -m venv adminserver/venv
           sudo -u "$SERVICE_USER" adminserver/venv/bin/pip install --upgrade pip
-          sudo -u "$SERVICE_USER" adminserver/venv/bin/pip install -r adminserver/requirements.txt
+          sudo -u "$SERVICE_USER" adminserver/venv/bin/pip install -e .
 
           # Set permissions
           sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$DEPLOY_PATH"
@@ -337,7 +335,7 @@ jobs:
           ./scripts/start.sh
 
           # Cleanup
-          rm -rf /tmp/kanakku-deploy.tar.gz /tmp/backend /tmp/frontend /tmp/config /tmp/scripts /tmp/banktransactions /tmp/shared /tmp/requirements.txt /tmp/pyproject.toml
+          rm -rf /tmp/kanakku-deploy.tar.gz /tmp/backend /tmp/frontend /tmp/config /tmp/scripts /tmp/banktransactions /tmp/shared /tmp/pyproject.toml
 
           echo "Deployment completed successfully!"
           EOF

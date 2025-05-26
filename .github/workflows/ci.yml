@@ -41,13 +41,11 @@ jobs:
               - 'banktransactions/**'
               - 'shared/**'
               - 'pyproject.toml'
-              - 'requirements.txt'
             frontend:
               - 'frontend/**'
             python:
               - '**/*.py'
               - 'pyproject.toml'
-              - 'requirements.txt'
 
       - name: Set up Python
         if: steps.changes.outputs.python == 'true'
@@ -55,9 +53,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            pyproject.toml
+          cache-dependency-path: pyproject.toml
 
       - name: Install Python dependencies
         if: steps.changes.outputs.python == 'true'
@@ -88,9 +84,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            pyproject.toml
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
         run: |
@@ -152,9 +146,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            pyproject.toml
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
         run: |
@@ -263,9 +255,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            pyproject.toml
+          cache-dependency-path: pyproject.toml
 
       - name: Install Python dependencies
         run: |

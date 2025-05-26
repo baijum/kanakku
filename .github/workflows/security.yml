@@ -28,9 +28,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            pyproject.toml
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
         run: |
