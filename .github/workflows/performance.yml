@@ -117,11 +117,36 @@ jobs:
           python -c "
           import psutil
           import os
+
+          # Process memory info
           process = psutil.Process(os.getpid())
           memory_info = process.memory_info()
-          print(f'RSS Memory: {memory_info.rss / 1024 / 1024:.2f} MB')
-          print(f'VMS Memory: {memory_info.vms / 1024 / 1024:.2f} MB')
-          "
+          rss_mb = memory_info.rss / 1024 / 1024
+          vms_mb = memory_info.vms / 1024 / 1024
+
+          # System memory info
+          system_memory = psutil.virtual_memory()
+          total_memory_gb = system_memory.total / 1024 / 1024 / 1024
+          available_memory_gb = system_memory.available / 1024 / 1024 / 1024
+          memory_percent = system_memory.percent
+
+          print(f'Process RSS Memory: {rss_mb:.2f} MB')
+          print(f'Process VMS Memory: {vms_mb:.2f} MB')
+          print(f'System Total Memory: {total_memory_gb:.2f} GB')
+          print(f'System Available Memory: {available_memory_gb:.2f} GB')
+          print(f'System Memory Usage: {memory_percent:.1f}%')
+          print(f'RSS_MEMORY_MB={rss_mb:.2f}')
+          print(f'VMS_MEMORY_MB={vms_mb:.2f}')
+          print(f'SYSTEM_MEMORY_USAGE_PERCENT={memory_percent:.1f}')
+          " | tee memory_output.txt
+
+          # Extract memory values and set as environment variables
+          RSS_MEMORY=$(grep "RSS_MEMORY_MB=" memory_output.txt | cut -d'=' -f2)
+          VMS_MEMORY=$(grep "VMS_MEMORY_MB=" memory_output.txt | cut -d'=' -f2)
+          SYSTEM_MEMORY_USAGE=$(grep "SYSTEM_MEMORY_USAGE_PERCENT=" memory_output.txt | cut -d'=' -f2)
+          echo "RSS_MEMORY_MB=${RSS_MEMORY}" >> $GITHUB_ENV
+          echo "VMS_MEMORY_MB=${VMS_MEMORY}" >> $GITHUB_ENV
+          echo "SYSTEM_MEMORY_USAGE_PERCENT=${SYSTEM_MEMORY_USAGE}" >> $GITHUB_ENV
 
       - name: Generate performance report
         run: |
@@ -139,6 +164,9 @@ jobs:
           | Dependency Install Time | ${DEPENDENCY_INSTALL_TIME}s |
           | Application Startup Time | ${STARTUP_TIME}ms |
           | Test Execution Time | ${TEST_EXECUTION_TIME}s |
+          | Process RSS Memory | ${RSS_MEMORY_MB} MB |
+          | Process VMS Memory | ${VMS_MEMORY_MB} MB |
+          | System Memory Usage | ${SYSTEM_MEMORY_USAGE_PERCENT}% |
 
           ## System Information
 
@@ -311,6 +339,8 @@ jobs:
           echo "| Component | Metric | Threshold | Status |" >> performance-summary.md
           echo "|-----------|--------|-----------|--------|" >> performance-summary.md
           echo "| Backend | Startup Time | < 5000ms | ⏳ |" >> performance-summary.md
+          echo "| Backend | Process RSS Memory | < 100MB | ⏳ |" >> performance-summary.md
+          echo "| Backend | System Memory Usage | < 80% | ⏳ |" >> performance-summary.md
           echo "| Frontend | Build Time | < 120s | ⏳ |" >> performance-summary.md
           echo "| Frontend | Bundle Size | < 2MB | ⏳ |" >> performance-summary.md
           echo "" >> performance-summary.md
