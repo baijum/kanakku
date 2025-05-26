@@ -135,7 +135,7 @@ class TestConfigurationFunctions:
 
     # Define constants for test API tokens
     VALID_TEST_GEMINI_TOKEN = (
-        "AIzaSyDXKNQz1234567890abcdefghijklmnop"  # Example valid token structure
+        "AIzaSyTEST_TOKEN_FOR_UNIT_TESTS_ONLY_123"  # Example valid token structure
     )
     INVALID_PREFIX_TEST_GEMINI_TOKEN = (
         "InvalidPrefix1234567890abcdefghijklmnop"  # Example invalid prefix
@@ -337,7 +337,7 @@ class TestConfigurationFunctions:
         with app.app_context():
             from app.utils.encryption import encrypt_value
 
-            encrypted_token = encrypt_value("AIzaSyDXKNQz1234567890abcdefghijklmnop")
+            encrypted_token = encrypt_value("AIzaSyTEST_TOKEN_FOR_UNIT_TESTS_ONLY_123")
 
             config = GlobalConfiguration(
                 key="GEMINI_API_TOKEN",
