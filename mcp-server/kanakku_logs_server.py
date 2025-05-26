@@ -377,6 +377,87 @@ async def execute_safe_command(
     return stdout, stderr, returncode, safety_note
 
 
+# Service management configuration
+KANAKKU_SERVICES = [
+    "kanakku",
+    "kanakku-worker",
+    "kanakku-scheduler",
+    "nginx",
+    "postgresql",
+    "redis-server",
+]
+
+ALLOWED_SERVICE_OPERATIONS = [
+    "start",
+    "stop",
+    "restart",
+    "reload",
+    "daemon-reload",
+    "status",
+    "is-active",
+    "is-enabled",
+]
+
+
+async def execute_service_operation(
+    operation: str, service: Optional[str] = None, timeout: int = 60
+) -> tuple[str, str, int, str]:
+    """
+    Execute a service management operation safely.
+
+    Args:
+        operation: The systemctl operation (start, stop, restart, reload, etc.)
+        service: The service name (optional for daemon-reload)
+        timeout: Command timeout in seconds
+
+    Returns:
+        tuple: (stdout, stderr, returncode, safety_note)
+    """
+    # Validate operation
+    if operation not in ALLOWED_SERVICE_OPERATIONS:
+        return (
+            "",
+            f"Operation '{operation}' not allowed",
+            1,
+            "🚫 BLOCKED: Invalid operation",
+        )
+
+    # Special case for daemon-reload
+    if operation == "daemon-reload":
+        command = "systemctl daemon-reload"
+        safety_note = "🔄 DAEMON-RELOAD: Reloading systemd configuration"
+    else:
+        # Validate service name
+        if not service:
+            return (
+                "",
+                "Service name required for this operation",
+                1,
+                "🚫 BLOCKED: Missing service name",
+            )
+
+        if service not in KANAKKU_SERVICES:
+            return (
+                "",
+                f"Service '{service}' not in allowed list",
+                1,
+                "🚫 BLOCKED: Service not allowed",
+            )
+
+        command = f"systemctl {operation} {service}"
+        safety_note = f"🔧 SERVICE: {operation.upper()} {service}"
+
+    # Execute the command
+    stdout, stderr, returncode = await execute_remote_command(command, timeout)
+
+    if returncode != 0:
+        safety_note += f" (FAILED - exit code: {returncode})"
+    else:
+        safety_note += " (SUCCESS)"
+
+    return stdout, stderr, returncode, safety_note
+
+
 @server.list_tools()
 async def handle_list_tools() -> List[types.Tool]:
     """List available tools for log access."""
@@ -492,6 +573,68 @@ async def handle_list_tools() -> List[types.Tool]:
                     },
                 },
                 "required": ["command"],
+            },
+        ),
+        types.Tool(
+            name="manage_service",
+            description="Manage Kanakku services (start, stop, restart, reload, daemon-reload)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "description": "Service operation to perform",
+                        "enum": [
+                            "start",
+                            "stop",
+                            "restart",
+                            "reload",
+                            "daemon-reload",
+                            "status",
+                            "is-active",
+                            "is-enabled",
+                        ],
+                    },
+                    "service": {
+                        "type": "string",
+                        "description": "Service name (not required for daemon-reload)",
+                        "enum": [
+                            "kanakku",
+                            "kanakku-worker",
+                            "kanakku-scheduler",
+                            "nginx",
+                            "postgresql",
+                            "redis-server",
+                        ],
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "description": "Command timeout in seconds (default: 60, max: 120)",
+                        "default": 60,
+                        "minimum": 10,
+                        "maximum": 120,
+                    },
+                },
+                "required": ["operation"],
+            },
+        ),
+        types.Tool(
+            name="restart_all_kanakku_services",
+            description="Restart all Kanakku application services (kanakku, kanakku-worker, kanakku-scheduler) in the correct order",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "include_nginx": {
+                        "type": "boolean",
+                        "description": "Whether to also restart nginx (default: false)",
+                        "default": False,
+                    },
+                    "daemon_reload": {
+                        "type": "boolean",
+                        "description": "Whether to run daemon-reload first (default: true)",
+                        "default": True,
+                    },
+                },
             },
         ),
     ]
@@ -627,6 +770,94 @@ async def handle_call_tool(
 
         if not stdout and not stderr and returncode == 0:
             output += "Command executed successfully with no output.\n"
+
+        return [types.TextContent(type="text", text=output)]
+
+    elif name == "manage_service":
+        operation = arguments["operation"]
+        service = arguments.get("service")
+        timeout = arguments.get("timeout", 60)
+
+        # Validate timeout
+        timeout = max(10, min(120, timeout))
+
+        # Execute the service operation
+        stdout, stderr, returncode, safety_note = await execute_service_operation(
+            operation, service, timeout
+        )
+
+        # Format output
+        output = "=== SERVICE MANAGEMENT ===\n"
+        output += f"Operation: {operation}\n"
+        if service:
+            output += f"Service: {service}\n"
+        output += f"Safety Check: {safety_note}\n"
+        output += f"Exit Code: {returncode}\n\n"
+
+        if stdout:
+            output += f"--- STDOUT ---\n{stdout}\n"
+
+        if stderr:
+            output += f"--- STDERR ---\n{stderr}\n"
+
+        if not stdout and not stderr and returncode == 0:
+            output += "Operation completed successfully with no output.\n"
+
+        return [types.TextContent(type="text", text=output)]
+
+    elif name == "restart_all_kanakku_services":
+        include_nginx = arguments.get("include_nginx", False)
+        daemon_reload = arguments.get("daemon_reload", True)
+
+        output = "=== RESTART ALL KANAKKU SERVICES ===\n\n"
+
+        # Step 1: Daemon reload if requested
+        if daemon_reload:
+            output += "Step 1: Reloading systemd daemon...\n"
+            stdout, stderr, returncode, safety_note = await execute_service_operation(
+                "daemon-reload", timeout=60
+            )
+            output += f"Result: {safety_note}\n"
+            if stderr:
+                output += f"Errors: {stderr}\n"
+            output += "\n"
+
+        # Step 2: Stop services in reverse order
+        services_to_restart = ["kanakku", "kanakku-worker", "kanakku-scheduler"]
+        if include_nginx:
+            services_to_restart.append("nginx")
+
+        output += "Step 2: Stopping services...\n"
+        for service in reversed(services_to_restart):
+            stdout, stderr, returncode, safety_note = await execute_service_operation(
+                "stop", service, timeout=60
+            )
+            output += f"  {service}: {safety_note}\n"
+            if stderr and "not loaded" not in stderr.lower():
+                output += f"    Errors: {stderr}\n"
+
+        output += "\n"
+
+        # Step 3: Start services in correct order
+        output += "Step 3: Starting services...\n"
+        for service in services_to_restart:
+            stdout, stderr, returncode, safety_note = await execute_service_operation(
+                "start", service, timeout=60
+            )
+            output += f"  {service}: {safety_note}\n"
+            if stderr:
+                output += f"    Errors: {stderr}\n"
+
+        output += "\n"
+
+        # Step 4: Check final status
+        output += "Step 4: Final service status...\n"
+        for service in services_to_restart:
+            stdout, stderr, returncode, safety_note = await execute_service_operation(
+                "is-active", service, timeout=30
+            )
+            status = stdout.strip() if stdout else "unknown"
+            output += f"  {service}: {status}\n"
 
         return [types.TextContent(type="text", text=output)]
 
