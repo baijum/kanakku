@@ -60,7 +60,7 @@ All Python dependencies are now managed in a single `pyproject.toml` file:
 - **Database & caching**: PostgreSQL, Redis
 - **Authentication & security**: JWT, OAuth, encryption
 - **AI & automation**: Google Gemini, background processing
-- **Development tools**: pytest, ruff, black, mypy
+- **Development tools**: pytest, ruff, black
 - **Production server**: Gunicorn
 
 ### Tool Configuration
@@ -69,7 +69,6 @@ All development tools are configured in `pyproject.toml`:
 
 - **Ruff**: Fast Python linter with comprehensive rules
 - **Black**: Code formatting with 88-character line length
-- **MyPy**: Type checking with flexible configuration
 - **Pytest**: Test discovery and execution
 
 ### Benefits
@@ -230,7 +229,7 @@ Kanakku is built using modern technologies and follows established architectural
 ### Development Tools
 - **Ruff**: Fast Python linter and formatter
 - **Black**: Code formatting
-- **MyPy**: Static type checking
+
 - **Pytest**: Testing framework with fixtures
 - **Docker**: Containerization for development and deployment
 
@@ -451,7 +450,7 @@ Kanakku now uses a unified monorepo structure with centralized dependency manage
    This single command installs:
    - All backend Flask dependencies
    - Bank transaction processing dependencies
-   - Development tools (pytest, ruff, black, mypy)
+   - Development tools (pytest, ruff, black)
    - Shared utilities
 
 4. **Configure environment variables** (optional - defaults are provided in `backend/app/config.py`):

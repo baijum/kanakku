@@ -137,6 +137,7 @@ banktransactions/tools/update_test_password.py
 kanakku.egg-info/PKG-INFO
 kanakku.egg-info/SOURCES.txt
 kanakku.egg-info/dependency_links.txt
+kanakku.egg-info/entry_points.txt
 kanakku.egg-info/requires.txt
 kanakku.egg-info/top_level.txt
 shared/__init__.py

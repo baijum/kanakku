@@ -54,7 +54,7 @@
     {
       "label": "Lint Backend",
       "type": "shell",
-      "command": "cd backend && source venv/bin/activate && flake8 . && black . && isort . && mypy .",
+      "command": "cd backend && source venv/bin/activate && flake8 . && black . && isort .",
       "group": "build",
       "presentation": {
         "reveal": "always",

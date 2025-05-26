@@ -41,7 +41,6 @@ updates:
         patterns:
           - "ruff"
           - "black"
-          - "mypy"
         update-types:
           - "minor"
           - "patch"

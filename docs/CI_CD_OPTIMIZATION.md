@@ -25,7 +25,6 @@ The primary workflow that runs on every push and pull request:
   - Change detection using `dorny/paths-filter`
   - Python linting with Ruff
   - Code formatting checks with Black
-  - Type checking with MyPy
 - **Optimization**: Only runs when Python files are changed
 
 #### Security Checks Job

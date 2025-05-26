@@ -204,9 +204,6 @@ ruff check . --fix
 # Format code
 black .
 
-# Type checking
-mypy backend/ banktransactions/
-
 # Use convenience script
 ./lint.sh
 ```

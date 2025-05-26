@@ -189,6 +189,29 @@ Following the successful monorepo build consolidation, this document outlines th
 
 **Estimated Effort**: 1 week
 
+### 10. MyPy Type Checking Integration 🔍
+**Status**: Future enhancement  
+**Impact**: Code quality and maintainability  
+
+**Background**:
+- MyPy was temporarily removed from the project to simplify the development workflow
+- Currently using Ruff and Black for linting and formatting
+- Type checking would provide additional code quality benefits
+
+**Action Items**:
+- [ ] Re-evaluate project readiness for static type checking
+- [ ] Add MyPy dependency back to `pyproject.toml` dev dependencies
+- [ ] Configure MyPy settings in `pyproject.toml` with appropriate strictness level
+- [ ] Add type hints to critical modules (backend/app/, banktransactions/, shared/)
+- [ ] Integrate MyPy check back into CI pipeline (`.github/workflows/ci.yml`)
+- [ ] Update development documentation and scripts
+- [ ] Configure editor settings for MyPy support
+- [ ] Address any type checking issues that arise
+
+**Estimated Effort**: 2-3 days (configuration and initial type hint additions)
+
+**Dependencies**: None (can be implemented independently)
+
 ---
 
 ### Monorepo Build Consolidation
@@ -219,6 +242,7 @@ Following the successful monorepo build consolidation, this document outlines th
 | ~~Documentation Updates~~ | ✅ DONE | ~~1 day~~ | ~~Medium~~ | ~~None~~ |
 | ~~CI/CD Optimization~~ | ✅ DONE | ~~1-2 days~~ | ~~Medium~~ | ~~None~~ |
 | Performance Monitoring | 📊 Low | 1 day | Medium | None |
+| MyPy Type Checking | 🔍 Future | 2-3 days | Medium | None |
 
 ---
 

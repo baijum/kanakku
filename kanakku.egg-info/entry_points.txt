@@ -1,0 +1,3 @@
+[console_scripts]
+kanakku-scheduler = banktransactions.automation.run_scheduler:main
+kanakku-worker = banktransactions.automation.run_worker:main

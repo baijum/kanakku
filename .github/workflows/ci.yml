@@ -73,10 +73,6 @@ jobs:
         if: steps.changes.outputs.python == 'true'
         run: black --check .
 
-      - name: Type check with MyPy
-        if: steps.changes.outputs.python == 'true'
-        run: mypy backend/ banktransactions/ shared/ --ignore-missing-imports
-
   # Security and dependency checks
   security-checks:
     name: Security & Dependencies

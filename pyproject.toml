@@ -63,7 +63,6 @@ dev = [
     "pytest-mock==3.12.0",
     "ruff>=0.1.0",
     "black>=23.0.0",
-    "mypy>=1.0.0",
 ]
 
 [project.scripts]
@@ -159,7 +158,6 @@ include = '\.pyi?$'
 exclude = '''
 /(
     \.git
-  | \.mypy_cache
   | \.pytest_cache
   | \.ruff_cache
   | \.venv
@@ -172,43 +170,7 @@ exclude = '''
 )/
 '''
 
-[tool.mypy]
-python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-check_untyped_defs = true
-disallow_untyped_decorators = false
-no_implicit_optional = true
-strict_optional = true
 
-# Exclude patterns
-exclude = [
-    "^migrations/",
-    "^venv/",
-    "^htmlcov/",
-    "^logs/",
-    "^logs_old/",
-    "^data/",
-]
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = [
-    "flask_login",
-    "flask_mail",
-    "flask_migrate",
-    "flask_cors",
-    "sqlalchemy.*",
-    "flask_dance.*",
-    "authlib.*",
-    "rq.*",
-]
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["backend/tests", "banktransactions/tests", "shared"]
