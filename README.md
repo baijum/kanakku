@@ -38,7 +38,7 @@ Kanakku provides a user-friendly way to track your personal expenses.
 
 ## Prerequisites
 
-- Python 3.12+
+- Python 3.11+
 - Node.js 18+
 - PostgreSQL database
 - Redis (for job queue)
@@ -235,7 +235,7 @@ Root-level scripts for common development tasks:
 Kanakku is built using modern technologies and follows established architectural patterns:
 
 ### Backend Technologies
-- **Python 3.12+**: Modern Python with type hints and async support
+- **Python 3.11+**: Modern Python with type hints and async support
 - **Flask 3.0+**: Lightweight web framework with Blueprint organization
 - **SQLAlchemy 2.0+**: Modern ORM with declarative models
 - **PostgreSQL**: Primary database with full-text search capabilities

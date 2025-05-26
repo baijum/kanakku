@@ -12,7 +12,7 @@ on:
         type: boolean
 
 env:
-  PYTHON_VERSION: '3.12'
+  PYTHON_VERSION: '3.11'
   NODE_VERSION: '20'
   DEPLOY_PATH: '/opt/kanakku'
   SERVICE_USER: 'kanakku'

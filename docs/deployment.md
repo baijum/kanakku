@@ -62,7 +62,7 @@ If you prefer manual setup or need to customize the installation:
 sudo apt update && sudo apt upgrade -y
 
 # Install essential packages
-sudo apt install -y curl wget git python3.12 python3.12-venv python3-pip \
+sudo apt install -y curl wget git python3.11 python3.11-venv python3-pip \
     postgresql-15 redis-server nginx certbot python3-certbot-nginx \
     build-essential libpq-dev pkg-config ufw fail2ban
 

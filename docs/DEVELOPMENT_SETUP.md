@@ -21,7 +21,7 @@ cd backend && ./run-backend.sh
 
 Ensure you have the following installed:
 
-- **Python 3.12+**: Required for all backend components
+- **Python 3.11+**: Required for all backend components
 - **Node.js 18+**: Required for frontend development
 - **PostgreSQL**: Database server
 - **Redis**: Required for background job processing
@@ -31,17 +31,17 @@ Ensure you have the following installed:
 
 **macOS (using Homebrew):**
 ```bash
-brew install python@3.12 node postgresql redis git
+brew install python@3.11 node postgresql redis git
 ```
 
 **Ubuntu/Debian:**
 ```bash
 sudo apt update
-sudo apt install python3.12 python3.12-venv nodejs npm postgresql redis-server git
+sudo apt install python3.11 python3.11-venv nodejs npm postgresql redis-server git
 ```
 
 **Windows:**
-- Install Python 3.12+ from [python.org](https://python.org)
+- Install Python 3.11+ from [python.org](https://python.org)
 - Install Node.js from [nodejs.org](https://nodejs.org)
 - Install PostgreSQL from [postgresql.org](https://postgresql.org)
 - Install Redis from [redis.io](https://redis.io)

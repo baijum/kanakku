@@ -19,7 +19,7 @@ sudo bash server-setup.sh
 ```
 
 **What this does:**
-- Installs PostgreSQL, Redis, Nginx, Python 3.12
+- Installs PostgreSQL, Redis, Nginx, Python 3.11
 - Creates the `kanakku` user and directories
 - Sets up firewall and security
 - Generates SSH keys and environment variables

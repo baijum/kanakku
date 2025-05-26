@@ -18,7 +18,7 @@ KANAKKU_HOME="/opt/kanakku"
 POSTGRES_VERSION="15"
 REDIS_VERSION="7"
 NGINX_VERSION="latest"
-PYTHON_VERSION="3.12"
+PYTHON_VERSION="3.11"
 
 # Logging function
 log() {
@@ -68,12 +68,11 @@ apt install -y \
     fail2ban \
     logrotate
 
-# Install Python 3.12 if not available
+# Install Python 3.11 if not available
 log "Setting up Python ${PYTHON_VERSION}..."
-if ! python3.12 --version &> /dev/null; then
-    add-apt-repository ppa:deadsnakes/ppa -y
-    apt update
-    apt install -y python3.12 python3.12-venv python3.12-dev
+if ! python3.11 --version &> /dev/null; then
+    # Python 3.11 is available in Debian 12 repositories
+    apt install -y python3.11 python3.11-venv python3.11-dev
 fi
 
 # Create kanakku user
