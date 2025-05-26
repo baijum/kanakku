@@ -114,7 +114,12 @@ def user_lookup_callback(_jwt_header, jwt_data):
     from .models import User
 
     identity = jwt_data["sub"]
-    return db.session.get(User, identity)
+    # Convert string identity back to integer for database lookup
+    try:
+        user_id = int(identity)
+        return db.session.get(User, user_id)
+    except (ValueError, TypeError):
+        return None
 
 
 # Custom decorator for API token authentication
@@ -142,10 +147,16 @@ def api_token_required(f):
             try:
                 verify_jwt_in_request()
                 identity = get_jwt_identity()
-                user = db.session.get(User, identity)
+                # Convert string identity back to integer for database lookup
+                try:
+                    user_id = int(identity)
+                    user = db.session.get(User, user_id)
+                except (ValueError, TypeError):
+                    user = None
                 if not user:
                     return {"error": "User associated with JWT not found"}, 401
                 g.current_user = user
+                g.auth_type = "JWT"
                 # Call the actual route function
                 return f(*args, **kwargs)
             except (
@@ -173,6 +184,7 @@ def api_token_required(f):
                         user = db.session.get(User, api_token.user_id)
                         if user:
                             g.current_user = user
+                            g.auth_type = "API Token"
                             api_token.update_last_used()
                             # Call the actual route function if API token auth succeeds
                             return f(*args, **kwargs)
@@ -196,6 +208,7 @@ def api_token_required(f):
                         user = db.session.get(User, api_token.user_id)
                         if user:
                             g.current_user = user
+                            g.auth_type = "API Token"
                             api_token.update_last_used()
                             # Call the actual route function again if API token auth succeeds
                             return f(*args, **kwargs)

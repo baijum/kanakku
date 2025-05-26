@@ -8,6 +8,7 @@ def test_register(authenticated_client, mock_ledger_command):
         json={
             "email": "new@example.com",
             "password": "password123",
+            "confirm_password": "password123",
             "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
     )

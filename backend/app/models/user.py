@@ -124,6 +124,7 @@ class User(UserMixin, db.Model):
         data = {
             "id": self.id,
             "email": self.email,
+            "name": self.name,
             "is_active": self.is_active,
             "is_admin": self.is_admin,
             "created_at": self.created_at.isoformat() if self.created_at else None,

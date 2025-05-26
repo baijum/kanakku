@@ -85,7 +85,7 @@ def test_create_token_validation(authenticated_client):
     assert response.status_code == 400
     data = response.get_json()
     assert "error" in data
-    assert "no data provided" in data["error"].lower()
+    assert "validation failed" in data["error"].lower()
 
     # Test with an empty name
     response = authenticated_client.post("/api/v1/auth/tokens", json={"name": ""})
@@ -101,7 +101,7 @@ def test_create_token_validation(authenticated_client):
     assert response.status_code == 400
     data = response.get_json()
     assert "error" in data
-    assert "invalid" in data["error"].lower()
+    assert "validation failed" in data["error"].lower()
 
 
 def test_get_tokens(authenticated_client, api_token, db_session):

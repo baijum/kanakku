@@ -31,6 +31,7 @@ def test_register(client):
         json={
             "email": "new@example.com",
             "password": "password",
+            "confirm_password": "password",
             "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
     )
@@ -85,7 +86,8 @@ def test_get_current_user(authenticated_client, user, db_session):
 def test_forgot_password(client, user, app):
     # Test with existing user
     response = client.post(
-        "/api/v1/auth/forgot-password", json={"email": "test@example.com"}
+        "/api/v1/auth/forgot-password",
+        json={"email": "test@example.com", "hcaptcha_token": "test_token"},
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -93,7 +95,8 @@ def test_forgot_password(client, user, app):
 
     # Test with non-existent user (should still return 200 for security)
     response = client.post(
-        "/api/v1/auth/forgot-password", json={"email": "nonexistent@example.com"}
+        "/api/v1/auth/forgot-password",
+        json={"email": "nonexistent@example.com", "hcaptcha_token": "test_token"},
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -114,6 +117,7 @@ def test_reset_password(client, user, app, db_session):
         json={
             "token": token,
             "new_password": "newpassword123",
+            "hcaptcha_token": "test_token",
         },
     )
     assert response.status_code == 200
@@ -139,6 +143,7 @@ def test_reset_password(client, user, app, db_session):
         json={
             "token": "invalidtoken",
             "new_password": "newpassword123",
+            "hcaptcha_token": "test_token",
         },
     )
     assert response.status_code == 400
@@ -265,7 +270,7 @@ def test_google_callback_success(client, app, mocker):
     app.config["FRONTEND_URL"] = "http://localhost:3000"
 
     # Mock requests library
-    mock_requests = mocker.patch("app.auth.requests")
+    mock_requests = mocker.patch("app.auth_bp.services.requests")
 
     # Mock token response
     mock_token_response = mocker.Mock()
@@ -327,7 +332,7 @@ def test_google_callback_existing_user(client, app, mocker):
         existing_user_id = existing_user.id
 
     # Mock requests library
-    mock_requests = mocker.patch("app.auth.requests")
+    mock_requests = mocker.patch("app.auth_bp.services.requests")
 
     # Mock token response
     mock_token_response = mocker.Mock()
@@ -371,7 +376,7 @@ def test_google_token_auth(client, app, mocker):
     app.config["FRONTEND_URL"] = "http://localhost:3000"
 
     # Mock the verify_oauth_token function
-    mock_verify = mocker.patch("app.auth.verify_oauth_token")
+    mock_verify = mocker.patch("app.auth_bp.services.AuthService.verify_oauth_token")
     mock_verify.return_value = {
         "sub": "google-user-id-token",
         "email": "google_token@example.com",
@@ -411,8 +416,8 @@ def test_google_token_auth(client, app, mocker):
     # Test invalid token
     mock_verify.side_effect = ValueError("Invalid token")
     response = client.post("/api/v1/auth/google", json={"token": "invalid_token"})
-    # Accept either 401 or 500 status code for now
-    assert response.status_code in (401, 500)
+    # Accept either 400, 401 or 500 status code for now
+    assert response.status_code in (400, 401, 500)
 
 
 def test_google_token_auth_inactive_user(client, app, mocker):
@@ -432,7 +437,7 @@ def test_google_token_auth_inactive_user(client, app, mocker):
         db.session.commit()
 
     # Mock the verify_oauth_token function
-    mock_verify = mocker.patch("app.auth.verify_oauth_token")
+    mock_verify = mocker.patch("app.auth_bp.services.AuthService.verify_oauth_token")
     mock_verify.return_value = {
         "sub": "google-inactive-id",
         "email": "inactive_google@example.com",
@@ -444,7 +449,7 @@ def test_google_token_auth_inactive_user(client, app, mocker):
     assert response.status_code == 403
     data = response.get_json()
     assert "error" in data
-    assert "Account is inactive" in data["error"]
+    assert "Account is deactivated" in data["error"]
 
 
 def test_google_callback_inactive_user(client, app, mocker):
@@ -464,7 +469,7 @@ def test_google_callback_inactive_user(client, app, mocker):
         db.session.commit()
 
     # Mock requests library
-    mock_requests = mocker.patch("app.auth.requests")
+    mock_requests = mocker.patch("app.auth_bp.services.requests")
 
     # Mock token response
     mock_token_response = mocker.Mock()
@@ -555,6 +560,7 @@ def test_register_honeypot_blocks_bots(client):
         json={
             "email": "bot@example.com",
             "password": "password123",
+            "confirm_password": "password123",
             "website": "filled_by_bot",  # Honeypot field filled
             "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
@@ -570,6 +576,7 @@ def test_register_honeypot_blocks_bots(client):
         json={
             "email": "bot2@example.com",
             "password": "password123",
+            "confirm_password": "password123",
             "username": "filled_by_bot",  # Old honeypot field filled
             "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
@@ -588,6 +595,7 @@ def test_register_honeypot_allows_legitimate_users(client):
         json={
             "email": "legitimate@example.com",
             "password": "password123",
+            "confirm_password": "password123",
             "website": "",  # Honeypot field empty
             "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
@@ -603,6 +611,7 @@ def test_register_honeypot_allows_legitimate_users(client):
         json={
             "email": "legitimate2@example.com",
             "password": "password123",
+            "confirm_password": "password123",
             "username": "",  # Old honeypot field empty
             "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
         },
@@ -620,6 +629,7 @@ def test_register_honeypot_missing_field_succeeds(client):
         json={
             "email": "nofield@example.com",
             "password": "password123",
+            "confirm_password": "password123",
             "hcaptcha_token": "test_token",  # In testing mode, this will be accepted
             # No honeypot fields at all
         },

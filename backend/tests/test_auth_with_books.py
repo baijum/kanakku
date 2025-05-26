@@ -65,7 +65,7 @@ def test_google_auth_creates_default_book(app, mocker):
     """Test that Google Auth creates a default book for new users."""
     # Mock Google OAuth verification
     mocker.patch(
-        "app.auth.verify_oauth_token",
+        "app.auth_bp.services.AuthService.verify_oauth_token",
         return_value={
             "sub": "12345",
             "email": "googleuser@example.com",
@@ -119,5 +119,6 @@ def test_user_profile_includes_active_book(authenticated_client, app, user):
     data = response.get_json()
 
     # Verify active book is included
-    assert "active_book_id" in data
-    assert data["active_book_id"] == book_id
+    assert "data" in data
+    assert "active_book_id" in data["data"]
+    assert data["data"]["active_book_id"] == book_id

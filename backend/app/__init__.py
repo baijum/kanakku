@@ -11,7 +11,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .accounts import accounts as accounts_bp
 from .api import api as api_bp
-from .auth import auth as auth_bp
+from .auth_bp import auth_bp
 from .books import books as books_bp
 from .config import config
 from .email_automation import email_automation as email_automation_bp
