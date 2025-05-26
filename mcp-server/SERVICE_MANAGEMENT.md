@@ -1,6 +1,6 @@
 # Service Management Features
 
-The Kanakku Logs MCP Server now includes comprehensive service management capabilities for safely managing Kanakku production services.
+The Kanakku Admin MCP Server includes comprehensive service management capabilities for safely managing Kanakku production services.
 
 ## New Tools Added
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for Kanakku Logs MCP Server
+Test script for Kanakku Admin MCP Server
 
 This script tests the SSH connection and basic log access functionality
 without running the full MCP server.
@@ -14,7 +14,7 @@ from pathlib import Path
 # Add the current directory to Python path to import the server module
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from kanakku_logs_server import (
+from admin_server import (
     LOG_PATHS,
     execute_remote_command,
     execute_safe_command,
@@ -166,7 +166,7 @@ async def test_safe_command_execution():
 
 async def main():
     """Main test function."""
-    print("🚀 Kanakku Logs MCP Server Connection Test")
+    print("🚀 Kanakku Admin MCP Server Connection Test")
     print("=" * 50)
 
     # Check environment variables
@@ -243,7 +243,7 @@ async def main():
         print("\n❌ No logs accessible. Check server configuration and permissions.")
 
     print("\nTo start the MCP server:")
-    print("   python kanakku_logs_server.py")
+    print("   python admin_server.py")
 
 
 if __name__ == "__main__":

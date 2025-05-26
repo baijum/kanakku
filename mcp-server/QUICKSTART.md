@@ -1,6 +1,6 @@
-# Quick Start Guide - Kanakku Logs MCP Server
+# Quick Start Guide - Kanakku Admin MCP Server
 
-Get up and running with the Kanakku Logs MCP Server in 5 minutes.
+Get up and running with the Kanakku Admin MCP Server in 5 minutes.
 
 ## Prerequisites
 
@@ -42,9 +42,9 @@ Add this to your Cursor settings (Cmd/Ctrl + , → search "MCP"):
 ```json
 {
   "mcpServers": {
-    "kanakku-logs": {
+    "kanakku-admin": {
       "command": "python",
-      "args": ["/absolute/path/to/mcp-server/kanakku_logs_server.py"],
+      "args": ["/absolute/path/to/mcp-server/admin_server.py"],
       "env": {
         "KANAKKU_DEPLOY_HOST": "your-production-server-ip",
         "KANAKKU_DEPLOY_USER": "root",

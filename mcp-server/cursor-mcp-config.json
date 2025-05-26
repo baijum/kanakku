@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "kanakku-logs": {
+    "kanakku-admin": {
       "command": "python",
-      "args": ["mcp-server/kanakku_logs_server.py"],
+      "args": ["mcp-server/admin_server.py"],
       "env": {
         "KANAKKU_DEPLOY_HOST": "your-production-server-ip",
         "KANAKKU_DEPLOY_USER": "root",

@@ -2,7 +2,7 @@
 
 ## ⚠️ Important Security Information
 
-The Kanakku Logs MCP Server includes an `execute_command` feature that allows running system commands on your production server. While this feature includes multiple security safeguards, **it inherently carries risks** and should be used with caution.
+The Kanakku Admin MCP Server includes an `execute_command` feature that allows running system commands on your production server. While this feature includes multiple security safeguards, **it inherently carries risks** and should be used with caution.
 
 ## 🛡️ Security Safeguards Implemented
 
@@ -47,11 +47,11 @@ The Kanakku Logs MCP Server includes an `execute_command` feature that allows ru
 ### 1. SSH User Restrictions
 ```bash
 # Create a dedicated user with minimal permissions
-sudo useradd -r -s /bin/bash kanakku-logs
-sudo usermod -aG adm kanakku-logs  # For log access only
+sudo useradd -r -s /bin/bash kanakku-admin
+sudo usermod -aG adm kanakku-admin  # For log access only
 
-# Restrict sudo access (add to /etc/sudoers.d/kanakku-logs)
-kanakku-logs ALL=(ALL) NOPASSWD: /bin/systemctl status *, /bin/journalctl *
+# Restrict sudo access (add to /etc/sudoers.d/kanakku-admin)
+kanakku-admin ALL=(ALL) NOPASSWD: /bin/systemctl status *, /bin/journalctl *
 ```
 
 ### 2. Network Security
@@ -132,19 +132,19 @@ kanakku-logs ALL=(ALL) NOPASSWD: /bin/systemctl status *, /bin/journalctl *
 ## 🔧 Customizing Security
 
 ### Adding New Safe Commands
-Edit `ALLOWED_COMMANDS` in `kanakku_logs_server.py`:
+Edit `ALLOWED_COMMANDS` in `admin_server.py`:
 ```python
 ALLOWED_COMMANDS.add("your_safe_command")
 ```
 
 ### Adding New Dangerous Patterns
-Edit `DANGEROUS_PATTERNS` in `kanakku_logs_server.py`:
+Edit `DANGEROUS_PATTERNS` in `admin_server.py`:
 ```python
 DANGEROUS_PATTERNS.append(r'\byour_dangerous_pattern\b')
 ```
 
 ### Disabling Command Execution
-To completely disable the feature, remove the `execute_command` tool from the `handle_list_tools()` function.
+To completely disable the feature, remove the `execute_command` tool from the `handle_list_tools()` function in `admin_server.py`.
 
 ## 📞 Incident Response
 

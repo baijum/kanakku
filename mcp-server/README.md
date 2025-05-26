@@ -1,6 +1,6 @@
-# Kanakku Logs MCP Server
+# Kanakku Admin MCP Server
 
-A Model Context Protocol (MCP) server that provides direct access to Kanakku production logs from Cursor IDE. This enables efficient debugging of production issues without manually SSH-ing into the server.
+A Model Context Protocol (MCP) server that provides administrative access to Kanakku production systems from Cursor IDE. This enables efficient debugging of production issues, log monitoring, and system administration without manually SSH-ing into the server.
 
 ## Features
 
@@ -133,9 +133,9 @@ export KANAKKU_SSH_PORT="22"
    ```json
    {
      "mcpServers": {
-       "kanakku-logs": {
+       "kanakku-admin": {
          "command": "python",
-                   "args": ["/path/to/mcp-server/kanakku_logs_server.py"],
+                   "args": ["/path/to/mcp-server/admin_server.py"],
          "env": {
            "KANAKKU_DEPLOY_HOST": "your-production-server-ip",
            "KANAKKU_DEPLOY_USER": "root",
@@ -286,7 +286,7 @@ Execute a safe system command for debugging purposes.
    
    # Test server manually
 source venv/bin/activate
-python kanakku_logs_server.py
+python admin_server.py
    ```
 
 2. **Cursor Can't Connect**:
@@ -357,12 +357,12 @@ source venv/bin/activate
 export KANAKKU_DEPLOY_HOST="your-server"
 
 # Run server in test mode
-python kanakku-logs-server.py
+python admin_server.py
 ```
 
 ### Adding New Log Sources
 
-To add new log sources, edit the `LOG_PATHS` dictionary in `kanakku_logs_server.py`:
+To add new log sources, edit the `LOG_PATHS` dictionary in `admin_server.py`:
 
 ```python
 LOG_PATHS = {

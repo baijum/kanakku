@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Kanakku Logs MCP Server Setup Script
-# This script sets up the MCP server for accessing Kanakku production logs from Cursor
+# Kanakku Admin MCP Server Setup Script
+# This script sets up the MCP server for accessing Kanakku production systems from Cursor
 
 set -e
 
-echo "Setting up Kanakku Logs MCP Server..."
+echo "Setting up Kanakku Admin MCP Server..."
 
 # Check if Python 3.8+ is available
 if ! command -v python3 &> /dev/null; then
@@ -32,7 +32,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # Make the server executable
-chmod +x kanakku_logs_server.py
+chmod +x admin_server.py
 
 # Check for SSH configuration
 echo ""
@@ -105,6 +105,6 @@ echo "=== Testing the Server ==="
 echo "To test the MCP server manually:"
 echo "  source venv/bin/activate"
 echo "  export KANAKKU_DEPLOY_HOST=your-server-ip"
-echo "  python kanakku_logs_server.py"
+echo "  python admin_server.py"
 echo ""
 echo "Setup complete! 🎉"
