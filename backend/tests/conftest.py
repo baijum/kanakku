@@ -128,9 +128,12 @@ def authenticated_client(client, app, user, db_session):
     auth_headers = {"Authorization": f"Bearer {token}"}
 
     class AuthenticatedClient:
+        def __init__(self, test_client):
+            self.test_client = test_client
+
         def get(self, path, **kwargs):
             kwargs.setdefault("headers", {}).update(auth_headers)
-            return client.get(path, **kwargs)
+            return self.test_client.get(path, **kwargs)
 
         def post(self, path, **kwargs):
             # Always set content-type for JSON data
@@ -138,16 +141,10 @@ def authenticated_client(client, app, user, db_session):
                 headers = kwargs.setdefault("headers", {})
                 headers.update(auth_headers)
                 headers.update({"Content-Type": "application/json"})
-                # Print request for debugging
-                print(f"\nPOST {path} with JSON: {json.dumps(kwargs['json'])}")
-                print(f"Headers: {headers}")
-                response = client.post(path, **kwargs)
-                print(f"Response status: {response.status_code}")
-                print(f"Response data: {response.data}")
-                return response
+                return self.test_client.post(path, **kwargs)
             else:
                 kwargs.setdefault("headers", {}).update(auth_headers)
-                return client.post(path, **kwargs)
+                return self.test_client.post(path, **kwargs)
 
         def put(self, path, **kwargs):
             # Always set content-type for JSON data
@@ -155,16 +152,16 @@ def authenticated_client(client, app, user, db_session):
                 headers = kwargs.setdefault("headers", {})
                 headers.update(auth_headers)
                 headers.update({"Content-Type": "application/json"})
-                return client.put(path, **kwargs)
+                return self.test_client.put(path, **kwargs)
             else:
                 kwargs.setdefault("headers", {}).update(auth_headers)
-                return client.put(path, **kwargs)
+                return self.test_client.put(path, **kwargs)
 
         def delete(self, path, **kwargs):
             kwargs.setdefault("headers", {}).update(auth_headers)
-            return client.delete(path, **kwargs)
+            return self.test_client.delete(path, **kwargs)
 
-    return AuthenticatedClient()
+    return AuthenticatedClient(client)
 
 
 @pytest.fixture(scope="function")
