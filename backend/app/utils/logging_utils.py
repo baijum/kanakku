@@ -199,7 +199,7 @@ def log_request(include_headers=False, include_body=False, sanitize_fields=None)
         except Exception:
             log_data["body"] = "[Error parsing JSON body]"
 
-    logger.debug(f"Request: {json.dumps(log_data)}")
+    logger.info(f"Request: {json.dumps(log_data)}")
 
 
 def log_response(response, include_body=False):
@@ -226,7 +226,7 @@ def log_response(response, include_body=False):
         except Exception:
             log_data["body"] = "[Error parsing JSON response]"
 
-    logger.debug(f"Response: {json.dumps(log_data)}")
+    logger.info(f"Response: {json.dumps(log_data)}")
     return response
 
 

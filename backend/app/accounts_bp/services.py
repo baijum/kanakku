@@ -415,21 +415,24 @@ class AccountService:
             module_name="AccountService",
         )
 
-        # Generate next segment suggestions
-        next_segment_suggestions = set()
+        # Generate suggestions including both exact matches and next segments
+        suggestions_set = set()
 
-        # If prefix ends with colon, suggest next segments
+        # Add exact matching accounts
+        suggestions_set.update(matching_accounts)
+
+        # Generate next segment suggestions
         if prefix.endswith(":"):
+            # If prefix ends with colon, suggest next segments
             for name in account_names:
                 if name.lower().startswith(prefix.lower()):
                     remaining = name[len(prefix) :]
                     if ":" in remaining:
                         next_segment = remaining.split(":")[0]
                         if next_segment:
-                            next_segment_suggestions.add(prefix + next_segment + ":")
-                    else:
-                        if remaining:
-                            next_segment_suggestions.add(name)
+                            # Add both the segment with colon (for further completion) and without (for selection)
+                            suggestions_set.add(prefix + next_segment)
+                            suggestions_set.add(prefix + next_segment + ":")
         else:
             # Find the last colon and suggest completions for the current segment
             last_colon_index = prefix.rfind(":")
@@ -443,14 +446,11 @@ class AccountService:
                         if ":" in remaining:
                             next_segment = remaining.split(":")[0]
                             if next_segment.lower().startswith(current_segment.lower()):
-                                next_segment_suggestions.add(
-                                    base_prefix + next_segment + ":"
-                                )
-                        else:
-                            if remaining.lower().startswith(current_segment.lower()):
-                                next_segment_suggestions.add(name)
+                                # Add both the segment with colon (for further completion) and without (for selection)
+                                suggestions_set.add(base_prefix + next_segment)
+                                suggestions_set.add(base_prefix + next_segment + ":")
 
-        suggestions = list(next_segment_suggestions)[:limit]
+        suggestions = list(suggestions_set)[:limit]
 
         log_debug(
             "Generated autocomplete suggestions",
