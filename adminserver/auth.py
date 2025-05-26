@@ -12,9 +12,16 @@ from datetime import datetime, timedelta
 from functools import wraps
 from typing import Optional, Tuple
 
+import bcrypt as bcrypt_lib
+
+# Fix bcrypt compatibility issue with passlib
+if not hasattr(bcrypt_lib, "__about__"):
+    bcrypt_lib.__about__ = type(
+        "about", (object,), {"__version__": bcrypt_lib.__version__}
+    )
+
 from flask import current_app, flash, redirect, request, session, url_for
 from passlib.apache import HtpasswdFile
-from passlib.hash import bcrypt, md5_crypt, sha256_crypt
 
 logger = logging.getLogger("kanakku-dashboard-auth")
 
@@ -58,7 +65,7 @@ class DashboardAuth:
                 return False
 
             # Check if user exists and verify password
-            if username in htpasswd:
+            if username in htpasswd.users():
                 return htpasswd.check_password(username, password)
 
             logger.warning(f"Authentication attempt for non-existent user: {username}")

@@ -7,12 +7,22 @@ This script helps create and manage htpasswd files for dashboard authentication.
 
 import argparse
 import getpass
+import logging
 import os
 import sys
 from pathlib import Path
 
+# Fix bcrypt compatibility issue with passlib
+import bcrypt
+
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = type("about", (object,), {"__version__": bcrypt.__version__})
+
 from auth import add_user_to_htpasswd, create_htpasswd_file
 from config.dashboard_config import get_config
+
+# Suppress passlib bcrypt version warning
+logging.getLogger("passlib").setLevel(logging.ERROR)
 
 
 def create_user(htpasswd_file: str, username: str, password: str = None) -> bool:
@@ -79,7 +89,7 @@ def delete_user(htpasswd_file: str, username: str) -> bool:
 
         htpasswd = HtpasswdFile(htpasswd_file)
 
-        if username not in htpasswd:
+        if username not in htpasswd.users():
             print(f"❌ User '{username}' not found in htpasswd file")
             return False
 

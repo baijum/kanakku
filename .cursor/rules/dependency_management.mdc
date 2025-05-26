@@ -1,6 +1,6 @@
 ---
 description:
-globs:
+globs: requirements.txt
 alwaysApply: false
 ---
 # Dependency Management Standards
