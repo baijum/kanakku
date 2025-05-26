@@ -193,7 +193,18 @@ jobs:
         with:
           fetch-depth: 0  # Full history for secret scanning
 
+      - name: Check if scan is needed
+        id: check_diff
+        run: |
+            BASE_HASH=$(git rev-parse origin/main)
+            HEAD_HASH=$(git rev-parse HEAD)
+            if [ "$BASE_HASH" = "$HEAD_HASH" ]; then
+              echo "No changes to scan."
+              echo "skip=true" >> $GITHUB_OUTPUT
+            fi
+
       - name: Run TruffleHog
+        if: steps.check_diff.outputs.skip != 'true'
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
