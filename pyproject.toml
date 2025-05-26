@@ -25,6 +25,9 @@ dependencies = [
     "psycopg2-binary==2.9.9",
     "redis==5.0.1",
 
+    # Email processing
+    "imapclient==3.0.1",
+
     # Core utilities
     "python-dotenv==1.0.1",
     "Werkzeug==3.0.1",

@@ -1,5 +1,8 @@
 """Models package - imports all models for easy access"""
 
+# Import database instance
+from ..extensions import db
+
 # Import base model
 from .account import Account
 from .base import BaseModel
@@ -22,6 +25,7 @@ from .user import User
 
 # Export all models for easy importing
 __all__ = [
+    "db",
     "BaseModel",
     "User",
     "Book",
