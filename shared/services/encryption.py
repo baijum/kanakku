@@ -6,7 +6,8 @@ across backend and banktransactions modules.
 """
 
 from typing import Optional
-from .base import StatelessService, ServiceResult, log_service_call
+
+from .base import ServiceResult, StatelessService, log_service_call
 
 
 class EncryptionService(StatelessService):

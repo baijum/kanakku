@@ -5,13 +5,14 @@ Provides unified database session management for both Flask-context
 and standalone usage across backend and banktransactions modules.
 """
 
-import os
 import logging
+import os
 from contextlib import contextmanager
-from typing import Optional, Generator
+from typing import Generator, Optional
+
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 logger = logging.getLogger(__name__)

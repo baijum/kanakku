@@ -13,17 +13,17 @@ setup_project_paths()
 # Backend model imports
 try:
     from app.models import (
-        EmailConfiguration,
-        GlobalConfiguration,
-        ProcessedGmailMessage,
-        User,
         Account,
-        Transaction,
-        Book,
-        BankAccountMapping,
-        ExpenseAccountMapping,
         ApiToken,
+        BankAccountMapping,
+        Book,
+        EmailConfiguration,
+        ExpenseAccountMapping,
+        GlobalConfiguration,
         Preamble,
+        ProcessedGmailMessage,
+        Transaction,
+        User,
     )
 except ImportError as e:
     # Fallback for when backend is not available
@@ -43,9 +43,9 @@ except ImportError as e:
 # Backend utility imports
 try:
     from app.utils.encryption import (
-        encrypt_value,
         decrypt_value,
         decrypt_value_standalone,
+        encrypt_value,
         get_encryption_key,
         get_encryption_key_standalone,
     )
@@ -60,12 +60,12 @@ except ImportError as e:
 # Backend service imports
 try:
     from app.services.gmail_message_service import (
+        clear_processed_gmail_msgids,
+        get_processed_message_count,
+        is_gmail_message_processed,
         load_processed_gmail_msgids,
         save_processed_gmail_msgid,
         save_processed_gmail_msgids,
-        is_gmail_message_processed,
-        get_processed_message_count,
-        clear_processed_gmail_msgids,
     )
 except ImportError as e:
     print(f"Warning: Could not import backend services: {e}")
@@ -78,10 +78,10 @@ except ImportError as e:
 
 # Banktransactions core imports
 try:
+    from banktransactions.core.api_client import APIClient, send_transaction_to_api
     from banktransactions.core.email_parser import extract_transaction_details
-    from banktransactions.core.imap_client import get_bank_emails, CustomIMAPClient
+    from banktransactions.core.imap_client import CustomIMAPClient, get_bank_emails
     from banktransactions.core.transaction_data import construct_transaction_data
-    from banktransactions.core.api_client import send_transaction_to_api, APIClient
 except ImportError as e:
     print(f"Warning: Could not import banktransactions core modules: {e}")
     extract_transaction_details = None
@@ -93,13 +93,13 @@ except ImportError as e:
 
 # Banktransactions automation imports
 try:
+    from banktransactions.automation.email_processor import (
+        process_user_emails_standalone,
+    )
     from banktransactions.automation.job_utils import (
         generate_job_id,
         get_user_job_status,
         has_user_job_pending,
-    )
-    from banktransactions.automation.email_processor import (
-        process_user_emails_standalone,
     )
 except ImportError as e:
     print(f"Warning: Could not import banktransactions automation modules: {e}")
@@ -119,10 +119,10 @@ except ImportError as e:
 try:
     from .database import (
         DatabaseManager,
-        get_database_session,
-        database_session,
-        get_flask_or_standalone_session,
         TestDatabaseManager,
+        database_session,
+        get_database_session,
+        get_flask_or_standalone_session,
     )
 except ImportError as e:
     print(f"Warning: Could not import database utilities: {e}")
@@ -136,20 +136,20 @@ except ImportError as e:
 try:
     from .services import (
         BaseService,
-        StatelessService,
-        ServiceResult,
-        ServiceError,
-        ValidationError,
         NotFoundError,
         PermissionError,
-        require_user_context,
+        ServiceError,
+        ServiceResult,
+        StatelessService,
+        ValidationError,
         log_service_call,
+        require_user_context,
     )
-    from .services.configuration import ConfigurationService, UserConfigurationService
-    from .services.encryption import EncryptionService
-    from .services.email import EmailProcessingService, EmailParsingService
-    from .services.transaction import TransactionService
     from .services.auth import AuthService, UserManagementService
+    from .services.configuration import ConfigurationService, UserConfigurationService
+    from .services.email import EmailParsingService, EmailProcessingService
+    from .services.encryption import EncryptionService
+    from .services.transaction import TransactionService
 except ImportError as e:
     print(f"Warning: Could not import unified services: {e}")
     BaseService = None

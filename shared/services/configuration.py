@@ -6,7 +6,8 @@ with encryption support.
 """
 
 from typing import Any, Optional
-from .base import BaseService, StatelessService, ServiceResult, log_service_call
+
+from .base import BaseService, ServiceResult, StatelessService, log_service_call
 
 
 class ConfigurationService(StatelessService):
@@ -17,6 +18,7 @@ class ConfigurationService(StatelessService):
         """Get a global configuration value."""
         try:
             from shared.imports import GlobalConfiguration, decrypt_value_standalone
+
             from ..database import get_database_session
 
             with get_database_session() as session:
@@ -58,6 +60,7 @@ class ConfigurationService(StatelessService):
         """Set a global configuration value."""
         try:
             from shared.imports import GlobalConfiguration, encrypt_value
+
             from ..database import database_session
 
             with database_session() as session:
@@ -110,6 +113,10 @@ class UserConfigurationService(BaseService):
 
     def __init__(self, user_id: int, session=None):
         super().__init__(user_id=user_id, session=session)
+
+    def get_service_name(self) -> str:
+        """Return the name of the service for logging purposes."""
+        return "UserConfigurationService"
 
     @log_service_call("get_user_preference")
     def get_user_preference(self, key: str, default: Any = None) -> ServiceResult:

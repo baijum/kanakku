@@ -592,7 +592,7 @@ class TestEmailProcessingTrigger:
             # This is expected behavior when the service layer can't decrypt the password
             assert response.status_code in [200, 400]
             data = json.loads(response.data)
-            
+
             if response.status_code == 200:
                 assert data["success"] is True
                 assert data["message"] == "Email processing job queued successfully"
@@ -668,7 +668,7 @@ class TestEmailProcessingTrigger:
             # The service layer may return 400 due to encryption issues instead of 409
             assert response.status_code in [400, 409]
             data = json.loads(response.data)
-            
+
             if response.status_code == 409:
                 assert data["success"] is False
                 assert "already pending" in data["error"]

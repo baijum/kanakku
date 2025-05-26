@@ -21,6 +21,10 @@ from ..utils.email_utils import send_password_reset_email
 class AuthService(BaseService):
     """Service class for authentication-related operations"""
 
+    def get_service_name(self) -> str:
+        """Return the name of the service for logging purposes."""
+        return "AuthService"
+
     # Keep track of failed login attempts
     # Structure: {ip_address: {email: [timestamp, timestamp, ...]}}
     failed_attempts = {}

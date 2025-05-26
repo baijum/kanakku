@@ -4,6 +4,7 @@ Comprehensive Redis Queue Inspector for Kanakku
 """
 
 import os
+
 import redis
 from rq import Queue, Worker
 from rq.job import Job

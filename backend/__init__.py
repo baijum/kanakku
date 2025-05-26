@@ -18,7 +18,7 @@ def setup_backend_paths():
     """
     # Get the backend directory (where this __init__.py is located)
     backend_dir = Path(__file__).parent.absolute()
-    
+
     # Add backend directory to Python path so 'app' imports work
     backend_str = str(backend_dir)
     if backend_str not in sys.path:

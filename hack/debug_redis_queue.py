@@ -3,13 +3,14 @@
 Complete Redis Queue Debugging Script for Kanakku
 """
 
+import argparse
 import os
 import sys
+from datetime import datetime
+
 import redis
 from rq import Queue, Worker
 from rq.job import Job
-from datetime import datetime
-import argparse
 
 
 def main():

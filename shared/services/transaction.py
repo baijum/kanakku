@@ -5,15 +5,19 @@ Consolidates transaction logic from backend and provides consistent
 interface for transaction operations across modules.
 """
 
-from typing import Dict
 from datetime import datetime, timezone
 from decimal import Decimal
+from typing import Dict
 
-from .base import BaseService, ServiceResult, require_user_context, log_service_call
+from .base import BaseService, ServiceResult, log_service_call, require_user_context
 
 
 class TransactionService(BaseService):
     """Unified service for transaction processing and management."""
+
+    def get_service_name(self) -> str:
+        """Return the name of the service for logging purposes."""
+        return "TransactionService"
 
     @require_user_context
     @log_service_call("create_transaction")

@@ -5,20 +5,20 @@ This package provides a consistent service layer pattern across
 backend and banktransactions modules.
 """
 
+from .auth import AuthService, UserManagementService
 from .base import (
     BaseService,
-    StatelessService,
-    ServiceResult,
-    ServiceError,
-    ValidationError,
     NotFoundError,
     PermissionError,
-    require_user_context,
+    ServiceError,
+    ServiceResult,
+    StatelessService,
+    ValidationError,
     log_service_call,
+    require_user_context,
 )
-from .email import EmailProcessingService, EmailParsingService
+from .email import EmailParsingService, EmailProcessingService
 from .transaction import TransactionService
-from .auth import AuthService, UserManagementService
 
 __all__ = [
     "BaseService",

@@ -1,13 +1,14 @@
-import yaml
 import os
 import sys
 from pathlib import Path
+
+import yaml
 
 
 def load_yaml_file(file_path):
     """Safely load a YAML file with error handling."""
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return yaml.safe_load(f)
     except yaml.YAMLError as e:
         print(f"Error parsing {file_path}: {e}", file=sys.stderr)

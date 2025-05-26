@@ -46,12 +46,8 @@ class Preamble(db.Model):
             "name": self.name,
             "content": self.content,
             "is_default": self.is_default,
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),
-            "updated_at": (
-                self.updated_at.isoformat() if self.updated_at else None
-            ),
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
+            "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
         }
 
     def __repr__(self):
@@ -106,9 +102,7 @@ class ApiToken(db.Model):
             "name": self.name,
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
             "is_active": self.is_active,
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
             "last_used_at": (
                 self.last_used_at.isoformat() if self.last_used_at else None
             ),
@@ -161,12 +155,8 @@ class EmailConfiguration(db.Model):
                 self.last_check_time.isoformat() if self.last_check_time else None
             ),
             "last_processed_email_id": self.last_processed_email_id,
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),
-            "updated_at": (
-                self.updated_at.isoformat() if self.updated_at else None
-            ),
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
+            "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
         }
 
     def __repr__(self):
@@ -217,12 +207,8 @@ class BankAccountMapping(db.Model):
             "account_identifier": self.account_identifier,
             "ledger_account": self.ledger_account,
             "description": self.description,
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),
-            "updated_at": (
-                self.updated_at.isoformat() if self.updated_at else None
-            ),
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
+            "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
         }
 
     def __repr__(self):
@@ -277,12 +263,8 @@ class ExpenseAccountMapping(db.Model):
             "merchant_name": self.merchant_name,
             "ledger_account": self.ledger_account,
             "description": self.description,
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),
-            "updated_at": (
-                self.updated_at.isoformat() if self.updated_at else None
-            ),
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
+            "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
         }
 
     def __repr__(self):
@@ -317,12 +299,8 @@ class GlobalConfiguration(db.Model):
             "value": "[ENCRYPTED]" if self.is_encrypted else self.value,
             "description": self.description,
             "is_encrypted": self.is_encrypted,
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),
-            "updated_at": (
-                self.updated_at.isoformat() if self.updated_at else None
-            ),
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
+            "updated_at": (self.updated_at.isoformat() if self.updated_at else None),
         }
 
     def __repr__(self):
@@ -362,9 +340,7 @@ class ProcessedGmailMessage(db.Model):
             "processed_at": (
                 self.processed_at.isoformat() if self.processed_at else None
             ),
-            "created_at": (
-                self.created_at.isoformat() if self.created_at else None
-            ),
+            "created_at": (self.created_at.isoformat() if self.created_at else None),
         }
 
     def __repr__(self):

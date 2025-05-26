@@ -6,10 +6,10 @@ backend and banktransactions modules.
 """
 
 import logging
-from abc import ABC
-from typing import Any, Dict, Optional
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
 from ..database import get_flask_or_standalone_session
 
@@ -19,25 +19,17 @@ logger = logging.getLogger(__name__)
 class ServiceError(Exception):
     """Base exception for service layer errors."""
 
-    pass
-
 
 class ValidationError(ServiceError):
     """Raised when service input validation fails."""
-
-    pass
 
 
 class NotFoundError(ServiceError):
     """Raised when a requested resource is not found."""
 
-    pass
-
 
 class PermissionError(ServiceError):
     """Raised when user lacks permission for an operation."""
-
-    pass
 
 
 class ServiceResult:
@@ -97,6 +89,10 @@ class BaseService(ABC):
         self.logger = logging.getLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}"
         )
+
+    @abstractmethod
+    def get_service_name(self) -> str:
+        """Return the name of the service for logging purposes."""
 
     @property
     def session(self):

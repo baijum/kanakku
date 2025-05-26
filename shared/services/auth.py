@@ -5,15 +5,15 @@ Consolidates authentication logic from backend and provides consistent
 interface for user management across modules.
 """
 
-from typing import Dict
 from datetime import datetime, timezone
+from typing import Dict
 
 from .base import (
     BaseService,
-    StatelessService,
     ServiceResult,
-    require_user_context,
+    StatelessService,
     log_service_call,
+    require_user_context,
 )
 
 
@@ -30,6 +30,7 @@ class AuthService(StatelessService):
         """
         try:
             from shared.imports import User
+
             from ..database import get_database_session
 
             with get_database_session() as session:
@@ -77,7 +78,8 @@ class AuthService(StatelessService):
     def create_user(self, email: str, password: str, name: str = None) -> ServiceResult:
         """Create a new user account."""
         try:
-            from shared.imports import User, Book
+            from shared.imports import Book, User
+
             from ..database import database_session
 
             with database_session() as session:
@@ -125,6 +127,7 @@ class AuthService(StatelessService):
         """Get user by ID."""
         try:
             from shared.imports import User
+
             from ..database import get_database_session
 
             with get_database_session() as session:
@@ -162,6 +165,7 @@ class AuthService(StatelessService):
         """Get user by email."""
         try:
             from shared.imports import User
+
             from ..database import get_database_session
 
             with get_database_session() as session:
@@ -199,6 +203,7 @@ class AuthService(StatelessService):
         """Update user password."""
         try:
             from shared.imports import User
+
             from ..database import database_session
 
             with database_session() as session:
@@ -242,6 +247,10 @@ class AuthService(StatelessService):
 
 class UserManagementService(BaseService):
     """Service for user management operations that require user context."""
+
+    def get_service_name(self) -> str:
+        """Return the name of the service for logging purposes."""
+        return "UserManagementService"
 
     @require_user_context
     @log_service_call("update_profile")
@@ -336,8 +345,9 @@ class UserManagementService(BaseService):
     ) -> ServiceResult:
         """Create a new API token for the current user."""
         try:
-            from shared.imports import ApiToken
             import secrets
+
+            from shared.imports import ApiToken
 
             # Generate secure token
             token_value = secrets.token_urlsafe(32)

@@ -4,22 +4,23 @@ Unit tests for shared database utilities.
 """
 
 import os
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import patch, Mock
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 # Import the database utilities
 from .database import (
     DatabaseManager,
-    get_database_session,
-    database_session,
-    get_flask_or_standalone_session,
     TestDatabaseManager,
+    database_session,
+    get_database_session,
+    get_flask_or_standalone_session,
 )
 
 
-class TestDatabaseManager:
+class TestDatabaseManagerClass:
     """Test cases for DatabaseManager class."""
 
     def setup_method(self):
@@ -151,7 +152,6 @@ class TestDatabaseManager:
         with DatabaseManager.session_scope() as session:
             assert session == mock_session
             # Simulate some work
-            pass
 
         mock_session.commit.assert_called_once()
         mock_session.close.assert_called_once()
@@ -245,9 +245,8 @@ class TestTestDatabaseManagerClass:
         mock_engine = Mock(spec=Engine)
         mock_create_engine.return_value = mock_engine
 
-        from .database import TestDatabaseManager as TDM
 
-        engine = TDM.create_test_engine()
+        engine = TestDatabaseManager.create_test_engine()
         assert engine == mock_engine
 
         # Check that it was called with test configuration
@@ -272,9 +271,8 @@ class TestTestDatabaseManagerClass:
         mock_session_class.return_value = mock_session
         mock_sessionmaker.return_value = mock_session_class
 
-        from .database import TestDatabaseManager as TDM
 
-        with TDM.test_session_scope() as session:
+        with TestDatabaseManager.test_session_scope() as session:
             assert session == mock_session
 
         mock_session.commit.assert_called_once()
@@ -295,10 +293,9 @@ class TestTestDatabaseManagerClass:
         mock_session_class.return_value = mock_session
         mock_sessionmaker.return_value = mock_session_class
 
-        from .database import TestDatabaseManager as TDM
 
         with pytest.raises(ValueError):
-            with TDM.test_session_scope() as session:
+            with TestDatabaseManager.test_session_scope() as session:
                 assert session == mock_session
                 raise ValueError("Test exception")
 

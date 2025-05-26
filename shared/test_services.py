@@ -5,22 +5,23 @@ Tests the base service functionality, service result objects,
 error handling, and logging.
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
 
+import pytest
+
+from shared.services.auth import AuthService, UserManagementService
 from shared.services.base import (
     BaseService,
-    StatelessService,
-    ServiceResult,
     PermissionError,
-    require_user_context,
+    ServiceResult,
+    StatelessService,
     log_service_call,
+    require_user_context,
 )
 from shared.services.configuration import ConfigurationService
 from shared.services.encryption import EncryptionService
 from shared.services.transaction import TransactionService
-from shared.services.auth import AuthService, UserManagementService
 
 
 class TestServiceResult:
@@ -94,8 +95,13 @@ class TestBaseService:
 
     def test_initialization_with_user_id(self):
         """Test service initialization with user ID."""
+
+        class ConcreteService(BaseService):
+            def get_service_name(self) -> str:
+                return "ConcreteService"
+
         user_id = 123
-        service = BaseService(user_id=user_id)
+        service = ConcreteService(user_id=user_id)
 
         assert service.user_id == user_id
         assert service._session is None
@@ -103,8 +109,13 @@ class TestBaseService:
 
     def test_initialization_with_session(self):
         """Test service initialization with session."""
+
+        class ConcreteService(BaseService):
+            def get_service_name(self) -> str:
+                return "ConcreteService"
+
         mock_session = Mock()
-        service = BaseService(session=mock_session)
+        service = ConcreteService(session=mock_session)
 
         assert service._session == mock_session
         assert service.user_id is None
@@ -112,10 +123,15 @@ class TestBaseService:
     @patch("shared.services.base.get_flask_or_standalone_session")
     def test_session_property_creates_session(self, mock_get_session):
         """Test that session property creates session when needed."""
+
+        class ConcreteService(BaseService):
+            def get_service_name(self) -> str:
+                return "ConcreteService"
+
         mock_session = Mock()
         mock_get_session.return_value = mock_session
 
-        service = BaseService()
+        service = ConcreteService()
         session = service.session
 
         assert session == mock_session
@@ -123,29 +139,49 @@ class TestBaseService:
 
     def test_validate_user_access_success(self):
         """Test successful user access validation."""
+
+        class ConcreteService(BaseService):
+            def get_service_name(self) -> str:
+                return "ConcreteService"
+
         user_id = 123
-        service = BaseService(user_id=user_id)
+        service = ConcreteService(user_id=user_id)
 
         result = service.validate_user_access(user_id)
         assert result is True
 
     def test_validate_user_access_no_user_context(self):
         """Test user access validation without user context."""
-        service = BaseService()
+
+        class ConcreteService(BaseService):
+            def get_service_name(self) -> str:
+                return "ConcreteService"
+
+        service = ConcreteService()
 
         with pytest.raises(PermissionError, match="No user context available"):
             service.validate_user_access(123)
 
     def test_validate_user_access_wrong_user(self):
         """Test user access validation with wrong user."""
-        service = BaseService(user_id=123)
+
+        class ConcreteService(BaseService):
+            def get_service_name(self) -> str:
+                return "ConcreteService"
+
+        service = ConcreteService(user_id=123)
 
         with pytest.raises(PermissionError, match="User does not have access"):
             service.validate_user_access(456)
 
     def test_log_operation(self):
         """Test operation logging."""
-        service = BaseService(user_id=123)
+
+        class ConcreteService(BaseService):
+            def get_service_name(self) -> str:
+                return "ConcreteService"
+
+        service = ConcreteService(user_id=123)
 
         with patch.object(service.logger, "info") as mock_info:
             service.log_operation("test_operation", {"detail": "value"})
@@ -154,7 +190,7 @@ class TestBaseService:
             args, kwargs = mock_info.call_args
             assert "Service operation: test_operation" in args[0]
             assert "extra" in kwargs
-            assert kwargs["extra"]["service"] == "BaseService"
+            assert kwargs["extra"]["service"] == "ConcreteService"
             assert kwargs["extra"]["operation"] == "test_operation"
             assert kwargs["extra"]["user_id"] == 123
 
@@ -192,6 +228,9 @@ class TestServiceDecorators:
         """Test require_user_context decorator with valid user context."""
 
         class TestService(BaseService):
+            def get_service_name(self) -> str:
+                return "TestService"
+
             @require_user_context
             def test_method(self):
                 return "success"
@@ -204,6 +243,9 @@ class TestServiceDecorators:
         """Test require_user_context decorator without user context."""
 
         class TestService(BaseService):
+            def get_service_name(self) -> str:
+                return "TestService"
+
             @require_user_context
             def test_method(self):
                 return "success"

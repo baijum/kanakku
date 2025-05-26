@@ -11,15 +11,19 @@ from typing import Dict, List, Optional, Set
 
 from .base import (
     BaseService,
-    StatelessService,
     ServiceResult,
-    require_user_context,
+    StatelessService,
     log_service_call,
+    require_user_context,
 )
 
 
 class EmailProcessingService(BaseService):
     """Unified service for email processing and automation."""
+
+    def get_service_name(self) -> str:
+        """Return the name of the service for logging purposes."""
+        return "EmailProcessingService"
 
     @require_user_context
     @log_service_call("process_user_emails")
