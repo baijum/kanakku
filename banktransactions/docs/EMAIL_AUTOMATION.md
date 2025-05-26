@@ -403,10 +403,6 @@ Environment=REDIS_URL=redis://localhost:6379/0
 WantedBy=multi-user.target
 ```
 
-### Docker Deployment
-
-The system can be deployed using Docker Compose. See the main project's `docker-compose.yml` for Redis and PostgreSQL services.
-
 ## Contributing
 
 1. Follow the existing code style

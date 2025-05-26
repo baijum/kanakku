@@ -196,13 +196,7 @@ kanakku/
 
 ### Phase 4: Infrastructure Updates (Week 2, Days 4-5)
 
-#### Day 4: Docker and CI/CD Updates
-- [ ] **Update Docker Configuration**
-  - Modify `backend/Dockerfile` for new structure
-  - Update `docker-compose.yml` if needed
-  - Test containerized builds
-  - Verify production deployment process
-
+#### Day 4: CI/CD Updates
 - [ ] **Update CI/CD Pipelines**
   - Modify GitHub Actions workflows
   - Update linting pipeline (`lint-black.yml`)

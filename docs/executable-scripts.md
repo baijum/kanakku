@@ -175,26 +175,6 @@ RestartSec=30
 WantedBy=multi-user.target
 ```
 
-### Docker Deployment
-
-For Docker deployments, use the executable scripts in your containers:
-
-```dockerfile
-# Worker container
-FROM python:3.12-slim
-COPY . /app
-WORKDIR /app
-RUN pip install -e ".[dev]"
-CMD ["kanakku-worker", "--queue-name", "email_processing", "--worker-name", "docker_worker"]
-
-# Scheduler container
-FROM python:3.12-slim
-COPY . /app
-WORKDIR /app
-RUN pip install -e ".[dev]"
-CMD ["kanakku-scheduler", "--interval", "300"]
-```
-
 ## Legacy Direct Execution
 
 You can still run the scripts directly if needed:

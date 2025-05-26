@@ -263,37 +263,6 @@ This checklist ensures a complete and secure deployment of the Kanakku email aut
 - [ ] Capacity planning reviewed
 - [ ] Documentation kept current
 
-## Docker Deployment Specific Checklist
-
-If using Docker deployment, also verify:
-
-### Docker Environment
-- [ ] Docker and Docker Compose installed
-- [ ] Docker daemon running and enabled
-- [ ] Docker Compose file configured (`docker-compose.prod.yml`)
-- [ ] Environment variables file created (`.env.production`)
-- [ ] SSL certificates mounted correctly
-
-### Container Configuration
-- [ ] All Dockerfiles created and optimized
-- [ ] Multi-stage builds used where appropriate
-- [ ] Non-root users configured in containers
-- [ ] Health checks implemented
-- [ ] Resource limits configured
-
-### Service Orchestration
-- [ ] Service dependencies configured correctly
-- [ ] Volume mounts configured for persistence
-- [ ] Network configuration verified
-- [ ] Container restart policies set
-- [ ] Service scaling tested
-
-### Container Monitoring
-- [ ] Container logs accessible
-- [ ] Container health monitoring configured
-- [ ] Resource usage monitoring set up
-- [ ] Container restart alerts configured
-
 ## Rollback Plan
 
 ### Rollback Preparation

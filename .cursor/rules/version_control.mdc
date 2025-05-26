@@ -57,7 +57,7 @@ alwaysApply: true
 - **File Naming Conventions**: Adhere to the established naming conventions for `kanakku`:
     - **Backend (Python):** `snake_case` for all files (e.g., `user_service.py`, `account_routes.py`)
     - **Frontend (JavaScript/React):** `PascalCase` for React components (e.g., `UserProfile.jsx`), `camelCase` for utilities and services (e.g., `apiService.js`, `dateUtils.js`)
-    - **Configuration files:** Use the conventional names (e.g., `requirements.txt`, `package.json`, `Dockerfile`, `docker-compose.yml`)
+    - **Configuration files:** Use the conventional names (e.g., `requirements.txt`, `package.json`)
     - **Documentation:** Use `kebab-case` for markdown files (e.g., `user-guide.md`, `api-reference.md`)
 - **Dependency Management**:
     - **Backend:** Keep `requirements.txt` up to date. When adding new Python packages, pin to specific versions (e.g., `flask==2.3.2`) for reproducibility. Use `pip freeze > requirements.txt` cautiously; prefer manually adding only the direct dependencies you need.

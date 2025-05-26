@@ -6,7 +6,7 @@ description: Production deployment standards for server management, security, an
 rules:
   - name: server_management
     description: Server management standards
-    applies_to: "docker-compose.yml,Dockerfile,**/*.{sh,yml,yaml}"
+    applies_to: "**/*.{sh,yml,yaml}"
     always_apply: true
     content: |
       - Kill running servers before starting new ones
@@ -21,15 +21,6 @@ rules:
       - Different DB credentials per env
       - HTTPS required in production
       - Environment variable naming: KANAKKU_* prefix
-
-  - name: docker
-    description: Docker best practices
-    content: |
-      - Use multi-stage builds
-      - Run as non-root users
-      - Specific version tags (not 'latest')
-      - Implement health checks
-      - Use volumes for persistent data
 
   - name: database
     description: Database deployment

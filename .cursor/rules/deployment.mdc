@@ -8,7 +8,7 @@ alwaysApply: true
 Server management standards
 - Kill running servers before starting new ones
 - Start new server after changes for testing
-**Applies to:** docker-compose.yml,Dockerfile,**/*.{sh,yml,yaml}
+**Applies to:** **/*.{sh,yml,yaml}
 
 
 ## Environment
@@ -19,15 +19,6 @@ Environment configuration
 - Different DB credentials per env
 - HTTPS required in production
 - Environment variable naming: KANAKKU_* prefix
-
-
-## Docker
-Docker best practices
-- Use multi-stage builds
-- Run as non-root users
-- Specific version tags (not 'latest')
-- Implement health checks
-- Use volumes for persistent data
 
 
 ## Database

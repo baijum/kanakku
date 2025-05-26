@@ -84,14 +84,6 @@ This document provides a checklist to ensure Kanakku is properly deployed to pro
 
 ## Notes for Specific Deployment Environments
 
-### Docker Deployment
-
-If deploying with Docker:
-- [ ] Ensure Docker images are properly built with production settings
-- [ ] Configure Docker volumes for persistent data
-- [ ] Set up Docker Compose for orchestration
-- [ ] Configure health checks
-
 ### Cloud Provider Deployment
 
 If deploying to a cloud provider:

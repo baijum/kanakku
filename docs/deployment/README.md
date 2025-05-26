@@ -18,20 +18,7 @@ A comprehensive manual deployment guide for Linux servers that provides:
 
 **Best for**: Production environments, organizations requiring full control over the deployment stack, environments with specific compliance requirements.
 
-### 2. [Docker Deployment Guide](docker-deployment.md)
-**Recommended for containerized environments**
-
-A Docker-based deployment using Docker Compose that provides:
-- Consistent deployment across environments
-- Easy scaling and management
-- Isolated service containers
-- Simplified dependency management
-- Quick setup and deployment
-- Container orchestration with health checks
-
-**Best for**: Development teams familiar with Docker, cloud-native deployments, environments requiring easy scaling, CI/CD pipelines.
-
-### 3. [Deployment Checklist](deployment-checklist.md)
+### 2. [Deployment Checklist](deployment-checklist.md)
 **Essential for all deployments**
 
 A comprehensive checklist covering:
@@ -51,10 +38,7 @@ A comprehensive checklist covering:
 2. Follow the [Linux Deployment Guide](linux-deployment-guide.md)
 3. Use the checklist to verify each step
 
-### For Docker Deployment
-1. Review the [Deployment Checklist](deployment-checklist.md) (Docker-specific sections)
-2. Follow the [Docker Deployment Guide](docker-deployment.md)
-3. Verify deployment using the checklist
+
 
 ## System Requirements
 

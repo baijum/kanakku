@@ -1,0 +1,376 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if tests fail'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+  DEPLOY_PATH: '/opt/kanakku'
+  SERVICE_USER: 'kanakku'
+
+jobs:
+  # Run tests before deployment
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_kanakku
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Install Node.js dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run Python linting
+        run: |
+          ruff check .
+          black --check .
+
+      - name: Run backend tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_kanakku
+          REDIS_URL: redis://localhost:6379/0
+          FLASK_ENV: testing
+        run: |
+          pytest backend/tests/ banktransactions/tests/ shared/ \
+            --cov=backend/app \
+            --cov=banktransactions \
+            --cov=shared \
+            --cov-report=term-missing
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm run test:ci
+
+  # Build application artifacts
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: test
+    if: success() || github.event.inputs.force_deploy == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Create deployment archive
+        run: |
+          # Create deployment directory structure
+          mkdir -p deploy/backend
+          mkdir -p deploy/frontend
+          mkdir -p deploy/config
+          mkdir -p deploy/scripts
+
+          # Copy backend files
+          cp -r backend/* deploy/backend/
+          cp -r banktransactions deploy/
+          cp -r shared deploy/
+          cp requirements.txt deploy/
+          cp pyproject.toml deploy/
+
+          # Copy frontend build
+          cp -r frontend/build/* deploy/frontend/
+
+          # Copy configuration files
+          cp nginx-kanakku.conf deploy/config/
+          cp kanakku.service deploy/config/
+          cp kanakku-worker.service deploy/config/
+          cp kanakku-scheduler.service deploy/config/
+
+          # Create deployment scripts
+          cat > deploy/scripts/deploy.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          DEPLOY_PATH="/opt/kanakku"
+          SERVICE_USER="kanakku"
+          BACKUP_DIR="/opt/kanakku/backups/$(date +%Y%m%d_%H%M%S)"
+
+          echo "Starting deployment..."
+
+          # Create backup
+          if [ -d "$DEPLOY_PATH" ]; then
+            echo "Creating backup..."
+            sudo mkdir -p "$BACKUP_DIR"
+            sudo cp -r "$DEPLOY_PATH"/* "$BACKUP_DIR/" || true
+          fi
+
+          # Stop services
+          echo "Stopping services..."
+          sudo systemctl stop kanakku || true
+          sudo systemctl stop kanakku-worker || true
+          sudo systemctl stop kanakku-scheduler || true
+
+          # Create deployment directory and set permissions
+          sudo mkdir -p "$DEPLOY_PATH"
+          sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$DEPLOY_PATH"
+
+          # Copy new files
+          echo "Copying application files..."
+          sudo cp -r backend "$DEPLOY_PATH/"
+          sudo cp -r banktransactions "$DEPLOY_PATH/"
+          sudo cp -r shared "$DEPLOY_PATH/"
+          sudo cp requirements.txt "$DEPLOY_PATH/"
+          sudo cp pyproject.toml "$DEPLOY_PATH/"
+
+          # Copy frontend build
+          sudo mkdir -p /var/www/kanakku
+          sudo cp -r frontend/* /var/www/kanakku/
+          sudo chown -R www-data:www-data /var/www/kanakku
+
+          # Set up Python virtual environment
+          echo "Setting up Python environment..."
+          cd "$DEPLOY_PATH"
+          sudo -u "$SERVICE_USER" python3 -m venv backend/venv
+          sudo -u "$SERVICE_USER" backend/venv/bin/pip install --upgrade pip
+          sudo -u "$SERVICE_USER" backend/venv/bin/pip install -e .
+
+          # Set permissions
+          sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$DEPLOY_PATH"
+          sudo chmod +x "$DEPLOY_PATH/backend/venv/bin/"*
+
+          echo "Deployment files copied successfully"
+          EOF
+
+          cat > deploy/scripts/configure.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          echo "Configuring services and nginx..."
+
+          # Copy and enable systemd services
+          sudo cp config/kanakku.service /etc/systemd/system/
+          sudo cp config/kanakku-worker.service /etc/systemd/system/
+          sudo cp config/kanakku-scheduler.service /etc/systemd/system/
+          sudo systemctl daemon-reload
+          sudo systemctl enable kanakku
+          sudo systemctl enable kanakku-worker
+          sudo systemctl enable kanakku-scheduler
+
+          # Configure nginx
+          sudo cp config/nginx-kanakku.conf /etc/nginx/sites-available/kanakku
+          sudo ln -sf /etc/nginx/sites-available/kanakku /etc/nginx/sites-enabled/
+          sudo nginx -t
+
+          echo "Configuration completed"
+          EOF
+
+          cat > deploy/scripts/start.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          echo "Starting services..."
+
+          # Run database migrations
+          cd /opt/kanakku/backend
+          sudo -u kanakku venv/bin/flask db upgrade || echo "Migration failed or not needed"
+
+          # Start services
+          sudo systemctl start kanakku
+          sudo systemctl start kanakku-worker
+          sudo systemctl start kanakku-scheduler
+          sudo systemctl reload nginx
+
+          # Check service status
+          sleep 5
+          sudo systemctl status kanakku --no-pager
+          sudo systemctl status kanakku-worker --no-pager
+          sudo systemctl status kanakku-scheduler --no-pager
+
+          echo "Services started successfully"
+          EOF
+
+          # Make scripts executable
+          chmod +x deploy/scripts/*.sh
+
+          # Create deployment archive
+          tar -czf kanakku-deploy.tar.gz -C deploy .
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanakku-deployment
+          path: kanakku-deploy.tar.gz
+          retention-days: 30
+
+  # Deploy to production server
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: success() || github.event.inputs.force_deploy == 'true'
+    environment: production
+
+    steps:
+      - name: Download deployment artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: kanakku-deployment
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy deployment files to server
+        run: |
+          scp kanakku-deploy.tar.gz ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/
+
+      - name: Deploy application
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          set -e
+
+          # Extract deployment files
+          cd /tmp
+          tar -xzf kanakku-deploy.tar.gz
+
+          # Run deployment scripts
+          chmod +x scripts/*.sh
+
+          # Deploy application files
+          ./scripts/deploy.sh
+
+          # Configure services (only on first deployment or when configs change)
+          ./scripts/configure.sh
+
+          # Start services
+          ./scripts/start.sh
+
+          # Cleanup
+          rm -rf /tmp/kanakku-deploy.tar.gz /tmp/backend /tmp/frontend /tmp/config /tmp/scripts /tmp/banktransactions /tmp/shared /tmp/requirements.txt /tmp/pyproject.toml
+
+          echo "Deployment completed successfully!"
+          EOF
+
+      - name: Health check
+        run: |
+          # Wait a moment for services to fully start
+          sleep 10
+
+          # Check if the application is responding
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          # Test backend health
+          curl -f http://localhost:8000/api/v1/health || echo "Backend health check failed"
+
+          # Check service status
+          sudo systemctl is-active kanakku
+          sudo systemctl is-active kanakku-worker
+          sudo systemctl is-active kanakku-scheduler
+          sudo systemctl is-active nginx
+          EOF
+
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF' || true
+          # Restore from backup if deployment failed
+          LATEST_BACKUP=$(ls -t /opt/kanakku/backups/ | head -n1)
+          if [ -n "$LATEST_BACKUP" ]; then
+            echo "Restoring from backup: $LATEST_BACKUP"
+            sudo systemctl stop kanakku || true
+            sudo systemctl stop kanakku-worker || true
+            sudo systemctl stop kanakku-scheduler || true
+            sudo cp -r "/opt/kanakku/backups/$LATEST_BACKUP"/* /opt/kanakku/
+            sudo chown -R kanakku:kanakku /opt/kanakku
+            sudo systemctl start kanakku || true
+            sudo systemctl start kanakku-worker || true
+            sudo systemctl start kanakku-scheduler || true
+          fi
+          EOF
+
+  # Notify deployment status
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+
+    steps:
+      - name: Notify success
+        if: needs.deploy.result == 'success'
+        run: |
+          echo "✅ Deployment to production completed successfully!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Deployed by: ${{ github.actor }}"
+
+      - name: Notify failure
+        if: needs.deploy.result == 'failure'
+        run: |
+          echo "❌ Deployment to production failed!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Check the logs for details."

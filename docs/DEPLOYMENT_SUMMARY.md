@@ -29,16 +29,9 @@ The following production-ready files and configurations have been added to prepa
    - Nginx configuration (`nginx-kanakku.conf`) for serving the frontend and proxying API requests
    - Systemd service file for running the backend as a managed service
 
-2. **Docker Deployment**
-   - Created `docker-compose.yml` for orchestrating the full stack
-   - Added Dockerfiles for both frontend and backend
-   - Configured PostgreSQL database container
-   - Added healthchecks and proper restart policies
-
-3. **Security Enhancements**
+2. **Security Enhancements**
    - Configured secure SSL/TLS settings in the Nginx configuration
    - Added security headers (CSP, HSTS, etc.)
-   - Created non-root users in Docker containers
    - Set up systemd security features for the service
 
 ## Documentation

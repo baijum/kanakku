@@ -6,22 +6,12 @@ This directory contains the OpenAPI (Swagger) documentation for the Kanakku back
 
 There are several ways to view and interact with the Swagger documentation:
 
-### Option 1: Using Swagger UI Docker
-
-You can run a Swagger UI container to view the documentation:
-
-```bash
-docker run -p 8080:8080 -v $(pwd)/swagger.yaml:/swagger.yaml -e SWAGGER_JSON=/swagger.yaml swaggerapi/swagger-ui
-```
-
-Then open your browser and navigate to http://localhost:8080
-
-### Option 2: Using Swagger Editor Online
+### Option 1: Using Swagger Editor Online
 
 1. Go to https://editor.swagger.io/
 2. Copy the contents of `swagger.yaml` and paste it into the editor
 
-### Option 3: Generate HTML documentation
+### Option 2: Generate HTML documentation
 
 You can use various tools to generate static HTML documentation from the swagger.yaml file:
 

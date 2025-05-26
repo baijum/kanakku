@@ -86,7 +86,6 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - PostgreSQL database
 - Redis (for job queue)
 - Gmail account with App Password (for bank transaction processing)
-- Docker and Docker Compose (optional, for containerized development)
 
 ## Dependency Management
 
@@ -228,10 +227,6 @@ kanakku/
 
 ## Development Tools
 
-### Docker Support
-
-Kanakku includes a `docker-compose.yml` file for containerized development and deployment. This allows for consistent environments across development, testing, and production.
-
 ### CI/CD Pipelines
 
 The project uses GitHub Actions for continuous integration and deployment, with workflows for:
@@ -243,6 +238,22 @@ The project uses GitHub Actions for continuous integration and deployment, with 
 ### Database Migrations
 
 Database schema changes are managed using Alembic migrations, located in `backend/migrations/`. This ensures version-controlled, reproducible database schema updates.
+
+### Deployment Pipeline
+
+Kanakku includes a comprehensive CI/CD pipeline for automated deployment to production servers:
+
+- **Automated Testing**: Runs all backend and frontend tests before deployment
+- **Build Process**: Builds React frontend and prepares deployment artifacts
+- **SSH Deployment**: Securely deploys to Debian/Ubuntu servers via SSH
+- **Health Checks**: Verifies deployment success with automated health checks
+- **Rollback Support**: Automatic backup and rollback capabilities
+- **Zero-Downtime**: Graceful service restarts with minimal downtime
+
+For deployment setup, see:
+- [Quick Start Guide](docs/deployment-quick-start.md) - Get deployed in 10 minutes
+- [Comprehensive Deployment Guide](docs/deployment.md) - Detailed setup and configuration
+- [Server Setup Script](scripts/server-setup.sh) - Automated server preparation
 
 ### Helper Scripts
 
@@ -275,9 +286,7 @@ Kanakku is built using modern technologies and follows established architectural
 ### Development Tools
 - **Ruff**: Fast Python linter and formatter
 - **Black**: Code formatting
-
 - **Pytest**: Testing framework with fixtures
-- **Docker**: Containerization for development and deployment
 
 ### Architectural Patterns
 
@@ -571,85 +580,6 @@ If you prefer to set up modules individually (not recommended for new developmen
 2. Access the web interface in your browser (usually `http://localhost:3000`).
 3. Register a new user or log in if you already have an account.
 4. Use the interface to add accounts and transactions.
-
-## Docker Development
-
-Kanakku provides a Docker-based development environment for easy setup and consistency across different machines.
-
-### Prerequisites
-
-- Docker
-- Docker Compose
-
-### Quick Start
-
-1. Clone the repository and navigate to the project root:
-
-   ```bash
-   git clone https://github.com/yourusername/kanakku.git
-   cd kanakku
-   ```
-
-2. Start all services:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-3. Access the application:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - Swagger UI: http://localhost:8000/api/docs
-
-### Services
-
-- `web`: Frontend React application
-- `api`: Backend Flask API
-- `db`: PostgreSQL database
-- `redis`: Redis for job queue
-- `migrate`: Runs database migrations on startup
-
-### Environment Variables
-
-Create a `.env` file in the project root with the following variables:
-
-```bash
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=kanakku
-DATABASE_URL=postgresql://postgres:postgres@db:5432/kanakku
-REDIS_URL=redis://redis:6379/0
-SECRET_KEY=your-secret-key
-JWT_SECRET_KEY=your-jwt-secret
-
-# hCaptcha Configuration (for spam protection)
-HCAPTCHA_SECRET_KEY=your-hcaptcha-secret-key
-```
-
-For the frontend, create a `.env` file in the `frontend/` directory:
-
-```bash
-# hCaptcha Configuration
-REACT_APP_HCAPTCHA_SITE_KEY=your-hcaptcha-site-key
-```
-
-**Note**: To get hCaptcha keys:
-
-1. Sign up at [hCaptcha Dashboard](https://dashboard.hcaptcha.com/)
-2. Create a new site
-3. Copy the Site Key for the frontend environment variable
-4. Copy the Secret Key for the backend environment variable
-
-### Useful Commands
-
-- Stop all services: `docker-compose down`
-- View logs: `docker-compose logs -f`
-- Run all tests: `docker-compose run --rm api python -m pytest backend/tests/ banktransactions/tests/ -v`
-- Run backend tests only: `docker-compose run --rm api python -m pytest backend/tests/ -v`
-- Run bank transaction tests: `docker-compose run --rm api python -m pytest banktransactions/tests/ -v`
-- Access database: `docker-compose exec db psql -U postgres -d kanakku`
-- Check linting: `docker-compose run --rm api ruff check .`
-- Format code: `docker-compose run --rm api black .`
 
 ## Testing
 
@@ -980,7 +910,6 @@ Kanakku follows comprehensive development standards to ensure code quality, secu
 
 **Infrastructure:**
 
-- Docker and Docker Compose for containerization
 - Nginx for reverse proxy and static file serving
 - Gunicorn for production WSGI serving
 - GitHub Actions for CI/CD

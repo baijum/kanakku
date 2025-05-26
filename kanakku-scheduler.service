@@ -1,0 +1,36 @@
+[Unit]
+Description=Kanakku Email Scheduler Service
+After=network.target redis.service postgresql.service
+Wants=redis.service postgresql.service
+
+[Service]
+Type=simple
+User=kanakku
+Group=kanakku
+WorkingDirectory=/opt/kanakku
+Environment="PATH=/opt/kanakku/backend/venv/bin"
+Environment="PYTHONPATH=/opt/kanakku:/opt/kanakku/backend:/opt/kanakku/banktransactions:/opt/kanakku/shared"
+EnvironmentFile=/opt/kanakku/.env
+ExecStart=/opt/kanakku/backend/venv/bin/kanakku-scheduler --interval 300
+Restart=always
+RestartSec=30s
+StandardOutput=journal
+StandardError=journal
+
+# Security enhancements
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/kanakku/logs /var/log/kanakku
+NoNewPrivileges=true
+PrivateDevices=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

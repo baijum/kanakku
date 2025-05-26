@@ -272,25 +272,6 @@ sudo systemctl start kanakku-email-scheduler
 sudo systemctl status kanakku-email-scheduler
 ```
 
-### Docker Deployment
-
-Add to your `docker-compose.yml`:
-
-```yaml
-services:
-  email-scheduler:
-    build: .
-    command: python banktransactions/email_automation/run_scheduler.py
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/kanakku
-      - REDIS_URL=redis://redis:6379/0
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-    depends_on:
-      - db
-      - redis
-    restart: unless-stopped
-```
-
 ## Performance Considerations
 
 ### Scheduling Interval

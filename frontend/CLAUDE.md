@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Critical Issues to Address
 
 1. **Environment Variables**
-   - Update API URL in frontend/build-production.sh and docker-compose.yml
+   - Update API URL in frontend/build-production.sh
    - Replace example.com domains with actual domain in nginx-kanakku.conf
    - Replace placeholder Google credentials in backend/.env.production with actual values
    - Update mail configuration with actual SMTP credentials in backend/.env.production
@@ -37,8 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Update SSL certificate paths in nginx configuration to point to actual certificates
 
 3. **Database Configuration**
-   - Change SQLite database to PostgreSQL for production in backend/.env.production if not using Docker
-   - If using Docker, ensure PostgreSQL volume is properly configured for persistence
+   - Change SQLite database to PostgreSQL for production in backend/.env.production
 
 4. **Frontend Configuration**
    - Ensure axiosInstance.js is properly configured for production API URLs
