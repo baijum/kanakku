@@ -21,6 +21,13 @@ class Config:
     UPDATE_INTERVAL = int(os.environ.get("DASHBOARD_UPDATE_INTERVAL", 30))  # seconds
     MAX_LOG_LINES = int(os.environ.get("DASHBOARD_MAX_LOG_LINES", 1000))
 
+    # Authentication settings
+    HTPASSWD_FILE = os.environ.get(
+        "DASHBOARD_HTPASSWD_FILE", "/etc/kanakku/dashboard.htpasswd"
+    )
+    AUTH_REALM = os.environ.get("DASHBOARD_AUTH_REALM", "Kanakku Monitoring Dashboard")
+    SESSION_TIMEOUT = int(os.environ.get("DASHBOARD_SESSION_TIMEOUT", 3600))  # seconds
+
     # Security settings
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
@@ -63,6 +70,11 @@ class DevelopmentConfig(Config):
         "http://localhost:5001",
         "http://127.0.0.1:5001",
     ]
+
+    # Development htpasswd file location
+    HTPASSWD_FILE = os.environ.get(
+        "DASHBOARD_HTPASSWD_FILE", "./config/dashboard.htpasswd"
+    )
 
 
 class ProductionConfig(Config):
@@ -107,6 +119,9 @@ class TestingConfig(Config):
 
     # Reduced log lines for testing
     MAX_LOG_LINES = 100
+
+    # Testing htpasswd file location
+    HTPASSWD_FILE = os.environ.get("DASHBOARD_HTPASSWD_FILE", "./config/test.htpasswd")
 
 
 # Configuration mapping

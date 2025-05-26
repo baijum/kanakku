@@ -24,9 +24,21 @@ from admin_server import (
     search_logs,
 )
 
+# Import authentication
+from auth import dashboard_auth, login_required
+
 # Import configuration
 from config.dashboard_config import get_config
-from flask import Flask, jsonify, render_template, request
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_cors import CORS
 
 # Create Flask application
@@ -41,6 +53,9 @@ logging.basicConfig(
     level=getattr(logging, app.config["LOG_LEVEL"]), format=app.config["LOG_FORMAT"]
 )
 logger = logging.getLogger("kanakku-monitor-dashboard")
+
+# Initialize authentication
+dashboard_auth.init_app(app)
 
 # Enable CORS if configured
 if app.config.get("CORS_ORIGINS"):
@@ -62,7 +77,57 @@ def run_async(coro):
     return loop.run_until_complete(coro)
 
 
+# Template context processor to make current user available in templates
+@app.context_processor
+def inject_user():
+    """Inject current user into template context."""
+    return {"current_user": dashboard_auth.get_current_user()}
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Login page and authentication handler."""
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if not username or not password:
+            flash("Please enter both username and password.", "error")
+            return render_template(
+                "login.html", session_timeout=app.config.get("SESSION_TIMEOUT", 3600)
+            )
+
+        if dashboard_auth.verify_credentials(username, password):
+            dashboard_auth.login_user(username)
+
+            # Redirect to the originally requested page or dashboard
+            next_url = session.pop("next_url", None)
+            return redirect(next_url or url_for("dashboard"))
+        else:
+            flash("Invalid username or password.", "error")
+            logger.warning(
+                f"Failed login attempt for user: {username} from IP: {request.remote_addr}"
+            )
+
+    # If already authenticated, redirect to dashboard
+    if dashboard_auth.is_authenticated():
+        return redirect(url_for("dashboard"))
+
+    return render_template(
+        "login.html", session_timeout=app.config.get("SESSION_TIMEOUT", 3600)
+    )
+
+
+@app.route("/logout")
+def logout():
+    """Logout handler."""
+    dashboard_auth.logout_user()
+    flash("You have been logged out successfully.", "info")
+    return redirect(url_for("login"))
+
+
 @app.route("/")
+@login_required
 def dashboard():
     """Main dashboard page."""
     return render_template("dashboard.html")
@@ -81,6 +146,7 @@ def health_check():
 
 
 @app.route("/api/services/status")
+@login_required
 def get_services_status():
     """Get status of all Kanakku services."""
     try:
@@ -135,6 +201,7 @@ def get_services_status():
 
 
 @app.route("/api/system/metrics")
+@login_required
 def get_system_metrics():
     """Get current system metrics."""
     try:
@@ -226,6 +293,7 @@ def get_system_metrics():
 
 
 @app.route("/api/system/uptime")
+@login_required
 def get_system_uptime():
     """Get detailed system uptime information."""
     try:
@@ -257,6 +325,7 @@ def get_system_uptime():
 
 
 @app.route("/api/logs/<log_key>")
+@login_required
 def get_logs(log_key):
     """Get recent log entries for a specific log."""
     try:
@@ -283,6 +352,7 @@ def get_logs(log_key):
 
 
 @app.route("/api/logs/<log_key>/search")
+@login_required
 def search_log(log_key):
     """Search for a pattern in a specific log."""
     try:
@@ -313,6 +383,7 @@ def search_log(log_key):
 
 
 @app.route("/api/logs/available")
+@login_required
 def get_available_logs():
     """Get list of available log files."""
     return jsonify(

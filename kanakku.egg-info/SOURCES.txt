@@ -4,6 +4,7 @@ pyproject.toml
 backend/__init__.py
 backend/init_db.py
 backend/setup_test_db.py
+backend/test_debug_logging.py
 backend/app/__init__.py
 backend/app/api.py
 backend/app/config.py

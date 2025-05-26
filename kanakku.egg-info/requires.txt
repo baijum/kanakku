@@ -22,12 +22,15 @@ authlib==1.2.1
 flask-dance==7.0.0
 cryptography==42.0.2
 python-jose==3.3.0
+passlib>=1.7.4
+bcrypt>=4.0.0
 flask-swagger-ui==4.11.1
 PyYAML==6.0.1
 google-genai>=1.14.0
 rq==2.3.3
 rq-scheduler==0.14
 gunicorn==21.2.0
+mcp>=1.0.0
 
 [dev]
 pytest==8.0.2

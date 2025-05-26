@@ -1,0 +1,184 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Dependency Management Standards
+
+## Unified Dependency Management
+
+Kanakku uses a **unified monorepo dependency management** system for simplified development and deployment.
+
+### Core Principle
+
+- **Single Source of Truth**: All Python dependencies MUST be managed in the root `pyproject.toml` file
+- **No Individual Requirements Files**: Do NOT create `requirements.txt` files in individual modules or subdirectories
+- **Unified Installation**: Use `pip install -e ".[dev]"` from the project root for all development setups
+
+### Key Files
+
+- **`pyproject.toml`**: Central configuration file containing ALL Python dependencies, tool configurations, and project metadata
+- **`requirements.txt`** (root only): Simplified file that installs the project in development mode (`-e .[dev]`)
+- **Individual module requirements**: REMOVED to eliminate duplication and version conflicts
+
+### Dependency Categories in pyproject.toml
+
+```toml
+[project]
+dependencies = [
+    # Core Flask dependencies (latest versions)
+    "Flask==3.0.2",
+    "Flask-CORS==4.0.0",
+    # ... other Flask extensions
+
+    # Database and caching
+    "psycopg2-binary==2.9.9",
+    "redis==5.0.1",
+
+    # Authentication and security
+    "authlib==1.2.1",
+    "passlib>=1.7.4",  # htpasswd authentication
+    "bcrypt>=4.0.0",   # Password hashing
+
+    # AI and automation
+    "google-genai>=1.14.0",
+
+    # Background processing
+    "rq==2.3.3",
+    "rq-scheduler==0.14",
+
+    # Production server
+    "gunicorn==21.2.0",
+
+    # MCP (Model Context Protocol) for admin server
+    "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.0.2",
+    "pytest-cov==4.1.0",
+    "pytest-mock==3.12.0",
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+    "pre-commit>=3.0.0",
+]
+```
+
+## Rules and Standards
+
+### ✅ DO
+
+- **Add new dependencies to `pyproject.toml`** in the appropriate category
+- **Use `pip install -e ".[dev]"`** for all development setups
+- **Document dependency rationale** with inline comments in pyproject.toml
+- **Pin major versions** for stability (e.g., `Flask==3.0.2`)
+- **Use version ranges** for non-critical dependencies (e.g., `google-genai>=1.14.0`)
+- **Group dependencies logically** with comments (Core Flask, Database, Security, etc.)
+
+### ❌ DON'T
+
+- **Create `requirements.txt` files** in subdirectories (backend/, adminserver/, banktransactions/, etc.)
+- **Duplicate dependencies** across multiple files
+- **Use different versions** of the same package in different modules
+- **Install dependencies directly** with `pip install package` without updating pyproject.toml
+- **Reference individual requirements files** in documentation or setup scripts
+
+### Adding New Dependencies
+
+1. **Edit `pyproject.toml`** in the appropriate section:
+   ```toml
+   dependencies = [
+       # ... existing dependencies
+       "new-package==1.0.0",  # Brief description of purpose
+   ]
+   ```
+
+2. **Reinstall in development mode**:
+   ```bash
+   pip install -e ".[dev]"
+   ```
+
+3. **Update documentation** if the dependency affects setup instructions
+
+### Module-Specific Dependencies
+
+If a dependency is only used by a specific module:
+
+- **Still add to main `pyproject.toml`** with a comment indicating its purpose
+- **Group related dependencies** together with clear comments
+- **Example**:
+  ```toml
+  # MCP (Model Context Protocol) for admin server
+  "mcp>=1.0.0",
+
+  # htpasswd authentication for admin dashboard
+  "passlib>=1.7.4",
+  "bcrypt>=4.0.0",
+  ```
+
+### Documentation Standards
+
+- **Setup instructions** must reference `pip install -e ".[dev]"` from project root
+- **Never reference** individual requirements.txt files in documentation
+- **Update README.md** dependency management section when adding new categories
+- **Include dependency purpose** in comments within pyproject.toml
+
+### Migration from Individual Requirements
+
+If you find existing `requirements.txt` files in subdirectories:
+
+1. **Review dependencies** in the individual file
+2. **Add missing dependencies** to main `pyproject.toml`
+3. **Delete the individual requirements file**
+4. **Update any documentation** that references the old file
+5. **Update setup scripts** to use unified installation
+
+### Benefits
+
+- **No version conflicts**: Single source of truth for all dependencies
+- **Simplified installation**: One command installs everything
+- **Consistent tooling**: Unified configuration across all modules
+- **Easier maintenance**: Update dependencies in one place
+- **Better CI/CD**: Single dependency cache and installation step
+
+### Examples
+
+#### ✅ Correct Setup Instructions
+```bash
+# From project root
+pip install -e ".[dev]"
+```
+
+#### ❌ Incorrect Setup Instructions
+```bash
+# DON'T DO THIS
+cd adminserver
+pip install -r requirements.txt
+```
+
+#### ✅ Correct Documentation
+```markdown
+## Installation
+
+1. Clone the repository and navigate to project root
+2. Install all dependencies: `pip install -e ".[dev]"`
+3. Configure environment variables
+```
+
+#### ❌ Incorrect Documentation
+```markdown
+## Installation
+
+1. Install backend dependencies: `pip install -r backend/requirements.txt`
+2. Install adminserver dependencies: `pip install -r adminserver/requirements.txt`
+```
+
+## Enforcement
+
+- **Code reviews** must check for new requirements.txt files
+- **CI/CD pipelines** should fail if individual requirements files are detected
+- **Setup scripts** must use unified dependency management
+- **Documentation** must be updated to reflect unified approach
+
+**Applies to:** All Python modules and subdirectories in the Kanakku project

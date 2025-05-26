@@ -40,6 +40,8 @@ dependencies = [
     "flask-dance==7.0.0",
     "cryptography==42.0.2",  # Using latest version from banktransactions
     "python-jose==3.3.0",
+    "passlib>=1.7.4",  # htpasswd authentication for admin dashboard
+    "bcrypt>=4.0.0",  # Password hashing for htpasswd
 
     # API documentation
     "flask-swagger-ui==4.11.1",
