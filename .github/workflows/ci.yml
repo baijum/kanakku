@@ -104,17 +104,11 @@ jobs:
       - name: Run safety check
         run: safety check --json || true
 
-      - name: Check for known security issues
-        run: |
-          echo "Checking for common security patterns..."
-          # Check for hardcoded secrets (basic patterns)
-          if grep -r -i "password\s*=\s*['\"][^'\"]*['\"]" --include="*.py" . || \
-             grep -r -i "secret\s*=\s*['\"][^'\"]*['\"]" --include="*.py" . || \
-             grep -r -i "api_key\s*=\s*['\"][^'\"]*['\"]" --include="*.py" .; then
-            echo "⚠️ Potential hardcoded secrets found. Please review."
-            exit 1
-          fi
-          echo "✅ No obvious hardcoded secrets detected."
+      - name: Run Gitleaks secret scanning
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Gitleaks Enterprise
 
   # Backend tests with optimized execution
   backend-tests:

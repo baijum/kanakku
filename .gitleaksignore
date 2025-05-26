@@ -1,0 +1,8 @@
+# .gitleaksignore
+# Add fingerprints of findings that should be ignored
+# Each line should contain a finding fingerprint from the Gitleaks report
+# Example:
+# 1234567890abcdef1234567890abcdef12345678
+
+# Add any specific findings that are false positives here
+# You can get the fingerprint from the Gitleaks report output
