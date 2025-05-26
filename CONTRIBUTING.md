@@ -172,14 +172,13 @@ When adding or modifying API endpoints:
 
 1. Fork the repository
 2. Clone your fork
-3. Set up the development environment:
+3. Set up the unified development environment:
 
    ```bash
-   # Backend
-   cd backend
+   # Unified setup (recommended)
    python -m venv venv
    source venv/bin/activate
-   pip install -r requirements.txt
+   pip install -e ".[dev]"
    
    # Frontend
    cd frontend
@@ -190,14 +189,34 @@ When adding or modifying API endpoints:
 5. Run tests:
 
    ```bash
-   # Backend
-   cd backend
-   python -m pytest
+   # All Python tests (backend + banktransactions)
+   python -m pytest backend/tests/ banktransactions/tests/ -v
+   
+   # Or use convenience script
+   ./test.sh
    
    # Frontend
    cd frontend
    npm test
    ```
+
+### Alternative Setup (Legacy)
+
+If you prefer individual module setup:
+
+```bash
+# Backend only
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Bank transactions only
+cd banktransactions
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
 6. Submit a Pull Request
 

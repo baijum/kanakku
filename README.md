@@ -42,6 +42,43 @@ Kanakku provides a user-friendly way to track your personal expenses.
 - Gmail account with App Password (for bank transaction processing)
 - Docker and Docker Compose (optional, for containerized development)
 
+## Dependency Management
+
+Kanakku uses a **unified monorepo dependency management** system for simplified development and deployment.
+
+### Key Files
+
+- **`pyproject.toml`**: Central configuration file containing all Python dependencies, tool configurations, and project metadata
+- **`requirements.txt`**: Simplified file that installs the project in development mode (`-e .[dev]`)
+- **Individual module requirements**: Removed to eliminate duplication and version conflicts
+
+### Unified Dependencies
+
+All Python dependencies are now managed in a single `pyproject.toml` file:
+
+- **Core Flask dependencies**: Latest stable versions
+- **Database & caching**: PostgreSQL, Redis
+- **Authentication & security**: JWT, OAuth, encryption
+- **AI & automation**: Google Gemini, background processing
+- **Development tools**: pytest, ruff, black, mypy
+- **Production server**: Gunicorn
+
+### Tool Configuration
+
+All development tools are configured in `pyproject.toml`:
+
+- **Ruff**: Fast Python linter with comprehensive rules
+- **Black**: Code formatting with 88-character line length
+- **MyPy**: Type checking with flexible configuration
+- **Pytest**: Test discovery and execution
+
+### Benefits
+
+- **No version conflicts**: Single source of truth for all dependencies
+- **Simplified installation**: One command installs everything
+- **Consistent tooling**: Unified configuration across all modules
+- **Easier maintenance**: Update dependencies in one place
+
 ## Project Structure
 
 ```
@@ -169,6 +206,50 @@ Root-level scripts for common development tasks:
 - `lint.sh` - Run code linting
 - `test.sh` - Run test suite
 
+## Core Technologies & Patterns
+
+Kanakku is built using modern technologies and follows established architectural patterns:
+
+### Backend Technologies
+- **Python 3.12+**: Modern Python with type hints and async support
+- **Flask 3.0+**: Lightweight web framework with Blueprint organization
+- **SQLAlchemy 2.0+**: Modern ORM with declarative models
+- **PostgreSQL**: Primary database with full-text search capabilities
+- **Redis**: Background job queue and caching
+- **Flask-JWT-Extended**: JWT-based authentication
+- **Google Gemini AI**: LLM for transaction parsing
+- **Gunicorn**: Production WSGI server
+
+### Frontend Technologies
+- **React 18+**: Modern React with hooks and functional components
+- **Material-UI (MUI)**: Component library for consistent UI
+- **React Router**: Client-side routing
+- **Axios**: HTTP client with interceptors
+- **React Context**: State management for shared data
+
+### Development Tools
+- **Ruff**: Fast Python linter and formatter
+- **Black**: Code formatting
+- **MyPy**: Static type checking
+- **Pytest**: Testing framework with fixtures
+- **Docker**: Containerization for development and deployment
+
+### Architectural Patterns
+
+#### Backend Patterns
+- **Flask Blueprints**: Modular route organization by feature
+- **Service Layer Pattern**: Business logic separated from routes
+- **Repository Pattern**: Data access abstraction
+- **Dependency Injection**: Configuration and service management
+- **Background Jobs**: Asynchronous processing with Redis Queue
+
+#### Frontend Patterns
+- **Feature-based Structure**: Components organized by functionality
+- **Custom Hooks**: Reusable stateful logic
+- **Context Providers**: Shared state management
+- **Error Boundaries**: Graceful error handling
+- **Responsive Design**: Mobile-first approach with MUI breakpoints
+
 ## Architecture
 
 Kanakku follows a modern, layered architecture with a clear separation between frontend and backend.
@@ -187,6 +268,18 @@ Kanakku follows a modern, layered architecture with a clear separation between f
 For a detailed architectural overview, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 For visual architecture diagrams using Mermaid, see [architecture_diagrams.md](docs/architecture_diagrams.md).
+
+### Development Standards
+
+Kanakku follows comprehensive development standards documented in `.cursor/rules/`:
+
+- **[API Design Standards](.cursor/rules/api_design.mdc)**: REST principles, request/response formats
+- **[Backend Standards](.cursor/rules/backend.mdc)**: Flask structure, database patterns, security
+- **[Frontend Standards](.cursor/rules/frontend.mdc)**: React components, state management, MUI guidelines
+- **[Code Quality Standards](.cursor/rules/code_quality.mdc)**: General standards, refactoring guidelines
+- **[Security Standards](.cursor/rules/security.mdc)**: Authentication, input validation, production security
+- **[Testing Standards](.cursor/rules/testing.mdc)**: Backend/frontend testing, coverage requirements
+- **[Version Control Standards](.cursor/rules/version_control.mdc)**: Git workflow, file management
 
 ## API Endpoints
 
@@ -331,7 +424,58 @@ To enable Google Sign-In, you need to:
 
 ## Setup
 
-### Backend Setup
+### Unified Monorepo Setup (Recommended)
+
+Kanakku now uses a unified monorepo structure with centralized dependency management. This is the recommended approach for development.
+
+1. **Clone and navigate to the project**:
+
+   ```bash
+   git clone https://github.com/yourusername/kanakku.git
+   cd kanakku
+   ```
+
+2. **Create and activate a virtual environment**:
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install all dependencies** (backend, banktransactions, and development tools):
+
+   ```bash
+   pip install -e ".[dev]"
+   ```
+
+   This single command installs:
+   - All backend Flask dependencies
+   - Bank transaction processing dependencies
+   - Development tools (pytest, ruff, black, mypy)
+   - Shared utilities
+
+4. **Configure environment variables** (optional - defaults are provided in `backend/app/config.py`):
+   - `SECRET_KEY`: A secret key for Flask sessions and security
+   - `JWT_SECRET_KEY`: A secret key for JWT generation
+   - `DATABASE_URL`: PostgreSQL database connection string (e.g., `postgresql://user:password@host:port/database`)
+   - `REDIS_URL`: Redis connection string for background jobs (e.g., `redis://localhost:6379/0`)
+   - `GOOGLE_API_KEY`: Google Gemini API key for AI-powered transaction parsing
+   - `LEDGER_PATH`: Path to the `ledger` executable (if not in system PATH)
+
+5. **Run the backend server**:
+
+   ```bash
+   cd backend
+   ./run-backend.sh
+   ```
+
+   The backend will be available at `http://localhost:8000`.
+
+### Legacy Individual Module Setup
+
+If you prefer to set up modules individually (not recommended for new development):
+
+#### Backend Setup
 
 1. Navigate to the backend directory:
 
@@ -352,19 +496,7 @@ To enable Google Sign-In, you need to:
    pip install -r requirements.txt
    ```
 
-4. Configure environment variables (optional - defaults are provided in `config.py`):
-   - `SECRET_KEY`: A secret key for Flask sessions and security.
-   - `JWT_SECRET_KEY`: A secret key for JWT generation.
-   - `DATABASE_URL`: PostgreSQL database connection string (e.g., `postgresql://user:password@host:port/database`).
-   - `LEDGER_PATH`: Path to the `ledger` executable (if not in system PATH).
-
-5. Run the backend server:
-
-   ```bash
-   ./run-backend.sh
-   ```
-
-   The backend will be available at `http://localhost:8000`.
+4. Configure environment variables and run as described above.
 
 ### Frontend Setup
 
@@ -467,23 +599,89 @@ REACT_APP_HCAPTCHA_SITE_KEY=your-hcaptcha-site-key
 
 - Stop all services: `docker-compose down`
 - View logs: `docker-compose logs -f`
-- Run tests: `docker-compose run --rm api pytest`
+- Run all tests: `docker-compose run --rm api python -m pytest backend/tests/ banktransactions/tests/ -v`
+- Run backend tests only: `docker-compose run --rm api python -m pytest backend/tests/ -v`
+- Run bank transaction tests: `docker-compose run --rm api python -m pytest banktransactions/tests/ -v`
 - Access database: `docker-compose exec db psql -U postgres -d kanakku`
+- Check linting: `docker-compose run --rm api ruff check .`
+- Format code: `docker-compose run --rm api black .`
 
 ## Testing
 
-To run the backend tests:
+### Unified Testing (Recommended)
+
+With the monorepo setup, you can run all tests from the project root:
+
+1. **Ensure the virtual environment is active** and dependencies are installed:
+
+   ```bash
+   source venv/bin/activate  # If not already active
+   pip install -e ".[dev]"   # If not already installed
+   ```
+
+2. **Run all backend tests** from the project root:
+
+   ```bash
+   python -m pytest backend/tests/ -v
+   ```
+
+3. **Run bank transaction tests**:
+
+   ```bash
+   python -m pytest banktransactions/tests/ -v
+   ```
+
+4. **Run all Python tests** (backend + banktransactions):
+
+   ```bash
+   python -m pytest backend/tests/ banktransactions/tests/ -v
+   ```
+
+5. **Use the convenience script**:
+
+   ```bash
+   ./test.sh
+   ```
+
+### Test Configuration
+
+The unified test configuration is defined in `pyproject.toml`:
+
+```toml
+[tool.pytest.ini_options]
+testpaths = ["backend/tests", "banktransactions/tests"]
+pythonpath = ["backend", "banktransactions", "shared"]
+addopts = "-v --tb=short"
+```
+
+This configuration:
+- Automatically discovers tests in both `backend/tests/` and `banktransactions/tests/`
+- Sets up Python paths for proper imports
+- Provides verbose output with short tracebacks
+
+### Test Coverage
+
+To run tests with coverage reporting:
+
+```bash
+python -m pytest backend/tests/ banktransactions/tests/ --cov=backend --cov=banktransactions --cov-report=html
+```
+
+Coverage reports will be generated in `htmlcov/` directory.
+
+### Legacy Testing Approach
+
+To run backend tests the traditional way:
 
 1. Ensure the backend virtual environment is active and development dependencies are installed (`pytest`, `pytest-cov`, `pytest-mock`).
-2. Navigate to the `kanakku` root directory.
-3. Run pytest:
+2. Navigate to the backend directory:
 
    ```bash
    cd backend
    python -m pytest -v tests/
    ```
 
-To run frontend tests:
+### Frontend Testing
 
 ### Unit Tests
 
