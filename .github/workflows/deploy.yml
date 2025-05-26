@@ -73,10 +73,10 @@ jobs:
           cd frontend
           npm ci
 
-      - name: Run Python linting
+      - name: Run linting
         run: |
-          ruff check .
-          black --check .
+          chmod +x lint.sh
+          ./lint.sh
 
       - name: Run backend tests
         env:
