@@ -72,7 +72,7 @@ def test_job_deduplication():
 
     # Test 3: Queue first job
     print(f"\n3. Queueing first job for user {test_user_id}...")
-    job_id = generate_job_id(test_user_id)
+    job_id = generate_job_id(test_user_id, datetime.now(timezone.utc))
     job = queue.enqueue(
         process_user_emails_standalone, test_user_id, job_id=job_id, job_timeout="10m"
     )

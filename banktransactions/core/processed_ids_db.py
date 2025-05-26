@@ -11,13 +11,17 @@ import os
 import sys
 from typing import Optional, Set
 
+logger = logging.getLogger(__name__)
+
 try:
+    logger.debug("Attempting to import Flask app and database dependencies...")
     # Set up project paths and import Flask app context and database service using shared imports
     from pathlib import Path
 
     project_root = Path(__file__).parent.parent.parent
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
+        logger.debug(f"Added project root to sys.path: {project_root}")
 
     from app import create_app
     from app.extensions import db
@@ -41,13 +45,16 @@ try:
     )
 
     # Create Flask app context for database operations
+    logger.debug("Creating Flask app for database operations...")
     app = create_app()
+    logger.debug("Flask app created successfully")
 
 except ImportError as e:
-    logging.warning(f"Could not import Flask app or database service: {e}")
-    logging.warning(
+    logger.warning(f"Could not import Flask app or database service: {e}")
+    logger.warning(
         "Database service not available - processed IDs functionality will be limited"
     )
+    logger.debug(f"Import error details: {type(e).__name__}: {str(e)}")
     app = None
 
 
@@ -64,19 +71,35 @@ def load_processed_gmail_msgids(
     Returns:
         Set[str]: Set of processed Gmail Message IDs
     """
+    logger.debug(f"Starting load_processed_gmail_msgids for user_id: {user_id}")
+    logger.debug(f"Filepath parameter: {filepath}")
+    logger.debug(f"App available: {app is not None}")
+
     if app and user_id is not None:
         # Use database-based approach
+        logger.debug(
+            "Using database-based approach to load processed Gmail Message IDs"
+        )
         try:
             with app.app_context():
-                return db_load_processed_gmail_msgids(user_id)
+                logger.debug("Created Flask app context")
+                result = db_load_processed_gmail_msgids(user_id)
+                logger.debug(
+                    f"Successfully loaded {len(result)} processed Gmail Message IDs from database for user {user_id}"
+                )
+                return result
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Error loading processed Gmail Message IDs from database for user {user_id}: {e}"
             )
-            logging.warning("Falling back to file-based approach")
+            logger.debug(
+                f"Database error details: {type(e).__name__}: {str(e)}", exc_info=True
+            )
+            logger.warning("Falling back to file-based approach")
 
     # Database not available and no fallback
-    logging.error("Database service not available and no fallback method")
+    logger.error("Database service not available and no fallback method")
+    logger.debug("Returning empty set due to unavailable database service")
     return set()
 
 
@@ -94,23 +117,37 @@ def save_processed_gmail_msgids(
     Returns:
         bool: True if saved successfully, False otherwise
     """
+    logger.debug(f"Starting save_processed_gmail_msgids for user_id: {user_id}")
+    logger.debug(f"Number of message IDs to save: {len(msgids)}")
+    logger.debug(f"Filepath parameter: {filepath}")
+    logger.debug(f"App available: {app is not None}")
+
     if app and user_id is not None:
         # Use database-based approach
+        logger.debug(
+            "Using database-based approach to save processed Gmail Message IDs"
+        )
         try:
             with app.app_context():
+                logger.debug("Created Flask app context")
                 saved_count = db_save_processed_gmail_msgids(user_id, msgids)
-                logging.info(
+                logger.info(
                     f"Saved {saved_count} new processed Gmail Message IDs to database for user {user_id}"
                 )
+                logger.debug("Database save operation completed successfully")
                 return True
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Error saving processed Gmail Message IDs to database for user {user_id}: {e}"
             )
-            logging.warning("Falling back to file-based approach")
+            logger.debug(
+                f"Database error details: {type(e).__name__}: {str(e)}", exc_info=True
+            )
+            logger.warning("Falling back to file-based approach")
 
     # Database not available and no fallback
-    logging.error("Database service not available and no fallback method")
+    logger.error("Database service not available and no fallback method")
+    logger.debug("Returning False due to unavailable database service")
     return False
 
 
@@ -127,20 +164,39 @@ def save_processed_gmail_msgid(
     Returns:
         bool: True if saved successfully, False otherwise
     """
+    logger.debug(f"Starting save_processed_gmail_msgid for user_id: {user_id}")
+    logger.debug(f"Gmail Message ID to save: {gmail_message_id}")
+    logger.debug(f"App available: {app is not None}")
+
     if app and user_id is not None:
         # Use database-based approach
+        logger.debug("Using database-based approach to save single Gmail Message ID")
         try:
             with app.app_context():
-                return db_save_processed_gmail_msgid(user_id, gmail_message_id)
+                logger.debug("Created Flask app context")
+                result = db_save_processed_gmail_msgid(user_id, gmail_message_id)
+                if result:
+                    logger.debug(
+                        f"Successfully saved Gmail Message ID {gmail_message_id} to database for user {user_id}"
+                    )
+                else:
+                    logger.warning(
+                        f"Failed to save Gmail Message ID {gmail_message_id} to database for user {user_id}"
+                    )
+                return result
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Error saving processed Gmail Message ID {gmail_message_id} to database for user {user_id}: {e}"
+            )
+            logger.debug(
+                f"Database error details: {type(e).__name__}: {str(e)}", exc_info=True
             )
             return False
     else:
-        logging.error(
+        logger.error(
             "Database approach not available and single message save not supported in file mode"
         )
+        logger.debug("Returning False due to unavailable database approach")
         return False
 
 
@@ -160,21 +216,41 @@ def is_gmail_message_processed(
     Returns:
         bool: True if the message has been processed, False otherwise
     """
+    logger.debug(f"Starting is_gmail_message_processed for user_id: {user_id}")
+    logger.debug(f"Gmail Message ID to check: {gmail_message_id}")
+    logger.debug(f"App available: {app is not None}")
+    logger.debug(f"Processed msgids set provided: {processed_msgids is not None}")
+
     if app and user_id is not None:
         # Use database-based approach
+        logger.debug("Using database-based approach to check Gmail Message ID")
         try:
             with app.app_context():
-                return db_is_gmail_message_processed(user_id, gmail_message_id)
+                logger.debug("Created Flask app context")
+                result = db_is_gmail_message_processed(user_id, gmail_message_id)
+                logger.debug(
+                    f"Database check result for Gmail Message ID {gmail_message_id}: {result}"
+                )
+                return result
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Error checking processed status for Gmail Message ID {gmail_message_id} and user {user_id}: {e}"
+            )
+            logger.debug(
+                f"Database error details: {type(e).__name__}: {str(e)}", exc_info=True
             )
             return False
     elif processed_msgids is not None:
         # Fall back to checking in-memory set
-        return gmail_message_id in processed_msgids
+        logger.debug("Using in-memory set fallback to check Gmail Message ID")
+        result = gmail_message_id in processed_msgids
+        logger.debug(
+            f"In-memory check result for Gmail Message ID {gmail_message_id}: {result}"
+        )
+        return result
     else:
-        logging.error("Neither database approach nor processed_msgids set available")
+        logger.error("Neither database approach nor processed_msgids set available")
+        logger.debug("Returning False due to no available checking method")
         return False
 
 
@@ -188,24 +264,37 @@ def get_processed_message_count(user_id: Optional[int] = None) -> int:
     Returns:
         int: Total count of processed messages
     """
+    logger.debug(f"Starting get_processed_message_count for user_id: {user_id}")
+    logger.debug(f"App available: {app is not None}")
+
     if app and user_id is not None:
         # Use database-based approach
+        logger.debug("Using database-based approach to get processed message count")
         try:
             with app.app_context():
-                return db_get_processed_message_count(user_id)
+                logger.debug("Created Flask app context")
+                count = db_get_processed_message_count(user_id)
+                logger.debug(
+                    f"Retrieved processed message count from database: {count}"
+                )
+                return count
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Error getting processed message count for user {user_id}: {e}"
             )
+            logger.debug(
+                f"Database error details: {type(e).__name__}: {str(e)}", exc_info=True
+            )
             return 0
-    else:
-        logging.error("Database approach not available")
-        return 0
+
+    logger.error("Database service not available for getting processed message count")
+    logger.debug("Returning 0 due to unavailable database service")
+    return 0
 
 
 def clear_processed_gmail_msgids(user_id: Optional[int] = None) -> bool:
     """
-    Clear all processed Gmail Message IDs.
+    Clear all processed Gmail Message IDs for a user.
 
     Args:
         user_id (int, optional): The ID of the user (required for database mode)
@@ -213,30 +302,66 @@ def clear_processed_gmail_msgids(user_id: Optional[int] = None) -> bool:
     Returns:
         bool: True if cleared successfully, False otherwise
     """
+    logger.debug(f"Starting clear_processed_gmail_msgids for user_id: {user_id}")
+    logger.debug(f"App available: {app is not None}")
+
     if app and user_id is not None:
         # Use database-based approach
+        logger.debug(
+            "Using database-based approach to clear processed Gmail Message IDs"
+        )
         try:
             with app.app_context():
-                return db_clear_processed_gmail_msgids(user_id)
+                logger.debug("Created Flask app context")
+                result = db_clear_processed_gmail_msgids(user_id)
+                if result:
+                    logger.debug(
+                        f"Successfully cleared processed Gmail Message IDs for user {user_id}"
+                    )
+                else:
+                    logger.warning(
+                        f"Failed to clear processed Gmail Message IDs for user {user_id}"
+                    )
+                return result
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Error clearing processed Gmail Message IDs for user {user_id}: {e}"
+            )
+            logger.debug(
+                f"Database error details: {type(e).__name__}: {str(e)}", exc_info=True
             )
             return False
     else:
-        logging.error("Database approach not available")
+        logger.error(
+            "Database service not available for clearing processed Gmail Message IDs"
+        )
+        logger.debug("Returning False due to unavailable database service")
         return False
 
 
-# Backward compatibility: maintain the original interface for existing code
-# These functions will work with the file-based approach if database is not available
 def load_processed_gmail_msgids_file(filepath: Optional[str] = None) -> Set[str]:
-    """Load processed Gmail Message IDs from file (backward compatibility)."""
-    return load_processed_gmail_msgids(user_id=None, filepath=filepath)
+    """
+    Load processed Gmail Message IDs from file (deprecated).
+    This function is kept for backward compatibility but is deprecated.
+    """
+    logger.debug(f"Starting load_processed_gmail_msgids_file with filepath: {filepath}")
+    logger.warning(
+        "load_processed_gmail_msgids_file is deprecated - use database approach instead"
+    )
+    logger.debug("Returning empty set for deprecated file-based approach")
+    return set()
 
 
 def save_processed_gmail_msgids_file(
     msgids: Set[str], filepath: Optional[str] = None
 ) -> None:
-    """Save processed Gmail Message IDs to file (backward compatibility)."""
-    save_processed_gmail_msgids(msgids, user_id=None, filepath=filepath)
+    """
+    Save processed Gmail Message IDs to file (deprecated).
+    This function is kept for backward compatibility but is deprecated.
+    """
+    logger.debug(f"Starting save_processed_gmail_msgids_file with filepath: {filepath}")
+    logger.debug(f"Number of message IDs to save: {len(msgids)}")
+    logger.warning(
+        "save_processed_gmail_msgids_file is deprecated - use database approach instead"
+    )
+    logger.debug("No operation performed for deprecated file-based approach")

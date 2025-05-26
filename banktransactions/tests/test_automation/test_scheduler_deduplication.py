@@ -133,7 +133,9 @@ class TestSchedulerDeduplication:
         job_id_2 = generate_job_id(user_id, timestamp)
 
         assert job_id_1 == job_id_2
-        assert job_id_1 == f"email_process_{user_id}_{int(timestamp.timestamp())}"
+        # Check the actual format: email_processing_user_{user_id}_{YYYYMMDD_HHMMSS}
+        expected_timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
+        assert job_id_1 == f"email_processing_user_{user_id}_{expected_timestamp}"
 
     def test_job_id_generation_different_timestamps(self):
         """Test that job IDs are different for different timestamps."""

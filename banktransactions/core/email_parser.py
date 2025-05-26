@@ -12,6 +12,8 @@ from typing import Dict, Optional, Tuple
 import requests
 from google import genai
 
+logger = logging.getLogger(__name__)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -24,6 +26,9 @@ class ExchangeRateCache:
     """
 
     def __init__(self, expiration_minutes: int = 60):
+        logger.debug(
+            f"Initializing ExchangeRateCache with {expiration_minutes} minute expiration"
+        )
         self.cache: Dict[Tuple[str, str], Tuple[float, datetime]] = {}
         self.expiration_minutes = expiration_minutes
 
@@ -38,19 +43,27 @@ class ExchangeRateCache:
         Returns:
             Optional[float]: Cached rate if valid, None otherwise
         """
+        logger.debug(f"Checking cache for exchange rate {from_currency}/{to_currency}")
         key = (from_currency, to_currency)
         if key in self.cache:
             rate, timestamp = self.cache[key]
+            age_minutes = (datetime.now() - timestamp).total_seconds() / 60
+            logger.debug(
+                f"Found cached rate for {from_currency}/{to_currency}, age: {age_minutes:.1f} minutes"
+            )
+
             if datetime.now() - timestamp < timedelta(minutes=self.expiration_minutes):
-                logging.debug(
-                    f"Using cached exchange rate for {from_currency}/{to_currency}"
+                logger.debug(
+                    f"Using cached exchange rate for {from_currency}/{to_currency}: {rate}"
                 )
                 return rate
             else:
-                logging.debug(
-                    f"Cached exchange rate for {from_currency}/{to_currency} expired"
+                logger.debug(
+                    f"Cached exchange rate for {from_currency}/{to_currency} expired (age: {age_minutes:.1f} min)"
                 )
                 del self.cache[key]
+        else:
+            logger.debug(f"No cached rate found for {from_currency}/{to_currency}")
         return None
 
     def set(self, from_currency: str, to_currency: str, rate: float):
@@ -64,45 +77,70 @@ class ExchangeRateCache:
         """
         key = (from_currency, to_currency)
         self.cache[key] = (rate, datetime.now())
-        logging.debug(f"Cached exchange rate for {from_currency}/{to_currency}")
+        logger.debug(f"Cached exchange rate for {from_currency}/{to_currency}: {rate}")
 
     def clear(self):
         """Clear all cached rates."""
+        cache_size = len(self.cache)
         self.cache.clear()
-        logging.debug("Exchange rate cache cleared")
+        logger.debug(f"Exchange rate cache cleared ({cache_size} entries removed)")
 
 
 # Create a global cache instance
+logger.debug("Creating global exchange rate cache instance")
 exchange_rate_cache = ExchangeRateCache()
 
 
 def decode_str(s):
     """Decode email subject or sender name"""
-    decoded, charset = decode_header(s)[0]
-    if isinstance(decoded, bytes):
-        return decoded.decode(charset or "utf-8", errors="replace")
-    return decoded
+    logger.debug(f"Decoding string: {s[:50]}{'...' if len(str(s)) > 50 else ''}")
+    try:
+        decoded, charset = decode_header(s)[0]
+        logger.debug(f"Decoded header charset: {charset}")
+        if isinstance(decoded, bytes):
+            result = decoded.decode(charset or "utf-8", errors="replace")
+            logger.debug(
+                f"Decoded bytes to string: {result[:50]}{'...' if len(result) > 50 else ''}"
+            )
+            return result
+        logger.debug("String was already decoded")
+        return decoded
+    except Exception as e:
+        logger.error(f"Error decoding string: {e}")
+        logger.debug(
+            f"Decode error details: {type(e).__name__}: {str(e)}", exc_info=True
+        )
+        return str(s)  # Fallback to string conversion
 
 
 def standardize_date_format(date_str):
     """
     Standardize date format to DD-MM-YYYY
     """
+    logger.debug(f"Standardizing date format: '{date_str}'")
+
     try:
         # Handle DD/MM/YYYY or DD-MM-YYYY format
         if re.match(r"\d{1,2}[-/]\d{1,2}[-/]\d{2,4}", date_str):
+            logger.debug("Date matches DD/MM/YYYY or DD-MM-YYYY pattern")
             # Replace / with - for consistent parsing
             date_str = date_str.replace("/", "-")
             parts = date_str.split("-")
+            logger.debug(f"Date parts: {parts}")
+
             if len(parts[2]) == 2:  # Handle 2-digit year
                 if int(parts[2]) > 50:  # Assume 19xx for years > 50
                     parts[2] = "19" + parts[2]
+                    logger.debug(f"Converted 2-digit year to 19xx: {parts[2]}")
                 else:  # Assume 20xx for years <= 50
                     parts[2] = "20" + parts[2]
+                    logger.debug(f"Converted 2-digit year to 20xx: {parts[2]}")
             # Ensure day and month are 2 digits
             parts[0] = parts[0].zfill(2)
             parts[1] = parts[1].zfill(2)
-            return f"{parts[0]}-{parts[1]}-{parts[2]}"
+            result = f"{parts[0]}-{parts[1]}-{parts[2]}"
+            logger.debug(f"Standardized date: {result}")
+            return result
 
         # Handle "Apr 10, 2025" or "10 Apr 2025" format
         month_abbrs = {
@@ -121,14 +159,19 @@ def standardize_date_format(date_str):
         }
 
         # Try different formats
+        logger.debug("Attempting to parse date with various datetime formats")
         for fmt in ["%b %d, %Y", "%d %b %Y", "%b %d %Y"]:
             try:
                 dt = datetime.strptime(date_str, fmt)
-                return dt.strftime("%d-%m-%Y")
+                result = dt.strftime("%d-%m-%Y")
+                logger.debug(f"Successfully parsed date with format '{fmt}': {result}")
+                return result
             except ValueError:
+                logger.debug(f"Failed to parse with format '{fmt}'")
                 continue
 
         # More specific pattern matching for "Apr 10, 2025" format
+        logger.debug("Attempting regex pattern matching for month abbreviations")
         match = re.search(
             r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:,|)\s+(\d{4})",
             date_str,
@@ -136,13 +179,17 @@ def standardize_date_format(date_str):
         )
         if match:
             month, day, year = match.groups()
+            logger.debug(f"Regex match found: month={month}, day={day}, year={year}")
             month = month_abbrs.get(
                 month[:3].title(), "01"
             )  # Default to 01 if month not found
             day = day.zfill(2)  # Ensure 2-digit day
-            return f"{day}-{month}-{year}"
+            result = f"{day}-{month}-{year}"
+            logger.debug(f"Converted to standardized format: {result}")
+            return result
 
         # Try "10 Apr 2025" format
+        logger.debug("Attempting regex pattern matching for day-month-year format")
         match = re.search(
             r"(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})",
             date_str,
@@ -150,15 +197,25 @@ def standardize_date_format(date_str):
         )
         if match:
             day, month, year = match.groups()
+            logger.debug(
+                f"Day-month-year regex match: day={day}, month={month}, year={year}"
+            )
             month = month_abbrs.get(month[:3].title(), "01")
             day = day.zfill(2)
-            return f"{day}-{month}-{year}"
+            result = f"{day}-{month}-{year}"
+            logger.debug(f"Converted to standardized format: {result}")
+            return result
 
         # If all parsing attempts fail, return the original string
+        logger.warning(f"Could not parse date format '{date_str}', returning original")
         return date_str
 
     except Exception as e:
-        logging.warning(f"Error standardizing date format '{date_str}': {e}")
+        logger.warning(f"Error standardizing date format '{date_str}': {e}")
+        logger.debug(
+            f"Date standardization error details: {type(e).__name__}: {str(e)}",
+            exc_info=True,
+        )
         return date_str
 
 
@@ -174,36 +231,57 @@ def get_exchange_rate(from_currency: str, to_currency: str) -> float:
     Returns:
         float: Exchange rate or 1.0 if API call fails
     """
+    logger.debug(f"Getting exchange rate from {from_currency} to {to_currency}")
+
     # Check cache first
     cached_rate = exchange_rate_cache.get(from_currency, to_currency)
     if cached_rate is not None:
+        logger.debug(f"Using cached exchange rate: {cached_rate}")
         return cached_rate
+
+    logger.debug("No cached rate found, fetching from API")
 
     try:
         # Using exchangerate-api.com (free tier)
         api_key = os.environ.get("EXCHANGE_RATE_API_KEY")
+        logger.debug(f"Exchange rate API key present: {bool(api_key)}")
+
         if not api_key:
-            logging.warning("EXCHANGE_RATE_API_KEY not found. Using fallback rate.")
+            logger.warning("EXCHANGE_RATE_API_KEY not found. Using fallback rate.")
             fallback_rate = 83.0  # Fallback rate for USD to INR
+            logger.debug(f"Using fallback rate: {fallback_rate}")
             exchange_rate_cache.set(from_currency, to_currency, fallback_rate)
             return fallback_rate
 
         url = f"https://v6.exchangerate-api.com/v6/{api_key}/pair/{from_currency}/{to_currency}"
+        logger.debug(f"Making API request to: {url}")
+
         response = requests.get(url)
+        logger.debug(f"API response status: {response.status_code}")
         response.raise_for_status()
 
         data = response.json()
+        logger.debug(f"API response data keys: {list(data.keys())}")
+
         rate = float(data.get("conversion_rate", 83.0))
+        logger.debug(f"Retrieved exchange rate: {rate}")
 
         # Cache the rate
         exchange_rate_cache.set(from_currency, to_currency, rate)
+        logger.debug("Cached exchange rate for future use")
 
         return rate
 
     except Exception as e:
-        logging.error(f"Error fetching exchange rate: {e}")
-        fallback_rate = 83.0  # Fallback rate for USD to INR
-        exchange_rate_cache.set(from_currency, to_currency, fallback_rate)
+        logger.error(
+            f"Error fetching exchange rate for {from_currency}/{to_currency}: {e}"
+        )
+        logger.debug(
+            f"Exchange rate API error details: {type(e).__name__}: {str(e)}",
+            exc_info=True,
+        )
+        fallback_rate = 83.0  # Fallback rate
+        logger.debug(f"Using fallback rate due to error: {fallback_rate}")
         return fallback_rate
 
 

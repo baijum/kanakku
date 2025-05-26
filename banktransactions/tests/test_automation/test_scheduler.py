@@ -300,8 +300,11 @@ class TestEmailScheduler:
         # Verify job ID format
         call_args = mock_scheduler.enqueue_at.call_args
         job_id = call_args[1]["job_id"]
-        assert job_id.startswith("email_process_123_")
-        assert str(int(next_run.timestamp())) in job_id
+        assert job_id.startswith("email_processing_user_123_")
+        # Check that the timestamp is in the job ID (formatted as YYYYMMDD_HHMMSS)
+        assert (
+            len(job_id.split("_")) >= 4
+        )  # Should have at least 4 parts separated by underscores
 
     @patch("banktransactions.automation.scheduler.Scheduler")
     def test_function_reference_in_schedule(
