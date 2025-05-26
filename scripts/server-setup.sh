@@ -317,10 +317,10 @@ case "$1" in
             exit 1
         fi
         echo "Restoring from backup: $2"
-        systemctl stop kanakku kanakku-worker kanakku-scheduler
+        systemctl stop kanakku kanakku-worker kanakku-scheduler kanakku-monitor
         cp -r "$2"/* "$KANAKKU_HOME/"
         chown -R "$KANAKKU_USER:$KANAKKU_USER" "$KANAKKU_HOME"
-        systemctl start kanakku kanakku-worker kanakku-scheduler
+        systemctl start kanakku kanakku-worker kanakku-scheduler kanakku-monitor
         echo "Restore completed"
         ;;
 
@@ -334,6 +334,7 @@ case "$1" in
         systemctl status kanakku --no-pager
         systemctl status kanakku-worker --no-pager
         systemctl status kanakku-scheduler --no-pager
+        systemctl status kanakku-monitor --no-pager
         systemctl status nginx --no-pager
         systemctl status postgresql --no-pager
         systemctl status redis-server --no-pager
@@ -341,7 +342,7 @@ case "$1" in
 
     restart)
         echo "Restarting services..."
-        systemctl restart kanakku kanakku-worker kanakku-scheduler nginx
+        systemctl restart kanakku kanakku-worker kanakku-scheduler kanakku-monitor nginx
         echo "Services restarted"
         ;;
 
@@ -368,7 +369,7 @@ cat > "$KANAKKU_HOME/health-check.sh" << 'EOF'
 set -e
 
 # Check if services are running
-services=("kanakku" "kanakku-worker" "kanakku-scheduler" "nginx" "postgresql" "redis-server")
+services=("kanakku" "kanakku-worker" "kanakku-scheduler" "kanakku-monitor" "nginx" "postgresql" "redis-server")
 for service in "${services[@]}"; do
     if systemctl is-active --quiet "$service"; then
         echo "✓ $service is running"
@@ -420,6 +421,16 @@ log "Creating systemd services..."
 
 # Note: The actual service files will be deployed by the CI/CD pipeline
 # This just ensures the directory exists and sets up the environment
+
+# Create systemd service directory if it doesn't exist
+mkdir -p /etc/systemd/system
+
+# Create placeholder for service files that will be deployed
+log "Service files will be deployed by CI/CD pipeline:"
+log "  - kanakku.service (Main application)"
+log "  - kanakku-worker.service (Background worker)"
+log "  - kanakku-scheduler.service (Scheduled tasks)"
+log "  - kanakku-monitor.service (Monitoring dashboard)"
 
 # Final setup steps
 log "Performing final setup steps..."

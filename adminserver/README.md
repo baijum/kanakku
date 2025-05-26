@@ -23,6 +23,7 @@ A Model Context Protocol (MCP) server that provides administrative access to Kan
 - `systemd_kanakku` - Kanakku service logs
 - `systemd_kanakku_worker` - Worker service logs
 - `systemd_kanakku_scheduler` - Scheduler service logs
+- `systemd_kanakku_monitor` - Monitoring dashboard service logs
 - `systemd_nginx` - Nginx service logs
 - `systemd_postgresql` - PostgreSQL service logs
 - `systemd_redis` - Redis service logs
@@ -49,6 +50,10 @@ A Model Context Protocol (MCP) server that provides administrative access to Kan
 - Python 3.8 or higher
 - SSH access to your Kanakku production server
 - SSH key for authentication
+
+### Dependency Management
+
+This adminserver is part of the Kanakku monorepo and uses **unified dependency management** via `pyproject.toml`. The MCP (Model Context Protocol) dependencies are included in the main kanakku package, so no separate `requirements.txt` file is needed for the adminserver.
 
 ### Quick Setup
 
@@ -87,7 +92,8 @@ A Model Context Protocol (MCP) server that provides administrative access to Kan
 
 2. **Install dependencies**:
    ```bash
-   pip install -r requirements.txt
+   # Install the main kanakku package with MCP dependencies
+   pip install -e ../.
    ```
 
 3. **Set up SSH access** (see SSH Configuration section below)

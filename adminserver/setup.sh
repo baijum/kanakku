@@ -29,7 +29,8 @@ source venv/bin/activate
 # Install dependencies
 echo "Installing dependencies..."
 pip install --upgrade pip
-pip install -r requirements.txt
+# Install the main kanakku package with MCP dependencies
+pip install -e ../.
 
 # Make the server executable
 chmod +x admin_server.py
@@ -90,6 +91,23 @@ echo "3. Add the configuration from cursor-mcp-config.json"
 echo "4. Update the environment variables with your actual values"
 echo ""
 
+echo ""
+echo "=== Monitoring Dashboard Setup ==="
+echo "The Admin Server includes a web-based monitoring dashboard:"
+echo ""
+echo "Features:"
+echo "- Real-time service status monitoring"
+echo "- System metrics (CPU, memory, disk usage)"
+echo "- Log viewing and searching"
+echo "- Service management capabilities"
+echo ""
+echo "To enable the monitoring dashboard:"
+echo "1. Configure environment variables for dashboard (see .env.example)"
+echo "2. Deploy kanakku-monitor.service to production"
+echo "3. Configure nginx for HTTPS access"
+echo "4. Set up HTTP Basic Authentication"
+echo ""
+
 # Create example environment file
 cat > .env.example << EOF
 # Kanakku Production Server Configuration
@@ -97,9 +115,19 @@ KANAKKU_DEPLOY_HOST=your-production-server-ip
 KANAKKU_DEPLOY_USER=root
 KANAKKU_SSH_KEY_PATH=~/.ssh/kanakku_deploy
 KANAKKU_SSH_PORT=22
+
+# Monitoring Dashboard Configuration
+FLASK_ENV=production
+CORS_ORIGINS=https://your-domain.com
+LOG_LEVEL=INFO
 EOF
 
 echo "Example environment file created: .env.example"
+echo ""
+echo "=== Dependency Management ==="
+echo "This project uses pyproject.toml for unified dependency management."
+echo "The MCP dependencies are included in the main kanakku package."
+echo "No separate requirements.txt file is needed for the adminserver."
 echo ""
 echo "=== Testing the Server ==="
 echo "To test the Admin server manually:"
@@ -107,4 +135,16 @@ echo "  source venv/bin/activate"
 echo "  export KANAKKU_DEPLOY_HOST=your-server-ip"
 echo "  python admin_server.py"
 echo ""
+echo "To test the monitoring dashboard:"
+echo "  source venv/bin/activate"
+echo "  export KANAKKU_DEPLOY_HOST=your-server-ip"
+echo "  python web_dashboard.py"
+echo "  # Dashboard will be available at http://127.0.0.1:5001"
+echo ""
 echo "Setup complete! 🎉"
+echo ""
+echo "Next steps:"
+echo "1. Configure your .env file with actual server details"
+echo "2. Test the MCP server connection"
+echo "3. Deploy to production using deploy-production.sh"
+echo "4. Configure monitoring dashboard for production access"

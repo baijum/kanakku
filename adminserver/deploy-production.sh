@@ -17,7 +17,8 @@ source venv/bin/activate
 # Install production dependencies
 echo "Installing dependencies..."
 pip install --upgrade pip
-pip install -r requirements.txt
+# Install the main kanakku package with MCP dependencies
+pip install -e ../.
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
@@ -35,6 +36,11 @@ KANAKKU_SSH_PORT=22
 # Optional: Logging configuration
 MCP_LOG_LEVEL=INFO
 MCP_LOG_FILE=/opt/kanakku/adminserver/logs/admin-server.log
+
+# Monitoring Dashboard Configuration
+FLASK_ENV=production
+CORS_ORIGINS=https://your-domain.com
+LOG_LEVEL=INFO
 EOF
 fi
 
@@ -55,12 +61,25 @@ fi
 
 echo "Admin Server preparation complete."
 echo ""
-echo "To deploy as a systemd service:"
+echo "Note: This project uses pyproject.toml for unified dependency management."
+echo "The MCP dependencies are included in the main kanakku package."
+echo ""
+echo "To deploy as systemd services:"
 echo "1. Copy files to /opt/kanakku/adminserver/"
 echo "2. Copy ../kanakku-admin-server.service to /etc/systemd/system/"
-echo "3. Run: sudo systemctl daemon-reload"
-echo "4. Run: sudo systemctl enable kanakku-admin-server"
-echo "5. Run: sudo systemctl start kanakku-admin-server"
+echo "3. Copy ../kanakku-monitor.service to /etc/systemd/system/"
+echo "4. Run: sudo systemctl daemon-reload"
+echo "5. Run: sudo systemctl enable kanakku-admin-server kanakku-monitor"
+echo "6. Run: sudo systemctl start kanakku-admin-server kanakku-monitor"
 echo ""
-echo "To check status: sudo systemctl status kanakku-admin-server"
-echo "To view logs: sudo journalctl -u kanakku-admin-server -f"
+echo "To check status:"
+echo "  sudo systemctl status kanakku-admin-server"
+echo "  sudo systemctl status kanakku-monitor"
+echo ""
+echo "To view logs:"
+echo "  sudo journalctl -u kanakku-admin-server -f"
+echo "  sudo journalctl -u kanakku-monitor -f"
+echo ""
+echo "Monitoring Dashboard will be available at:"
+echo "  Development: http://127.0.0.1:5001"
+echo "  Production: https://monitor.your-domain.com (after nginx configuration)"

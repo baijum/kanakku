@@ -21,6 +21,7 @@ Manage individual Kanakku services with fine-grained control.
   - `kanakku` - Main application service
   - `kanakku-worker` - Background worker service
   - `kanakku-scheduler` - Scheduled task service
+  - `kanakku-monitor` - Monitoring dashboard service
   - `nginx` - Web server
   - `postgresql` - Database service
   - `redis-server` - Cache/session store
@@ -44,6 +45,12 @@ Manage individual Kanakku services with fine-grained control.
   "operation": "is-active", 
   "service": "kanakku-worker"
 }
+
+// Check monitoring dashboard status
+{
+  "operation": "status",
+  "service": "kanakku-monitor"
+}
 ```
 
 ### 2. `restart_all_kanakku_services`
@@ -55,8 +62,8 @@ Restart all Kanakku application services in the correct order with optional ngin
 
 **Process:**
 1. **Daemon Reload** (if enabled): Reloads systemd configuration
-2. **Stop Services**: Stops services in reverse order (kanakku → kanakku-worker → kanakku-scheduler → nginx)
-3. **Start Services**: Starts services in correct order (kanakku-scheduler → kanakku-worker → kanakku → nginx)
+2. **Stop Services**: Stops services in reverse order (kanakku → kanakku-worker → kanakku-scheduler → kanakku-monitor → nginx)
+3. **Start Services**: Starts services in correct order (kanakku-scheduler → kanakku-worker → kanakku → kanakku-monitor → nginx)
 4. **Status Check**: Verifies all services are active
 
 **Examples:**
@@ -81,6 +88,7 @@ Only predefined Kanakku-related services are allowed:
 - `kanakku` - Main application
 - `kanakku-worker` - Background worker
 - `kanakku-scheduler` - Scheduled tasks
+- `kanakku-monitor` - Monitoring dashboard
 - `nginx` - Web server
 - `postgresql` - Database
 - `redis-server` - Cache/session store
@@ -115,6 +123,20 @@ Service operations are restricted to safe management commands:
    {"operation": "status", "service": "kanakku"}
    ```
 
+### Monitoring Dashboard Management
+1. **Check monitoring dashboard status**:
+   ```json
+   {"operation": "status", "service": "kanakku-monitor"}
+   ```
+2. **Restart monitoring dashboard**:
+   ```json
+   {"operation": "restart", "service": "kanakku-monitor"}
+   ```
+3. **Verify it's active**:
+   ```json
+   {"operation": "is-active", "service": "kanakku-monitor"}
+   ```
+
 ### Troubleshooting Workflow
 1. **Check service status**:
    ```json
@@ -146,8 +168,8 @@ All service management operations return structured output:
 ```
 === SERVICE MANAGEMENT ===
 Operation: restart
-Service: kanakku
-Safety Check: 🔧 SERVICE: RESTART kanakku (SUCCESS)
+Service: kanakku-monitor
+Safety Check: 🔧 SERVICE: RESTART kanakku-monitor (SUCCESS)
 Exit Code: 0
 
 --- STDOUT ---
@@ -170,17 +192,20 @@ Step 2: Stopping services...
   kanakku: 🔧 SERVICE: STOP kanakku (SUCCESS)
   kanakku-worker: 🔧 SERVICE: STOP kanakku-worker (SUCCESS)
   kanakku-scheduler: 🔧 SERVICE: STOP kanakku-scheduler (SUCCESS)
+  kanakku-monitor: 🔧 SERVICE: STOP kanakku-monitor (SUCCESS)
 
 Step 3: Starting services...
   kanakku: 🔧 SERVICE: START kanakku (SUCCESS)
   kanakku-worker: 🔧 SERVICE: START kanakku-worker (SUCCESS)
   kanakku-scheduler: 🔧 SERVICE: START kanakku-scheduler (SUCCESS)
+  kanakku-monitor: 🔧 SERVICE: START kanakku-monitor (SUCCESS)
   nginx: 🔧 SERVICE: START nginx (SUCCESS)
 
 Step 4: Final service status...
   kanakku: active
   kanakku-worker: active
   kanakku-scheduler: active
+  kanakku-monitor: active
   nginx: active
 ```
 
@@ -202,5 +227,23 @@ The new service management tools complement existing MCP server capabilities:
 - Use `read_log` and `search_logs` to investigate issues before restarting services
 - Use `tail_log` to monitor service logs during restart operations
 - Use `get_system_info` to check system resources before performing operations
+
+## Monitoring Dashboard Integration
+
+The kanakku-monitor service provides a web-based monitoring dashboard with:
+
+- **Real-time Service Monitoring**: View status of all Kanakku services
+- **System Metrics**: CPU, memory, disk usage visualization
+- **Log Access**: Browse and search application and system logs
+- **Service Management**: Start/stop/restart services through web interface
+
+**Access Information:**
+- Development: `http://127.0.0.1:5001`
+- Production: `https://monitor.your-domain.com` (with nginx configuration)
+
+**Log Sources Available:**
+- Application logs: kanakku, worker, scheduler
+- System service logs: All Kanakku services via journalctl
+- Monitoring dashboard logs: `systemd_kanakku_monitor`
 
 This provides a complete toolkit for managing Kanakku production services safely and effectively. 
