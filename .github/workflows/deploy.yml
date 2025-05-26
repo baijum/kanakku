@@ -78,6 +78,15 @@ jobs:
           chmod +x lint.sh
           ./lint.sh
 
+      - name: Initialize test database
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_kanakku
+          FLASK_ENV: testing
+        run: |
+          cd backend
+          # Run database migrations to create all tables
+          python -m flask db upgrade
+
       - name: Run backend tests
         env:
           DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_kanakku
@@ -283,7 +292,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, build]
     if: success() || github.event.inputs.force_deploy == 'true'
-    environment: production
 
     steps:
       - name: Download deployment artifact
