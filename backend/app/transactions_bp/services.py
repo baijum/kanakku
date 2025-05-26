@@ -6,32 +6,12 @@ from sqlalchemy import func, or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import db
-from app.models import Account, Book, Transaction
+from app.models import Account, Transaction
+from app.shared.services import get_active_book_id
 
 
 class TransactionService:
     """Service layer for transaction operations."""
-
-    @staticmethod
-    def get_active_book_id() -> int:
-        """Get the active book ID for the current user or raise an error if not set."""
-        user = g.current_user
-
-        if not user.active_book_id:
-            # Try to find first book ordered by ID
-            first_book = Book.query.filter_by(user_id=user.id).order_by(Book.id).first()
-            if first_book:
-                user.active_book_id = first_book.id
-                db.session.commit()
-            else:
-                # Create a default book
-                default_book = Book(user_id=user.id, name="Book 1")
-                db.session.add(default_book)
-                db.session.flush()
-                user.active_book_id = default_book.id
-                db.session.commit()
-
-        return user.active_book_id
 
     @staticmethod
     def validate_transaction_data(data: Dict) -> Tuple[bool, str]:
@@ -104,7 +84,7 @@ class TransactionService:
         """Create a new transaction from the provided data."""
         current_app.logger.info("Processing transaction creation request")
 
-        active_book_id = TransactionService.get_active_book_id()
+        active_book_id = get_active_book_id()
         user = g.current_user
 
         # Validate transaction data
@@ -190,7 +170,7 @@ class TransactionService:
 
         # Use provided book_id or get active book
         if book_id is None:
-            book_id = TransactionService.get_active_book_id()
+            book_id = get_active_book_id()
 
         # Start with base query
         query = Transaction.query.filter_by(user_id=g.current_user.id, book_id=book_id)
@@ -655,7 +635,7 @@ class TransactionService:
 
         # If book_id is not provided, use the active book
         if not book_id:
-            book_id = TransactionService.get_active_book_id()
+            book_id = get_active_book_id()
 
         # Fetch more raw transactions than we need to ensure we have enough after grouping
         fetch_limit = limit * 4

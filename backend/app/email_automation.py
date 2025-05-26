@@ -3,8 +3,7 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, g, jsonify, request
 
-from .auth import api_token_required
-from .extensions import db
+from .extensions import api_token_required, db
 from .models import EmailConfiguration
 from .utils.encryption import encrypt_value
 

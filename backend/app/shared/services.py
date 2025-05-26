@@ -126,3 +126,28 @@ def calculate_pagination_metadata(pagination) -> Dict:
         "next_page": pagination.next_num if pagination.has_next else None,
         "prev_page": pagination.prev_num if pagination.has_prev else None,
     }
+
+
+def get_active_book_id() -> int:
+    """Get the active book ID for the current user or create a default book if not set."""
+    from flask import g
+
+    from ..models import Book
+
+    user = g.current_user
+
+    if not user.active_book_id:
+        # Try to find first book ordered by ID
+        first_book = Book.query.filter_by(user_id=user.id).order_by(Book.id).first()
+        if first_book:
+            user.active_book_id = first_book.id
+            db.session.commit()
+        else:
+            # Create a default book
+            default_book = Book(user_id=user.id, name="Book 1")
+            db.session.add(default_book)
+            db.session.flush()
+            user.active_book_id = default_book.id
+            db.session.commit()
+
+    return user.active_book_id

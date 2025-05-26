@@ -49,22 +49,57 @@ kanakku/
 ├── backend/           # Flask backend
 │   ├── app/           # Application package
 │   │   ├── __init__.py # App factory
-│   │   ├── models.py  # SQLAlchemy models
 │   │   ├── config.py  # Configuration settings
 │   │   ├── extensions.py # Flask extensions (db, jwt)
+│   │   ├── models/    # Modular SQLAlchemy models
+│   │   │   ├── __init__.py # Model imports
+│   │   │   ├── base.py    # Base model class
+│   │   │   ├── user.py    # User model
+│   │   │   ├── account.py # Account model
+│   │   │   ├── transaction.py # Transaction model
+│   │   │   ├── book.py    # Book model
+│   │   │   └── other.py   # Other models (API tokens, etc.)
+│   │   ├── auth_bp/   # Authentication blueprint
+│   │   │   ├── __init__.py # Blueprint registration
+│   │   │   ├── routes.py  # Authentication routes
+│   │   │   ├── services.py # Authentication business logic
+│   │   │   └── schemas.py # Validation schemas
+│   │   ├── accounts_bp/ # Account management blueprint
+│   │   │   ├── __init__.py # Blueprint registration
+│   │   │   ├── routes.py  # Account routes
+│   │   │   ├── services.py # Account business logic
+│   │   │   └── schemas.py # Validation schemas
+│   │   ├── transactions_bp/ # Transaction management blueprint
+│   │   │   ├── __init__.py # Blueprint registration
+│   │   │   ├── routes.py  # Transaction routes
+│   │   │   ├── services.py # Transaction business logic
+│   │   │   └── schemas.py # Validation schemas
+│   │   ├── books_bp/  # Book management blueprint
+│   │   │   ├── __init__.py # Blueprint registration
+│   │   │   ├── routes.py  # Book routes
+│   │   │   ├── services.py # Book business logic
+│   │   │   └── schemas.py # Validation schemas
+│   │   ├── reports_bp/ # Reporting blueprint
+│   │   │   ├── __init__.py # Blueprint registration
+│   │   │   ├── routes.py  # Report routes
+│   │   │   ├── services.py # Report business logic
+│   │   │   └── schemas.py # Validation schemas
+│   │   ├── shared/    # Shared utilities and services
+│   │   │   ├── __init__.py
+│   │   │   ├── services.py # Common service functions
+│   │   │   ├── schemas.py # Shared validation schemas
+│   │   │   └── utils.py   # Shared utilities
 │   │   ├── api.py     # General API routes (e.g., health check)
-│   │   ├── auth.py    # Authentication routes
-│   │   ├── accounts.py # Account management routes
-│   │   ├── transactions.py # Transaction management routes
 │   │   ├── ledger.py  # Ledger-specific routes (e.g., ledger format export)
-│   │   ├── reports.py # Reporting functionality
-│   │   ├── books.py   # Book entries for advanced accounting
 │   │   ├── preamble.py # Core utilities and constants
 │   │   ├── swagger.py # Swagger/OpenAPI documentation handlers
 │   │   ├── errors.py  # Error handlers
 │   │   ├── mappings.py # Data mapping configurations
+│   │   ├── settings.py # Global settings management
+│   │   ├── email_automation.py # Email automation features
 │   │   └── utils/     # Utility modules
 │   │       ├── email_utils.py  # Email handling utilities
+│   │       ├── encryption.py  # Encryption utilities
 │   │       └── logging_utils.py  # Logging configuration
 │   ├── migrations/    # Database migrations (Alembic)
 │   ├── swagger.yaml   # OpenAPI specification
@@ -144,7 +179,7 @@ Kanakku follows a modern, layered architecture with a clear separation between f
   - Axios for API requests
 - **Backend:** Flask application (`backend/`) serving a RESTful API. It handles:
   - **Business Logic:** Managing users, accounts, transactions, and book entries.
-  - **Database Interaction:** Using SQLAlchemy (`backend/app/models.py`) with a PostgreSQL database for application data.
+  - **Database Interaction:** Using SQLAlchemy with modular models (`backend/app/models/`) with a PostgreSQL database for application data.
   - **Authentication:** Utilizing Flask-JWT-Extended for token-based authentication and Google OAuth integration.
   - **Ledger Interaction:** Exporting data in Ledger format and generating reports.
 - **API:** Defined using Flask Blueprints, organized by functionality with Swagger/OpenAPI documentation. All endpoints are prefixed with `/api/`.
@@ -159,7 +194,7 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
 
 - **Health Check (`api.py`)**
   - `GET /api/v1/health` (No Auth Required) - Basic health check.
-- **Authentication (`auth.py`)**
+- **Authentication (`auth_bp/`)**
   - `POST /api/v1/auth/register` - Register a new user. (Body: `{ "email": "...", "password": "..." }`)
   - `POST /api/v1/auth/login` - Log in a user. (Body: `{ "email": "...", "password": "..." }`)
   - `POST /api/v1/auth/logout` (Auth Required) - Placeholder for logout (JWT handled client-side).
@@ -174,13 +209,13 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
   - `POST /api/v1/auth/tokens` - Create a new API token.
   - `PUT /api/v1/auth/tokens/<token_id>` - Update an API token.
   - `DELETE /api/v1/auth/tokens/<token_id>` - Delete an API token.
-- **Accounts (`accounts.py`)** (Auth Required)
+- **Accounts (`accounts_bp/`)** (Auth Required)
   - `GET /api/v1/accounts` - Get all accounts for the current user.
   - `POST /api/v1/accounts` - Add a new account. (Body: `{ "name": "...", "description": "..." (optional), "currency": "..." (optional), "balance": ... (optional) }`)
   - `GET /api/v1/accounts/<int:account_id>` - Get details for a specific account.
   - `PUT /api/v1/accounts/<int:account_id>` - Update a specific account.
   - `DELETE /api/v1/accounts/<int:account_id>` - Delete a specific account.
-- **Transactions (`transactions.py`)** (Auth Required)
+- **Transactions (`transactions_bp/`)** (Auth Required)
   - `POST /api/v1/transactions` - Add a new transaction. (Body: `{ "date": "YYYY-MM-DD", "payee": "...", "postings": [...] }`)
   - `GET /api/v1/transactions` - Get all transactions for the current user (supports filtering parameters).
   - `GET /api/v1/transactions/<int:transaction_id>` - Get a specific transaction.
@@ -188,12 +223,12 @@ The main API endpoints are served under the `/api/` prefix by the Flask backend.
   - `DELETE /api/v1/transactions/<int:transaction_id>` - Delete a transaction.
 - **Ledger (`ledger.py`)** (Auth Required)
   - `GET /api/v1/ledgertransactions` - Get all transactions for the current user in Ledger text format.
-- **Reports (`reports.py`)** (Auth Required)
+- **Reports (`reports_bp/`)** (Auth Required)
   - `GET /api/v1/reports/balance` - Get account balances.
   - `GET /api/v1/reports/register` - Get transaction register.
   - `GET /api/v1/reports/balance_report` - Get detailed balance report by account type.
   - `GET /api/v1/reports/income_statement` - Get income statement (income vs expenses).
-- **Books (`books.py`)** (Auth Required)
+- **Books (`books_bp/`)** (Auth Required)
   - `GET /api/v1/books` - Get all books for the current user.
   - `POST /api/v1/books` - Create a new book.
   - `GET /api/v1/books/<int:book_id>` - Get a specific book.

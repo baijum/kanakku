@@ -4,39 +4,19 @@ from flask import current_app, g
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.extensions import db
-from app.models import Account, Book, Transaction
+from app.models import Account, Transaction
+from app.shared.services import get_active_book_id
 
 
 class AccountService:
     """Service layer for account operations."""
 
     @staticmethod
-    def get_active_book_id() -> int:
-        """Get the active book ID for the current user or raise an error if not set."""
-        user = g.current_user
-
-        if not user.active_book_id:
-            # Try to find first book ordered by ID
-            first_book = Book.query.filter_by(user_id=user.id).order_by(Book.id).first()
-            if first_book:
-                user.active_book_id = first_book.id
-                db.session.commit()
-            else:
-                # Create a default book
-                default_book = Book(user_id=user.id, name="Book 1")
-                db.session.add(default_book)
-                db.session.flush()
-                user.active_book_id = default_book.id
-                db.session.commit()
-
-        return user.active_book_id
-
-    @staticmethod
     def get_accounts(include_details: bool = False) -> List[Dict]:
         """Get all accounts for the current user and active book."""
         current_app.logger.debug("Getting accounts from service layer")
 
-        active_book_id = AccountService.get_active_book_id()
+        active_book_id = get_active_book_id()
         accounts_list = Account.query.filter_by(
             user_id=g.current_user.id, book_id=active_book_id
         ).all()
@@ -53,7 +33,7 @@ class AccountService:
         """Get a specific account by ID."""
         current_app.logger.debug(f"Getting account {account_id} from service layer")
 
-        active_book_id = AccountService.get_active_book_id()
+        active_book_id = get_active_book_id()
         return Account.query.filter_by(
             id=account_id, user_id=g.current_user.id, book_id=active_book_id
         ).first()
@@ -68,7 +48,7 @@ class AccountService:
             return False, "Missing required field: name", None
 
         user_id = g.current_user.id
-        active_book_id = AccountService.get_active_book_id()
+        active_book_id = get_active_book_id()
 
         # Check if account with the same name already exists in this book
         existing = Account.query.filter_by(
@@ -109,7 +89,7 @@ class AccountService:
         """Update an account."""
         current_app.logger.debug(f"Updating account {account_id} from service layer")
 
-        active_book_id = AccountService.get_active_book_id()
+        active_book_id = get_active_book_id()
         account = Account.query.filter_by(
             id=account_id, user_id=g.current_user.id, book_id=active_book_id
         ).first()
@@ -160,7 +140,7 @@ class AccountService:
         """Delete an account."""
         current_app.logger.debug(f"Deleting account {account_id} from service layer")
 
-        active_book_id = AccountService.get_active_book_id()
+        active_book_id = get_active_book_id()
         account = Account.query.filter_by(
             id=account_id, user_id=g.current_user.id, book_id=active_book_id
         ).first()
@@ -202,7 +182,7 @@ class AccountService:
         if ":" not in prefix:
             return [], prefix
 
-        active_book_id = AccountService.get_active_book_id()
+        active_book_id = get_active_book_id()
         accounts_list = Account.query.filter_by(
             user_id=g.current_user.id, book_id=active_book_id
         ).all()

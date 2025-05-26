@@ -1,7 +1,6 @@
 from flask import Blueprint, g, jsonify, request
 
-from .auth import api_token_required
-from .extensions import db
+from .extensions import api_token_required, db
 from .models import GlobalConfiguration
 from .utils.encryption import decrypt_value, encrypt_value
 
