@@ -135,6 +135,7 @@ jobs:
           cp -r backend/* deploy/backend/
           cp -r banktransactions deploy/
           cp -r shared deploy/
+          cp -r mcp-server deploy/
           cp requirements.txt deploy/
           cp pyproject.toml deploy/
 
@@ -146,6 +147,7 @@ jobs:
           cp kanakku.service deploy/config/
           cp kanakku-worker.service deploy/config/
           cp kanakku-scheduler.service deploy/config/
+          cp kanakku-mcp-server.service deploy/config/
 
           # Create deployment scripts
           cat > deploy/scripts/deploy.sh << 'EOF'
@@ -170,6 +172,7 @@ jobs:
           sudo systemctl stop kanakku || true
           sudo systemctl stop kanakku-worker || true
           sudo systemctl stop kanakku-scheduler || true
+          sudo systemctl stop kanakku-mcp-server || true
 
           # Create deployment directory and set permissions
           sudo mkdir -p "$DEPLOY_PATH"
@@ -180,6 +183,7 @@ jobs:
           sudo cp -r backend "$DEPLOY_PATH/"
           sudo cp -r banktransactions "$DEPLOY_PATH/"
           sudo cp -r shared "$DEPLOY_PATH/"
+          sudo cp -r mcp-server "$DEPLOY_PATH/"
           sudo cp requirements.txt "$DEPLOY_PATH/"
           sudo cp pyproject.toml "$DEPLOY_PATH/"
 
@@ -194,6 +198,12 @@ jobs:
           sudo -u "$SERVICE_USER" python3 -m venv backend/venv
           sudo -u "$SERVICE_USER" backend/venv/bin/pip install --upgrade pip
           sudo -u "$SERVICE_USER" backend/venv/bin/pip install -e .
+
+          # Set up MCP Server virtual environment
+          echo "Setting up MCP Server environment..."
+          sudo -u "$SERVICE_USER" python3 -m venv mcp-server/venv
+          sudo -u "$SERVICE_USER" mcp-server/venv/bin/pip install --upgrade pip
+          sudo -u "$SERVICE_USER" mcp-server/venv/bin/pip install -r mcp-server/requirements.txt
 
           # Set permissions
           sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$DEPLOY_PATH"
@@ -212,10 +222,12 @@ jobs:
           sudo cp config/kanakku.service /etc/systemd/system/
           sudo cp config/kanakku-worker.service /etc/systemd/system/
           sudo cp config/kanakku-scheduler.service /etc/systemd/system/
+          sudo cp config/kanakku-mcp-server.service /etc/systemd/system/
           sudo systemctl daemon-reload
           sudo systemctl enable kanakku
           sudo systemctl enable kanakku-worker
           sudo systemctl enable kanakku-scheduler
+          sudo systemctl enable kanakku-mcp-server
 
           # Configure nginx
           sudo cp config/nginx-kanakku.conf /etc/nginx/sites-available/kanakku
@@ -239,6 +251,7 @@ jobs:
           sudo systemctl start kanakku
           sudo systemctl start kanakku-worker
           sudo systemctl start kanakku-scheduler
+          sudo systemctl start kanakku-mcp-server
           sudo systemctl reload nginx
 
           # Check service status
@@ -246,6 +259,7 @@ jobs:
           sudo systemctl status kanakku --no-pager
           sudo systemctl status kanakku-worker --no-pager
           sudo systemctl status kanakku-scheduler --no-pager
+          sudo systemctl status kanakku-mcp-server --no-pager
 
           echo "Services started successfully"
           EOF
@@ -329,6 +343,7 @@ jobs:
           sudo systemctl is-active kanakku
           sudo systemctl is-active kanakku-worker
           sudo systemctl is-active kanakku-scheduler
+          sudo systemctl is-active kanakku-mcp-server
           sudo systemctl is-active nginx
           EOF
 
@@ -343,11 +358,13 @@ jobs:
             sudo systemctl stop kanakku || true
             sudo systemctl stop kanakku-worker || true
             sudo systemctl stop kanakku-scheduler || true
+            sudo systemctl stop kanakku-mcp-server || true
             sudo cp -r "/opt/kanakku/backups/$LATEST_BACKUP"/* /opt/kanakku/
             sudo chown -R kanakku:kanakku /opt/kanakku
             sudo systemctl start kanakku || true
             sudo systemctl start kanakku-worker || true
             sudo systemctl start kanakku-scheduler || true
+            sudo systemctl start kanakku-mcp-server || true
           fi
           EOF
 
