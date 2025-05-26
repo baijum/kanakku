@@ -11,6 +11,11 @@ from cryptography.fernet import Fernet
 
 from app.utils.encryption import decrypt_value, encrypt_value, get_encryption_key
 
+# Define a constant for the test encryption key
+TEST_ENCRYPTION_KEY = (
+    "G27M7j58p9H2el6A5iJJX0RD0hAJsClDNalxOoI9zA8="  # Dummy key for testing
+)
+
 
 class TestEncryption:
     """Test cases for encryption utility functions"""
@@ -25,9 +30,7 @@ class TestEncryption:
 
         assert key == test_key
 
-    @patch.dict(
-        os.environ, {"ENCRYPTION_KEY": "G27M7j58p9H2el6A5iJJX0RD0hAJsClDNalxOoI9zA8="}
-    )
+    @patch.dict(os.environ, {"ENCRYPTION_KEY": TEST_ENCRYPTION_KEY})
     def test_get_encryption_key_from_environment(self, app):
         """Test getting encryption key from environment variable"""
         # Clear config key to force environment lookup
@@ -36,7 +39,7 @@ class TestEncryption:
         with app.app_context():
             key = get_encryption_key()
 
-        assert key == "G27M7j58p9H2el6A5iJJX0RD0hAJsClDNalxOoI9zA8="
+        assert key == TEST_ENCRYPTION_KEY
 
     def test_get_encryption_key_generates_temporary(self, app):
         """Test generating temporary key when none configured"""
@@ -110,7 +113,7 @@ class TestEncryption:
         test_value = "secret_password_123"
 
         # Set a consistent encryption key for the test
-        app.config["ENCRYPTION_KEY"] = "G27M7j58p9H2el6A5iJJX0RD0hAJsClDNalxOoI9zA8="
+        app.config["ENCRYPTION_KEY"] = TEST_ENCRYPTION_KEY
 
         with app.app_context():
             encrypted = encrypt_value(test_value)
@@ -153,7 +156,7 @@ class TestEncryption:
         ]
 
         # Set a consistent encryption key for the test
-        app.config["ENCRYPTION_KEY"] = "G27M7j58p9H2el6A5iJJX0RD0hAJsClDNalxOoI9zA8="
+        app.config["ENCRYPTION_KEY"] = TEST_ENCRYPTION_KEY
 
         with app.app_context():
             for test_value in test_values:
@@ -164,7 +167,7 @@ class TestEncryption:
     def test_encryption_key_consistency(self, app):
         """Test that encryption key remains consistent within app context"""
         # Set a consistent encryption key for the test
-        app.config["ENCRYPTION_KEY"] = "G27M7j58p9H2el6A5iJJX0RD0hAJsClDNalxOoI9zA8="
+        app.config["ENCRYPTION_KEY"] = TEST_ENCRYPTION_KEY
 
         with app.app_context():
             key1 = get_encryption_key()
