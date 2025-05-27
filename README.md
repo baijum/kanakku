@@ -148,6 +148,9 @@ kanakku/
 ├── tools/            # Command-line tools
 │   ├── accountimporter/  # Rust-based account importer
 │   └── ledgertransactions/  # Go-based ledger transaction processor
+├── scripts/          # Deployment and administration scripts
+│   ├── create-htpasswd.sh  # Monitoring dashboard authentication setup
+│   └── README.md     # Script documentation
 ├── hack/             # Debugging and development scripts
 │   ├── debug_redis_queue.py  # Redis queue debugging script
 │   ├── inspect_queues.py     # Queue inspection tool

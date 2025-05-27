@@ -168,6 +168,28 @@ cd /opt/kanakku/adminserver
 sudo -u kanakku ./deploy-production.sh
 ```
 
+### 4. Configure Monitoring Dashboard Authentication
+
+Set up HTTP Basic Authentication for the monitoring dashboard:
+
+```bash
+# Navigate to the project directory
+cd /opt/kanakku
+
+# Run the htpasswd setup script
+sudo ./scripts/create-htpasswd.sh
+
+# Follow the prompts to create a username and password
+# The script will create /etc/nginx/.htpasswd automatically
+```
+
+**Important:** This step should be completed before configuring nginx, as the nginx configuration references the htpasswd file.
+
+**Security Notes:**
+- Use a strong, unique password for monitoring access
+- This will be required to access `https://monitor.yourdomain.com`
+- Keep credentials secure and share only with authorized personnel
+
 ## GitHub Actions Setup
 
 ### 1. Configure Repository Secrets
@@ -379,6 +401,48 @@ The system includes automated health checks:
 - **API Health**: Verifies backend API responses
 - **Database Connectivity**: Tests PostgreSQL connection
 - **Cache Connectivity**: Tests Redis connection
+
+### Monitoring Dashboard Authentication
+
+The monitoring dashboard at `https://monitor.yourdomain.com` requires HTTP Basic Authentication for security. Set up user credentials using the provided script:
+
+```bash
+# Navigate to the project directory
+cd /opt/kanakku
+
+# Run the htpasswd setup script
+sudo ./scripts/create-htpasswd.sh
+
+# Follow the prompts to create a username and password
+# The script will create /etc/nginx/.htpasswd automatically
+
+# Restart nginx to apply the authentication
+sudo systemctl restart nginx
+```
+
+**Security Best Practices:**
+- Use strong, unique passwords for monitoring access
+- Limit monitoring access to authorized personnel only
+- Consider implementing IP whitelisting for additional security
+- Monitor nginx access logs for unauthorized access attempts
+- Regularly update passwords and remove unused accounts
+
+**Managing Users:**
+```bash
+# Add a new user
+sudo htpasswd /etc/nginx/.htpasswd new_username
+
+# Change existing user's password
+sudo htpasswd /etc/nginx/.htpasswd existing_username
+
+# Remove a user
+sudo htpasswd -D /etc/nginx/.htpasswd username_to_remove
+
+# List all users
+sudo cut -d: -f1 /etc/nginx/.htpasswd
+```
+
+For detailed information about the htpasswd script and user management, see [`scripts/README.md`](../scripts/README.md).
 
 ### Log Rotation
 

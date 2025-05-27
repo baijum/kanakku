@@ -144,7 +144,29 @@ sudo /opt/kanakku/deploy-helper.sh logs
 
 ## Next Steps
 
-- Set up monitoring and alerting
+### Set up monitoring and alerting
+
+Configure authentication for the monitoring dashboard:
+
+```bash
+# Set up monitoring dashboard authentication
+cd /opt/kanakku
+sudo ./scripts/create-htpasswd.sh
+
+# Follow prompts to create username/password
+# Restart nginx to apply changes
+sudo systemctl restart nginx
+```
+
+**Access your monitoring dashboard at:** `https://monitor.yourdomain.com`
+
+**Security Notes:**
+- Use a strong, unique password
+- Only share credentials with authorized personnel
+- Monitor access logs for unauthorized attempts
+
+### Additional Configuration
+
 - Configure email automation for bank transaction processing
 - Configure email settings for notifications
 - Review security settings

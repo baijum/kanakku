@@ -175,6 +175,32 @@ This guide provides step-by-step instructions for deploying Kanakku in productio
    0 2 * * * /opt/kanakku/backup-db.sh
    ```
 
+3. **Configure Monitoring Dashboard Authentication**
+
+   The monitoring dashboard at `https://monitor.yourdomain.com` requires HTTP Basic Authentication. Use the provided script to set up user credentials:
+
+   ```bash
+   # Navigate to the project directory
+   cd /opt/kanakku
+   
+   # Run the htpasswd setup script
+   sudo ./scripts/create-htpasswd.sh
+   
+   # Follow the prompts to create a username and password
+   # The script will create /etc/nginx/.htpasswd automatically
+   
+   # Restart nginx to apply the authentication
+   sudo systemctl restart nginx
+   ```
+
+   **Security Notes:**
+   - Use a strong, unique password for monitoring access
+   - Limit monitoring access to authorized personnel only
+   - Consider implementing IP whitelisting for additional security
+   - Monitor nginx access logs for unauthorized access attempts
+
+   For detailed information about managing monitoring users, see [`scripts/README.md`](../scripts/README.md).
+
 ## Security Considerations
 
 1. **Set Up Firewall**
