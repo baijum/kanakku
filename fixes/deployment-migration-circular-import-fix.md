@@ -33,9 +33,11 @@ The systemd service configuration had strict security settings (`ProtectSystem=s
 ### 1. Database Migration Fix
 - Created a `scripts/check_migration.py` script that safely checks if database tables exist
 - Modified the deployment script to:
-  - Check if tables exist before running migrations
+  - Use direct PostgreSQL commands (`psql`) to check if tables exist
   - If tables exist, stamp the migration as complete using `flask db stamp head`
+  - Create the `alembic_version` table if it doesn't exist before stamping
   - Only run `flask db upgrade` if tables don't exist
+- Added fallback mechanisms to handle edge cases where migration history is missing
 
 ### 2. Circular Import Fix
 - Made database imports more defensive in `shared/database.py`
@@ -53,11 +55,23 @@ The systemd service configuration had strict security settings (`ProtectSystem=s
 ```bash
 # Check if database tables exist and handle migration accordingly
 echo "Checking if database tables exist..."
-if sudo -u kanakku python3 scripts/check_migration.py 2>/dev/null | grep -q "TABLES_EXIST"; then
+
+# Get database name from environment
+DB_NAME=$(grep -E "^DATABASE_URL=" /opt/kanakku/.env | cut -d'/' -f4 | cut -d'?' -f1 || echo "kanakku")
+echo "Using database: $DB_NAME"
+
+# Check if user table exists using psql
+if sudo -u postgres psql -d "$DB_NAME" -c "\\dt" 2>/dev/null | grep -q "user"; then
   echo "Database tables already exist, marking migration as complete..."
-  cd backend && sudo -u kanakku venv/bin/flask db stamp head || echo "Could not stamp migration"
+  cd backend
+  # First ensure the alembic_version table exists
+  sudo -u kanakku venv/bin/flask db stamp head || {
+    echo "Could not stamp migration, trying to create alembic_version table..."
+    sudo -u postgres psql -d "$DB_NAME" -c "CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num));" || true
+    sudo -u kanakku venv/bin/flask db stamp head || echo "Still could not stamp migration"
+  }
 else
-  echo "Running database migrations..."
+  echo "No existing tables found, running database migrations..."
   cd backend && sudo -u kanakku venv/bin/flask db upgrade || echo "Migration failed or not needed"
 fi
 ```

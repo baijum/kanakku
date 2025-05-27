@@ -1118,15 +1118,11 @@ async def handle_read_resource(uri: str) -> str:
 async def main():
     """Main entry point for the Admin server."""
     # Validate configuration
-    if not validate_ssh_config():
-        logger.error("Invalid SSH configuration. Please set environment variables:")
-        logger.error("- KANAKKU_DEPLOY_HOST: Production server hostname/IP")
-        logger.error("- KANAKKU_DEPLOY_USER: SSH user (default: root)")
-        logger.error(
-            "- KANAKKU_SSH_KEY_PATH: Path to SSH private key (default: ~/.ssh/kanakku_deploy)"
-        )
-        logger.error("- KANAKKU_SSH_PORT: SSH port (default: 22)")
-        sys.exit(1)
+    validate_ssh_config()
+
+    logger.info(
+        f"SSH Config: host={SSH_CONFIG['host']}, user={SSH_CONFIG['user']}, key_path={SSH_CONFIG['key_path']}"
+    )
 
     # Test connection
     logger.info(f"Testing connection to {SSH_CONFIG['host']}...")
@@ -1135,10 +1131,12 @@ async def main():
     )
 
     if returncode != 0:
-        logger.error(f"Failed to connect to server: {stderr}")
-        sys.exit(1)
+        logger.warning(f"Failed to connect to server: {stderr}")
+        logger.info("Continuing anyway - connection may work during actual operations")
+    else:
+        logger.info("Connection test successful")
 
-    logger.info("Connection successful. Starting Admin server...")
+    logger.info("Starting Admin server...")
 
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(
