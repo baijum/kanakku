@@ -16,6 +16,7 @@ env:
   NODE_VERSION: '20'
   DEPLOY_PATH: '/opt/kanakku'
   SERVICE_USER: 'kanakku'
+  DOMAIN: ${{ secrets.DOMAIN || 'localhost' }}
 
 jobs:
   # Run tests before deployment
@@ -156,7 +157,7 @@ jobs:
           cp -r frontend/build/* deploy/frontend/
 
           # Copy configuration files
-          cp nginx-kanakku.conf deploy/config/
+          cp nginx-kanakku.conf deploy/config/nginx-kanakku.conf.template
           cp kanakku.service deploy/config/
           cp kanakku-worker.service deploy/config/
           cp kanakku-scheduler.service deploy/config/
@@ -251,6 +252,13 @@ jobs:
 
           echo "Configuring services and nginx..."
 
+          # Get domain from environment or use localhost as fallback
+          DOMAIN="${DOMAIN:-localhost}"
+          echo "Configuring for domain: $DOMAIN"
+
+          # Generate nginx configuration from template
+          sed "s/{{DOMAIN}}/$DOMAIN/g" config/nginx-kanakku.conf.template > config/nginx-kanakku.conf
+
           # Copy and enable systemd services
           sudo cp config/kanakku.service /etc/systemd/system/
           sudo cp config/kanakku-worker.service /etc/systemd/system/
@@ -267,7 +275,7 @@ jobs:
           sudo ln -sf /etc/nginx/sites-available/kanakku /etc/nginx/sites-enabled/
           sudo nginx -t
 
-          echo "Configuration completed"
+          echo "Configuration completed for domain: $DOMAIN"
           EOF
 
           cat > deploy/scripts/start.sh << 'EOF'
@@ -399,13 +407,16 @@ jobs:
 
       - name: Deploy application
         run: |
-          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << EOF
           set -e
 
+          # Set domain environment variable
+          export DOMAIN="${{ env.DOMAIN }}"
+
           # Create a temporary deployment directory with proper permissions
-          DEPLOY_TEMP="/tmp/kanakku-deploy-$(date +%s)"
-          mkdir -p "$DEPLOY_TEMP"
-          cd "$DEPLOY_TEMP"
+          DEPLOY_TEMP="/tmp/kanakku-deploy-\$(date +%s)"
+          mkdir -p "\$DEPLOY_TEMP"
+          cd "\$DEPLOY_TEMP"
 
           # Extract deployment files with relaxed permissions
           tar -xzf /tmp/kanakku-deploy.tar.gz --no-same-owner --no-same-permissions
@@ -424,7 +435,7 @@ jobs:
 
           # Cleanup
           cd /tmp
-          rm -rf /tmp/kanakku-deploy.tar.gz "$DEPLOY_TEMP"
+          rm -rf /tmp/kanakku-deploy.tar.gz "\$DEPLOY_TEMP"
 
           echo "Deployment completed successfully!"
           EOF

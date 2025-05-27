@@ -221,6 +221,7 @@ Kanakku includes a comprehensive CI/CD pipeline for automated deployment to prod
 For deployment setup, see:
 - [Quick Start Guide](docs/deployment-quick-start.md) - Get deployed in 10 minutes
 - [Comprehensive Deployment Guide](docs/deployment.md) - Detailed setup and configuration
+- [Domain Configuration Guide](docs/deployment-domain-setup.md) - Configure custom domains with GitHub Actions
 - [Server Setup Script](scripts/server-setup.sh) - Automated server preparation
 
 ### Helper Scripts
@@ -760,6 +761,16 @@ $ flask shell
 For detailed production deployment instructions, see [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md).
 
 For a pre-deployment checklist, see [PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
+
+### Domain Configuration
+
+Kanakku supports dynamic domain configuration through GitHub Actions secrets. Configure your custom domain (e.g., `kanakku.muthukadan.net`) and the system automatically sets up:
+
+- **Main Application**: `kanakku.muthukadan.net`
+- **API Server**: `api.kanakku.muthukadan.net`  
+- **Monitoring Dashboard**: `monitor.kanakku.muthukadan.net`
+
+See the [Domain Configuration Guide](docs/deployment-domain-setup.md) for complete setup instructions.
 
 ## Recent Updates and Fixes
 
