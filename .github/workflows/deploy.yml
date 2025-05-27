@@ -162,6 +162,9 @@ jobs:
           cp kanakku-scheduler.service deploy/config/
           cp kanakku-admin-server.service deploy/config/
 
+          # Copy scripts
+          cp -r scripts deploy/
+
           # Create deployment scripts
           cat > deploy/scripts/deploy.sh << 'EOF'
           #!/bin/bash
@@ -263,9 +266,18 @@ jobs:
 
           echo "Starting services..."
 
-          # Run database migrations
-          cd /opt/kanakku/backend
-          sudo -u kanakku venv/bin/flask db upgrade || echo "Migration failed or not needed"
+          # Run database migrations with proper error handling
+          cd /opt/kanakku
+
+          # Check if database tables exist and handle migration accordingly
+          echo "Checking if database tables exist..."
+          if sudo -u kanakku python3 scripts/check_migration.py 2>/dev/null | grep -q "TABLES_EXIST"; then
+            echo "Database tables already exist, marking migration as complete..."
+            cd backend && sudo -u kanakku venv/bin/flask db stamp head || echo "Could not stamp migration"
+          else
+            echo "Running database migrations..."
+            cd backend && sudo -u kanakku venv/bin/flask db upgrade || echo "Migration failed or not needed"
+          fi
 
           # Start services
           sudo systemctl start kanakku

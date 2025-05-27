@@ -10,6 +10,9 @@ Group=kanakku
 WorkingDirectory=/opt/kanakku/adminserver
 Environment="PATH=/opt/kanakku/adminserver/venv/bin"
 Environment="PYTHONPATH=/opt/kanakku/adminserver"
+Environment="KANAKKU_DEPLOY_HOST=localhost"
+Environment="KANAKKU_DEPLOY_USER=kanakku"
+Environment="KANAKKU_SSH_KEY_PATH=/home/kanakku/.ssh/id_rsa"
 EnvironmentFile=/opt/kanakku/.env
 ExecStart=/opt/kanakku/adminserver/venv/bin/python admin_server.py
 Restart=always
@@ -17,16 +20,12 @@ RestartSec=10s
 StandardOutput=journal
 StandardError=journal
 
-# Security enhancements
-PrivateTmp=true
-ProtectSystem=strict
-ReadWritePaths=/opt/kanakku/logs /var/log/kanakku /opt/kanakku/adminserver/logs
-NoNewPrivileges=true
-PrivateDevices=true
-ProtectHome=true
-ProtectKernelTunables=true
-ProtectKernelModules=true
-ProtectControlGroups=true
+# Security enhancements (relaxed for admin functionality)
+PrivateTmp=false
+ProtectSystem=false
+NoNewPrivileges=false
+PrivateDevices=false
+ProtectHome=false
 
 # Resource limits
 LimitNOFILE=65536

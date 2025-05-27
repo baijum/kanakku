@@ -124,7 +124,7 @@ try:
         get_database_session,
         get_flask_or_standalone_session,
     )
-except ImportError as e:
+except (ImportError, RuntimeError) as e:
     print(f"Warning: Could not import database utilities: {e}")
     DatabaseManager = None
     get_database_session = None

@@ -72,13 +72,15 @@ SSH_CONFIG = {
 def validate_ssh_config() -> bool:
     """Validate SSH configuration for remote access."""
     if not SSH_CONFIG["host"]:
-        logger.error("KANAKKU_DEPLOY_HOST environment variable not set")
-        return False
+        logger.warning(
+            "KANAKKU_DEPLOY_HOST environment variable not set, using localhost"
+        )
+        SSH_CONFIG["host"] = "localhost"
 
     key_path = Path(SSH_CONFIG["key_path"]).expanduser()
     if not key_path.exists():
-        logger.error(f"SSH key not found at {key_path}")
-        return False
+        logger.warning(f"SSH key not found at {key_path}, will try without key")
+        SSH_CONFIG["key_path"] = None
 
     return True
 
@@ -87,22 +89,26 @@ async def execute_remote_command(
     command: str, timeout: int = 30
 ) -> tuple[str, str, int]:
     """Execute a command on the remote server via SSH."""
-    if not validate_ssh_config():
-        return "", "SSH configuration invalid", 1
+    validate_ssh_config()
 
-    ssh_command = [
-        "ssh",
-        "-i",
-        str(Path(SSH_CONFIG["key_path"]).expanduser()),
-        "-p",
-        str(SSH_CONFIG["port"]),
-        "-o",
-        "StrictHostKeyChecking=no",
-        "-o",
-        "ConnectTimeout=10",
-        f"{SSH_CONFIG['user']}@{SSH_CONFIG['host']}",
-        command,
-    ]
+    ssh_command = ["ssh"]
+
+    # Add SSH key if available
+    if SSH_CONFIG["key_path"]:
+        ssh_command.extend(["-i", str(Path(SSH_CONFIG["key_path"]).expanduser())])
+
+    ssh_command.extend(
+        [
+            "-p",
+            str(SSH_CONFIG["port"]),
+            "-o",
+            "StrictHostKeyChecking=no",
+            "-o",
+            "ConnectTimeout=10",
+            f"{SSH_CONFIG['user']}@{SSH_CONFIG['host']}",
+            command,
+        ]
+    )
 
     try:
         process = await asyncio.create_subprocess_exec(

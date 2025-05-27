@@ -148,9 +148,13 @@ def get_flask_or_standalone_session() -> Session:
         from flask import has_app_context
 
         if has_app_context():
-            from app.extensions import db
+            try:
+                from app.extensions import db
 
-            return db.session
+                return db.session
+            except (ImportError, RuntimeError, AttributeError):
+                # Flask app not fully initialized, fall back
+                pass
     except (ImportError, RuntimeError):
         # Not in Flask context or Flask not available
         pass
