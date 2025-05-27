@@ -170,6 +170,9 @@ jobs:
           cp -r scripts deploy/
           chmod +x deploy/scripts/*.sh
 
+          # Copy environment update script
+          cp scripts/update-env.sh deploy/scripts/
+
           # Create deployment scripts
           cat > deploy/scripts/deploy.sh << 'EOF'
           #!/bin/bash
@@ -410,8 +413,10 @@ jobs:
           ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << EOF
           set -e
 
-          # Set domain environment variable
+          # Set environment variables
           export DOMAIN="${{ env.DOMAIN }}"
+          export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+          export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
 
           # Create a temporary deployment directory with proper permissions
           DEPLOY_TEMP="/tmp/kanakku-deploy-\$(date +%s)"
@@ -426,6 +431,9 @@ jobs:
 
           # Deploy application files
           ./scripts/deploy.sh
+
+          # Update environment file with Google OAuth credentials
+          ./scripts/update-env.sh
 
           # Configure services (only on first deployment or when configs change)
           ./scripts/configure.sh

@@ -293,6 +293,10 @@ REDIS_URL=redis://localhost:6379/0
 # Frontend URL (update with your domain)
 FRONTEND_URL=https://yourdomain.com
 
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your-google-client-id-here
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+
 # Email Configuration (optional)
 MAIL_SERVER=smtp.gmail.com
 MAIL_PORT=587
@@ -475,6 +479,10 @@ REDIS_URL=redis://localhost:6379/0
 # Frontend URL (update with your domain)
 FRONTEND_URL=https://yourdomain.com
 
+# Google OAuth Configuration (will be updated by CI/CD)
+GOOGLE_CLIENT_ID=your-google-client-id-here
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+
 # API Configuration
 API_RATE_LIMIT=1000 per hour
 EOF
@@ -512,6 +520,9 @@ echo "4. Add the following secrets to your GitHub repository:"
 echo "   - DEPLOY_HOST: $(hostname -I | awk '{print $1}')"
 echo "   - DEPLOY_USER: root (or a user with sudo privileges)"
 echo "   - DEPLOY_SSH_KEY: (copy the private key below)"
+echo "   - GOOGLE_CLIENT_ID: (your Google OAuth client ID)"
+echo "   - GOOGLE_CLIENT_SECRET: (your Google OAuth client secret)"
+echo "   - DOMAIN: (your domain name, e.g., yourdomain.com)"
 echo
 echo "5. SSH Private Key for GitHub Actions:"
 echo "   Copy this private key to your GitHub repository secrets as DEPLOY_SSH_KEY:"

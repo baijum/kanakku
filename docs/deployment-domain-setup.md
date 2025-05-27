@@ -125,7 +125,7 @@ sudo certbot --nginx -d kanakku.muthukadan.net -d api.kanakku.muthukadan.net -d 
 
 # Auto-renewal
 sudo crontab -e
-# Add: 0 12 * * * /usr/bin/certbot renew --quiet
+# Add: 0 12 1 * * /usr/bin/certbot renew --quiet
 ```
 
 ## Testing the Configuration
