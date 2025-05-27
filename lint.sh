@@ -36,6 +36,16 @@ if [ ! -d "adminserver" ]; then
   exit 1
 fi
 
+if [ ! -d "scripts" ]; then
+  echo -e "${RED}Error: scripts directory not found${NC}"
+  exit 1
+fi
+
+if [ ! -d "tools" ]; then
+  echo -e "${RED}Error: tools directory not found${NC}"
+  exit 1
+fi
+
 # Frontend linting
 echo -e "\n${YELLOW}Running frontend linting...${NC}"
 cd frontend
@@ -91,5 +101,21 @@ ruff check adminserver/ || { echo -e "${RED}Admin Server linting failed${NC}"; e
 
 echo "Running Black formatter check on adminserver..."
 black --check adminserver/ || { echo -e "${RED}Admin Server Black formatting check failed${NC}"; exit 1; }
+
+# Scripts linting
+echo -e "\n${YELLOW}Running scripts linting...${NC}"
+echo "Running Ruff linter on scripts..."
+ruff check scripts/ || { echo -e "${RED}Scripts linting failed${NC}"; exit 1; }
+
+echo "Running Black formatter check on scripts..."
+black --check scripts/ || { echo -e "${RED}Scripts Black formatting check failed${NC}"; exit 1; }
+
+# Tools linting
+echo -e "\n${YELLOW}Running tools linting...${NC}"
+echo "Running Ruff linter on tools..."
+ruff check tools/ || { echo -e "${RED}Tools linting failed${NC}"; exit 1; }
+
+echo "Running Black formatter check on tools..."
+black --check tools/ || { echo -e "${RED}Tools Black formatting check failed${NC}"; exit 1; }
 
 echo -e "\n${GREEN}All linting checks passed successfully!${NC}"

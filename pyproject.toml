@@ -159,6 +159,16 @@ ignore = [
     "F401",  # Allow unused imports in tools
     "F841",  # Allow unused variables in tools
 ]
+"scripts/**/*.py" = [
+    "F401",  # Allow unused imports in scripts
+    "F841",  # Allow unused variables in scripts
+    "E402",  # Allow module level imports not at top in scripts
+]
+"tools/**/*.py" = [
+    "F401",  # Allow unused imports in tools
+    "F841",  # Allow unused variables in tools
+    "E402",  # Allow module level imports not at top in tools
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app", "backend", "banktransactions", "shared"]
