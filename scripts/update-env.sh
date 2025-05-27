@@ -32,6 +32,9 @@ REDIS_URL=redis://localhost:6379/0
 # Frontend URL
 FRONTEND_URL=https://${DOMAIN:-localhost}
 
+# Backend URL
+BACKEND_URL=https://api.${DOMAIN:-localhost}
+
 # API Configuration
 API_RATE_LIMIT=1000 per hour
 ENVEOF
@@ -60,6 +63,7 @@ fi
 if [ -n "$DOMAIN" ]; then
   echo "Updating domain to: $DOMAIN"
   sudo sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=https://$DOMAIN|" "$ENV_FILE"
+  sudo sed -i "s|BACKEND_URL=.*|BACKEND_URL=https://api.$DOMAIN|" "$ENV_FILE"
 fi
 
 # Set proper permissions
