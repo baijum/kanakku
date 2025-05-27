@@ -162,6 +162,7 @@ jobs:
           cp kanakku-worker.service deploy/config/
           cp kanakku-scheduler.service deploy/config/
           cp kanakku-admin-server.service deploy/config/
+          cp kanakku-dashboard.service deploy/config/
 
           # Copy admin server test script
           cp adminserver/test_imports.py deploy/adminserver/
@@ -267,11 +268,13 @@ jobs:
           sudo cp config/kanakku-worker.service /etc/systemd/system/
           sudo cp config/kanakku-scheduler.service /etc/systemd/system/
           sudo cp config/kanakku-admin-server.service /etc/systemd/system/
+          sudo cp config/kanakku-dashboard.service /etc/systemd/system/
           sudo systemctl daemon-reload
           sudo systemctl enable kanakku
           sudo systemctl enable kanakku-worker
           sudo systemctl enable kanakku-scheduler
           sudo systemctl enable kanakku-admin-server
+          sudo systemctl enable kanakku-dashboard
 
           # Configure nginx
           sudo cp config/nginx-kanakku.conf /etc/nginx/sites-available/kanakku
@@ -351,6 +354,14 @@ jobs:
           }
           sleep 2
 
+          echo "Starting dashboard..."
+          sudo systemctl start kanakku-dashboard || {
+            echo "Warning: Dashboard failed to start, checking logs..."
+            sudo journalctl -u kanakku-dashboard --no-pager -n 20
+            echo "Continuing without dashboard..."
+          }
+          sleep 2
+
           echo "Reloading nginx..."
           sudo systemctl reload nginx
 
@@ -360,6 +371,7 @@ jobs:
           sudo systemctl status kanakku-worker --no-pager || echo "Worker service status check failed"
           sudo systemctl status kanakku-scheduler --no-pager || echo "Scheduler service status check failed"
           sudo systemctl status kanakku-admin-server --no-pager || echo "Admin server status check failed"
+          sudo systemctl status kanakku-dashboard --no-pager || echo "Dashboard status check failed"
 
           echo "Services startup completed"
 
@@ -463,6 +475,7 @@ jobs:
           sudo systemctl is-active kanakku-worker
           sudo systemctl is-active kanakku-scheduler
           sudo systemctl is-active kanakku-admin-server
+          sudo systemctl is-active kanakku-dashboard
           sudo systemctl is-active nginx
           EOF
 
@@ -478,12 +491,14 @@ jobs:
             sudo systemctl stop kanakku-worker || true
             sudo systemctl stop kanakku-scheduler || true
             sudo systemctl stop kanakku-admin-server || true
+            sudo systemctl stop kanakku-dashboard || true
             sudo cp -r "/opt/kanakku/backups/$LATEST_BACKUP"/* /opt/kanakku/
             sudo chown -R kanakku:kanakku /opt/kanakku
             sudo systemctl start kanakku || true
             sudo systemctl start kanakku-worker || true
             sudo systemctl start kanakku-scheduler || true
             sudo systemctl start kanakku-admin-server || true
+            sudo systemctl start kanakku-dashboard || true
           fi
           EOF
 

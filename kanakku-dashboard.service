@@ -1,0 +1,40 @@
+[Unit]
+Description=Kanakku Monitoring Web Dashboard
+After=network.target
+Wants=kanakku.service kanakku-admin-server.service
+
+[Service]
+Type=simple
+User=kanakku
+Group=kanakku
+WorkingDirectory=/opt/kanakku/adminserver
+Environment="PATH=/opt/kanakku/adminserver/venv/bin"
+Environment="PYTHONPATH=/opt/kanakku/adminserver"
+Environment="FLASK_ENV=production"
+Environment="DASHBOARD_SECRET_KEY=change-this-in-production"
+Environment="DASHBOARD_HTPASSWD_FILE=/etc/kanakku/dashboard.htpasswd"
+Environment="DASHBOARD_SESSION_TIMEOUT=3600"
+Environment="DASHBOARD_LOG_LEVEL=INFO"
+EnvironmentFile=/opt/kanakku/.env
+ExecStart=/opt/kanakku/adminserver/venv/bin/gunicorn --bind 127.0.0.1:5001 --workers 2 --timeout 60 web_dashboard:app
+Restart=always
+RestartSec=10s
+StandardOutput=journal
+StandardError=journal
+
+# Security enhancements
+PrivateTmp=true
+ProtectSystem=strict
+NoNewPrivileges=true
+PrivateDevices=true
+ProtectHome=true
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=256M
+
+# Network access for web server
+PrivateNetwork=false
+
+[Install]
+WantedBy=multi-user.target
