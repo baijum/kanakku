@@ -333,30 +333,30 @@ jobs:
             echo "Warning: Admin server dependencies have issues, but continuing..."
           fi
 
-          # Start services one by one with error checking
-          echo "Starting main application..."
-          sudo systemctl start kanakku
+          # Restart services one by one with error checking
+          echo "Restarting main application..."
+          sudo systemctl restart kanakku
           sleep 3
 
-          echo "Starting worker service..."
-          sudo systemctl start kanakku-worker
+          echo "Restarting worker service..."
+          sudo systemctl restart kanakku-worker
           sleep 2
 
-          echo "Starting scheduler service..."
-          sudo systemctl start kanakku-scheduler
+          echo "Restarting scheduler service..."
+          sudo systemctl restart kanakku-scheduler
           sleep 2
 
-          echo "Starting admin server..."
-          sudo systemctl start kanakku-admin-server || {
-            echo "Warning: Admin server failed to start, checking logs..."
+          echo "Restarting admin server..."
+          sudo systemctl restart kanakku-admin-server || {
+            echo "Warning: Admin server failed to restart, checking logs..."
             sudo journalctl -u kanakku-admin-server --no-pager -n 20
             echo "Continuing without admin server..."
           }
           sleep 2
 
-          echo "Starting dashboard..."
-          sudo systemctl start kanakku-dashboard || {
-            echo "Warning: Dashboard failed to start, checking logs..."
+          echo "Restarting dashboard..."
+          sudo systemctl restart kanakku-dashboard || {
+            echo "Warning: Dashboard failed to restart, checking logs..."
             sudo journalctl -u kanakku-dashboard --no-pager -n 20
             echo "Continuing without dashboard..."
           }
