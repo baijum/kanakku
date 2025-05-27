@@ -44,9 +44,10 @@ fi
 if [ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ]; then
   echo "Adding Google OAuth credentials to .env file..."
 
-  # Remove existing Google credentials if they exist
+  # Remove existing Google credentials and comments if they exist
   sudo sed -i '/^GOOGLE_CLIENT_ID=/d' "$ENV_FILE"
   sudo sed -i '/^GOOGLE_CLIENT_SECRET=/d' "$ENV_FILE"
+  sudo sed -i '/^# Google OAuth Configuration$/d' "$ENV_FILE"
 
   # Add new Google credentials
   echo "" | sudo tee -a "$ENV_FILE" > /dev/null
@@ -62,8 +63,20 @@ fi
 # Update domain if provided
 if [ -n "$DOMAIN" ]; then
   echo "Updating domain to: $DOMAIN"
-  sudo sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=https://$DOMAIN|" "$ENV_FILE"
-  sudo sed -i "s|BACKEND_URL=.*|BACKEND_URL=https://api.$DOMAIN|" "$ENV_FILE"
+
+  # Update FRONTEND_URL if it exists, otherwise add it
+  if grep -q "^FRONTEND_URL=" "$ENV_FILE"; then
+    sudo sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=https://$DOMAIN|" "$ENV_FILE"
+  else
+    echo "FRONTEND_URL=https://$DOMAIN" | sudo tee -a "$ENV_FILE" > /dev/null
+  fi
+
+  # Update BACKEND_URL if it exists, otherwise add it
+  if grep -q "^BACKEND_URL=" "$ENV_FILE"; then
+    sudo sed -i "s|BACKEND_URL=.*|BACKEND_URL=https://api.$DOMAIN|" "$ENV_FILE"
+  else
+    echo "BACKEND_URL=https://api.$DOMAIN" | sudo tee -a "$ENV_FILE" > /dev/null
+  fi
 fi
 
 # Set proper permissions
