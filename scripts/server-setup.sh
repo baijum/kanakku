@@ -98,11 +98,30 @@ chown -R "$KANAKKU_USER:$KANAKKU_USER" /var/log/kanakku
 # Install PostgreSQL
 log "Installing PostgreSQL ${POSTGRES_VERSION}..."
 if ! command -v psql &> /dev/null; then
-    # Add PostgreSQL official repository
-    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-    echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-    apt update
-    apt install -y postgresql-${POSTGRES_VERSION} postgresql-client-${POSTGRES_VERSION} postgresql-contrib-${POSTGRES_VERSION}
+    # Clean up any existing PostgreSQL repository configurations
+    rm -f /etc/apt/sources.list.d/pgdg.list
+
+    # Fix /tmp permissions if needed
+    chmod 1777 /tmp
+
+    # Create keyrings directory if it doesn't exist
+    mkdir -p /usr/share/keyrings
+
+    # Add PostgreSQL official repository using modern GPG key management
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+
+    # Clean apt cache and update with error handling
+    apt clean
+    rm -rf /var/lib/apt/lists/*
+
+    # Update package lists
+    if ! apt update; then
+        warn "apt update failed, trying to install PostgreSQL from default repositories"
+        apt install -y postgresql postgresql-client postgresql-contrib
+    else
+        apt install -y postgresql-${POSTGRES_VERSION} postgresql-client-${POSTGRES_VERSION} postgresql-contrib-${POSTGRES_VERSION}
+    fi
 
     # Start and enable PostgreSQL
     systemctl start postgresql

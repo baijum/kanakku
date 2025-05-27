@@ -318,9 +318,13 @@ jobs:
           ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
           set -e
 
-          # Extract deployment files
-          cd /tmp
-          tar -xzf kanakku-deploy.tar.gz
+          # Create a temporary deployment directory with proper permissions
+          DEPLOY_TEMP="/tmp/kanakku-deploy-$(date +%s)"
+          mkdir -p "$DEPLOY_TEMP"
+          cd "$DEPLOY_TEMP"
+
+          # Extract deployment files with relaxed permissions
+          tar -xzf /tmp/kanakku-deploy.tar.gz --no-same-owner --no-same-permissions
 
           # Run deployment scripts
           chmod +x scripts/*.sh
@@ -335,7 +339,8 @@ jobs:
           ./scripts/start.sh
 
           # Cleanup
-          rm -rf /tmp/kanakku-deploy.tar.gz /tmp/backend /tmp/frontend /tmp/config /tmp/scripts /tmp/banktransactions /tmp/shared /tmp/pyproject.toml
+          cd /tmp
+          rm -rf /tmp/kanakku-deploy.tar.gz "$DEPLOY_TEMP"
 
           echo "Deployment completed successfully!"
           EOF
