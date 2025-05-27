@@ -136,7 +136,7 @@ jobs:
       - name: Build frontend
         run: |
           cd frontend
-          npm run build
+          REACT_APP_API_URL="https://api.${{ env.DOMAIN }}/" npm run build
 
       - name: Create deployment archive
         run: |
