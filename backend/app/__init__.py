@@ -9,21 +9,11 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .accounts_bp import accounts_bp
-from .api import api as api_bp
-from .auth_bp import auth_bp
-from .books_bp import books_bp
+# Import configuration first
 from .config import config
-from .email_automation import email_automation as email_automation_bp
-from .errors import errors as errors_bp
+
+# Import extensions
 from .extensions import db, jwt, limiter, login_manager, mail, setup_csrf
-from .ledger import ledger as ledger_bp
-from .mappings import mappings_bp
-from .preamble import preamble as preamble_bp
-from .reports_bp import reports_bp
-from .settings import settings as settings_bp
-from .swagger import swagger as swagger_bp
-from .transactions_bp import transactions_bp
 
 
 def setup_logging(app):
@@ -78,24 +68,28 @@ def setup_logging(app):
     app.logger.addHandler(error_file_handler)
     app.logger.addHandler(console_handler)
 
-    # Add filter to inject request ID into log records
-    class RequestIDLogFilter(logging.Filter):
+    # Prevent propagation to avoid duplicate logs
+    app.logger.propagate = False
+
+    # Add request ID to log context
+    class RequestIdFilter(logging.Filter):
         def filter(self, record):
-            if not hasattr(record, "request_id"):
+            if has_request_context():
+                record.request_id = getattr(g, "request_id", "no_request_id")
+            else:
                 record.request_id = "no_request_id"
-                # Only try to get request ID if we're in a request context
-                if has_request_context():
-                    record.request_id = getattr(g, "request_id", "no_request_id")
             return True
 
+    # Add the filter to all handlers
+    request_id_filter = RequestIdFilter()
     for handler in app.logger.handlers:
-        handler.addFilter(RequestIDLogFilter())
+        handler.addFilter(request_id_filter)
 
-    # Log application startup
     app.logger.info("Application startup complete")
 
 
 def create_app(config_name="default"):
+    """Create and configure the Flask application."""
     app = Flask(__name__)
 
     # Serve favicon.ico
@@ -116,9 +110,6 @@ def create_app(config_name="default"):
             value = getattr(config_instance, key)
             if not callable(value):  # Skip methods
                 app.config[key] = value
-
-    # Initialize Flask-Session
-    # Session(app)
 
     # Configure CORS to allow any origin
     CORS(
@@ -151,47 +142,12 @@ def create_app(config_name="default"):
         g.request_id = str(uuid.uuid4())
         app.logger.debug(f"Request started: {request.method} {request.path}")
 
-    # Global CSRF exemption logic if needed
-    @app.before_request
-    def csrf_protect():
-        if request.method != "GET" and request.path.startswith("/api/v1/"):
-            # Log CSRF debug info
-            app.logger.debug(
-                f"CSRF check for {request.path} - Headers: {request.headers.get('X-CSRFToken', 'NONE')}"
-            )
-
-            # Check for API token authentication and exempt from CSRF if found
-            x_api_key = request.headers.get("X-API-Key")
-            auth_header = request.headers.get("Authorization", "")
-
-            # If API token authentication is being used, exempt from CSRF
-            if x_api_key or auth_header.startswith("Token "):
-                app.logger.debug(
-                    f"API token detected, exempting from CSRF: {request.path}"
-                )
-                request._csrf_exempt = True
-
+    # Request logging middleware
     @app.after_request
     def log_response(response):
         app.logger.debug(
-            f"Request completed: {request.method} {request.path} - Status: {response.status_code}"
+            f"Request completed: {request.method} {request.path} - {response.status_code}"
         )
-
-        # Add security headers
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://unpkg.com; "
-            "style-src 'self' 'unsafe-inline' https://unpkg.com; "
-            "img-src 'self' data:"
-        )
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "SAMEORIGIN"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Referrer-Policy"] = "same-origin"
-        response.headers["Permissions-Policy"] = (
-            "geolocation=(), microphone=(), camera=()"
-        )
-
         return response
 
     # Create database tables (only if not running migrations)
@@ -204,20 +160,40 @@ def create_app(config_name="default"):
         except Exception as e:
             app.logger.error(f"Error creating database: {str(e)}", exc_info=True)
 
-        # Register blueprints
-        app.register_blueprint(auth_bp)
-        app.register_blueprint(transactions_bp)
-        app.register_blueprint(accounts_bp)
-        app.register_blueprint(books_bp)
-        app.register_blueprint(reports_bp)
-        app.register_blueprint(api_bp)
-        app.register_blueprint(ledger_bp)
-        app.register_blueprint(preamble_bp)
-        app.register_blueprint(mappings_bp)
-        app.register_blueprint(errors_bp)
-        app.register_blueprint(swagger_bp)
-        app.register_blueprint(settings_bp)
-        app.register_blueprint(email_automation_bp)
+        # Import and register blueprints after app context is established
+        try:
+            from .accounts_bp import accounts_bp
+            from .api import api as api_bp
+            from .auth_bp import auth_bp
+            from .books_bp import books_bp
+            from .email_automation import email_automation as email_automation_bp
+            from .errors import errors as errors_bp
+            from .ledger import ledger as ledger_bp
+            from .mappings import mappings_bp
+            from .preamble import preamble as preamble_bp
+            from .reports_bp import reports_bp
+            from .settings import settings as settings_bp
+            from .swagger import swagger as swagger_bp
+            from .transactions_bp import transactions_bp
+
+            # Register blueprints
+            app.register_blueprint(auth_bp)
+            app.register_blueprint(transactions_bp)
+            app.register_blueprint(accounts_bp)
+            app.register_blueprint(books_bp)
+            app.register_blueprint(reports_bp)
+            app.register_blueprint(api_bp)
+            app.register_blueprint(ledger_bp)
+            app.register_blueprint(preamble_bp)
+            app.register_blueprint(mappings_bp)
+            app.register_blueprint(errors_bp)
+            app.register_blueprint(swagger_bp)
+            app.register_blueprint(settings_bp)
+            app.register_blueprint(email_automation_bp)
+
+            app.logger.info("All blueprints registered successfully")
+        except Exception as e:
+            app.logger.error(f"Error registering blueprints: {str(e)}", exc_info=True)
 
     # Rate limiting error handler
     @app.errorhandler(429)

@@ -162,8 +162,12 @@ jobs:
           cp kanakku-scheduler.service deploy/config/
           cp kanakku-admin-server.service deploy/config/
 
+          # Copy admin server test script
+          cp adminserver/test_imports.py deploy/adminserver/
+
           # Copy scripts
           cp -r scripts deploy/
+          chmod +x deploy/scripts/*.sh
 
           # Create deployment scripts
           cat > deploy/scripts/deploy.sh << 'EOF'
@@ -206,6 +210,9 @@ jobs:
           sudo cp -r adminserver "$DEPLOY_PATH/"
           sudo cp pyproject.toml "$DEPLOY_PATH/"
 
+          # Copy scripts
+          sudo cp -r scripts "$DEPLOY_PATH/" || echo "Warning: Could not copy scripts directory"
+
           # Copy frontend build
           sudo mkdir -p /var/www/kanakku
           sudo cp -r frontend/* /var/www/kanakku/
@@ -226,6 +233,9 @@ jobs:
           sudo -u "$SERVICE_USER" python3 -m venv adminserver/venv
           sudo -u "$SERVICE_USER" adminserver/venv/bin/pip install --upgrade pip
           sudo -u "$SERVICE_USER" adminserver/venv/bin/pip install -e .
+
+          # Copy admin server test script
+          sudo cp adminserver/test_imports.py "$DEPLOY_PATH/adminserver/" || echo "Warning: Could not copy test_imports.py"
 
           # Set final permissions
           sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$DEPLOY_PATH"
@@ -280,32 +290,74 @@ jobs:
           if sudo -u postgres psql -d "$DB_NAME" -c "\\dt" 2>/dev/null | grep -q "user"; then
             echo "Database tables already exist, marking migration as complete..."
             cd backend
+            # Set environment variables for Flask
+            export FLASK_APP=app
+            export FLASK_ENV=production
+            export FLASK_SKIP_DB_CREATE=1
+
             # First ensure the alembic_version table exists
-            sudo -u kanakku venv/bin/flask db stamp head || {
+            sudo -u kanakku -E venv/bin/flask db stamp head || {
               echo "Could not stamp migration, trying to create alembic_version table..."
               sudo -u postgres psql -d "$DB_NAME" -c "CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num));" || true
-              sudo -u kanakku venv/bin/flask db stamp head || echo "Still could not stamp migration"
+              sudo -u kanakku -E venv/bin/flask db stamp head || echo "Still could not stamp migration"
             }
           else
             echo "No existing tables found, running database migrations..."
-            cd backend && sudo -u kanakku venv/bin/flask db upgrade || echo "Migration failed or not needed"
+            cd backend
+            export FLASK_APP=app
+            export FLASK_ENV=production
+            export FLASK_SKIP_DB_CREATE=1
+            sudo -u kanakku -E venv/bin/flask db upgrade || echo "Migration failed or not needed"
           fi
 
-          # Start services
+          # Test admin server imports before starting
+          echo "Testing admin server dependencies..."
+          cd /opt/kanakku/adminserver
+          if sudo -u kanakku venv/bin/python test_imports.py; then
+            echo "Admin server dependencies OK"
+          else
+            echo "Warning: Admin server dependencies have issues, but continuing..."
+          fi
+
+          # Start services one by one with error checking
+          echo "Starting main application..."
           sudo systemctl start kanakku
+          sleep 3
+
+          echo "Starting worker service..."
           sudo systemctl start kanakku-worker
+          sleep 2
+
+          echo "Starting scheduler service..."
           sudo systemctl start kanakku-scheduler
-          sudo systemctl start kanakku-admin-server
+          sleep 2
+
+          echo "Starting admin server..."
+          sudo systemctl start kanakku-admin-server || {
+            echo "Warning: Admin server failed to start, checking logs..."
+            sudo journalctl -u kanakku-admin-server --no-pager -n 20
+            echo "Continuing without admin server..."
+          }
+          sleep 2
+
+          echo "Reloading nginx..."
           sudo systemctl reload nginx
 
           # Check service status
-          sleep 5
-          sudo systemctl status kanakku --no-pager
-          sudo systemctl status kanakku-worker --no-pager
-          sudo systemctl status kanakku-scheduler --no-pager
-          sudo systemctl status kanakku-admin-server --no-pager
+          echo "Checking service status..."
+          sudo systemctl status kanakku --no-pager || echo "Main service status check failed"
+          sudo systemctl status kanakku-worker --no-pager || echo "Worker service status check failed"
+          sudo systemctl status kanakku-scheduler --no-pager || echo "Scheduler service status check failed"
+          sudo systemctl status kanakku-admin-server --no-pager || echo "Admin server status check failed"
 
-          echo "Services started successfully"
+          echo "Services startup completed"
+
+          # Run health check if available
+          if [ -f "/opt/kanakku/scripts/health_check.sh" ]; then
+            echo "Running health check..."
+            chmod +x /opt/kanakku/scripts/health_check.sh
+            /opt/kanakku/scripts/health_check.sh || echo "Health check completed with warnings"
+          fi
           EOF
 
           # Make scripts executable

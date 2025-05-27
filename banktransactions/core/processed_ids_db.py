@@ -23,6 +23,8 @@ try:
         sys.path.insert(0, str(project_root))
         logger.debug(f"Added project root to sys.path: {project_root}")
 
+    # Import database utilities first to avoid circular imports
+    # Import Flask app and extensions after shared imports
     from app import create_app
     from app.extensions import db
     from shared.imports import (

@@ -148,12 +148,9 @@ def test_log_response_middleware():
     # It should be one of the functions registered to after_request
     log_response_func = None
     for func in app.after_request_funcs[None]:
-        # Check if it's a functools.partial object
-        if (
-            hasattr(func, "func")
-            and func.func.__name__ == "log_response"
-            or hasattr(func, "__name__")
-            and func.__name__ == "log_response"
+        # Check if it's a functools.partial object or regular function
+        if (hasattr(func, "func") and func.func.__name__ == "log_response") or (
+            hasattr(func, "__name__") and func.__name__ == "log_response"
         ):
             log_response_func = func
             break
@@ -161,7 +158,7 @@ def test_log_response_middleware():
     # If we found the function, test it directly
     assert (
         log_response_func is not None
-    ), "Could not find log_response function in after_request_funcs"
+    ), f"Could not find log_response function in after_request_funcs. Available functions: {[getattr(f, '__name__', str(f)) for f in app.after_request_funcs[None]]}"
 
     # Create a test response and call the function directly
     with app.test_request_context("/test"):
@@ -174,7 +171,7 @@ def test_log_response_middleware():
         # Verify the logger was called
         mock_logger.debug.assert_called_once()
         assert "Request completed" in mock_logger.debug.call_args[0][0]
-        assert "Status: 200" in mock_logger.debug.call_args[0][0]
+        assert "200" in mock_logger.debug.call_args[0][0]
 
         # Verify the response was returned unchanged
         assert result == response

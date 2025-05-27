@@ -149,9 +149,13 @@ def get_flask_or_standalone_session() -> Session:
 
         if has_app_context():
             try:
-                from app.extensions import db
+                # Import db only when we're sure we're in a Flask context
+                import sys
 
-                return db.session
+                if "app.extensions" in sys.modules:
+                    from app.extensions import db
+
+                    return db.session
             except (ImportError, RuntimeError, AttributeError):
                 # Flask app not fully initialized, fall back
                 pass
