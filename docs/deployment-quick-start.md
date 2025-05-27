@@ -77,7 +77,7 @@ After successful deployment:
 
 ```bash
 # Install SSL certificates
-sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com
+sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com -d monitor.yourdomain.com
 
 # Test automatic renewal
 sudo certbot renew --dry-run

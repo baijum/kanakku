@@ -632,7 +632,7 @@ sudo ufw status verbose
 sudo apt install -y certbot python3-certbot-nginx
 
 # Obtain SSL certificate
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+sudo certbot --nginx -d your-domain.com -d www.your-domain.com -d api.your-domain.com -d monitor.your-domain.com
 
 # Set up automatic renewal
 sudo crontab -e

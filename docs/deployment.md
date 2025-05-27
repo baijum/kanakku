@@ -213,13 +213,14 @@ Point your domain to your server:
 ```
 A    yourdomain.com        192.168.1.100
 A    api.yourdomain.com    192.168.1.100
+A    monitor.yourdomain.com 192.168.1.100
 ```
 
 ### 2. SSL Certificate Setup
 
 ```bash
 # Install SSL certificates using Let's Encrypt
-sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com
+sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com -d monitor.yourdomain.com
 
 # Test automatic renewal
 sudo certbot renew --dry-run

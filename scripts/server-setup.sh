@@ -506,7 +506,7 @@ echo "2. Configure your domain in the nginx config:"
 echo "   The CI/CD pipeline will deploy the nginx config, but you may need to update the domain names"
 echo
 echo "3. Set up SSL certificates:"
-echo "   sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com"
+echo "   sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com -d monitor.yourdomain.com"
 echo
 echo "4. Add the following secrets to your GitHub repository:"
 echo "   - DEPLOY_HOST: $(hostname -I | awk '{print $1}')"
