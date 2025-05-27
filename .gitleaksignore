@@ -25,15 +25,21 @@
 
 # Documentation examples in banktransactions/docs/TEST_README.md
 b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/TEST_README.md:generic-api-key:52
+aad4b7c1c3abca5658aaff4adf2db485a8673338:banktransactions/docs/TEST_README.md:generic-api-key:52
 
 # Documentation examples in docs/GEMINI_API_SETUP.md
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/GEMINI_API_SETUP.md:curl-auth-header:58
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/GEMINI_API_SETUP.md:curl-auth-header:92
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/GEMINI_API_SETUP.md:curl-auth-header:58
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/GEMINI_API_SETUP.md:curl-auth-header:92
 
 # Documentation examples in banktransactions/docs/SCHEDULER.md
 b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:kanakku-database-url:74
 b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:generic-api-key:61
 b48ea9585ad6585f964a59b24fa3016506747d9e:banktransactions/docs/SCHEDULER.md:generic-api-key:93
+aad4b7c1c3abca5658aaff4adf2db485a8673338:banktransactions/docs/SCHEDULER.md:kanakku-database-url:74
+aad4b7c1c3abca5658aaff4adf2db485a8673338:banktransactions/docs/SCHEDULER.md:generic-api-key:61
+aad4b7c1c3abca5658aaff4adf2db485a8673338:banktransactions/docs/SCHEDULER.md:generic-api-key:93
 
 # Frontend test passwords in UpdatePassword.jsx (older commit)
 b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:50
@@ -49,7 +55,14 @@ b48ea9585ad6585f964a59b24fa3016506747d9e:frontend/src/components/Auth/UpdatePass
 972ba5e52296722d8ea49082ff6c9a76b92d9d78:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:60
 972ba5e52296722d8ea49082ff6c9a76b92d9d78:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:62
 
-# Documentation examples in docs/api_documentation.md
+# Frontend test passwords in UpdatePassword.jsx (latest commit)
+aad4b7c1c3abca5658aaff4adf2db485a8673338:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:50
+aad4b7c1c3abca5658aaff4adf2db485a8673338:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:54
+aad4b7c1c3abca5658aaff4adf2db485a8673338:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:56
+aad4b7c1c3abca5658aaff4adf2db485a8673338:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:60
+aad4b7c1c3abca5658aaff4adf2db485a8673338:frontend/src/components/Auth/UpdatePassword.jsx:kanakku-test-passwords:62
+
+# Documentation examples in docs/api_documentation.md (older commit)
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:jwt:111
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:122
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:140
@@ -92,6 +105,53 @@ b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-hea
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1244
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/api_documentation.md:curl-auth-header:1270
 
-# Documentation examples in docs/deployment/linux-deployment-guide.md
+# Documentation examples in docs/api_documentation.md (latest commit)
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:jwt:111
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:122
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:140
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:162
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:229
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:254
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:282
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:310
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:330
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:352
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:385
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:417
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:440
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:472
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:496
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:532
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:574
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:633
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:659
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:696
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:757
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:775
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:803
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:827
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:849
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:867
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:885
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:910
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:938
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:975
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1008
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1032
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1065
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1084
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1110
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1143
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1173
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1196
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1226
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1244
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/api_documentation.md:curl-auth-header:1270
+
+# Documentation examples in docs/deployment/linux-deployment-guide.md (older commit)
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/deployment/linux-deployment-guide.md:kanakku-jwt-secret:272
 b48ea9585ad6585f964a59b24fa3016506747d9e:docs/deployment/linux-deployment-guide.md:kanakku-jwt-secret:275
+
+# Documentation examples in docs/deployment/linux-deployment-guide.md (latest commit)
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/deployment/linux-deployment-guide.md:kanakku-jwt-secret:272
+aad4b7c1c3abca5658aaff4adf2db485a8673338:docs/deployment/linux-deployment-guide.md:kanakku-jwt-secret:275
