@@ -20,19 +20,24 @@ RestartSec=10s
 StandardOutput=journal
 StandardError=journal
 
-# Security enhancements (relaxed for admin functionality)
+# Security enhancements (minimal restrictions for admin functionality)
 PrivateTmp=false
 ProtectSystem=false
 NoNewPrivileges=false
 PrivateDevices=false
 ProtectHome=false
+PrivateNetwork=false
+PrivateMounts=false
+
+# Explicitly allow access to required paths
+ReadWritePaths=/opt/kanakku
+ReadWritePaths=/home/kanakku
+ReadWritePaths=/var/log
+ReadWritePaths=/tmp
 
 # Resource limits
 LimitNOFILE=65536
 MemoryMax=256M
-
-# Network access for SSH connections
-PrivateNetwork=false
 
 [Install]
 WantedBy=multi-user.target
