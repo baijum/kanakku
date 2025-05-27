@@ -173,11 +173,12 @@ jobs:
 
           echo "Starting deployment..."
 
-          # Create backup
+          # Create backup (exclude the backups directory to avoid recursive copy)
           if [ -d "$DEPLOY_PATH" ]; then
             echo "Creating backup..."
             sudo mkdir -p "$BACKUP_DIR"
-            sudo cp -r "$DEPLOY_PATH"/* "$BACKUP_DIR/" || true
+            # Copy all files except the backups directory
+            sudo find "$DEPLOY_PATH" -maxdepth 1 -not -name "backups" -not -path "$DEPLOY_PATH" -exec cp -r {} "$BACKUP_DIR/" \; || true
           fi
 
           # Stop services
@@ -189,7 +190,10 @@ jobs:
 
           # Create deployment directory and set permissions
           sudo mkdir -p "$DEPLOY_PATH"
-          sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$DEPLOY_PATH"
+
+          # Remove old virtual environments to avoid permission issues
+          sudo rm -rf "$DEPLOY_PATH/backend/venv" || true
+          sudo rm -rf "$DEPLOY_PATH/adminserver/venv" || true
 
           # Copy new files
           echo "Copying application files..."
@@ -204,6 +208,9 @@ jobs:
           sudo cp -r frontend/* /var/www/kanakku/
           sudo chown -R www-data:www-data /var/www/kanakku
 
+          # Set ownership before creating virtual environments
+          sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$DEPLOY_PATH"
+
           # Set up Python virtual environment
           echo "Setting up Python environment..."
           cd "$DEPLOY_PATH"
@@ -217,9 +224,10 @@ jobs:
           sudo -u "$SERVICE_USER" adminserver/venv/bin/pip install --upgrade pip
           sudo -u "$SERVICE_USER" adminserver/venv/bin/pip install -e .
 
-          # Set permissions
+          # Set final permissions
           sudo chown -R "$SERVICE_USER:$SERVICE_USER" "$DEPLOY_PATH"
-          sudo chmod +x "$DEPLOY_PATH/backend/venv/bin/"*
+          sudo chmod +x "$DEPLOY_PATH/backend/venv/bin/"* || true
+          sudo chmod +x "$DEPLOY_PATH/adminserver/venv/bin/"* || true
 
           echo "Deployment files copied successfully"
           EOF
